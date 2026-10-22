@@ -7,6 +7,7 @@ use crate::rng::Rng;
 use crate::{
     Entity, AnimState, GameEvent, HeroStats, ItemDef, ItemKind, ItemOnGround, PlayerInput,
 };
+use d2missiles::MissileSystem;
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
@@ -45,6 +46,11 @@ pub(crate) const RESPAWN_MS: u32 = 2000;
 pub(crate) const POTION_HEAL: u32 = 60;
 /// dt max accepté par tick (anti-tunneling ; au-delà, tronqué).
 pub(crate) const MAX_DT_MS: u32 = 100;
+/// Rayon de collision missile↔monstre (tuiles, rayon de corps MVP).
+pub(crate) const MISSILE_HIT_RADIUS: f32 = 0.7;
+/// Missile tiré par l'attaque à distance MVP (`arrow` : Vel=24, Range=40,
+/// patch_missiles.txt ligne Id=0). d2game pourra mapper classe→missile plus tard.
+pub(crate) const HERO_MISSILE: &str = "arrow";
 /// Niveau max MVP (seuils XP livrés jusqu'à 10).
 pub(crate) const MAX_LEVEL: u32 = 10;
 
@@ -175,6 +181,8 @@ pub struct World {
     /// Données monstres — parallèle à `mon_ent`.
     pub(crate) mon_dat: Vec<MonData>,
     pub(crate) items: Vec<ItemOnGround>,
+    /// Projectiles en vol (crate pure d2missiles, table réelle embarquée).
+    pub(crate) missiles: MissileSystem,
     pub(crate) rng: Rng,
     pub(crate) now_ms: u64,
 }
@@ -325,6 +333,7 @@ impl World {
             mon_ent: Vec::new(),
             mon_dat: Vec::new(),
             items: Vec::new(),
+            missiles: MissileSystem::with_seed(seed ^ 0x4D49_5353_1A4E_0001),
             rng: Rng::new(seed),
             now_ms: 0,
         };
@@ -470,6 +479,7 @@ impl World {
         }
         self.update_hero(dt, &mut ev);
         self.update_monsters(dt, &mut ev);
+        self.update_missiles(dt, &mut ev);
         ev
     }
 
@@ -488,6 +498,11 @@ impl World {
     /// après l'anim DD, donc l'indice peut être périmé (caveat REPORT.md §4).
     pub fn monster_alive(&self, index: usize) -> bool {
         self.mon_ent.get(index).map(|m| m.anim != AnimState::DD).unwrap_or(false)
+    }
+
+    /// Missiles en vol (lecture — positions pour le rendu d2game).
+    pub fn missiles(&self) -> &[d2missiles::Missile] {
+        self.missiles.missiles()
     }
 
     /// Objets au sol (lecture).
@@ -636,6 +651,25 @@ impl World {
                         }
                     }
                 }
+            }
+            PlayerInput::RangedAttack { x, y } => {
+                let click = (x as f32 + 0.5, y as f32 + 0.5);
+                // cible : monstre vivant le plus proche du clic (rayon 2),
+                // sinon tir vers le point du clic (comme D2 : on tire toujours)
+                let mut aim = click;
+                let mut bd = PICK_RADIUS;
+                for i in 0..self.mon_ent.len() {
+                    if self.mon_dat[i].state == MonState::Dying {
+                        continue;
+                    }
+                    let e = &self.mon_ent[i];
+                    let d = dist(e.x - click.0, e.y - click.1);
+                    if d <= bd {
+                        bd = d;
+                        aim = (e.x, e.y);
+                    }
+                }
+                self.hero_ranged_attack(aim, ev);
             }
             PlayerInput::Pickup => {
                 let (hx, hy) = (self.hero_ent.x, self.hero_ent.y);
@@ -801,6 +835,90 @@ impl World {
             }
         } else {
             ev.push(GameEvent::HeroMissed { target: i });
+        }
+    }
+
+    /// Tir à distance : anime le swing, face à la cible, spawn un missile
+    /// `arrow` (Vel=24, Range=40 réels) transportant les dégâts d'arme
+    /// (×force, résolus AU TIR — la flèche "sait" ses dégâts, règle D2).
+    fn hero_ranged_attack(&mut self, aim: (f32, f32), ev: &mut Vec<GameEvent>) {
+        if self.hero.swing_ms > 0 || self.hero.dead_ms > 0 {
+            return; // cooldown en cours / héros mort
+        }
+        let (dx, dy) = (aim.0 - self.hero_ent.x, aim.1 - self.hero_ent.y);
+        self.hero_ent.facing = facing_from(dx, dy);
+        self.hero.swing_ms = HERO_SWING_MS;
+        self.hero.anim_ms = 0;
+        // dégâts d'arme résolus : floor(min/max × (1 + force/100)), min 1
+        let mult = 1.0 + self.hero.stats.strength as f32 / 100.0;
+        let dmin = ((self.hero_tpl.weapon_min as f32 * mult).floor() as u32).max(1);
+        let dmax = ((self.hero_tpl.weapon_max as f32 * mult).floor() as u32).max(dmin);
+        let from = (self.hero_ent.x, self.hero_ent.y);
+        if self.missiles.spawn_weapon(HERO_MISSILE, from, aim, dmin, dmax).is_some() {
+            ev.push(GameEvent::MissileSpawned);
+        }
+    }
+
+    /// Avance les missiles en vol : collision monstres (rayon
+    /// MISSILE_HIT_RADIUS, DD exclus) puis murs (tuile bloquée ⇒ arrêt).
+    fn update_missiles(&mut self, dt: u32, ev: &mut Vec<GameEvent>) {
+        if self.missiles.is_empty() {
+            return;
+        }
+        // Snapshot des cibles (monstres figés pendant le tick missiles —
+        // update_monsters est déjà terminé) : split-borrow impossible sinon.
+        let targets: Vec<(f32, f32, bool)> = self
+            .mon_ent
+            .iter()
+            .zip(self.mon_dat.iter())
+            .map(|(e, d)| (e.x, e.y, d.state == MonState::Dying))
+            .collect();
+        let (grid, gw, gh) = (&self.grid, self.w, self.h);
+        let events = self.missiles.tick_walls(
+            dt,
+            &mut |x, y| {
+                for (i, (ex, ey, dying)) in targets.iter().enumerate() {
+                    if *dying {
+                        continue;
+                    }
+                    if dist(*ex - x, *ey - y) <= MISSILE_HIT_RADIUS {
+                        return Some(i);
+                    }
+                }
+                None
+            },
+            &mut |x, y| {
+                let (tx, ty) = (x.floor() as i32, y.floor() as i32);
+                !(tx >= 0 && ty >= 0 && tx < gw && ty < gh && !grid[ty as usize][tx as usize])
+            },
+        );
+        for me in events {
+            match me {
+                d2missiles::MissileEvent::Hit { target, dmg, .. } => {
+                    // jet de toucher : attack rating héros vs AC monstre (§3)
+                    let ac = self.mon_dat[target].ac;
+                    let chance = hit_chance(self.hero.stats.to_hit, ac);
+                    if (self.rng.below(100)) < chance {
+                        self.mon_dat[target].hp = self.mon_dat[target].hp.saturating_sub(dmg);
+                        ev.push(GameEvent::MissileHit { target, dmg });
+                        if self.mon_dat[target].hp == 0 {
+                            let ent = &mut self.mon_ent[target];
+                            let dat = &mut self.mon_dat[target];
+                            dat.state = MonState::Dying;
+                            dat.dying_ms = 0;
+                            dat.anim_ms = 0;
+                            dat.path.clear();
+                            ent.anim = AnimState::DD;
+                            ent.anim_frame = 0;
+                        }
+                    } else {
+                        ev.push(GameEvent::MissileMissed { target });
+                    }
+                }
+                d2missiles::MissileEvent::Spawned { .. }
+                | d2missiles::MissileEvent::Expired { .. }
+                | d2missiles::MissileEvent::Blocked { .. } => {}
+            }
         }
     }
 

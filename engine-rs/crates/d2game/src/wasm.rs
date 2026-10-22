@@ -10,7 +10,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::game::GameCore;
-use crate::world::{GameEvent, PlayerInput};
+use crate::world::PlayerInput;
 
 #[wasm_bindgen]
 pub struct D2Game {
@@ -23,10 +23,20 @@ impl D2Game {
     /// selected class code (`"BA"`, `"SOR"`, `"PA"`…, case-insensitive, default
     /// `"BA"`): the hero's COF/DCC layers AND stats both come from
     /// `manifest.heroes[code]` when present, else the legacy `hero` block.
+    /// Initial level: `"town"`.
     #[wasm_bindgen(constructor)]
     pub fn new(manifest_json: &str, hero: &str) -> Result<D2Game, JsValue> {
+        Self::with_level(manifest_json, hero, "town")
+    }
+
+    /// Like [`D2Game::new`] with the initial level key from the manifest's
+    /// `levels` block (`"town"`, `"bloodmoor"`…, case-insensitive).
+    #[wasm_bindgen(js_name = withLevel)]
+    pub fn with_level(manifest_json: &str, hero: &str, level: &str) -> Result<D2Game, JsValue> {
         console_error_panic_lite();
-        Ok(D2Game { core: GameCore::new(manifest_json, hero).map_err(js_err)? })
+        Ok(D2Game {
+            core: GameCore::with_level(manifest_json, hero, level).map_err(js_err)?,
+        })
     }
 
     /// Resolved hero class as JSON `{"code":"BA","name":"Barbare"}` — HUD
@@ -36,7 +46,25 @@ impl D2Game {
         self.core.hero_class_json()
     }
 
+    /// Current level as JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
+    /// — HUD zone name + level-switch banner. `{}` if the key is unknown.
+    #[wasm_bindgen(js_name = levelInfo)]
+    pub fn level_info(&self) -> String {
+        self.core.level_info_json()
+    }
+
+    /// Switch level: reloads DS1/DT1/collision from the provided (or hot-
+    /// provided) bytes, carries the hero over (stats/inventory/xp), spawns the
+    /// target level's monsters, and lands the hero at `(spawn_x, spawn_y)`
+    /// (snapped to the nearest walkable sub-tile). Throws on unknown level or
+    /// missing assets.
+    #[wasm_bindgen(js_name = switchLevel)]
+    pub fn switch_level(&mut self, name: &str, spawn_x: f32, spawn_y: f32) -> Result<(), JsValue> {
+        self.core.switch_level(name, spawn_x, spawn_y).map(|_| ()).map_err(js_err)
+    }
+
     /// Feed one asset blob (manifest path + bytes), e.g. fetched files.
+    /// Accepted any time — including between level switches (hot provide).
     pub fn provide(&mut self, path: &str, bytes: &[u8]) {
         self.core.provide(path, bytes.to_vec());
     }
@@ -78,6 +106,19 @@ impl D2Game {
         self.core.sprite_notes_json()
     }
 
+    /// Level-switch notes (degraded hero transfers…) as a JSON array.
+    #[wasm_bindgen(js_name = switchNotes)]
+    pub fn switch_notes(&self) -> String {
+        self.core.switch_notes_json()
+    }
+
+    /// Monster codes for the current level, parallel to the tick's monster
+    /// indices — debug/E2E. JSON `["FA","ZM",…]`.
+    #[wasm_bindgen(js_name = monsterCodes)]
+    pub fn monster_codes(&self) -> String {
+        self.core.monster_codes_json()
+    }
+
     /// Serialize the world (JSON v1) — demo Save button → localStorage.
     #[wasm_bindgen(js_name = saveGame)]
     pub fn save_game(&self) -> String {
@@ -96,11 +137,16 @@ impl D2Game {
     /// `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
     /// · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
     /// · `{"type":"useItem","slot":0}`.
-    /// Returns the tick's `GameEvent`s as a JSON array string.
+    /// Returns the tick's events as a JSON array string: the d2rules contract
+    /// events ({"HeroMoved":…}…) plus the engine's multi-level extras
+    /// `{"LevelSwitch":{"key":…,"name":…}}` / `{"LevelSwitchFailed":"…"}` —
+    /// entering a warp zone switches the level INSIDE the tick, so the very
+    /// next frame already renders the new level.
     pub fn tick(&mut self, dt_ms: u32, input_json: Option<String>) -> String {
         let input = input_json.as_deref().and_then(parse_input);
         let events = self.core.tick(dt_ms, input);
-        serde_json::to_string(&events).unwrap_or_else(|_| "[]".into())
+        let json: Vec<serde_json::Value> = events.iter().map(|e| e.to_json()).collect();
+        serde_json::to_string(&json).unwrap_or_else(|_| "[]".into())
     }
 
     /// RGBA framebuffer (`viewport_width * viewport_height * 4`) for
@@ -189,11 +235,10 @@ fn parse_input(json: &str) -> Option<PlayerInput> {
     }
 }
 
-/// Events serialize via serde (stub world derives it; the real d2rules
-/// must too — noted in world.rs).
+/// The world events stay serializable through `CoreEvent::to_json`.
 #[allow(dead_code)]
-fn _events_are_serializable(e: &[GameEvent]) -> String {
-    serde_json::to_string(e).unwrap_or_else(|_| "[]".into())
+fn _events_are_serializable(e: &crate::game::CoreEvent) -> String {
+    e.to_json().to_string()
 }
 
 fn js_err(msg: String) -> JsValue {

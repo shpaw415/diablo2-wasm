@@ -705,6 +705,146 @@ fn hero_selection_survives_save_load() {
 // helpers de test (état interne)
 // ---------------------------------------------------------------------------
 
+
+// ---------------------------------------------------------------------------
+// Attaque à distance (missiles d2missiles dans le World)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn ranged_attack_fires_flies_and_hits() {
+    let mut w = World::with_seed(open_grid(56, 40), manifest_full(), 11);
+    w.clear_monsters();
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert!(w.spawn_monster("FA", hx + 8, hy), "Fallen à 8 tuiles à l'est");
+    // Tir : le héros fait face à l'est et décoche.
+    let ev = run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    assert!(ev.iter().any(|e| matches!(e, GameEvent::MissileSpawned)), "MissileSpawned au tir");
+    assert_eq!(w.hero().facing, 6, "face à l'est (cible à l'est)");
+    assert_eq!(w.missiles().len(), 1, "flèche en vol");
+    // Vol : 8 tuiles / 24 tps ≈ 333 ms ; on avance jusqu'au Hit (budget 2 s).
+    let mut hit = None;
+    for _ in 0..40 {
+        let ev = w.tick(50, None);
+        for e in ev {
+            if let GameEvent::MissileHit { target, dmg } = e {
+                hit = Some((target, dmg));
+            }
+        }
+        if hit.is_some() {
+            break;
+        }
+    }
+    let (target, dmg) = hit.expect("MissileHit sur le Fallen");
+    assert_eq!(target, 0);
+    assert!((3..=8).contains(&dmg), "dégâts arme×force (hax 3..6 × 1,30), trouvé {dmg}");
+    assert!(w.missiles().is_empty(), "la flèche disparaît sur le coup");
+}
+
+#[test]
+fn ranged_attack_misses_roll_and_kept_deterministic() {
+    // Même graine ⇒ même séquence hit/miss (jet de toucher côté World).
+    let shoot = |seed: u64| -> Vec<GameEvent> {
+        let mut w = World::with_seed(open_grid(56, 40), manifest_full(), seed);
+        w.clear_monsters();
+        let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+        assert!(w.spawn_monster("ZM", hx + 10, hy));
+        run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 10, y: hy }));
+        let mut out = Vec::new();
+        for _ in 0..30 {
+            out.extend(w.tick(50, None));
+            if w.missiles().is_empty() {
+                break;
+            }
+        }
+        out.into_iter().filter(|e| matches!(e, GameEvent::MissileHit { .. } | GameEvent::MissileMissed { .. })).collect()
+    };
+    let a = shoot(0xA1);
+    let b = shoot(0xA1);
+    assert_eq!(a, b, "même graine ⇒ même résultat");
+    assert!(!a.is_empty(), "au moins un événement (hit ou miss)");
+}
+
+#[test]
+fn ranged_attack_respects_arrow_range() {
+    // Tir vers l'est, rien sur la trajectoire : en vol à 1 s (24 tuiles <
+    // portée 40), disparu à 2,5 s (40 tuiles / 24 tps ≈ 1667 ms) — aucun hit.
+    let mut w = World::with_seed(open_grid(56, 40), manifest_no_monsters(), 12);
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 50, y: hy }));
+    assert_eq!(w.missiles().len(), 1);
+    run(&mut w, 1000, None);
+    assert_eq!(w.missiles().len(), 1, "encore en vol à ~1 s (24 tuiles < 40)");
+    let ev = run(&mut w, 1500, None);
+    assert!(!ev.iter().any(|e| matches!(e, GameEvent::MissileHit { .. } | GameEvent::MissileMissed { .. })));
+    assert!(w.missiles().is_empty(), "la flèche expire à portée 40 (1667 ms)");
+}
+
+#[test]
+fn ranged_attack_is_stopped_by_walls() {
+    // Mur vertical 4 tuiles à l'est du héros, Fallen derrière (8 tuiles).
+    // Le spawn héros est déterministe : monde jetable sur grille ouverte
+    // pour dériver (hx, hy), mur posé sur la colonne hx+4, monde réel ensuite.
+    let probe = World::with_seed(open_grid(56, 40), manifest_full(), 13);
+    let (hx, hy) = (probe.hero().x.floor() as i32, probe.hero().y.floor() as i32);
+    let mut grid = open_grid(56, 40);
+    for y in 0..40 {
+        grid[y][(hx + 4) as usize] = true;
+    }
+    let mut w = World::with_seed(grid, manifest_full(), 13);
+    w.clear_monsters();
+    let (hx2, hy2) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert_eq!((hx2, hy2), (hx, hy), "le spawn du héros ne bouge pas (BFS depuis le centre, colonne hx+4 hors chemin)");
+    assert!(w.spawn_monster("FA", hx + 8, hy));
+    run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    let ev = run(&mut w, 1200, None);
+    assert!(
+        !ev.iter().any(|e| matches!(e, GameEvent::MissileHit { .. } | GameEvent::MissileMissed { .. })),
+        "le mur protège le monstre"
+    );
+    assert!(w.missiles().is_empty(), "la flèche meurt sur le mur");
+}
+
+#[test]
+fn in_flight_missiles_survive_save_load() {
+    // Flèche en vol à mi-course : save/load → continuation identique (le RNG
+    // missiles sérialisé poursuit le même flux de jets).
+    let build = || {
+        let mut w = World::with_seed(open_grid(56, 40), manifest_full(), 14);
+        w.clear_monsters();
+        let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+        assert!(w.spawn_monster("FA", hx + 20, hy)); // hit à ~833 ms, après le save
+        run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 20, y: hy }));
+        w.tick(100, None); // la flèche est en vol (~2,4 tuiles parcourues)
+        w
+    };
+    let mut a = build();
+    let snapshot = a.save();
+    let mut b = World::load(&snapshot).expect("rechargement avec flèche en vol");
+    assert_eq!(b.missiles().len(), 1, "la flèche en vol est persistée");
+    assert_eq!(a.missiles(), b.missiles(), "position de vol identique");
+    for t in 0..40 {
+        let ev_a = a.tick(50, None);
+        let ev_b = b.tick(50, None);
+        assert_eq!(ev_a, ev_b, "tick {t} : événements identiques après reload");
+        assert_eq!(a.missiles(), b.missiles(), "tick {t} : vol identique après reload");
+    }
+}
+
+#[test]
+fn ranged_attack_respects_cooldown_and_picks_nearest_target() {
+    let mut w = World::with_seed(open_grid(56, 40), manifest_full(), 15);
+    w.clear_monsters();
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert!(w.spawn_monster("FA", hx + 8, hy));
+    assert!(w.spawn_monster("FA", hx + 9, hy + 3));
+    // Deux tirs rapprochés : le second est refusé (cooldown 800 ms).
+    run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    let n1 = w.missiles().len();
+    assert!(n1 >= 1, "première flèche partie");
+    run(&mut w, 100, Some(PlayerInput::RangedAttack { x: hx + 9, y: hy + 3 }));
+    assert_eq!(w.missiles().len(), n1, "cooldown : pas de 2e flèche avant 800 ms");
+}
+
 impl World {
     /// Test uniquement : force un slot d'inventaire.
     pub(crate) fn debug_set_slot(&mut self, slot: usize, def: Option<ItemDef>) {

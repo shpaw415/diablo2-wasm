@@ -61,6 +61,7 @@ const PARAMS = new URLSearchParams(location.search);
 let HERO_REQ = (PARAMS.get('hero') || 'BA').toUpperCase();
 // ?continue=1 : « Continuer » du menu — le héros vient de la sauvegarde.
 let CONTINUE_SAVE = null;
+let SAVE_LEVEL = null; // niveau détecté dans la sauvegarde (dimensions de grille)
 if (PARAMS.get('continue') === '1') {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -70,6 +71,21 @@ if (PARAMS.get('continue') === '1') {
       if (typeof hc === 'string' && hc) HERO_REQ = hc.toUpperCase();
     }
   } catch { CONTINUE_SAVE = null; } // save corrompue : nouvelle partie
+}
+
+// Niveau de boot : ?level=bloodmoor… ; sinon le niveau de la sauvegarde
+// (« Continuer » — la grille du save identifie la carte : town 285, bloodmoor
+// 360 colonnes), sinon town.
+function detectSaveLevel(manifest, saveJson) {
+  try {
+    const cols = saveJson.collision?.[0]?.length;
+    if (!cols || !manifest.levels) return null;
+    for (const [key, lv] of Object.entries(manifest.levels)) {
+      const gw = (lv.grid || [lv.sizeTiles[0] + 1, 0])[0] * 5;
+      if (gw === cols) return key;
+    }
+  } catch { /* save illisible : niveau par défaut */ }
+  return null;
 }
 
 function resolveHero(manifest, requested) {
@@ -89,15 +105,22 @@ async function fetchBytes(path) {
   return new Uint8Array(await r.arrayBuffer());
 }
 
-// Assets CRITIQUES (carte + blocs walk) : un échec = partie impossible.
+// Assets CRITIQUES (cartes + blocs walk) : un échec = partie impossible.
 // Assets OPTIONNELS (modes NU/RN/A1/DD) : un échec = mode sauté, note,
 // le moteur retombe sur la marche — jamais d'erreur fatale.
+// Multi-niveaux : les assets de TOUS les blocs `levels` sont chargés au boot
+// (ds1 + dt1 + palette par niveau) — changer de niveau est instantané.
 function collectPaths(manifest, heroDef) {
   const critical = new Set();
   const optional = new Set();
-  critical.add(manifest.level.ds1);
-  critical.add(manifest.level.palette);
-  for (const p of manifest.level.dt1) critical.add(p);
+  const levels = manifest.levels && Object.keys(manifest.levels).length
+    ? Object.values(manifest.levels)
+    : [manifest.level]; // rétro-compat : bloc `level` historique seul
+  for (const lv of levels) {
+    critical.add(lv.ds1);
+    critical.add(lv.palette);
+    for (const p of lv.dt1 || []) critical.add(p);
+  }
   const addAnim = (set, w) => {
     if (!w || typeof w !== 'object') return;
     set.add(w.cof);
@@ -371,10 +394,35 @@ function drawInventory() {
 }
 
 // --- événements gameplay → sons + messages ----------------------------------
+function showLevelBanner(name) {
+  const b = $('levelBanner');
+  b.textContent = name || '';
+  b.classList.remove('show');
+  void b.offsetWidth; // relance l'animation CSS
+  b.classList.add('show');
+}
+function levelFade() {
+  // Fondu noir court masquant le rechargement du niveau (le moteur change
+  // de carte DANS le tick ; le fondu couvre la bascule visuelle).
+  const f = $('fade');
+  f.classList.add('black');
+  setTimeout(() => f.classList.remove('black'), 260);
+}
 function handleEvents(events, manifest) {
   for (const ev of events) {
     window.__d2.events++;
-    if (ev.HeroAttacked) {
+    if (ev.LevelSwitch) {
+      const info = ev.LevelSwitch;
+      window.__d2.level = info.key;
+      hud.zone.textContent = info.name;
+      levelFade();
+      showLevelBanner(info.name);
+      sfx(manifest.sfx.uiClick, 0.5, 0.7);
+      note(`— ${info.name} —`);
+      if (window.__d2.refreshStatus) window.__d2.refreshStatus();
+    } else if (ev.LevelSwitchFailed) {
+      flash(`Transition impossible : ${ev.LevelSwitchFailed}`);
+    } else if (ev.HeroAttacked) {
       sfx(manifest.sfx.attack);
       flash('Attaque !');
     } else if (ev.HeroMissed) {
@@ -382,7 +430,9 @@ function handleEvents(events, manifest) {
     } else if (ev.HeroHit) {
       sfx(manifest.sfx.hit);
     } else if (ev.MonsterDied) {
-      const code = manifest.monsters[ev.MonsterDied.index]?.code;
+      // Les monstres spawnent PAR NIVEAU (codes du moteur, pas l'ordre manifest).
+      const code = (window.__d2.monCodes || [])[ev.MonsterDied.index]
+        || manifest.monsters[ev.MonsterDied.index]?.code;
       const die = (code && manifest.sfx.monsters[code] && manifest.sfx.monsters[code].die) || manifest.sfx.die;
       sfx(die);
       flash(`Monstre tué (+${ev.MonsterDied.xp} xp) — un butin est peut-être au sol !`);
@@ -528,7 +578,8 @@ function fpsTick(statusBase, extra = '') {
     const fps = (loop.frames * 1000) / (now - loop.fpsClock);
     loop.frames = 0;
     loop.fpsClock = now;
-    status.textContent = statusBase.replace(/ · \d+ fps$/, '') + ` · ${fps.toFixed(0)} fps` + extra;
+    const base = loop.statusBase || statusBase;
+    status.textContent = base.replace(/ · \d+ fps$/, '') + ` · ${fps.toFixed(0)} fps` + extra;
   }
 }
 
@@ -547,6 +598,19 @@ async function main() {
   const manifestText = await (await fetch(new URL('assets/manifest.json', ROOT))).text();
   const manifest = JSON.parse(manifestText);
 
+  // Niveau de boot : ?level=bloodmoor… > niveau de la sauvegarde (« Continuer »)
+  // > town. Le bloc `level` historique reste l'alias de town côté moteur.
+  let LEVEL_REQ = (PARAMS.get('level') || '').toLowerCase();
+  if (!LEVEL_REQ && CONTINUE_SAVE) {
+    try { LEVEL_REQ = detectSaveLevel(manifest, JSON.parse(CONTINUE_SAVE)) || 'town'; }
+    catch { LEVEL_REQ = 'town'; }
+  }
+  if (!LEVEL_REQ) LEVEL_REQ = 'town';
+  if (LEVEL_REQ !== 'town' && !(manifest.levels && manifest.levels[LEVEL_REQ])) {
+    flash(`Niveau « ${LEVEL_REQ} » inconnu — démarrage au Camp des Rousses.`);
+    LEVEL_REQ = 'town';
+  }
+
   const hero = resolveHero(manifest, HERO_REQ);
   HERO_NAME = hero.def.name || hero.code;
   window.__d2.hero = hero.code;
@@ -554,7 +618,7 @@ async function main() {
     flash(`Classe ${HERO_REQ} absente du manifest — partie lancée en ${HERO_NAME}.`);
   }
 
-  const game = new D2Game(manifestText, HERO_REQ);
+  const game = D2Game.withLevel(manifestText, HERO_REQ, LEVEL_REQ);
   window.__d2.game = game;
 
   // Sanité : le moteur Rust doit résoudre le héros comme le JS (même règle).
@@ -586,13 +650,15 @@ async function main() {
   game.finalize();
 
   for (const n of JSON.parse(game.spriteNotes())) note(`anim sautée : ${n}`);
+  for (const n of JSON.parse(game.switchNotes())) note(n);
   if (skipped.size) note(`${skipped.size} fichier(s) optionnel(s) absent(s) — modes en repli marche.`);
 
-  // « Continuer » : restaure la sauvegarde (même carte ⇒ grille identique).
-  if (CONTINUE_SAVE) {
+  // « Continuer » : restaure la sauvegarde (même niveau ⇒ grille identique ;
+  // le niveau de boot a déjà été aligné sur celui du save).
+  if (CONTINUE_SAVE && (PARAMS.get('level') || 'town') === LEVEL_REQ) {
     try {
       game.loadGame(CONTINUE_SAVE);
-      flash('Partie chargée — bon retour au camp.');
+      flash('Partie chargée — bon retour dans la zone.');
     } catch (e) {
       note(`Sauvegarde incompatible (${e && e.message ? e.message : e}) — nouvelle partie.`);
     }
@@ -600,14 +666,29 @@ async function main() {
   // ?run=1 : course engagée au boot (E2E — l'automation ne peut pas tenir Maj).
   if (PARAMS.get('run') === '1') loop.queue.push({ type: 'setRun', on: true });
 
-  hud.zone.textContent = manifest.level.name || 'Camp des Rousses';
-  const [mw, mh] = game.mapPixelSize();
-  const [gw, gh] = game.gridSize();
-  const [drawn, hidden, , oob] = game.composeStats();
-  const statusBase =
-    `Héros : ${HERO_NAME} · Carte ${mw}×${mh}px · grille ${gw}×${gh} · tuiles dessinées ${drawn} (cachées ${hidden}, hors bornes ${oob})` +
-    ' · clic = déplacer · Maj = courir · clic monstre = attaquer · E = ramasser · P = potion · I = inventaire';
-  status.textContent = statusBase;
+  // --- niveau courant : HUD + helpers multi-niveaux -------------------------
+  const li = JSON.parse(game.levelInfo() || '{}');
+  window.__d2.level = li.key || LEVEL_REQ;
+  hud.zone.textContent = li.name || manifest.level.name || 'Camp des Rousses';
+  showLevelBanner(hud.zone.textContent);
+  // Debug/E2E : téléporte via le moteur (mêmes points d'entrée que les warps).
+  window.__d2.goto = (lvl) => {
+    const block = manifest.levels && manifest.levels[lvl];
+    if (!block || !block.warp) { note(`Pas de warp défini vers « ${lvl} ».`); return; }
+    game.switchLevel(lvl, block.warp.entry[0], block.warp.entry[1]);
+  };
+
+  function buildStatusBase() {
+    const [mw, mh] = game.mapPixelSize();
+    const [gw, gh] = game.gridSize();
+    const [drawn, hidden, , oob] = game.composeStats();
+    return `Héros : ${HERO_NAME} · Zone : ${hud.zone.textContent} · Carte ${mw}×${mh}px · grille ${gw}×${gh}` +
+      ` · tuiles dessinées ${drawn} (cachées ${hidden}, hors bornes ${oob})` +
+      ' · clic = déplacer · Maj = courir · clic monstre = attaquer · E = ramasser · P = potion · I = inventaire';
+  }
+  loop.statusBase = buildStatusBase();
+  window.__d2.refreshStatus = () => { loop.statusBase = buildStatusBase(); };
+  status.textContent = loop.statusBase;
 
   await loadSfx(manifest);
   wireCommon(manifest);
@@ -625,6 +706,7 @@ async function main() {
       const stats = JSON.parse(game.heroStats());
       updateHud(stats);
       window.__d2.invCache = JSON.parse(game.inventory());
+      window.__d2.monCodes = JSON.parse(game.monsterCodes());
       const hs = JSON.parse(game.heroState());
       hud.run.style.display = hs.run && hs.moving ? 'block' : 'none';
       imgData.data.set(game.render());
@@ -636,7 +718,7 @@ async function main() {
       if (loop.lastClick && now - loop.lastClick.t < 450) {
         drawClickRing(loop.lastClick.sx, loop.lastClick.sy, 1 - (now - loop.lastClick.t) / 450);
       }
-      fpsTick(statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
+      fpsTick(loop.statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
       requestAnimationFrame(frame);
     } catch (err) {
       fail('tick', err);

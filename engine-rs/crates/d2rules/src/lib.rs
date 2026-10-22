@@ -42,6 +42,10 @@ mod tests;
 
 pub use world::World;
 
+/// Projectiles (crate sœur pure) : système embarqué dans le `World`,
+/// re-exporté pour le rendu d2game (positions/sprites des missiles en vol).
+pub use d2missiles::{DamageType, Missile, MissileDef, MissileSystem};
+
 use serde::{Deserialize, Serialize};
 
 /// Résout le code héros EFFECTIF du manifest : `heroes[CODE]` si l'objet
@@ -60,6 +64,12 @@ pub enum PlayerInput {
     /// Clic-attaque : monstre le plus proche du clic (rayon 2 tuiles) ;
     /// frappe si à portée (1,5 tuile), sinon le héros marche vers lui.
     Attack { x: i32, y: i32 },
+    /// Attaque à distance (arc/bolt) : tire un missile [`Missile`] vers le
+    /// monstre le plus proche du clic (rayon 2 tuiles) ou vers le point du
+    /// clic à défaut. Même cooldown de swing que [`PlayerInput::Attack`] ;
+    /// le missile vole en ligne droite (vitesse/portée réelles missiles.txt),
+    /// toucher au contact (rayon 0,7 tuile), bloqué par les murs.
+    RangedAttack { x: i32, y: i32 },
     /// Ramasser l'objet au sol le plus proche (rayon 2 tuiles).
     Pickup,
     /// Active/coupe la course (touche Maj) : anim RN + vitesse `RunVelocity`
@@ -90,6 +100,14 @@ pub enum GameEvent {
     HeroMissed { target: usize },
     /// Le monstre `index` a touché le héros.
     HeroHit { index: usize, dmg: u32 },
+    /// Un missile du héros a touché le monstre `target` (dégâts `dmg`, jet de
+    /// toucher réussi — [`MissileEvent::Hit`] résolu côté règles).
+    MissileHit { target: usize, dmg: u32 },
+    /// Un missile du héros a atteint le monstre `target` mais le jet de
+    /// toucher a échoué (attack rating vs AC, formule §3 GAME-DATA).
+    MissileMissed { target: usize },
+    /// Un missile a été décoché (son "bow release", position via `missiles()`).
+    MissileSpawned,
     /// Réapparition du héros (pleine vie, point d'apparition).
     HeroRespawned { x: i32, y: i32 },
     /// Or ramassé au sol.

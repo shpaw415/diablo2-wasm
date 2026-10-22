@@ -1,0 +1,124 @@
+{
+ "missiles": [
+  {
+   "id": "arrow",
+   "vel": 24.0,
+   "range": 40.0,
+   "hitClass": 10,
+   "elem": "physical",
+   "dmgMin": 0,
+   "dmgMax": 0,
+   "dmgSrc": "weapon",
+   "celFile": "Arrow",
+   "animLen": 1
+  },
+  {
+   "id": "javelin",
+   "vel": 24.0,
+   "range": 40.0,
+   "hitClass": 6,
+   "elem": "physical",
+   "dmgMin": 0,
+   "dmgMax": 0,
+   "dmgSrc": "weapon",
+   "celFile": "Javelin",
+   "animLen": 1
+  },
+  {
+   "id": "firearrow",
+   "vel": 24.0,
+   "range": 40.0,
+   "hitClass": 0,
+   "elem": "fire",
+   "dmgMin": 0,
+   "dmgMax": 0,
+   "dmgSrc": "weapon",
+   "celFile": "FireArrow",
+   "animLen": 8
+  },
+  {
+   "id": "magicarrow",
+   "vel": 24.0,
+   "range": 40.0,
+   "hitClass": 10,
+   "elem": "magic",
+   "dmgMin": 1,
+   "dmgMax": 1,
+   "dmgSrc": "skill",
+   "celFile": "SafeArrow",
+   "animLen": 1
+  },
+  {
+   "id": "icearrow",
+   "vel": 24.0,
+   "range": 40.0,
+   "hitClass": 0,
+   "elem": "cold",
+   "dmgMin": 0,
+   "dmgMax": 0,
+   "dmgSrc": "weapon",
+   "celFile": "IceArrow",
+   "animLen": 8
+  },
+  {
+   "id": "bolt",
+   "vel": 24.0,
+   "range": 50.0,
+   "hitClass": 10,
+   "elem": "physical",
+   "dmgMin": 0,
+   "dmgMax": 0,
+   "dmgSrc": "weapon",
+   "celFile": "XBowBolt",
+   "animLen": 1
+  },
+  {
+   "id": "throwaxe",
+   "vel": 24.0,
+   "range": 20.0,
+   "hitClass": 2,
+   "elem": "physical",
+   "dmgMin": 0,
+   "dmgMax": 0,
+   "dmgSrc": "weapon",
+   "celFile": "MissileHandAxe",
+   "animLen": 8
+  },
+  {
+   "id": "chargedbolt",
+   "vel": 12.0,
+   "range": 98.0,
+   "hitClass": 64,
+   "elem": "lightning",
+   "dmgMin": 2,
+   "dmgMax": 6,
+   "dmgSrc": "skill",
+   "celFile": "ChargedBolt",
+   "animLen": 10
+  },
+  {
+   "id": "firebolt",
+   "vel": 20.0,
+   "range": 50.0,
+   "hitClass": 0,
+   "elem": "fire",
+   "dmgMin": 3,
+   "dmgMax": 8,
+   "dmgSrc": "skill",
+   "celFile": "Firebolt",
+   "animLen": 5
+  },
+  {
+   "id": "icebolt",
+   "vel": 12.0,
+   "range": 50.0,
+   "hitClass": 0,
+   "elem": "cold",
+   "dmgMin": 3,
+   "dmgMax": 7,
+   "dmgSrc": "skill",
+   "celFile": "Icebolt",
+   "animLen": 6
+  }
+ ]
+}

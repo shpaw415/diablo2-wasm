@@ -6,6 +6,7 @@
 
 use super::world::*;
 use crate::rng::Rng;
+use d2missiles::MissileSystem;
 use crate::{AnimState, Entity, HeroStats, ItemDef, ItemOnGround};
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +33,10 @@ struct Save {
     monsters: Vec<MonSave>,
     /// Objets au sol.
     items: Vec<ItemOnGround>,
+    /// Projectiles en vol (JSON du MissileSystem ; absent des sauvegardes
+    /// v1 antérieures aux missiles — rétro-compat : système vide).
+    #[serde(default)]
+    missiles: Option<serde_json::Value>,
 }
 
 /// État complet du héros.
@@ -154,6 +159,7 @@ pub(crate) fn save_json(w: &World) -> String {
             })
             .collect(),
         items: w.items.clone(),
+        missiles: Some(serde_json::to_value(&w.missiles).expect("d2rules: sérialisation missiles")),
     };
     serde_json::to_string(&save).expect("d2rules: sérialisation save")
 }
@@ -227,6 +233,10 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             })
             .collect(),
         items: s.items,
+        missiles: match s.missiles {
+            Some(v) => serde_json::from_value(v).map_err(|_| ())?,
+            None => MissileSystem::with_seed(s.rng ^ 0x4D49_5353_1A4E_0001),
+        },
         rng: Rng::new(s.rng),
         now_ms: s.now_ms,
     };
@@ -240,6 +250,11 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         if e.x < 0.0 || e.y < 0.0 || e.x >= w as f32 || e.y >= h as f32 {
             return Err(());
         }
+    }
+    if world.missiles.missiles().iter().any(|m| {
+        m.x < 0.0 || m.y < 0.0 || m.x >= w as f32 || m.y >= h as f32
+    }) {
+        return Err(()); // missile hors carte : état incohérent
     }
     if world.hero_ent.anim == AnimState::DD && world.hero.dead_ms == 0 {
         return Err(()); // anim DD héros sans compte de mort : état incohérent

@@ -94,6 +94,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "d2missiles"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "d2mpq"
 version = "0.1.0"
 dependencies = [
@@ -106,6 +114,7 @@ dependencies = [
 name = "d2rules"
 version = "0.1.0"
 dependencies = [
+ "d2missiles",
  "serde",
  "serde_json",
 ]
