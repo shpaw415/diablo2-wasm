@@ -1,0 +1,24 @@
+[package]
+name = "d2mpq"
+version = "0.1.0"
+edition = "2021"
+description = "Read-only Diablo 2 MPQ v0/v1 archive reader (zlib + PKWARE DCL), WASM-friendly"
+license = "MIT"
+
+[features]
+default = ["bz2"]
+# Pure-Rust bzip2 decoder (bzip2-rs), kept behind a feature so the WASM build
+# can be slimmed down if needed (no D2 test file uses bzip2).
+bz2 = ["dep:bzip2-rs"]
+
+[dependencies]
+flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
+bzip2-rs = { version = "0.1", optional = true }
+
+[dev-dependencies]
+sha2 = "0.10"
+flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
+
+# rlib: normal Rust linking; cdylib: produces a .wasm artifact for the browser port.
+[lib]
+crate-type = ["rlib", "cdylib"]

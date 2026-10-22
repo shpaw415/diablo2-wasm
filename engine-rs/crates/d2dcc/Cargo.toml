@@ -1,0 +1,9 @@
+[package]
+name = "d2dcc"
+version = "0.1.0"
+edition = "2021"
+description = "Diablo 2 DCC sprite-animation + COF composite decoders, byte-faithful port of the OpenDiablo2 Go reference — no file IO, WASM-friendly"
+license = "MIT"
+
+[dev-dependencies]
+sha2 = "0.10"

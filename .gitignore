@@ -1,0 +1,9 @@
+target/
+demo/assets/map/*.ds1
+demo/assets/map/*.dt1
+demo/assets/map/pal_act1.dat
+demo/assets/dcc/*
+demo/assets/sfx/*
+demo/assets/map/collision.json
+*.zip
+__pycache__/

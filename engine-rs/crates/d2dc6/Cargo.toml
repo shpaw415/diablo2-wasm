@@ -1,0 +1,12 @@
+[package]
+name = "d2dc6"
+version = "0.1.0"
+edition = "2021"
+description = "Diablo 2 DC6 sprite decoder (palette indices), byte-faithful port of tools/dc6_mini.py — no file IO, WASM-friendly"
+license = "MIT"
+
+[dependencies]
+d2mpq = { path = "../d2mpq" }
+
+[dev-dependencies]
+sha2 = "0.10"

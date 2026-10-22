@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diablo II — Menu principal</title>
+<link rel="stylesheet" href="menu.css">
+</head>
+<body>
+<div id="stage">
+  <img id="bg" src="assets/menu/title.png" alt="" draggable="false">
+  <div id="fire"></div>
+  <img id="logo" src="assets/menu/logo.png" alt="Diablo II" draggable="false">
+
+  <div id="menu">
+    <div id="classes">
+      <button class="class-card selected" data-hero="BA" type="button">
+        <span class="portrait"><img data-src="assets/dcc/composite.png" alt=""><span class="initials">BA</span></span>
+        <span class="cname">Barbare</span>
+      </button>
+      <button class="class-card" data-hero="SOR" type="button">
+        <span class="portrait"><img data-src="assets/dcc/sor-composite.png" alt=""><span class="initials">SO</span></span>
+        <span class="cname">Sorcière</span>
+      </button>
+      <button class="class-card" data-hero="PA" type="button">
+        <span class="portrait"><img data-src="assets/dcc/pal-composite.png" alt=""><span class="initials">PA</span></span>
+        <span class="cname">Paladin</span>
+      </button>
+    </div>
+    <button id="play" type="button">Jouer</button>
+  </div>
+
+  <div id="foot">diablo-2-wasm — portage non officiel des données D2 v1.12</div>
+</div>
+<script src="menu.js"></script>
+</body>
+</html>

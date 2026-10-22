@@ -1,0 +1,15 @@
+[package]
+name = "d2wasm"
+version = "0.1.0"
+edition = "2021"
+description = "wasm-bindgen bindings: MPQ reader + DC6 decoder for the browser demo"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "=0.2.129"
+js-sys = "0.3"
+d2mpq = { path = "../d2mpq" }
+d2dc6 = { path = "../d2dc6" }

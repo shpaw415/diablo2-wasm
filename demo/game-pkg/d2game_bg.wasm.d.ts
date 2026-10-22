@@ -1,0 +1,30 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_d2game_free: (a: number, b: number) => void;
+export const d2game_collisionGrid: (a: number) => [number, number];
+export const d2game_composeStats: (a: number) => [number, number];
+export const d2game_finalize: (a: number) => [number, number];
+export const d2game_gridSize: (a: number) => [number, number];
+export const d2game_heroClass: (a: number) => [number, number];
+export const d2game_heroScreen: (a: number) => [number, number];
+export const d2game_heroStats: (a: number) => [number, number];
+export const d2game_inventory: (a: number) => [number, number];
+export const d2game_loadGame: (a: number, b: number, c: number) => [number, number];
+export const d2game_mapPixelSize: (a: number) => [number, number];
+export const d2game_monsterNear: (a: number, b: number, c: number, d: number) => number;
+export const d2game_new: (a: number, b: number, c: number, d: number) => [number, number, number];
+export const d2game_provide: (a: number, b: number, c: number, d: number, e: number) => void;
+export const d2game_render: (a: number) => [number, number];
+export const d2game_saveGame: (a: number) => [number, number];
+export const d2game_screenToWorld: (a: number, b: number, c: number) => [number, number];
+export const d2game_setViewport: (a: number, b: number, c: number) => void;
+export const d2game_tick: (a: number, b: number, c: number, d: number) => [number, number];
+export const d2game_viewportHeight: (a: number) => number;
+export const d2game_viewportWidth: (a: number) => number;
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __externref_table_dealloc: (a: number) => void;
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __wbindgen_start: () => void;

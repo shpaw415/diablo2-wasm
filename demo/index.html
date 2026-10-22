@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diablo 2 in the browser — MPQ + DC6 en WebAssembly</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>DIABLO II <span class="gold">·</span> WASM</h1>
+  <p class="tagline">Lecteur MPQ + décodeur DC6 en Rust/WebAssembly — zéro serveur, tout se décode dans votre navigateur.</p>
+  <p id="status" class="status">Chargement du moteur WebAssembly…</p>
+</header>
+
+<main id="app" hidden>
+  <section>
+    <h2><span class="num">I</span> Icônes du jeu</h2>
+    <p><code>skillicon.dc6</code> (24 frames 48×48) extrait de <code>d2data.mpq</code>, décodé en WASM,
+    palette <code>pal.dat</code> de l'acte I. Rendu ×3.</p>
+    <canvas id="icons" width="1152" height="432"></canvas>
+    <p id="icons-info" class="meta"></p>
+  </section>
+
+  <section>
+    <h2><span class="num">II</span> Ouvre ton MPQ</h2>
+    <p>Chargez un <code>.mpq</code> de votre installation (ex. <code>d2data.mpq</code> ou <code>d2exp.mpq</code>) :
+    l'archive est ouverte en mémoire et le casque <code>invcap.dc6</code> (data\global\items) est extrait et rendu.</p>
+    <div class="controls">
+      <label class="filebtn">Choisir une archive MPQ…<input type="file" id="mpq-file" accept=".mpq"></label>
+      <button id="mpq-sample" type="button">Tester avec l'asset local</button>
+      <span id="mpq-msg" class="meta"></span>
+    </div>
+    <canvas id="helm" width="336" height="336"></canvas>
+  </section>
+
+  <section>
+    <h2><span class="num">III</span> Données du jeu</h2>
+    <p><code>patch_armor.txt</code> (TSV, 164 colonnes) extrait de <code>patch_d2.mpq</code> —
+    10 premières colonnes × 12 premières lignes d'armures.</p>
+    <div class="tablewrap"><table id="armor"></table></div>
+  </section>
+</main>
+
+<footer><p>Rust 1.99 · wasm-bindgen 0.2 · d2mpq + d2dc6 — lecteur octet-fidèle, vérifié SHA-256 contre les archives réelles.</p></footer>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

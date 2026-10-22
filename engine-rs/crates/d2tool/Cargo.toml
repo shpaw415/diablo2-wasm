@@ -1,0 +1,10 @@
+[package]
+name = "d2tool"
+version = "0.1.0"
+edition = "2021"
+description = "Diablo 2 MPQ command-line utility (extract / probe / sha) built on d2mpq"
+license = "MIT"
+
+[dependencies]
+d2mpq = { path = "../d2mpq" }
+sha2 = "0.10"
