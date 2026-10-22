@@ -112,6 +112,8 @@ pub(crate) struct HeroData {
     pub dead_ms: u32,
     /// Horloge d'animation (reset à chaque changement d'état).
     pub anim_ms: u32,
+    /// Course active (touche Maj côté navigateur) : vitesse RN + anim RN.
+    pub run: bool,
     /// Point d'apparition / respawn.
     pub spawn: (f32, f32),
     /// Inventaire 10×4, index rangée par rangée.
@@ -316,6 +318,7 @@ impl World {
                 swing_ms: 0,
                 dead_ms: 0,
                 anim_ms: 0,
+                run: false,
                 spawn: (0.0, 0.0),
                 inv: vec![None; INV_SLOTS],
             },
@@ -581,6 +584,11 @@ impl World {
         !self.hero.path.is_empty()
     }
 
+    /// Le héros court-il (touche Maj, anim RN, vitesse course) ?
+    pub fn hero_is_running(&self) -> bool {
+        self.hero.run
+    }
+
     // ------------------------------------------------------------------
     // Entrées
     // ------------------------------------------------------------------
@@ -654,6 +662,9 @@ impl World {
                     }
                 }
             }
+            PlayerInput::SetRun(on) => {
+                self.hero.run = on;
+            }
             PlayerInput::UseItem(slot) => {
                 if slot >= INV_SLOTS {
                     return;
@@ -703,16 +714,24 @@ impl World {
             self.hero.swing_ms = self.hero.swing_ms.saturating_sub(dt);
         }
 
-        // déplacement
+        // déplacement (course = RunVelocity du manifest, sinon marche)
         let mut arrived = false;
         if !self.hero.path.is_empty() {
-            let speed = self.hero.stats.walk_speed;
+            let speed = if self.hero.run {
+                self.hero_tpl.run_speed.max(self.hero.stats.walk_speed)
+            } else {
+                self.hero.stats.walk_speed
+            };
             arrived = advance_along_path(&mut self.hero_ent, &mut self.hero.path, speed, dt);
         }
 
         // sélection anim
         let st = if !self.hero.path.is_empty() {
-            AnimState::WL
+            if self.hero.run {
+                AnimState::RN
+            } else {
+                AnimState::WL
+            }
         } else if self.hero.swing_ms > 0 {
             AnimState::A1
         } else {

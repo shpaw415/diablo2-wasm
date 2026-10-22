@@ -175,6 +175,38 @@ body {
   box-shadow: inset 0 0 26px rgba(0,0,0,.95), 0 0 8px rgba(195,48,16,.3);
 }
 
+/* bouton CONTINUER — même tablette, teinte plus discrète */
+#continue {
+  min-width: 208px;
+  padding: 8px 28px 9px;
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: 4px;
+  text-indent: 4px;
+  color: var(--or);
+  text-shadow: 0 1px 2px #000, 0 0 10px rgba(0,0,0,.9);
+  background:
+    linear-gradient(180deg, #2a231a 0%, #17120c 46%, #0c0906 100%);
+  border: 1px solid rgba(199, 179, 119, .4);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(232, 217, 160, .14),
+    inset 0 -2px 6px rgba(0,0,0,.9),
+    inset 0 0 22px rgba(0,0,0,.75),
+    0 2px 10px rgba(0,0,0,.8);
+  cursor: pointer;
+}
+#continue:hover {
+  color: var(--or-vif);
+  border-color: rgba(199, 179, 119, .8);
+}
+#actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
 #foot {
   position: absolute;
   bottom: 8px;

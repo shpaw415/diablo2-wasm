@@ -1,8 +1,12 @@
 // Diablo 2 WASM — glue navigateur.
 // Le décodage/composition/rendu/simulation vivent dans Rust (demo/game-pkg).
-// Ce fichier : fetch des assets, boucle putImageData, HUD, sons, sauvegarde,
+// Ce fichier : fetch des assets, boucle putImageData, HUD (globes D2 dessinés
+// sur le canvas), panneau inventaire (I), course (Maj), sons, sauvegarde,
 // et un fallback JS visible si le moteur WASM ne charge pas.
-import init, { D2Game } from './game-pkg/d2game.js';
+//
+// Import DYNAMIQUE avec buste de cache : le pkg wasm est régénéré à chaque
+// build Rust (membres parallèles) — un module ES statique resterait collé au
+// cache Chromium malgré le nouveau binaire.
 
 const $ = (id) => document.getElementById(id);
 const status = $('status');
@@ -50,10 +54,23 @@ function fail(where, e) {
 
 const ROOT = new URL('..', location); // racine projet (chemins du manifest)
 const SAVE_KEY = 'd2wasm.save.v1';
+const PARAMS = new URLSearchParams(location.search);
 // Sélection de personnage : ?hero=BA|SOR|PA (défaut BA). La résolution
 // effective (heroes[code] sinon bloc hero) est faite côté moteur Rust —
 // ci-dessous on reflète la même règle pour les assets et le HUD.
-const HERO_REQ = (new URLSearchParams(location.search).get('hero') || 'BA').toUpperCase();
+let HERO_REQ = (PARAMS.get('hero') || 'BA').toUpperCase();
+// ?continue=1 : « Continuer » du menu — le héros vient de la sauvegarde.
+let CONTINUE_SAVE = null;
+if (PARAMS.get('continue') === '1') {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      CONTINUE_SAVE = raw;
+      const hc = JSON.parse(raw).hero_code;
+      if (typeof hc === 'string' && hc) HERO_REQ = hc.toUpperCase();
+    }
+  } catch { CONTINUE_SAVE = null; } // save corrompue : nouvelle partie
+}
 
 function resolveHero(manifest, requested) {
   if (manifest.heroes && Object.prototype.hasOwnProperty.call(manifest.heroes, requested)) {
@@ -72,17 +89,41 @@ async function fetchBytes(path) {
   return new Uint8Array(await r.arrayBuffer());
 }
 
+// Assets CRITIQUES (carte + blocs walk) : un échec = partie impossible.
+// Assets OPTIONNELS (modes NU/RN/A1/DD) : un échec = mode sauté, note,
+// le moteur retombe sur la marche — jamais d'erreur fatale.
 function collectPaths(manifest, heroDef) {
-  const paths = new Set();
-  paths.add(manifest.level.ds1);
-  paths.add(manifest.level.palette);
-  for (const p of manifest.level.dt1) paths.add(p);
-  const walkSets = [heroDef.walk, ...manifest.monsters.map((m) => m.walk)];
-  for (const w of walkSets) {
-    paths.add(w.cof);
-    for (const p of Object.values(w.layers || {})) paths.add(p);
+  const critical = new Set();
+  const optional = new Set();
+  critical.add(manifest.level.ds1);
+  critical.add(manifest.level.palette);
+  for (const p of manifest.level.dt1) critical.add(p);
+  const addAnim = (set, w) => {
+    if (!w || typeof w !== 'object') return;
+    set.add(w.cof);
+    for (const p of Object.values(w.layers || {})) set.add(p);
+  };
+  addAnim(critical, heroDef.walk);
+  // modes explicites {NU|WL|RN|A1|DD} ou blocs nommés idle/attack/death :
+  // WL retombe sur walk (déjà critique) ; les autres sont optionnels.
+  const extra = new Set();
+  if (heroDef.modes) {
+    for (const tag of ['NU', 'WL', 'RN', 'A1', 'DD']) addAnim(extra, heroDef.modes[tag]);
+  } else {
+    addAnim(extra, heroDef.idle);
+    addAnim(extra, heroDef.attack);
+    addAnim(extra, heroDef.death);
   }
-  return [...paths];
+  for (const p of extra) if (!critical.has(p)) optional.add(p);
+  for (const m of manifest.monsters) {
+    addAnim(critical, m.walk);
+    const mExtra = new Set();
+    if (m.modes) {
+      for (const tag of ['NU', 'WL', 'RN', 'A1', 'DD']) addAnim(mExtra, m.modes[tag]);
+    }
+    for (const p of mExtra) if (!critical.has(p)) optional.add(p);
+  }
+  return { critical: [...critical], optional: [...optional] };
 }
 
 // --- audio (WebAudio, décodage des WAV du manifest) -------------------------
@@ -118,26 +159,89 @@ function sfx(key, vol = 0.5, rate = 1) {
   const now = performance.now();
   if (now - (audio.last.get(key) || 0) < 70) return; // anti-spam
   audio.last.set(key, now);
+  playNote(c, buf, c.currentTime, vol, rate);
+}
+function playNote(c, buf, when, vol, rate) {
   const src = c.createBufferSource();
   src.buffer = buf;
   src.playbackRate.value = rate;
   const g = c.createGain();
   g.gain.value = vol;
   src.connect(g).connect(c.destination);
-  src.start();
+  src.start(when);
+}
+// Fanfare simplifiée : 3 notes du même buffer, montante (level up).
+function fanfare(key) {
+  if (!audio.enabled || !key) return;
+  const c = acx();
+  const buf = audio.buffers.get(key);
+  if (!c || !buf) return;
+  const t = c.currentTime;
+  playNote(c, buf, t, 0.55, 1.2);
+  playNote(c, buf, t + 0.13, 0.6, 1.5);
+  playNote(c, buf, t + 0.26, 0.7, 2.0);
 }
 
-// --- HUD --------------------------------------------------------------------
+// --- HUD : globes circulaires D2 dessinés sur le canvas ---------------------
 let HERO_NAME = 'Barbare'; // surchargé une fois le manifest lu
 const hud = {
-  hp: $('hpfill'), hpt: $('hptext'), mp: $('mpfill'), mpt: $('mptext'),
-  lvl: $('lvltext'), gold: $('goldtext'), xp: $('xpfill'),
+  hpt: $('hptext'), mpt: $('mptext'), lvl: $('lvltext'), gold: $('goldtext'),
+  xp: $('xpfill'), zone: $('zonetext'), run: $('runbadge'),
 };
+const GLOBE_R = 50;
+const HP_GLOBE = { x: 66, y: canvas.height - 62 };
+const MP_GLOBE = { x: canvas.width - 66, y: canvas.height - 62 };
+
+function drawGlobe(g, frac, topColor, bottomColor) {
+  const { x, y } = g;
+  const r = GLOBE_R;
+  const f = Math.max(0, Math.min(1, frac));
+  ctx.save();
+  // fond sombre du globe
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#100a09';
+  ctx.fill();
+  // liquide : niveau = fraction, dégradé vertical
+  ctx.save();
+  ctx.clip();
+  const lvl = y + r - 2 * r * f;
+  const grad = ctx.createLinearGradient(0, y - r, 0, y + r);
+  grad.addColorStop(0, topColor);
+  grad.addColorStop(1, bottomColor);
+  ctx.fillStyle = grad;
+  ctx.fillRect(x - r, lvl, 2 * r, y + r - lvl);
+  // reflet de surface
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fillRect(x - r, lvl, 2 * r, 3);
+  ctx.restore();
+  // reflet vitre
+  const glass = ctx.createRadialGradient(x - r * 0.35, y - r * 0.45, r * 0.1, x, y, r);
+  glass.addColorStop(0, 'rgba(255,255,255,0.16)');
+  glass.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = glass;
+  ctx.fill();
+  // cerclage pierre/or
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#4a3c22';
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#000000cc';
+  ctx.beginPath();
+  ctx.arc(x, y, r - 2.5, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawGlobes(s) {
+  drawGlobe(HP_GLOBE, s ? s.life / Math.max(1, s.max_life) : 0, '#e05545', '#5e120c');
+  drawGlobe(MP_GLOBE, s ? s.mana / Math.max(1, s.max_mana) : 0, '#4f8fd4', '#122a52');
+}
+
 function updateHud(s) {
   if (!s || s.max_life === undefined) return;
-  hud.hp.style.width = `${(100 * s.life) / Math.max(1, s.max_life)}%`;
   hud.hpt.textContent = `${s.life}/${s.max_life}`;
-  hud.mp.style.width = `${(100 * s.mana) / Math.max(1, s.max_mana)}%`;
   hud.mpt.textContent = `${s.mana}/${s.max_mana}`;
   hud.lvl.textContent = `${HERO_NAME} · Niv. ${s.level}`;
   hud.gold.textContent = `Or : ${s.gold}`;
@@ -150,6 +254,9 @@ function updateHud(s) {
 function flash(msg) {
   status.classList.remove('err');
   status.textContent = status.textContent.replace(/ · \d+ fps.*$/, '') + ' — ' + msg;
+  note(msg);
+}
+function note(msg) {
   const log = $('msglog');
   if (log) {
     const line = document.createElement('div');
@@ -158,6 +265,109 @@ function flash(msg) {
     while (log.children.length > 12) log.removeChild(log.firstChild);
     log.scrollTop = log.scrollHeight;
   }
+}
+
+// --- inventaire visuel (panneau 10×4 dessiné sur le canvas) ------------------
+const INV_COLS = 10, INV_ROWS = 4;
+const inv = {
+  open: false,
+  hover: -1,
+  cell: 42, pad: 14, header: 30,
+  get x0() { return (canvas.width - this.w) / 2; },
+  get y0() { return (canvas.height - this.h) / 2; },
+  get w() { return this.pad * 2 + INV_COLS * this.cell; },
+  get h() { return this.pad * 2 + this.header + INV_ROWS * this.cell; },
+};
+function invSlotAt(px, py) {
+  const cx = Math.floor((px - inv.x0 - inv.pad) / inv.cell);
+  const cy = Math.floor((py - inv.y0 - inv.pad - inv.header) / inv.cell);
+  if (cx < 0 || cy < 0 || cx >= INV_COLS || cy >= INV_ROWS) return -1;
+  return cy * INV_COLS + cx;
+}
+const ITEM_COLORS = {
+  Potion: ['#b03a2e', '#57150e'],
+  Weapon: ['#8d99a6', '#39424c'],
+  Armor: ['#8a6d3b', '#41331a'],
+  Gold: ['#d9b96a', '#6e5626'],
+};
+function drawInventory() {
+  const { x0, y0, w, h } = inv;
+  ctx.save();
+  // cadre pierre sombre
+  ctx.fillStyle = 'rgba(16,12,18,0.92)';
+  ctx.fillRect(x0, y0, w, h);
+  ctx.strokeStyle = '#5a4a2a';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x0 + 1, y0 + 1, w - 2, h - 2);
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(x0 + 3.5, y0 + 3.5, w - 7, h - 7);
+  ctx.fillStyle = '#c7a45a';
+  ctx.font = '600 12px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('INVENTAIRE', x0 + w / 2, y0 + inv.pad + 8);
+  // grille 10×4
+  for (let row = 0; row < INV_ROWS; row++) {
+    for (let col = 0; col < INV_COLS; col++) {
+      const cx = x0 + inv.pad + col * inv.cell;
+      const cy = y0 + inv.pad + inv.header + row * inv.cell;
+      ctx.fillStyle = '#2c2c34';
+      ctx.fillRect(cx + 1, cy + 1, inv.cell - 2, inv.cell - 2);
+      // biseau pierre
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.beginPath();
+      ctx.moveTo(cx + 2, cy + inv.cell - 3);
+      ctx.lineTo(cx + 2, cy + 2);
+      ctx.lineTo(cx + inv.cell - 3, cy + 2);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      ctx.beginPath();
+      ctx.moveTo(cx + inv.cell - 2, cy + 2);
+      ctx.lineTo(cx + inv.cell - 2, cy + inv.cell - 2);
+      ctx.lineTo(cx + 2, cy + inv.cell - 2);
+      ctx.stroke();
+      const slot = row * INV_COLS + col;
+      if (slot === inv.hover) {
+        ctx.strokeStyle = '#d9b96a';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx + 0.5, cy + 0.5, inv.cell - 1, inv.cell - 1);
+      }
+    }
+  }
+  // objets (rectangles colorés)
+  const slots = window.__d2.invCache || [];
+  for (let i = 0; i < slots.length && i < INV_COLS * INV_ROWS; i++) {
+    const it = slots[i];
+    if (!it) continue;
+    const [body, edge] = ITEM_COLORS[it.kind] || ['#9a8f7a', '#4a4438'];
+    const cx = x0 + inv.pad + (i % INV_COLS) * inv.cell;
+    const cy = y0 + inv.pad + inv.header + Math.floor(i / INV_COLS) * inv.cell;
+    const m = 5;
+    ctx.fillStyle = body;
+    ctx.fillRect(cx + m, cy + m, inv.cell - 2 * m, inv.cell - 2 * m);
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx + m, cy + m, inv.cell - 2 * m, inv.cell - 2 * m);
+    // lueur
+    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+    ctx.fillRect(cx + m, cy + m, inv.cell - 2 * m, 4);
+  }
+  // info-bulle survol
+  if (inv.hover >= 0 && slots[inv.hover]) {
+    const it = slots[inv.hover];
+    const label = it.name + (it.amount ? ` (${it.amount} or)` : '');
+    ctx.font = '11px system-ui';
+    const tw = ctx.measureText(label).width + 16;
+    const tx = Math.min(Math.max(x0, x0 + w / 2 - tw / 2), x0 + w - tw);
+    const ty = y0 - 26;
+    ctx.fillStyle = '#141019ee';
+    ctx.fillRect(tx, ty, tw, 20);
+    ctx.strokeStyle = '#5a4a2a';
+    ctx.strokeRect(tx, ty, tw, 20);
+    ctx.fillStyle = '#e8dcbf';
+    ctx.textAlign = 'left';
+    ctx.fillText(label, tx + 8, ty + 14);
+  }
+  ctx.restore();
 }
 
 // --- événements gameplay → sons + messages ----------------------------------
@@ -177,10 +387,12 @@ function handleEvents(events, manifest) {
       sfx(die);
       flash(`Monstre tué (+${ev.MonsterDied.xp} xp) — un butin est peut-être au sol !`);
     } else if (ev.ItemDropped) {
+      // son de drop (or grave, potion aiguë) — nouveauté HUD/sons
       const it = ev.ItemDropped.item;
+      sfx(manifest.sfx.uiClick, 0.45, it.kind === 'Gold' ? 0.85 : 1.15);
       flash(`Butin : ${it.name}${it.amount ? ` (${it.amount} or)` : ''}`);
     } else if (ev.HeroLeveled) {
-      sfx(manifest.sfx.uiClick, 0.7, 1.5);
+      fanfare(manifest.sfx.uiClick);
       flash(`NIVEAU ${ev.HeroLeveled.level} !`);
     } else if (ev.GoldGained) {
       sfx(manifest.sfx.uiClick, 0.4, 1.2);
@@ -197,17 +409,23 @@ function handleEvents(events, manifest) {
       sfx(manifest.sfx.hit, 0.8, 0.6);
       flash('Vous êtes mort… résurrection au camp dans 2 s.');
     } else if (ev.HeroRespawned) {
+      sfx(manifest.sfx.uiClick, 0.55, 0.7);
       flash('Résurrection au Camp des Rousses.');
     }
   }
 }
 
 // --- boucle commune ---------------------------------------------------------
-const loop = { pendingInput: null, lastClick: null, last: performance.now(), frames: 0, fpsClock: performance.now() };
-function clickToInput(game, e) {
+const loop = { queue: [], lastClick: null, last: performance.now(), frames: 0, fpsClock: performance.now() };
+const mouse = { x: -1, y: -1, inside: false };
+function canvasXY(e) {
   const r = canvas.getBoundingClientRect();
-  const px = (e.clientX - r.left) * (canvas.width / r.width);
-  const py = (e.clientY - r.top) * (canvas.height / r.height);
+  return [
+    (e.clientX - r.left) * (canvas.width / r.width),
+    (e.clientY - r.top) * (canvas.height / r.height),
+  ];
+}
+function clickToInput(game, px, py) {
   const [wx, wy] = game.screenToWorld(px, py);
   loop.lastClick = { sx: px, sy: py, t: performance.now() };
   return game.monsterNear(wx, wy, 2.5) >= 0
@@ -224,16 +442,60 @@ function drawClickRing(x, y, k) {
   ctx.restore();
 }
 function wireCommon(manifest) {
-  canvas.addEventListener('click', (e) => { acx(); loop.pendingInput = clickToInput(window.__d2.game, e); });
+  canvas.addEventListener('mousemove', (e) => {
+    [mouse.x, mouse.y] = canvasXY(e);
+    mouse.inside = true;
+    if (inv.open) {
+      inv.hover = invSlotAt(mouse.x, mouse.y);
+      canvas.style.cursor = inv.hover >= 0 ? 'pointer' : 'crosshair';
+    }
+  });
+  canvas.addEventListener('mouseleave', () => { mouse.inside = false; inv.hover = -1; });
+  canvas.addEventListener('click', (e) => {
+    acx();
+    const [px, py] = canvasXY(e);
+    // clic dans le panneau inventaire ouvert : utiliser l'objet, pas bouger
+    if (inv.open && px >= inv.x0 && px < inv.x0 + inv.w && py >= inv.y0 && py < inv.y0 + inv.h) {
+      const slot = invSlotAt(px, py);
+      const it = slot >= 0 ? (window.__d2.invCache || [])[slot] : null;
+      if (it) {
+        if (it.kind === 'Potion') {
+          loop.queue.push({ type: 'useItem', slot });
+        } else {
+          note(`${it.name} — équipement à venir (phase 3).`);
+        }
+      }
+      return;
+    }
+    loop.queue.push(clickToInput(window.__d2.game, px, py));
+  });
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'e' || e.key === 'E') { acx(); loop.pendingInput = { type: 'pickup' }; }
+    if (e.key === 'Shift') {
+      acx();
+      loop.queue.push({ type: 'setRun', on: true });
+    }
+    if (e.key === 'i' || e.key === 'I') {
+      inv.open = !inv.open;
+      inv.hover = -1;
+      canvas.style.cursor = 'crosshair';
+      sfx(manifest.sfx.uiClick, 0.4, inv.open ? 1.3 : 1.0);
+      note(inv.open ? 'Inventaire ouvert.' : 'Inventaire fermé.');
+    }
+    if (e.key === 'Escape' && inv.open) {
+      inv.open = false;
+      canvas.style.cursor = 'crosshair';
+    }
+    if (e.key === 'e' || e.key === 'E') { acx(); loop.queue.push({ type: 'pickup' }); }
     if (e.key === 'p' || e.key === 'P') {
       acx();
-      const inv = JSON.parse(window.__d2.game.inventory());
-      const slot = inv.findIndex((s) => s && s.kind === 'Potion');
-      if (slot >= 0) loop.pendingInput = { type: 'useItem', slot };
-      else flash('Aucune potion dans l\'inventaire.');
+      const slots = JSON.parse(window.__d2.game.inventory());
+      const slot = slots.findIndex((s) => s && s.kind === 'Potion');
+      if (slot >= 0) loop.queue.push({ type: 'useItem', slot });
+      else note("Aucune potion dans l'inventaire.");
     }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'Shift') loop.queue.push({ type: 'setRun', on: false });
   });
   $('btn-sound').addEventListener('click', () => {
     audio.enabled = !audio.enabled;
@@ -273,7 +535,13 @@ function fpsTick(statusBase, extra = '') {
 // --- chemin principal : moteur WASM -----------------------------------------
 async function main() {
   $('loadmsg').textContent = 'Compilation JIT du moteur…';
-  await init();
+  const cb = Date.now();
+  const mod = await import(`./game-pkg/d2game.js?cb=${cb}`);
+  const D2Game = mod.D2Game;
+  // Le .wasm est chargé explicitement (buste de cache : le module généré
+  // résout d2game_bg.wasm sans query, resté collé au cache après rebuild).
+  const wasmBytes = await (await fetch(`./game-pkg/d2game_bg.wasm?cb=${cb}`)).arrayBuffer();
+  await mod.default(wasmBytes);
 
   $('loadmsg').textContent = 'Lecture du manifest…';
   const manifestText = await (await fetch(new URL('assets/manifest.json', ROOT))).text();
@@ -295,11 +563,20 @@ async function main() {
     logErr(`désaccord résolution héros JS/Rust : ${hero.code} vs ${hcRust.code}`);
   }
 
-  const paths = collectPaths(manifest, hero.def);
+  const { critical, optional } = collectPaths(manifest, hero.def);
+  const paths = [...critical, ...optional];
+  const skipped = new Set();
   for (let i = 0; i < paths.length; i++) {
     $('loadmsg').textContent = `Chargement des assets ${i + 1}/${paths.length}…`;
     $('loadfill').style.width = `${(100 * i) / paths.length}%`;
-    game.provide(paths[i], await fetchBytes(paths[i]));
+    const p = paths[i];
+    const isOptional = i >= critical.length;
+    try {
+      game.provide(p, await fetchBytes(p));
+    } catch (e) {
+      if (!isOptional) throw e;
+      skipped.add(p); // mode optionnel absent : le moteur le notera aussi
+    }
   }
   $('loadfill').style.width = '100%';
 
@@ -308,12 +585,28 @@ async function main() {
   game.setViewport(canvas.width, canvas.height);
   game.finalize();
 
+  for (const n of JSON.parse(game.spriteNotes())) note(`anim sautée : ${n}`);
+  if (skipped.size) note(`${skipped.size} fichier(s) optionnel(s) absent(s) — modes en repli marche.`);
+
+  // « Continuer » : restaure la sauvegarde (même carte ⇒ grille identique).
+  if (CONTINUE_SAVE) {
+    try {
+      game.loadGame(CONTINUE_SAVE);
+      flash('Partie chargée — bon retour au camp.');
+    } catch (e) {
+      note(`Sauvegarde incompatible (${e && e.message ? e.message : e}) — nouvelle partie.`);
+    }
+  }
+  // ?run=1 : course engagée au boot (E2E — l'automation ne peut pas tenir Maj).
+  if (PARAMS.get('run') === '1') loop.queue.push({ type: 'setRun', on: true });
+
+  hud.zone.textContent = manifest.level.name || 'Camp des Rousses';
   const [mw, mh] = game.mapPixelSize();
   const [gw, gh] = game.gridSize();
   const [drawn, hidden, , oob] = game.composeStats();
   const statusBase =
     `Héros : ${HERO_NAME} · Carte ${mw}×${mh}px · grille ${gw}×${gh} · tuiles dessinées ${drawn} (cachées ${hidden}, hors bornes ${oob})` +
-    ' · clic = déplacer · clic monstre = attaquer · E = ramasser · P = potion';
+    ' · clic = déplacer · Maj = courir · clic monstre = attaquer · E = ramasser · P = potion · I = inventaire';
   status.textContent = statusBase;
 
   await loadSfx(manifest);
@@ -326,19 +619,24 @@ async function main() {
     const dt = Math.min(now - loop.last, 100);
     loop.last = now;
     try {
-      const inputJson = loop.pendingInput ? JSON.stringify(loop.pendingInput) : null;
-      loop.pendingInput = null;
+      const inputJson = loop.queue.length ? JSON.stringify(loop.queue.shift()) : null;
       const events = JSON.parse(game.tick(dt, inputJson));
       handleEvents(events, manifest);
-      updateHud(JSON.parse(game.heroStats()));
+      const stats = JSON.parse(game.heroStats());
+      updateHud(stats);
+      window.__d2.invCache = JSON.parse(game.inventory());
+      const hs = JSON.parse(game.heroState());
+      hud.run.style.display = hs.run && hs.moving ? 'block' : 'none';
       imgData.data.set(game.render());
       ctx.putImageData(imgData, 0, 0);
+      drawGlobes(stats);
+      if (inv.open) drawInventory();
       const [hsx, hsy] = game.heroScreen();
       const [hwx, hwy] = game.screenToWorld(hsx, hsy);
       if (loop.lastClick && now - loop.lastClick.t < 450) {
         drawClickRing(loop.lastClick.sx, loop.lastClick.sy, 1 - (now - loop.lastClick.t) / 450);
       }
-      fpsTick(statusBase, ` · héros ${hwx | 0},${hwy | 0} (monde)`);
+      fpsTick(statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
       requestAnimationFrame(frame);
     } catch (err) {
       fail('tick', err);
@@ -355,7 +653,8 @@ function fallback(reason) {
   logErr('wasm indisponible : ' + reason);
   const statusBase = 'MODE DÉGRADÉ JS — clic pour déplacer le héros (moteur Rust indisponible)';
   status.textContent = statusBase;
-  updateHud({ life: 55, max_life: 55, mana: 15, max_mana: 15, level: 1, xp: 0, gold: 0 });
+  const fbStats = { life: 55, max_life: 55, mana: 15, max_mana: 15, level: 1, xp: 0, gold: 0 };
+  updateHud(fbStats);
 
   const fb = {
     hx: 400, hy: 300, tx: 400, ty: 300, speed: 120,
@@ -365,9 +664,8 @@ function fallback(reason) {
     })),
   };
   canvas.addEventListener('click', (e) => {
-    const r = canvas.getBoundingClientRect();
-    fb.tx = (e.clientX - r.left) * (canvas.width / r.width);
-    fb.ty = (e.clientY - r.top) * (canvas.height / r.height);
+    const [px, py] = canvasXY(e);
+    fb.tx = px; fb.ty = py;
   });
   let last = performance.now();
   function frame(now) {
@@ -394,6 +692,7 @@ function fallback(reason) {
     ctx.fillStyle = '#e8dcbf';
     ctx.font = '12px system-ui';
     ctx.fillText('fallback JS — WASM non chargé', 12, canvas.height - 12);
+    drawGlobes(fbStats);
     fpsTick(statusBase);
     requestAnimationFrame(frame);
   }

@@ -11,6 +11,9 @@ pub(crate) struct HeroTpl {
     pub mana: u32,
     /// Vitesse de marche en tuiles/s (`WalkVelocity` = 6 yards/s).
     pub walk_speed: f32,
+    /// Vitesse de course en tuiles/s (`RunVelocity` = 9 yards/s ; absent ⇒
+    /// walk × 1,5 comme le brief moteur).
+    pub run_speed: f32,
     /// Force (`str` = 30).
     pub strength: u32,
     /// Dextérité (`dex` = 20).
@@ -95,6 +98,10 @@ pub(crate) fn parse_hero_code(v: &Value, code: &str) -> HeroTpl {
         life: u32_at(v, &format!("{base}/life"), 55),
         mana: u32_at(v, &format!("{base}/mana"), 15),
         walk_speed: f32_at(v, &format!("{base}/walkSpeed"), 6.0),
+        run_speed: {
+            let walk = f32_at(v, &format!("{base}/walkSpeed"), 6.0);
+            f32_at(v, &format!("{base}/runSpeed"), walk * 1.5)
+        },
         strength: u32_at(v, &format!("{base}/strength"), 30),
         dexterity: u32_at(v, &format!("{base}/dexterity"), 20),
         to_hit_factor: u32_at(v, &format!("{base}/toHitFactor"), 20),

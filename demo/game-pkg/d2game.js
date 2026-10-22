@@ -77,6 +77,23 @@ export class D2Game {
         return v1;
     }
     /**
+     * Hero animation state as JSON `{"anim":"RN","frame":3,"facing":6,
+     * "run":true,"moving":false}` — HUD run flag + E2E probes.
+     * @returns {string}
+     */
+    heroState() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_heroState(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Hero HUD stats (`HeroStats`) as a JSON object string — level, life,
      * mana, xp, gold… polled by the demo HUD each frame.
      * @returns {string}
@@ -223,10 +240,28 @@ export class D2Game {
         wasm.d2game_setViewport(this.__wbg_ptr, w, h);
     }
     /**
+     * Animation modes listed in the manifest but skipped (missing files),
+     * as a JSON array of strings — the page logs them, the game still runs.
+     * @returns {string}
+     */
+    spriteNotes() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_spriteNotes(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Advance the simulation. `input_json` (nullable) mirrors the
      * `PlayerInput` contract:
      * `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
-     * · `{"type":"pickup"}` · `{"type":"useItem","slot":0}`.
+     * · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
+     * · `{"type":"useItem","slot":0}`.
      * Returns the tick's `GameEvent`s as a JSON array string.
      * @param {number} dt_ms
      * @param {string | null} [input_json]

@@ -198,6 +198,7 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             swing_ms: s.hero.swing_ms,
             dead_ms: s.hero.dead_ms,
             anim_ms: s.hero.anim_ms,
+            run: false, // transient (touche Maj) — jamais persisté
             spawn: s.hero.spawn,
             inv,
         },

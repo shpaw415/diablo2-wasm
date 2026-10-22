@@ -213,9 +213,20 @@ fn build_game(root: &str, manifest: &Value) -> GameCore {
         paths.push(p.as_str().unwrap().into());
     }
     for m in manifest.get("monsters").unwrap().as_array().unwrap() {
-        paths.push(m.pointer("/walk/cof").unwrap().as_str().unwrap().into());
-        for (_, p) in m.pointer("/walk/layers").unwrap().as_object().unwrap() {
-            paths.push(p.as_str().unwrap().into());
+        if m.pointer("/walk/cof").is_some() {
+            paths.push(m.pointer("/walk/cof").unwrap().as_str().unwrap().into());
+            for (_, p) in m.pointer("/walk/layers").unwrap().as_object().unwrap() {
+                paths.push(p.as_str().unwrap().into());
+            }
+        }
+        // monstres MVP : `modes` remplace les blocs nommés
+        if let Some(modes) = m.get("modes").and_then(|x| x.as_object()) {
+            for mv in modes.values() {
+                paths.push(mv["cof"].as_str().unwrap().into());
+                for (_, p) in mv["layers"].as_object().unwrap() {
+                    paths.push(p.as_str().unwrap().into());
+                }
+            }
         }
     }
     for p in &paths {

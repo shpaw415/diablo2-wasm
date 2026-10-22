@@ -64,6 +64,20 @@ impl D2Game {
         self.core.inventory_json()
     }
 
+    /// Hero animation state as JSON `{"anim":"RN","frame":3,"facing":6,
+    /// "run":true,"moving":false}` — HUD run flag + E2E probes.
+    #[wasm_bindgen(js_name = heroState)]
+    pub fn hero_state(&self) -> String {
+        self.core.hero_state_json()
+    }
+
+    /// Animation modes listed in the manifest but skipped (missing files),
+    /// as a JSON array of strings — the page logs them, the game still runs.
+    #[wasm_bindgen(js_name = spriteNotes)]
+    pub fn sprite_notes(&self) -> String {
+        self.core.sprite_notes_json()
+    }
+
     /// Serialize the world (JSON v1) — demo Save button → localStorage.
     #[wasm_bindgen(js_name = saveGame)]
     pub fn save_game(&self) -> String {
@@ -80,7 +94,8 @@ impl D2Game {
     /// Advance the simulation. `input_json` (nullable) mirrors the
     /// `PlayerInput` contract:
     /// `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
-    /// · `{"type":"pickup"}` · `{"type":"useItem","slot":0}`.
+    /// · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
+    /// · `{"type":"useItem","slot":0}`.
     /// Returns the tick's `GameEvent`s as a JSON array string.
     pub fn tick(&mut self, dt_ms: u32, input_json: Option<String>) -> String {
         let input = input_json.as_deref().and_then(parse_input);
@@ -164,6 +179,9 @@ fn parse_input(json: &str) -> Option<PlayerInput> {
         "move" => Some(PlayerInput::MoveTo { x: x(&v), y: y(&v) }),
         "attack" => Some(PlayerInput::Attack { x: x(&v), y: y(&v) }),
         "pickup" => Some(PlayerInput::Pickup),
+        "setRun" => Some(PlayerInput::SetRun(
+            v.get("on").and_then(|b| b.as_bool()).unwrap_or(false),
+        )),
         "useItem" => Some(PlayerInput::UseItem(
             v.get("slot").and_then(|n| n.as_u64()).unwrap_or(0) as usize,
         )),

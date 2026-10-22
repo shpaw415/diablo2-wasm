@@ -27,6 +27,11 @@ export class D2Game {
      */
     heroScreen(): Float32Array;
     /**
+     * Hero animation state as JSON `{"anim":"RN","frame":3,"facing":6,
+     * "run":true,"moving":false}` — HUD run flag + E2E probes.
+     */
+    heroState(): string;
+    /**
      * Hero HUD stats (`HeroStats`) as a JSON object string — level, life,
      * mana, xp, gold… polled by the demo HUD each frame.
      */
@@ -72,10 +77,16 @@ export class D2Game {
     screenToWorld(px: number, py: number): Float32Array;
     setViewport(w: number, h: number): void;
     /**
+     * Animation modes listed in the manifest but skipped (missing files),
+     * as a JSON array of strings — the page logs them, the game still runs.
+     */
+    spriteNotes(): string;
+    /**
      * Advance the simulation. `input_json` (nullable) mirrors the
      * `PlayerInput` contract:
      * `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
-     * · `{"type":"pickup"}` · `{"type":"useItem","slot":0}`.
+     * · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
+     * · `{"type":"useItem","slot":0}`.
      * Returns the tick's `GameEvent`s as a JSON array string.
      */
     tick(dt_ms: number, input_json?: string | null): string;
@@ -94,6 +105,7 @@ export interface InitOutput {
     readonly d2game_gridSize: (a: number) => [number, number];
     readonly d2game_heroClass: (a: number) => [number, number];
     readonly d2game_heroScreen: (a: number) => [number, number];
+    readonly d2game_heroState: (a: number) => [number, number];
     readonly d2game_heroStats: (a: number) => [number, number];
     readonly d2game_inventory: (a: number) => [number, number];
     readonly d2game_loadGame: (a: number, b: number, c: number) => [number, number];
@@ -105,6 +117,7 @@ export interface InitOutput {
     readonly d2game_saveGame: (a: number) => [number, number];
     readonly d2game_screenToWorld: (a: number, b: number, c: number) => [number, number];
     readonly d2game_setViewport: (a: number, b: number, c: number) => void;
+    readonly d2game_spriteNotes: (a: number) => [number, number];
     readonly d2game_tick: (a: number, b: number, c: number, d: number) => [number, number];
     readonly d2game_viewportHeight: (a: number) => number;
     readonly d2game_viewportWidth: (a: number) => number;

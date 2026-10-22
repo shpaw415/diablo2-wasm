@@ -62,6 +62,9 @@ pub enum PlayerInput {
     Attack { x: i32, y: i32 },
     /// Ramasser l'objet au sol le plus proche (rayon 2 tuiles).
     Pickup,
+    /// Active/coupe la course (touche Maj) : anim RN + vitesse `RunVelocity`
+    /// (manifest) ou marche ×1,5 à défaut. État transient, non sauvegardé.
+    SetRun(bool),
     /// Utiliser l'objet du slot d'inventaire (grille 10×4, index rangée par rangée).
     UseItem(usize),
 }

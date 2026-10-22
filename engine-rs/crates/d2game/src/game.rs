@@ -32,6 +32,9 @@ pub struct GameCore {
     map_rgba: [u8; 256 * 4], // palette-index → RGBA, precomputed for blits
     sprite_pal: d2dcc::render::Palette,
     sprites: BTreeMap<String, SpriteSet>,
+    /// Modes d'animation listés au manifest mais aux fichiers absents/illisibles
+    /// — sautés avec note (fallback gracieux), visibles via `sprite_notes_json`.
+    sprite_notes: Vec<String>,
     world: Option<World>,
     /// Héros demandé ("BA"|"SOR"|"PA"…, normalisé uppercase) — résolu contre
     /// `manifest.heroes` (retombée `hero` à l'ancienne via d2rules).
@@ -63,6 +66,7 @@ impl GameCore {
             map_rgba: [0; 256 * 4],
             sprite_pal: sprite_palette(&[]),
             sprites: BTreeMap::new(),
+            sprite_notes: Vec::new(),
             world: None,
             hero_request,
             vw: DEFAULT_VIEWPORT_W,
@@ -129,30 +133,30 @@ impl GameCore {
         self.map = Some(map);
 
         // --- sprites ------------------------------------------------------
-        // Héros : bloc walk de `heroes[code]` si le code demandé y existe,
-        // sinon `hero.walk` (rétro-compat) — même règle de résolution que
-        // d2rules (resolve_hero_code), sprite et stats toujours en phase.
+        // Sets are keyed "<entity>" (marche/défaut, toujours présent) et
+        // "<entity>:MODE" (NU/WL/RN/A1/DD) quand le manifest les fournit
+        // (`heroes[code].modes` ou blocs nommés idle/attack/death). Un mode
+        // listé mais aux fichiers absents est SAUTÉ avec note (fallback
+        // gracieux) — jamais d'échec de finalize sur un mode optionnel.
         let hero_code = d2rules::resolve_hero_code(&self.manifest, &self.hero_request);
-        let hero_walk = self
-            .manifest
-            .pointer(&format!("/heroes/{hero_code}/walk"))
-            .unwrap_or(&self.manifest["hero"]["walk"]);
         let mut sprites = BTreeMap::new();
-        sprites.insert("hero".into(), self.build_sprite_set(hero_walk)?);
+        let mut notes: Vec<String> = Vec::new();
+        if let Some(hero_def) = hero_def_for(&self.manifest, &hero_code) {
+            Self::build_entity_sets("hero", &hero_def, &mut sprites, &mut notes, self)?;
+        } else {
+            // Rétro-compat totale : bloc `hero` historique seul.
+            let walk = &self.manifest["hero"]["walk"];
+            let set = self.build_sprite_set(walk)?;
+            sprites.insert("hero".into(), set);
+        }
         if let Some(list) = self.manifest.get("monsters").and_then(|m| m.as_array()) {
             for m in list {
                 let code = m.get("code").and_then(|c| c.as_str()).unwrap_or("??").to_string();
-                if let Some(walk) = m.get("walk") {
-                    match self.build_sprite_set(walk) {
-                        Ok(set) => {
-                            sprites.insert(code, set);
-                        }
-                        Err(e) => return Err(format!("monster {code}: {e}")),
-                    }
-                }
+                Self::build_entity_sets(&code, m, &mut sprites, &mut notes, self)?;
             }
         }
         self.sprites = sprites;
+        self.sprite_notes = notes;
 
         // --- world (contract) ----------------------------------------------
         // Polarity: compose yields `true` = WALKABLE, the d2rules contract
@@ -184,6 +188,72 @@ impl GameCore {
             }
         }
         Ok(set)
+    }
+
+    /// Construit tous les sets d'une entité (héros ou monstre) : `modes`
+    /// {NU,WL,RN,A1,DD} si présent, sinon les blocs nommés
+    /// walk/idle/attack/death, sinon walk seul. Le set « base » (sans suffixe)
+    /// reste le repli universel = la marche. Les modes optionnels aux fichiers
+    /// absents produisent une note, pas une erreur.
+    fn build_entity_sets(
+        base: &str,
+        def: &Value,
+        sprites: &mut BTreeMap<String, SpriteSet>,
+        notes: &mut Vec<String>,
+        me: &GameCore,
+    ) -> Result<(), String> {
+        // 1. Set de base : `modes.WL` > `walk` (jamais d'erreur si absent —
+        //    l'entité ne sera simplement pas dessinée, comportement historique).
+        let base_set: Option<SpriteSet> = if let Some(wl) = def
+            .pointer("/modes/WL")
+            .filter(|v| v.get("cof").is_some())
+        {
+            me.build_sprite_set(wl).ok()
+        } else if let Some(walk) = def.get("walk").filter(|v| !v.is_null()) {
+            match me.build_sprite_set(walk) {
+                Ok(s) => Some(s),
+                Err(e) => {
+                    return Err(format!("{base}: {e}"));
+                }
+            }
+        } else {
+            None
+        };
+        if let Some(s) = base_set {
+            sprites.insert(base.to_string(), s);
+        }
+
+        // 2. Modes additionnels. `modes` = {NU|WL|RN|A1|DD: {cof, layers}} ;
+        //    à défaut blocs nommés idle→NU, attack→A1, death→DD.
+        let mut mode_of: Vec<(&str, &Value)> = Vec::new();
+        if let Some(modes) = def.get("modes").and_then(|m| m.as_object()) {
+            for tag in ["NU", "WL", "RN", "A1", "DD"] {
+                if let Some(v) = modes.get(tag).filter(|v| v.get("cof").is_some()) {
+                    mode_of.push((tag, v));
+                }
+            }
+        } else {
+            for (field, tag) in [("idle", "NU"), ("attack", "A1"), ("death", "DD")] {
+                if let Some(v) = def.get(field).filter(|v| v.get("cof").is_some()) {
+                    mode_of.push((tag, v));
+                }
+            }
+        }
+        for (tag, spec) in mode_of {
+            let key = format!("{base}:{tag}");
+            if sprites.contains_key(&key) {
+                continue;
+            }
+            match me.build_sprite_set(spec) {
+                Ok(set) => {
+                    sprites.insert(key, set);
+                }
+                Err(e) => {
+                    notes.push(format!("{key}: ignoré ({e})"));
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn set_viewport(&mut self, w: u32, h: u32) {
@@ -279,6 +349,38 @@ impl GameCore {
             .and_then(|n| n.as_str())
             .unwrap_or(&code);
         serde_json::json!({ "code": code, "name": name }).to_string()
+    }
+
+    /// État d'animation du héros, JSON `{"anim":"RN","frame":3,"facing":6,
+    /// "run":true,"moving":true}` — HUD course + captures E2E.
+    pub fn hero_state_json(&self) -> String {
+        match self.world.as_ref() {
+            Some(w) => {
+                let h = w.hero();
+                let anim = match h.anim {
+                    AnimState::NU => "NU",
+                    AnimState::WL => "WL",
+                    AnimState::RN => "RN",
+                    AnimState::A1 => "A1",
+                    AnimState::DD => "DD",
+                };
+                serde_json::json!({
+                    "anim": anim,
+                    "frame": h.anim_frame,
+                    "facing": h.facing,
+                    "run": w.hero_is_running(),
+                    "moving": w.hero_is_moving(),
+                })
+                .to_string()
+            }
+            None => "{}".into(),
+        }
+    }
+
+    /// Modes d'animation sautés (fichiers absents au manifest) — visibilité
+    /// du fallback gracieux côté page. JSON `["hero:DD: ignoré (…)", …]`.
+    pub fn sprite_notes_json(&self) -> String {
+        serde_json::to_string(&self.sprite_notes).unwrap_or_else(|_| "[]".into())
     }
 
     /// Inventory (40 slots, `null` = empty) as JSON.
@@ -429,14 +531,33 @@ impl GameCore {
     }
 
     fn blit_entity(&self, fb: &mut [u8], vw: usize, vh: usize, key: &str, e: &Entity) {
-        let Some(set) = self.sprites.get(key) else { return };
-        // Only the WL cycle is extracted in this phase; other states fall
-        // back to it (idle = frame 0).
-        let (facing, frame) = match e.anim {
-            AnimState::NU => (e.facing, 0),
-            _ => (e.facing, e.anim_frame as usize),
+        // Set par mode "<key>:<ANIM>" en priorité, repli "<key>" (la marche).
+        let tag = match e.anim {
+            AnimState::NU => "NU",
+            AnimState::WL => "WL",
+            AnimState::RN => "RN",
+            AnimState::A1 => "A1",
+            AnimState::DD => "DD",
         };
-        let Some(sf) = set.compose(facing, frame, &self.sprite_pal) else { return };
+        let mode_key = format!("{key}:{tag}");
+        let (set, fallback_idle) = match (self.sprites.get(&mode_key), self.sprites.get(key)) {
+            (Some(s), _) => (s, false),
+            (None, Some(s)) => (s, true),
+            // Aucun set (ex. DD sans assets DD) : entité non dessinée.
+            (None, None) => return,
+        };
+        // Mort sans set DD dédié : pas de « cadavre qui marche » — invisible.
+        if fallback_idle && e.anim == AnimState::DD {
+            return;
+        }
+        // Sélection de frame : set dédié ⇒ frame animée du mode ; repli marche
+        // ⇒ NU figé frame 0 (comportement historique), autres états animés.
+        let frame = if fallback_idle && e.anim == AnimState::NU {
+            0
+        } else {
+            (e.anim_frame as usize).min(set.frames().saturating_sub(1))
+        };
+        let Some(sf) = set.compose(e.facing, frame, &self.sprite_pal) else { return };
         let map = self.map.as_ref().unwrap();
         let (wx, wy) = map.sub_to_screen(e.x, e.y);
         blit_sprite(fb, vw, vh, &sf, wx - self.cam_x, wy - self.cam_y);
@@ -448,6 +569,15 @@ enum DrawKind {
     Hero,
     Monster(usize),
     Item(usize),
+}
+
+/// Le bloc de définition du héros résolu : `heroes[code]` si présent, sinon
+/// le bloc `hero` historique — même règle de résolution que d2rules.
+fn hero_def_for(manifest: &Value, code: &str) -> Option<Value> {
+    manifest
+        .pointer(&format!("/heroes/{code}"))
+        .cloned()
+        .or_else(|| manifest.get("hero").cloned())
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize)]
@@ -647,6 +777,156 @@ mod tests {
         assert!(g.finalize().is_err()); // ds1 not provided yet
     }
 
+    // --- modes d'animation -------------------------------------------------
+
+    /// Fournit à `g` tous les assets d'un bloc d'animation {cof, layers}.
+    fn provide_anim_block(g: &mut GameCore, root: &str, block: &Value) {
+        if let Some(p) = block.get("cof").and_then(|c| c.as_str()) {
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        if let Some(layers) = block.get("layers").and_then(|l| l.as_object()) {
+            for (_, p) in layers {
+                let p = p.as_str().unwrap();
+                g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+            }
+        }
+    }
+
+    #[test]
+    fn hero_modes_built_from_named_blocks() {
+        // Manifest réel : SOR a walk/idle/attack/death (fichiers présents).
+        let Some(root) = ws_root() else { return };
+        let manifest = std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap();
+        let m: Value = serde_json::from_str(&manifest).unwrap();
+        let mut g = GameCore::new(&manifest, "SOR").unwrap();
+        g.provide(
+            m.pointer("/level/palette").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/palette").unwrap().as_str().unwrap())).unwrap(),
+        );
+        g.provide(
+            m.pointer("/level/ds1").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/ds1").unwrap().as_str().unwrap())).unwrap(),
+        );
+        for p in m.pointer("/level/dt1").unwrap().as_array().unwrap() {
+            let p = p.as_str().unwrap();
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        let sor = &m["heroes"]["SOR"];
+        for field in ["walk", "idle", "attack", "death"] {
+            provide_anim_block(&mut g, &root, &sor[field]);
+        }
+        // `modes` {NU|WL|RN|A1|DD} : fournir aussi ces assets (manifest complet).
+        if let Some(modes) = sor.get("modes").and_then(|x| x.as_object()) {
+            for mv in modes.values() {
+                provide_anim_block(&mut g, &root, mv);
+            }
+        }
+        for mon in m.get("monsters").unwrap().as_array().unwrap() {
+            if mon.get("walk").and_then(|w| w.get("cof")).is_some() {
+                provide_anim_block(&mut g, &root, &mon["walk"]);
+            }
+            if let Some(modes) = mon.get("modes").and_then(|x| x.as_object()) {
+                for mv in modes.values() {
+                    provide_anim_block(&mut g, &root, mv);
+                }
+            }
+        }
+        g.finalize().unwrap();
+        // walk → base ; idle/attack/death → NU/A1/DD dédiés.
+        for key in ["hero", "hero:NU", "hero:A1", "hero:DD"] {
+            assert!(g.sprites.contains_key(key), "set `{key}` attendu (sets: {:?})", g.sprites.keys().collect::<Vec<_>>());
+        }
+        assert!(g.sprite_notes_json() == "[]", "{}", g.sprite_notes_json());
+        let _ = g.tick(16, None);
+        let frame = g.render();
+        assert_eq!(frame.len(), (DEFAULT_VIEWPORT_W * DEFAULT_VIEWPORT_H * 4) as usize);
+    }
+
+    #[test]
+    fn missing_mode_files_gracefully_skipped_with_note() {
+        // `modes.RN` pointe vers des fichiers inexistants : finalize OK,
+        // note émise, jeu jouable (la marche sert de repli).
+        let Some(root) = ws_root() else { return };
+        let mut m: Value =
+            serde_json::from_str(&std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap())
+                .unwrap();
+        m["heroes"]["BA"]["modes"] = serde_json::json!({
+            "WL": m["heroes"]["BA"]["walk"],
+            "RN": {
+                "cof": "assets/dcc/BARN_INEXISTANT.COF",
+                "layers": { "TR": "assets/dcc/BARN_INEXISTANT.dcc" }
+            }
+        });
+        let manifest = m.to_string();
+        let mut g = GameCore::new(&manifest, "BA").unwrap();
+        g.provide(
+            m.pointer("/level/palette").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/palette").unwrap().as_str().unwrap())).unwrap(),
+        );
+        g.provide(
+            m.pointer("/level/ds1").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/ds1").unwrap().as_str().unwrap())).unwrap(),
+        );
+        for p in m.pointer("/level/dt1").unwrap().as_array().unwrap() {
+            let p = p.as_str().unwrap();
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        provide_anim_block(&mut g, &root, &m["heroes"]["BA"]["walk"]);
+        for mon in m.get("monsters").unwrap().as_array().unwrap() {
+            provide_anim_block(&mut g, &root, &mon["walk"]);
+        }
+        g.finalize().unwrap();
+        let notes = g.sprite_notes_json();
+        assert!(notes.contains("hero:RN"), "note RN attendue, eu : {notes}");
+        assert!(g.sprites.contains_key("hero:WL"), "WL du bloc modes devient la base");
+        // Le jeu tourne quand même (marche en repli sur RN).
+        let _ = g.tick(16, None);
+        let frame = g.render();
+        let lit = frame.chunks_exact(4).filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30).count();
+        assert!(lit > 10_000);
+    }
+
+    #[test]
+    fn hero_dead_without_dd_set_has_no_corpse_walk() {
+        // BA n'a que walk : aucun set hero:DD ⇒ pas de set de mort construit,
+        // et le blit DD sans set dédié ne dessine pas (pas de cadavre marchant).
+        let Some(root) = ws_root() else { return };
+        let manifest = std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap();
+        let m: Value = serde_json::from_str(&manifest).unwrap();
+        let mut g = GameCore::new(&manifest, "BA").unwrap();
+        g.provide(
+            m.pointer("/level/palette").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/palette").unwrap().as_str().unwrap())).unwrap(),
+        );
+        g.provide(
+            m.pointer("/level/ds1").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/ds1").unwrap().as_str().unwrap())).unwrap(),
+        );
+        for p in m.pointer("/level/dt1").unwrap().as_array().unwrap() {
+            let p = p.as_str().unwrap();
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        provide_anim_block(&mut g, &root, &m["heroes"]["BA"]["walk"]);
+        for mon in m.get("monsters").unwrap().as_array().unwrap() {
+            provide_anim_block(&mut g, &root, &mon["walk"]);
+        }
+        g.finalize().unwrap();
+        assert!(!g.sprites.contains_key("hero:DD"), "BA n'a pas de DD au manifest");
+        // État héros exposé pour le HUD/E2E.
+        let st: Value = serde_json::from_str(&g.hero_state_json()).unwrap();
+        assert_eq!(st["anim"], "NU");
+        assert_eq!(st["run"], false);
+        // Mort simulée : l'entité DD sans set dédié n'est PAS blittée (aucun
+        // panic, framebuffer rendu) — le contrat « pas de cadavre qui marche ».
+        let mut dead = *g.world.as_ref().unwrap().hero();
+        dead.anim = AnimState::DD;
+        dead.anim_frame = 5;
+        let fb_len = g.vw as usize * g.vh as usize * 4;
+        let mut fb = vec![0u8; fb_len];
+        g.blit_entity(&mut fb, g.vw as usize, g.vh as usize, "hero", &dead);
+        assert!(fb.iter().all(|&b| b == 0), "aucun pixel héros en DD sans set");
+    }
+
     #[test]
     fn full_pipeline_smoke() {
         let Some(root) = ws_root() else { return }; // skip outside workspace
@@ -665,9 +945,20 @@ mod tests {
             paths.push(p.as_str().unwrap().to_string());
         }
         for mon in m.get("monsters").unwrap().as_array().unwrap() {
-            paths.push(mon.pointer("/walk/cof").unwrap().as_str().unwrap().to_string());
-            for (_, p) in mon.pointer("/walk/layers").unwrap().as_object().unwrap() {
-                paths.push(p.as_str().unwrap().to_string());
+            if mon.pointer("/walk/cof").is_some() {
+                paths.push(mon.pointer("/walk/cof").unwrap().as_str().unwrap().to_string());
+                for (_, p) in mon.pointer("/walk/layers").unwrap().as_object().unwrap() {
+                    paths.push(p.as_str().unwrap().to_string());
+                }
+            }
+            // monstres MVP : `modes` remplace les blocs nommés
+            if let Some(modes) = mon.get("modes").and_then(|x| x.as_object()) {
+                for mv in modes.values() {
+                    paths.push(mv["cof"].as_str().unwrap().to_string());
+                    for (_, p) in mv["layers"].as_object().unwrap() {
+                        paths.push(p.as_str().unwrap().to_string());
+                    }
+                }
             }
         }
         for p in &paths {

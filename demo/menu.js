@@ -77,6 +77,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 120);
   });
 
+  // « Continuer » : visible seulement si une sauvegarde existe ; le héros
+  // repris est celui de la sauvegarde (hero_code), cf. game.html?continue=1.
+  const SAVE_KEY = 'd2wasm.save.v1';
+  let savedHero = null;
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const hc = JSON.parse(raw).hero_code;
+      if (typeof hc === 'string' && hc) savedHero = hc.toUpperCase();
+    }
+  } catch (e) { savedHero = null; }
+  const btnContinue = document.getElementById('continue');
+  if (savedHero && btnContinue) {
+    btnContinue.hidden = false;
+    btnContinue.addEventListener('click', () => {
+      playClick();
+      setTimeout(() => {
+        window.location.href = `game.html?hero=${savedHero}&continue=1`;
+      }, 120);
+    });
+  }
+
   document.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') document.getElementById('play').click();
   });
