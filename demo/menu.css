@@ -1,221 +1,24 @@
-/* menu.css — Écran-titre Diablo II (800×600, scaled) */
-:root {
-  --or: #c7b377;
-  --or-vif: #e8d9a0;
-  --braise: #c33010;
-  --braise-sombre: #6e1408;
-  --pierre: #101010;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  background: #000;
-  overflow: hidden;
-  font-family: Georgia, 'Palatino Linotype', 'Times New Roman', serif;
-  display: grid;
-  place-items: center;
-  user-select: none;
-}
-
-/* scène 800×600 mise à l'échelle */
-#stage {
-  position: relative;
-  width: 800px;
-  height: 600px;
-  transform-origin: center center;
-}
-#bg {
-  position: absolute;
-  inset: 0;
-  width: 800px;
-  height: 600px;
-  image-rendering: auto;
-}
-
-/* feu de camp animé (sprite 30 cellules 180×140, base alignée à y=132) */
-#fire {
-  position: absolute;
-  left: 327px;
-  top: 338px;
-  width: 180px;
-  height: 140px;
-  background: url('assets/menu/fire-sheet.png') 0 0 / 5400px 140px repeat-x;
-  animation: brule 1.2s steps(30) infinite;
-  pointer-events: none;
-  filter: drop-shadow(0 0 14px rgba(255, 120, 20, .35));
-}
-@keyframes brule {
-  from { background-position: 0 0; }
-  to   { background-position: -5400px 0; }
-}
-
-#logo {
-  position: absolute;
-  left: 50%;
-  top: 26px;
-  width: 320px;
-  height: 151px;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 0 22px rgba(200, 60, 10, .25));
-  pointer-events: none;
-}
-
-/* ------- menu (colonne gauche, camp visible à droite comme l'original) ------- */
-#menu {
-  position: absolute;
-  left: 88px;
-  top: 196px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-#classes {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.class-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 208px;
-  padding: 7px 10px;
-  background: linear-gradient(180deg, rgba(16,14,10,.82), rgba(8,7,5,.9));
-  border: 1px solid rgba(199, 179, 119, .38);
-  border-radius: 3px;
-  box-shadow: inset 0 0 18px rgba(0,0,0,.85), 0 2px 10px rgba(0,0,0,.7);
-  cursor: pointer;
-  color: var(--or);
-  font-family: inherit;
-  text-align: left;
-  transition: border-color .12s, box-shadow .12s;
-}
-.class-card .portrait {
-  display: grid;
-  place-items: center;
-  position: relative;
-  width: 64px;
-  height: 66px;
-  flex: none;
-  background:
-    radial-gradient(ellipse at 50% 68%, rgba(120, 40, 8, .28), transparent 62%),
-    linear-gradient(180deg, #17130d, #0a0806);
-  border: 1px solid rgba(199, 179, 119, .22);
-  overflow: hidden;
-}
-.class-card .portrait img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  image-rendering: pixelated;
-}
-.class-card .initials {
-  font-size: 26px;
-  letter-spacing: 2px;
-  color: rgba(199, 179, 119, .5);
-  text-shadow: 0 2px 6px #000;
-}
-.class-card .cname {
-  font-size: 18px;
-  letter-spacing: 2px;
-  text-shadow: 0 1px 3px #000, 0 0 8px rgba(0,0,0,.9);
-}
-.class-card:hover {
-  border-color: var(--braise);
-  box-shadow: inset 0 0 18px rgba(0,0,0,.85), 0 0 14px rgba(195, 48, 16, .35);
-}
-.class-card:hover .cname { color: var(--braise); text-shadow: 0 0 8px rgba(195,48,16,.6); }
-.class-card.selected {
-  border-color: var(--or-vif);
-  box-shadow:
-    inset 0 0 18px rgba(0,0,0,.85),
-    0 0 12px rgba(232, 217, 160, .45),
-    0 0 26px rgba(195, 90, 16, .3);
-}
-.class-card.selected .cname { color: var(--or-vif); }
-.class-card:active { transform: translateY(1px); }
-
-/* bouton JOUER — tablette de pierre, liseré doré */
-#play {
-  min-width: 208px;
-  padding: 10px 34px 11px;
-  font-family: inherit;
-  font-size: 20px;
-  letter-spacing: 6px;
-  text-indent: 6px;
-  color: var(--or);
-  text-shadow: 0 1px 2px #000, 0 0 10px rgba(0,0,0,.9);
-  background:
-    linear-gradient(180deg, #2a231a 0%, #17120c 46%, #0c0906 100%);
-  border: 1px solid rgba(199, 179, 119, .55);
-  border-radius: 3px;
-  box-shadow:
-    inset 0 1px 0 rgba(232, 217, 160, .18),
-    inset 0 -2px 6px rgba(0,0,0,.9),
-    inset 0 0 22px rgba(0,0,0,.75),
-    0 2px 10px rgba(0,0,0,.8);
-  cursor: pointer;
-}
-#play:hover {
-  color: var(--braise);
-  border-color: var(--braise);
-  text-shadow: 0 0 9px rgba(195, 48, 16, .65);
-  box-shadow:
-    inset 0 1px 0 rgba(232, 217, 160, .18),
-    inset 0 -2px 6px rgba(0,0,0,.9),
-    inset 0 0 22px rgba(0,0,0,.75),
-    0 0 16px rgba(195, 48, 16, .4);
-}
-#play:active {
-  padding-top: 12px;
-  padding-bottom: 11px;
-  box-shadow: inset 0 0 26px rgba(0,0,0,.95), 0 0 8px rgba(195,48,16,.3);
-}
-
-/* bouton CONTINUER — même tablette, teinte plus discrète */
-#continue {
-  min-width: 208px;
-  padding: 8px 28px 9px;
-  font-family: inherit;
-  font-size: 15px;
-  letter-spacing: 4px;
-  text-indent: 4px;
-  color: var(--or);
-  text-shadow: 0 1px 2px #000, 0 0 10px rgba(0,0,0,.9);
-  background:
-    linear-gradient(180deg, #2a231a 0%, #17120c 46%, #0c0906 100%);
-  border: 1px solid rgba(199, 179, 119, .4);
-  border-radius: 3px;
-  box-shadow:
-    inset 0 1px 0 rgba(232, 217, 160, .14),
-    inset 0 -2px 6px rgba(0,0,0,.9),
-    inset 0 0 22px rgba(0,0,0,.75),
-    0 2px 10px rgba(0,0,0,.8);
-  cursor: pointer;
-}
-#continue:hover {
-  color: var(--or-vif);
-  border-color: rgba(199, 179, 119, .8);
-}
-#actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-}
-
-#foot {
-  position: absolute;
-  bottom: 8px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: rgba(199, 179, 119, .42);
-  text-shadow: 0 1px 2px #000;
-  pointer-events: none;
-}
+/* Diablo II — écran-titre original (800x600 logique, mis à l'échelle) */
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Georgia,'Times New Roman',serif}
+#stage{position:absolute;top:50%;left:50%;width:800px;height:600px;transform:translate(-50%,-50%) scale(var(--s,1));transform-origin:center}
+#bg{position:absolute;inset:0;width:800px;height:600px;image-rendering:pixelated}
+#logo{position:absolute;left:224px;top:8px;display:flex}
+#logo img{image-rendering:pixelated}
+#buttons{position:absolute;left:40px;top:340px;display:flex;flex-direction:column;gap:6px}
+.dbtn{position:relative;width:256px;height:60px;border:0;padding:0;background:transparent;cursor:pointer;
+  background-image:url('assets/menu/widebtn_00.png');background-size:256px 60px;image-rendering:pixelated}
+.dbtn:hover{background-image:url('assets/menu/widebtn_02.png')}
+.dbtn:active{background-image:url('assets/menu/widebtn_01.png')}
+.dbtn:disabled{filter:brightness(.55) saturate(.4);cursor:default}
+.dbtn span{font-size:20px;letter-spacing:2px;color:#e8d5a3;text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.9)}
+#classes{position:absolute;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#classes.hidden{display:none}
+.card{display:flex;align-items:center;gap:16px;width:420px;padding:10px 16px;border:1px solid #6b5a2e;background:rgba(12,8,4,.9);cursor:pointer}
+.card:hover{border-color:#e8d5a3;box-shadow:0 0 14px rgba(232,213,163,.35)}
+.card.selected{border-color:#ffd873;box-shadow:0 0 18px rgba(255,216,115,.55)}
+.card img{width:96px;height:96px;object-fit:contain;image-rendering:pixelated;background:#0a0a12;border:1px solid #3a3226}
+.card span{font-size:22px;color:#e8d5a3;letter-spacing:2px}
+#play{margin-top:8px}
+#version{position:absolute;left:8px;bottom:6px;color:#8a7a55;font-size:12px}
+#copyright{position:absolute;right:10px;bottom:6px;color:#6a5f45;font-size:11px}
+#errlog{position:absolute;left:0;bottom:-24px;color:#c33;font-size:11px;white-space:pre-wrap}

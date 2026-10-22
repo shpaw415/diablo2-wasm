@@ -1,105 +1,57 @@
-// menu.js — Écran-titre Diablo II (WASM). Sélection de classe -> game.html?hero=BA|SOR|PA
-'use strict';
+// Diablo II — menu principal original : logo en flammes animé + navigation
+(function () {
+  'use strict';
+  const M = 'assets/menu/';
+  const errlog = document.getElementById('errlog');
+  window.addEventListener('error', (e) => { errlog.textContent += '[err] ' + e.message + '\n'; });
 
-let audioCtx = null;
-let clickBuffer = null;
-
-function initAudio() {
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  } catch (e) {
-    audioCtx = null;
-    return;
+  // Mise à l'échelle du stage 800x600
+  function fit() {
+    const s = Math.min(innerWidth / 800, innerHeight / 600);
+    document.getElementById('stage').style.setProperty('--s', s);
   }
-  fetch('assets/sfx/ui_click.wav')
-    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
-    .then((buf) => audioCtx.decodeAudioData(buf))
-    .then((buf) => { clickBuffer = buf; })
-    .catch(() => { clickBuffer = null; }); // pas de son -> clic muet, zéro erreur console
-}
+  addEventListener('resize', fit); fit();
 
-function playClick() {
-  if (!audioCtx || !clickBuffer) return;
-  const src = audioCtx.createBufferSource();
-  src.buffer = clickBuffer;
-  src.connect(audioCtx.destination);
-  src.start();
-}
+  // Logo en flammes : 30 frames (gauche + droite), ~15 fps
+  const FRAMES = 30;
+  let f = 0;
+  const logoL = document.getElementById('logoL');
+  const logoR = document.getElementById('logoR');
+  const pad = (n) => String(n).padStart(2, '0');
+  setInterval(() => {
+    f = (f + 1) % FRAMES;
+    logoL.src = M + 'logo_fire_left_' + pad(f) + '.png';
+    logoR.src = M + 'logo_fire_right_' + pad(f) + '.png';
+  }, 66);
 
-function selectedHero() {
-  const el = document.querySelector('.class-card.selected');
-  return el ? el.dataset.hero : 'BA';
-}
-
-function selectCard(card) {
-  document.querySelectorAll('.class-card').forEach((c) => c.classList.remove('selected'));
-  card.classList.add('selected');
-}
-
-function scaleStage() {
-  const stage = document.getElementById('stage');
-  const s = Math.min(window.innerWidth / 800, window.innerHeight / 600);
-  stage.style.transform = `scale(${s})`;
-}
-
-// Portraits : chargement tolérant (sor/pal produits par un autre membre —
-// absent -> initiales, aucune erreur console).
-function loadPortraits() {
-  document.querySelectorAll('.portrait img[data-src]').forEach((img) => {
-    fetch(img.dataset.src)
-      .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
-      .then((blob) => {
-        img.src = URL.createObjectURL(blob);
-        img.addEventListener('load', () => img.classList.add('ready'), { once: true });
-      })
-      .catch(() => { /* initiales affichées */ });
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  scaleStage();
-  window.addEventListener('resize', scaleStage);
-  loadPortraits();
-  initAudio();
-
-  document.querySelectorAll('.class-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      selectCard(card);
-      playClick();
+  // Boutons
+  let selectedHero = null;
+  const classes = document.getElementById('classes');
+  const play = document.getElementById('play');
+  document.querySelectorAll('#buttons .dbtn').forEach((b) => {
+    b.addEventListener('click', () => {
+      try { new Audio('assets/sfx/ui_click.wav').play(); } catch (e) {}
+      const action = b.dataset.action;
+      if (action === 'solo') classes.classList.remove('hidden');
+      else if (action === 'continue') location.href = 'game.html?load=1&hero=' + (localStorage.getItem('d2hero') || 'BA');
+      else if (action === 'github') open('https://github.com/shpaw415/diablo2-wasm', '_blank');
+      else if (action === 'quit') { classes.classList.add('hidden'); }
     });
   });
-
-  document.getElementById('play').addEventListener('click', () => {
-    playClick();
-    // laisse le clic s'entendre avant la navigation
-    setTimeout(() => {
-      window.location.href = `game.html?hero=${selectedHero()}`;
-    }, 120);
-  });
-
-  // « Continuer » : visible seulement si une sauvegarde existe ; le héros
-  // repris est celui de la sauvegarde (hero_code), cf. game.html?continue=1.
-  const SAVE_KEY = 'd2wasm.save.v1';
-  let savedHero = null;
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) {
-      const hc = JSON.parse(raw).hero_code;
-      if (typeof hc === 'string' && hc) savedHero = hc.toUpperCase();
-    }
-  } catch (e) { savedHero = null; }
-  const btnContinue = document.getElementById('continue');
-  if (savedHero && btnContinue) {
-    btnContinue.hidden = false;
-    btnContinue.addEventListener('click', () => {
-      playClick();
-      setTimeout(() => {
-        window.location.href = `game.html?hero=${savedHero}&continue=1`;
-      }, 120);
+  document.querySelectorAll('#classes .card').forEach((c) => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#classes .card').forEach((x) => x.classList.remove('selected'));
+      c.classList.add('selected');
+      selectedHero = c.dataset.hero;
+      play.disabled = false;
+      try { new Audio('assets/sfx/ui_click.wav').play(); } catch (e) {}
     });
-  }
-
-  document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter') document.getElementById('play').click();
   });
-});
+  play.addEventListener('click', () => {
+    if (!selectedHero) return;
+    localStorage.setItem('d2hero', selectedHero);
+    location.href = 'game.html?hero=' + selectedHero;
+  });
+  // Continuer grisé sans sauvegarde
+  if (!localStorage.getItem('d2save')) document.getElementById('btnContinue').disabled = true;
+})();
