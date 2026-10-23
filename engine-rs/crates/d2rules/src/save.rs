@@ -2,12 +2,14 @@
 //!
 //! Le format embarque la grille (RLE trivial : '1' marchable, '0' bloqué) et le
 //! manifest — `World::load(json)` n'a pas d'autres paramètres, conformément au
-//! contrat. Versionnée (`version: 1`) ; tout écart ⇒ `Err(())`.
+//! contrat. Versionnée (`version: 2`) ; tout écart ⇒ `Err(())`. Rétro-compat :
+//! une sauvegarde v1 (sans `hero_code`, `missiles` ni `skills`) se charge —
+//! défauts du manifest / systèmes vides / skills de départ de la classe.
 
 use super::world::*;
 use crate::rng::Rng;
 use d2missiles::MissileSystem;
-use crate::{AnimState, Entity, HeroStats, ItemDef, ItemOnGround};
+use crate::{AnimState, Entity, HeroSkill, HeroStats, ItemDef, ItemOnGround};
 use serde::{Deserialize, Serialize};
 
 /// Sauvegarde sérialisable du monde complet.
@@ -37,6 +39,13 @@ struct Save {
     /// v1 antérieures aux missiles — rétro-compat : système vide).
     #[serde(default)]
     missiles: Option<serde_json::Value>,
+    /// Compétences du héros (absent des sauvegardes v1 antérieures aux skills
+    /// — rétro-compat : skills de départ de la classe, cf. `skills.rs`).
+    #[serde(default)]
+    skills: Option<Vec<HeroSkill>>,
+    /// Index du skill actif (absent v1 — défaut par classe).
+    #[serde(default)]
+    active_skill: Option<usize>,
 }
 
 /// État complet du héros.
@@ -90,6 +99,13 @@ struct MonSave {
     ac: u32,
     xp: u32,
     speed: f32,
+    /// Rang (champion/unique/boss…) — absent des sauvegardes antérieures à
+    /// impl-monstres-boss (rétro-compat : Normal).
+    #[serde(default)]
+    kind: Option<MonKind>,
+    /// TC de drop effective (surcharge champion/unique/boss) — absent v2.1.
+    #[serde(default)]
+    tc: Option<Option<String>>,
 }
 
 fn grid_to_strings(grid: &[Vec<bool>]) -> Vec<String> {
@@ -133,6 +149,8 @@ pub(crate) fn save_json(w: &World) -> String {
             spawn: w.hero.spawn,
             inv: w.hero.inv.clone(),
         },
+        skills: Some(w.hero.skills.clone()),
+        active_skill: Some(w.hero.active_skill),
         monsters: w
             .mon_ent
             .iter()
@@ -156,6 +174,8 @@ pub(crate) fn save_json(w: &World) -> String {
                 ac: d.ac,
                 xp: d.xp,
                 speed: d.speed,
+                kind: Some(d.kind),
+                tc: Some(d.tc.clone()),
             })
             .collect(),
         items: w.items.clone(),
@@ -167,7 +187,7 @@ pub(crate) fn save_json(w: &World) -> String {
 /// Reconstruit le monde (contracte `World::load`).
 pub(crate) fn load_json(json: &str) -> Result<World, ()> {
     let s: Save = serde_json::from_str(json).map_err(|_| ())?;
-    if s.version != SAVE_VERSION {
+    if s.version != SAVE_VERSION && s.version != SAVE_VERSION_OLDEST {
         return Err(());
     }
     let grid = strings_to_grid(&s.collision)?;
@@ -189,6 +209,16 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         .hero_code
         .clone()
         .unwrap_or_else(|| super::data::resolve_hero(&s.manifest, "BA"));
+    // skills : champ v2 sinon skills de départ de la classe (sauvegardes v1) ;
+    // index actif hors bornes ⇒ défaut par classe.
+    let skills = match s.skills {
+        Some(v) => v,
+        None => crate::skills::starting_skills(&hero_code),
+    };
+    let active_skill = match s.active_skill {
+        Some(i) if i < skills.len() => i,
+        _ => crate::skills::default_active(&hero_code),
+    };
     let world = World {
         w,
         h,
@@ -197,6 +227,8 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         hero_code: hero_code.clone(),
         hero_tpl: super::data::parse_hero_code(&s.manifest, &hero_code),
         mon_tpls: super::data::parse_monsters(&s.manifest),
+        // Tables de loot statiques (embarquées) — pas d'état à recharger.
+        loot: super::loot::build(),
         hero_ent: s.hero.ent,
         hero: HeroData {
             stats: s.hero.stats,
@@ -207,6 +239,8 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             run: false, // transient (touche Maj) — jamais persisté
             spawn: s.hero.spawn,
             inv,
+            skills,
+            active_skill,
         },
         mon_ent: s.monsters.iter().map(|m| m.ent).collect(),
         mon_dat: s
@@ -230,6 +264,8 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 ac: m.ac,
                 xp: m.xp,
                 speed: m.speed,
+                kind: m.kind.unwrap_or_default(),
+                tc: m.tc.clone().unwrap_or(None),
             })
             .collect(),
         items: s.items,

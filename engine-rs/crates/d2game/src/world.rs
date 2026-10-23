@@ -18,7 +18,10 @@
 //! * `World::monster_alive(i)` is an additive extra d2rules provides
 //!   (false for out-of-range or DD corpses).
 
-pub use d2rules::{AnimState, Entity, GameEvent, HeroStats, ItemDef, ItemOnGround, PlayerInput, World};
+pub use d2rules::{
+    AnimState, Entity, GameEvent, HeroStats, ItemDef, ItemOnGround, MonKind, PlayerInput,
+    SpawnRule, World,
+};
 
 /// The real `d2rules` behind the game loop.
 pub use d2rules as world_impl;

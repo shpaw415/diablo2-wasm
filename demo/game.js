@@ -146,6 +146,9 @@ function collectPaths(manifest, heroDef) {
     }
     for (const p of mExtra) if (!critical.has(p)) optional.add(p);
   }
+  // AnimData.d2 (frames/speed officiels par token, audit #19) : optionnel —
+  // absent ⇒ le moteur garde le repli octets COF.
+  optional.add('assets/animdata/AnimData.d2');
   return { critical: [...critical], optional: [...optional] };
 }
 

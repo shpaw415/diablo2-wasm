@@ -68,6 +68,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "d2animdata"
+version = "0.1.0"
+
+[[package]]
 name = "d2dc6"
 version = "0.1.0"
 dependencies = [
@@ -86,6 +90,7 @@ dependencies = [
 name = "d2game"
 version = "0.1.0"
 dependencies = [
+ "d2animdata",
  "d2dcc",
  "d2rules",
  "serde",

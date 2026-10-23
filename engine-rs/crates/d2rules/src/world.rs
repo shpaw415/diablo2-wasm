@@ -2,8 +2,10 @@
 //! inventaire 10×4, save/load. Zéro IO, zéro rendu.
 
 use crate::data::{self, HeroTpl, MonTpl};
+use crate::loot;
 use crate::path::{astar, snap_near, Grid};
 use crate::rng::Rng;
+use crate::skills::{default_active, starting_skills, HeroSkill};
 use crate::{
     Entity, AnimState, GameEvent, HeroStats, ItemDef, ItemKind, ItemOnGround, PlayerInput,
 };
@@ -48,8 +50,10 @@ pub(crate) const POTION_HEAL: u32 = 60;
 pub(crate) const MAX_DT_MS: u32 = 100;
 /// Rayon de collision missile↔monstre (tuiles, rayon de corps MVP).
 pub(crate) const MISSILE_HIT_RADIUS: f32 = 0.7;
-/// Missile tiré par l'attaque à distance MVP (`arrow` : Vel=24, Range=40,
-/// patch_missiles.txt ligne Id=0). d2game pourra mapper classe→missile plus tard.
+/// Missile de REPLI du tir à distance (`arrow` : Vel=24, Range=40,
+/// patch_missiles.txt ligne Id=0). Utilisé quand le skill actif n'a pas de
+/// missile (mêlée BA/PA) ou quand le héros n'a aucune compétence — le skill
+/// actif prime sinon (SOR : `firebolt`, cf. `skills.rs`).
 pub(crate) const HERO_MISSILE: &str = "arrow";
 /// Niveau max MVP (seuils XP livrés jusqu'à 10).
 pub(crate) const MAX_LEVEL: u32 = 10;
@@ -77,13 +81,16 @@ pub(crate) const MONLVL_XP_NUM: u32 = 30;
 /// Dénominateur du facteur XP.
 pub(crate) const MONLVL_XP_DEN: u32 = 100;
 
-// Table de drop MVP (brief) — remplacée par TreasureClassEx réel en phase 3.
+// Repli drop ( TreasureClassEx absente / TC inconnue — cf. loot.rs).
 /// % rien.
 pub(crate) const DROP_NOTHING_PCT: u32 = 60;
 /// % or (ensuite : % potion).
 pub(crate) const DROP_GOLD_PCT: u32 = 25;
-/// Version du format de sauvegarde.
-pub(crate) const SAVE_VERSION: u32 = 1;
+/// Version du format de sauvegarde (2 = skills héros).
+pub(crate) const SAVE_VERSION: u32 = 2;
+/// Plus ancienne version acceptée au chargement (1 = sans skills — rétro-compat
+/// : les skills de départ de la classe sont reconstitués, cf. `skills.rs`).
+pub(crate) const SAVE_VERSION_OLDEST: u32 = 1;
 /// Grille d'inventaire MVP : 10 colonnes × 4 rangées.
 pub(crate) const INV_COLS: usize = 10;
 pub(crate) const INV_ROWS: usize = 4;
@@ -106,6 +113,82 @@ pub(crate) enum MonState {
     Dying,
 }
 
+/// Rang d'un monstre spawné (W08/W10/W11, impl-monstres-boss) : gouverne la
+/// teinte de rendu d2game et le boost appliqué au spawn. Les multiplicateurs
+/// (HP/dégâts/toucher) viennent des constantes réelles de `monumod.txt`,
+/// portées par [`SpawnRule`] au moment du spawn — ici on ne garde que le
+/// rang (sauvegardé, exposé par [`World::monster_kind`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum MonKind {
+    /// Monstre normal (planche mon1-10).
+    #[default]
+    Normal,
+    /// Champion (leader bleu, mods monumod champion).
+    Champion,
+    /// Unique doré (mods monumod upick).
+    Unique,
+    /// Super-unique nommé (SuperUniques.txt : Bishibosh, Rakanishu…) —
+    /// teinte dorée comme un unique, nom exposé par d2game.
+    SuperUnique,
+    /// Boss de quête (Andariel…) : record monstats dédié, TC dédiée.
+    Boss,
+}
+
+impl MonKind {
+    /// Libellé court (JSON debug/E2E d2game).
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            MonKind::Normal => "normal",
+            MonKind::Champion => "champion",
+            MonKind::Unique => "unique",
+            MonKind::SuperUnique => "super_unique",
+            MonKind::Boss => "boss",
+        }
+    }
+}
+
+/// Facteurs de spawn explicites — l'appelant (d2game) les calcule depuis les
+/// tables réelles (`MonLvl.txt` ligne niveau du monstre, boosts `monumod.txt`
+/// champion/unique, XP communauté ×3/×5) : `d2rules` reste pur, sans IO ni
+/// table embarquée de plus. Les pourcentages sont relatifs aux valeurs brutes
+/// monstats (`hp_pct = MonLvl.HP` = 7 pour le niveau 1 Normal — les constantes
+/// historiques de ce fichier). `treasure_class` surcharge la TC de drop du
+/// gabarit (TC champion/unique/boss réelles : "Act 1 Champ A", "Andariel"…).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SpawnRule {
+    /// Rang du monstre spawné.
+    pub kind: MonKind,
+    /// % HP appliqué aux PV bruts (MonLvl.HP × boosts éventuels).
+    pub hp_pct: u32,
+    /// % dégâts (MonLvl.DM × boosts).
+    pub dmg_pct: u32,
+    /// % toucher (MonLvl.TH × boosts).
+    pub th_pct: u32,
+    /// % XP (MonLvl.XP × boosts).
+    pub xp_pct: u32,
+    /// AC effectif (MonLvl.AC de la ligne).
+    pub ac: u32,
+    /// TC de drop effectives (aucune = celle du gabarit manifest).
+    pub treasure_class: Option<String>,
+}
+
+impl Default for SpawnRule {
+    /// Règle historique : MonLvl.txt ligne 1 Normal (AC 6, TH 8, ×7/100,
+    /// ×2/100, ×30/100) — zéro changement de comportement pour le spawn
+    /// existant ([`World::spawn_monster`]).
+    fn default() -> SpawnRule {
+        SpawnRule {
+            kind: MonKind::Normal,
+            hp_pct: MONLVL_HP_NUM,
+            dmg_pct: MONLVL_DM_NUM,
+            th_pct: MONLVL_TH,
+            xp_pct: MONLVL_XP_NUM,
+            ac: MONLVL_AC,
+            treasure_class: None,
+        }
+    }
+}
+
 /// Données héros (l'`Entity` est à côté, cf. `World.hero_ent`).
 pub(crate) struct HeroData {
     /// Stats courantes (life = PV restants).
@@ -124,6 +207,10 @@ pub(crate) struct HeroData {
     pub spawn: (f32, f32),
     /// Inventaire 10×4, index rangée par rangée.
     pub inv: Vec<Option<ItemDef>>,
+    /// Compétences connues (skills de départ par classe, cf. `skills.rs`).
+    pub skills: Vec<HeroSkill>,
+    /// Index du skill actif dans `skills` (hors bornes = aucun).
+    pub active_skill: usize,
 }
 
 /// Données monstre (l'`Entity` est à côté, cf. `World.mon_ent`).
@@ -162,6 +249,12 @@ pub(crate) struct MonData {
     pub xp: u32,
     /// Vitesse marche tuiles/s.
     pub speed: f32,
+    /// Rang ([`MonKind`]) — teinte d2game + events quête (sauvegardé).
+    pub kind: MonKind,
+    /// TC de drop effective (surcharge du gabarit : TC champion/unique/boss
+    /// réelles de monstats TreasureClass2/3 ou TC dédiée boss) — `None` =
+    /// TC du gabarit (comportement historique).
+    pub tc: Option<String>,
 }
 
 /// Monde de jeu complet (pur : aucune IO, aucune dépendance de rendu).
@@ -181,6 +274,9 @@ pub struct World {
     /// Données monstres — parallèle à `mon_ent`.
     pub(crate) mon_dat: Vec<MonData>,
     pub(crate) items: Vec<ItemOnGround>,
+    /// Tables de loot TreasureClassEx v1.12 embarquées (`loot.rs`) ;
+    /// `None` si la table est illisible ⇒ repli MVP dans `roll_drop`.
+    pub(crate) loot: Option<loot::Loot>,
     /// Projectiles en vol (crate pure d2missiles, table réelle embarquée).
     pub(crate) missiles: MissileSystem,
     pub(crate) rng: Rng,
@@ -290,6 +386,7 @@ impl World {
             assert_eq!(row.len() as i32, w, "d2rules: ligne {i} de largeur {} != {w}", row.len());
         }
         let hero_code = data::resolve_hero(&manifest, hero);
+        let hero_skills = starting_skills(&hero_code);
         let world = World {
             w,
             h,
@@ -298,6 +395,7 @@ impl World {
             manifest: manifest.clone(),
             hero_tpl: data::parse_hero_code(&manifest, &hero_code),
             mon_tpls: data::parse_monsters(&manifest),
+            loot: loot::build(),
             hero_ent: Entity {
                 x: 0.0,
                 y: 0.0,
@@ -321,6 +419,8 @@ impl World {
                     gold: 0,
                     walk_speed: 0.0,
                     potion_heal: POTION_HEAL,
+                    skill: String::new(),
+                    skill_level: 0,
                 },
                 path: Vec::new(),
                 swing_ms: 0,
@@ -329,6 +429,8 @@ impl World {
                 run: false,
                 spawn: (0.0, 0.0),
                 inv: vec![None; INV_SLOTS],
+                active_skill: default_active(&hero_code),
+                skills: hero_skills,
             },
             mon_ent: Vec::new(),
             mon_dat: Vec::new(),
@@ -352,6 +454,12 @@ impl World {
         self.hero_ent.x = sx;
         self.hero_ent.y = sy;
         self.hero_ent.facing = 0;
+        let (skill, skill_level) = self
+            .hero
+            .skills
+            .get(self.hero.active_skill)
+            .map(|s| (s.code.clone(), s.level))
+            .unwrap_or_else(|| (String::new(), 0));
         self.hero.stats = HeroStats {
             level: 1,
             xp: 0,
@@ -367,6 +475,8 @@ impl World {
             gold: 0,
             walk_speed: t.walk_speed,
             potion_heal: POTION_HEAL,
+            skill,
+            skill_level,
         };
         self.hero.spawn = (sx, sy);
     }
@@ -431,12 +541,61 @@ impl World {
         }
     }
 
+    /// Gabarit d'un bloc monstre/boss du manifest (mêmes champs et défauts que
+    /// `data::parse_monsters`) — utilisé pour les boss (`manifest.bosses`, W11)
+    /// qui ne vivent PAS dans `monsters` (pas d'auto-spawn).
+    fn mon_tpl_from_block(m: &serde_json::Value) -> MonTpl {
+        let at = |p: &str, d: u32| -> u32 {
+            m.pointer(p).and_then(|x| x.as_u64()).map(|x| x as u32).unwrap_or(d)
+        };
+        let atf = |p: &str, d: f32| -> f32 {
+            m.pointer(p).and_then(|x| x.as_f64()).map(|x| x as f32).unwrap_or(d)
+        };
+        let ats = |p: &str, d: &str| -> String {
+            m.pointer(p).and_then(|x| x.as_str()).unwrap_or(d).to_string()
+        };
+        MonTpl {
+            code: ats("/code", "???"),
+            name: ats("/name", "???"),
+            level: at("/stats/level", 1).max(1),
+            hp_min: at("/stats/hpMin", 21),
+            hp_max: at("/stats/hp", 61).max(at("/stats/hpMin", 21)),
+            dmg_min: at("/stats/dmgMin", 51),
+            dmg_max: at("/stats/dmgMax", 101).max(at("/stats/dmgMin", 51)),
+            exp: at("/stats/exp", 61),
+            speed: atf("/stats/speed", 3.0),
+            treasure_class: ats("/stats/treasureClass", ""),
+        }
+    }
+
+    /// Résout l'index de gabarit pour `code` : table `mon_tpls` d'abord, sinon
+    /// bloc `manifest.bosses` correspondant (ajouté paresseusement à la table
+    /// — les boss n'altèrent ni l'auto-spawn ni les spawns manifest existants).
+    fn resolve_tpl_index(&mut self, code: &str) -> Option<usize> {
+        if let Some(i) = self.mon_tpls.iter().position(|t| t.code == code) {
+            return Some(i);
+        }
+        let bosses = self.manifest.get("bosses")?.as_array()?;
+        let block = bosses
+            .iter()
+            .find(|b| b.get("code").and_then(|c| c.as_str()).map(|c| c.eq_ignore_ascii_case(code)).unwrap_or(false))?;
+        let tpl = Self::mon_tpl_from_block(block);
+        self.mon_tpls.push(tpl);
+        Some(self.mon_tpls.len() - 1)
+    }
+
     /// Spawn un monstre du gabarit `tpl_index` à une position continue donnée.
     fn spawn_monster_at(&mut self, tpl_index: usize, x: f32, y: f32) {
+        self.spawn_monster_at_rule(tpl_index, x, y, SpawnRule::default());
+    }
+
+    /// Comme [`Self::spawn_monster_at`] avec les facteurs explicites
+    /// [`SpawnRule`] (MonLvl réel + boosts champion/unique + TC dédiée).
+    fn spawn_monster_at_rule(&mut self, tpl_index: usize, x: f32, y: f32, rule: SpawnRule) {
         let t = &self.mon_tpls[tpl_index];
-        // HP effectifs : rand(minHP..maxHP) × MonLvl.HP/100, min 1
+        // HP effectifs : rand(minHP..maxHP) × hp%/100, min 1
         let raw = self.rng.range_u32(t.hp_min, t.hp_max);
-        let hp = ((raw * MONLVL_HP_NUM) / MONLVL_HP_DEN).max(1);
+        let hp = ((raw.saturating_mul(rule.hp_pct)) / 100).max(1);
         let ent = Entity { x, y, facing: 0, anim: AnimState::NU, anim_frame: 0 };
         let dat = MonData {
             tpl: tpl_index,
@@ -451,12 +610,14 @@ impl World {
             anim_ms: 0,
             home: (x, y),
             // dégâts effectifs scalés à la frappe (stockés bruts, scalés ici en min/max)
-            dmg_min: ((t.dmg_min * MONLVL_DM_NUM) / MONLVL_DM_DEN).max(1),
-            dmg_max: ((t.dmg_max * MONLVL_DM_NUM) / MONLVL_DM_DEN).max(1),
-            th: MONLVL_TH,
-            ac: MONLVL_AC,
-            xp: t.exp * MONLVL_XP_NUM / MONLVL_XP_DEN,
+            dmg_min: ((t.dmg_min.saturating_mul(rule.dmg_pct)) / 100).max(1),
+            dmg_max: ((t.dmg_max.saturating_mul(rule.dmg_pct)) / 100).max(1),
+            th: (rule.th_pct.max(1)),
+            ac: rule.ac,
+            xp: (t.exp.saturating_mul(rule.xp_pct)) / 100,
             speed: t.speed,
+            kind: rule.kind,
+            tc: rule.treasure_class,
         };
         self.mon_ent.push(ent);
         self.mon_dat.push(dat);
@@ -515,6 +676,28 @@ impl World {
         &self.hero.stats
     }
 
+    /// Compétences connues du héros (lecture ; vide = classe sans skill de départ).
+    pub fn hero_skills(&self) -> &[HeroSkill] {
+        &self.hero.skills
+    }
+
+    /// Compétence actuellement sélectionnée (lecture ; `None` si aucune).
+    pub fn active_skill(&self) -> Option<&HeroSkill> {
+        self.hero.skills.get(self.hero.active_skill)
+    }
+
+    /// Sélectionne la compétence `index` — false si hors bornes (état inchangé).
+    pub fn select_skill(&mut self, index: usize) -> bool {
+        if index >= self.hero.skills.len() {
+            return false;
+        }
+        self.hero.active_skill = index;
+        let s = &self.hero.skills[index];
+        self.hero.stats.skill = s.code.clone();
+        self.hero.stats.skill_level = s.level;
+        true
+    }
+
     /// Inventaire (lecture) : 40 slots 10×4.
     pub fn inventory(&self) -> &[Option<ItemDef>] {
         &self.hero.inv
@@ -539,14 +722,28 @@ impl World {
     /// Spawn un monstre du code manifest (`"FA"`, `"ZM"`, `"SI"`) sur une tuile.
     /// Renvoie false si code inconnu ou tuile bloquée/hors bornes.
     pub fn spawn_monster(&mut self, code: &str, x: i32, y: i32) -> bool {
-        let Some(i) = self.mon_tpls.iter().position(|t| t.code == code) else {
+        self.spawn_monster_rule(code, x, y, SpawnRule::default())
+    }
+
+    /// Comme [`World::spawn_monster`] avec les facteurs [`SpawnRule`] réels
+    /// (MonLvl.txt ligne du monstre, boosts monumod champion/unique, TC
+    /// champion/unique/boss). Code inconnu du manifest (`monsters`+`bosses`)
+    /// ou tuile bloquée ⇒ false, état inchangé.
+    pub fn spawn_monster_rule(&mut self, code: &str, x: i32, y: i32, rule: SpawnRule) -> bool {
+        let Some(i) = self.resolve_tpl_index(code) else {
             return false;
         };
         if !self.is_walkable(x, y) {
             return false;
         }
-        self.spawn_monster_at(i, x as f32 + 0.5, y as f32 + 0.5);
+        self.spawn_monster_at_rule(i, x as f32 + 0.5, y as f32 + 0.5, rule);
         true
+    }
+
+    /// Rang du monstre `index` ([`MonKind`]) — teinte/labels d2game, events
+    /// quête. `None` hors bornes.
+    pub fn monster_kind(&self, index: usize) -> Option<MonKind> {
+        self.mon_dat.get(index).map(|d| d.kind)
     }
 
     /// Retire tous les monstres (vivants ou mourants) — tests / placement fin.
@@ -838,9 +1035,11 @@ impl World {
         }
     }
 
-    /// Tir à distance : anime le swing, face à la cible, spawn un missile
-    /// `arrow` (Vel=24, Range=40 réels) transportant les dégâts d'arme
-    /// (×force, résolus AU TIR — la flèche "sait" ses dégâts, règle D2).
+    /// Tir à distance : anime le swing, face à la cible, décoche le missile du
+    /// skill actif. Skill porteur (`firebolt` SOR) : dégâts/élément OFFICIELS
+    /// de la table d2missiles (`dmgSrc=Skill`, firebolt 3–8 feu). Skill de
+    /// mêlée (BA/PA) ou aucun skill : repli `arrow` transportant les dégâts
+    /// d'arme (×force, résolus AU TIR — règle D2 « la flèche sait »).
     fn hero_ranged_attack(&mut self, aim: (f32, f32), ev: &mut Vec<GameEvent>) {
         if self.hero.swing_ms > 0 || self.hero.dead_ms > 0 {
             return; // cooldown en cours / héros mort
@@ -849,12 +1048,22 @@ impl World {
         self.hero_ent.facing = facing_from(dx, dy);
         self.hero.swing_ms = HERO_SWING_MS;
         self.hero.anim_ms = 0;
-        // dégâts d'arme résolus : floor(min/max × (1 + force/100)), min 1
-        let mult = 1.0 + self.hero.stats.strength as f32 / 100.0;
-        let dmin = ((self.hero_tpl.weapon_min as f32 * mult).floor() as u32).max(1);
-        let dmax = ((self.hero_tpl.weapon_max as f32 * mult).floor() as u32).max(dmin);
         let from = (self.hero_ent.x, self.hero_ent.y);
-        if self.missiles.spawn_weapon(HERO_MISSILE, from, aim, dmin, dmax).is_some() {
+        let skill_missile = self
+            .active_skill()
+            .and_then(|s| s.missile.clone());
+        let spawned = match skill_missile {
+            // carrier Skill : la table porte les dégâts/élément du sort niv 1
+            Some(code) => self.missiles.spawn(&code, from, aim),
+            // carrier Weapon : l'appelant résout floor(min/max × (1 + force/100))
+            None => {
+                let mult = 1.0 + self.hero.stats.strength as f32 / 100.0;
+                let dmin = ((self.hero_tpl.weapon_min as f32 * mult).floor() as u32).max(1);
+                let dmax = ((self.hero_tpl.weapon_max as f32 * mult).floor() as u32).max(dmin);
+                self.missiles.spawn_weapon(HERO_MISSILE, from, aim, dmin, dmax)
+            }
+        };
+        if spawned.is_some() {
             ev.push(GameEvent::MissileSpawned);
         }
     }
@@ -964,8 +1173,14 @@ impl World {
                 if self.mon_dat[i].dying_ms >= DYING_MS {
                     let xp = self.mon_dat[i].xp;
                     let mlvl = self.mon_tpls[self.mon_dat[i].tpl].level;
+                    // TC effective : surcharge du spawn (champion/unique/boss)
+                    // sinon celle du gabarit manifest.
+                    let tc = self.mon_dat[i]
+                        .tc
+                        .clone()
+                        .unwrap_or_else(|| self.mon_tpls[self.mon_dat[i].tpl].treasure_class.clone());
                     let (x, y) = (self.mon_ent[i].x, self.mon_ent[i].y);
-                    self.roll_drop(x, y, mlvl, ev);
+                    self.roll_drop(x, y, mlvl, &tc, ev);
                     xp_gain += xp;
                     ev.push(GameEvent::MonsterDied { index: i, xp });
                     self.mon_dat.remove(i);
@@ -1112,24 +1327,35 @@ impl World {
         // raté : pas d'événement (flux volontairement minimal)
     }
 
-    /// Drop MVP : 60 % rien / 25 % or (~niveau×10, [×5..×15]) / 15 % potion hp1.
-    fn roll_drop(&mut self, x: f32, y: f32, monster_level: u32, ev: &mut Vec<GameEvent>) {
-        let r = self.rng.below(100);
-        if r < DROP_NOTHING_PCT {
-            return;
-        }
-        let def = if r < DROP_NOTHING_PCT + DROP_GOLD_PCT {
-            let lvl = monster_level.max(1);
-            let amount = self.rng.range_u32(lvl * 5, lvl * 15);
-            ItemDef::gold(amount)
-        } else {
-            ItemDef::potion()
+    /// Drop réel : TreasureClassEx v1.12 (`loot.rs`, feature #34 / D1) — la TC
+    /// du monstre vient du manifest (`stats.treasureClass`, ex. "Act 1 H2H A").
+    /// Chaîne : TC → picks/NoDrop → sous-TC → code d'item final ; or quantifié
+    /// par mlvl. Repli (table absente, TC vide/inconnue) : 60 % rien / 25 % or
+    /// (~niveau×10) / 15 % potion hp1 — déterministe au seed dans tous les cas.
+    fn roll_drop(&mut self, x: f32, y: f32, monster_level: u32, tc_name: &str, ev: &mut Vec<GameEvent>) {
+        let mlvl = monster_level.max(1);
+        let loot = self.loot.as_ref();
+        let drops = match loot {
+            Some(l) if l.has_tc(tc_name) => l.roll(&mut self.rng, tc_name, mlvl),
+            _ => loot::Loot::roll_fallback(&mut self.rng, mlvl),
         };
-        ev.push(GameEvent::ItemDropped {
-            item: def.clone(),
-            x: x.floor() as i32,
-            y: y.floor() as i32,
-        });
-        self.items.push(ItemOnGround { def, x, y });
+        for d in drops {
+            let def = match loot {
+                Some(l) => l.to_def(&d),
+                None => {
+                    if d.code == "gld" {
+                        ItemDef::gold(d.gold)
+                    } else {
+                        ItemDef::potion()
+                    }
+                }
+            };
+            ev.push(GameEvent::ItemDropped {
+                item: def.clone(),
+                x: x.floor() as i32,
+                y: y.floor() as i32,
+            });
+            self.items.push(ItemOnGround { def, x, y });
+        }
     }
 }

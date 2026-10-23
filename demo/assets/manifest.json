@@ -43,7 +43,11 @@
     "RA": "assets/dcc/BAWLRA.dcc",
     "S1": "assets/dcc/BAWLS1.dcc",
     "S2": "assets/dcc/BAWLS2.dcc"
-   }
+   },
+   "missingLayers": [
+    "LH",
+    "S3"
+   ]
   }
  },
  "heroes": {
@@ -84,14 +88,149 @@
    "walk": {
     "cof": "assets/dcc/BAWL1HS.COF",
     "layers": {
-     "HD": "assets/dcc/BAWLHD.dcc",
      "TR": "assets/dcc/BAWLTR.dcc",
-     "LG": "assets/dcc/BAWLLG.dcc",
      "LA": "assets/dcc/BAWLLA.dcc",
      "RA": "assets/dcc/BAWLRA.dcc",
+     "S2": "assets/dcc/BAWLS2.dcc",
+     "HD": "assets/dcc/BAWLHD.dcc",
      "S1": "assets/dcc/BAWLS1.dcc",
-     "S2": "assets/dcc/BAWLS2.dcc"
+     "RH": "assets/dcc/BAWLRH.dcc",
+     "LG": "assets/dcc/BAWLLG.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/BANU1HS.COF",
+     "layers": {
+      "LA": "assets/dcc/BANULA.dcc",
+      "TR": "assets/dcc/BANUTR.dcc",
+      "RA": "assets/dcc/BANURA.dcc",
+      "S2": "assets/dcc/BANUS2.dcc",
+      "S1": "assets/dcc/BANUS1.dcc",
+      "HD": "assets/dcc/BANUHD.dcc",
+      "RH": "assets/dcc/BANURH.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 96
+    },
+    "WL": {
+     "cof": "assets/dcc/BAWL1HS.COF",
+     "layers": {
+      "TR": "assets/dcc/BAWLTR.dcc",
+      "LA": "assets/dcc/BAWLLA.dcc",
+      "RA": "assets/dcc/BAWLRA.dcc",
+      "S2": "assets/dcc/BAWLS2.dcc",
+      "HD": "assets/dcc/BAWLHD.dcc",
+      "S1": "assets/dcc/BAWLS1.dcc",
+      "RH": "assets/dcc/BAWLRH.dcc",
+      "LG": "assets/dcc/BAWLLG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 168
+    },
+    "RN": {
+     "cof": "assets/dcc/BARN1HS.COF",
+     "layers": {
+      "LA": "assets/dcc/BARNLA.dcc",
+      "TR": "assets/dcc/BARNTR.dcc",
+      "RA": "assets/dcc/BARNRA.dcc",
+      "S1": "assets/dcc/BARNS1.dcc",
+      "HD": "assets/dcc/BARNHD.dcc",
+      "RH": "assets/dcc/BARNRH.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S2",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 216
+    },
+    "A1": {
+     "cof": "assets/dcc/BAA11HS.COF",
+     "layers": {
+      "HD": "assets/dcc/BAA1HD.dcc",
+      "TR": "assets/dcc/BAA1TR.dcc",
+      "RA": "assets/dcc/BAA1RA.dcc",
+      "RH": "assets/dcc/BAA1RH.dcc",
+      "LA": "assets/dcc/BAA1LA.dcc",
+      "S1": "assets/dcc/BAA1S1.dcc",
+      "S2": "assets/dcc/BAA1S2.dcc",
+      "LG": "assets/dcc/BAA1LG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 16,
+     "dirs": 16,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/BADDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/BADDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 16,
+     "speed": 0
     }
+   },
+   "idle": {
+    "cof": "assets/dcc/BANU1HS.COF",
+    "layers": {
+     "LA": "assets/dcc/BANULA.dcc",
+     "TR": "assets/dcc/BANUTR.dcc",
+     "RA": "assets/dcc/BANURA.dcc",
+     "S2": "assets/dcc/BANUS2.dcc",
+     "S1": "assets/dcc/BANUS1.dcc",
+     "HD": "assets/dcc/BANUHD.dcc",
+     "RH": "assets/dcc/BANURH.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/BAA11HS.COF",
+    "layers": {
+     "HD": "assets/dcc/BAA1HD.dcc",
+     "TR": "assets/dcc/BAA1TR.dcc",
+     "RA": "assets/dcc/BAA1RA.dcc",
+     "RH": "assets/dcc/BAA1RH.dcc",
+     "LA": "assets/dcc/BAA1LA.dcc",
+     "S1": "assets/dcc/BAA1S1.dcc",
+     "S2": "assets/dcc/BAA1S2.dcc",
+     "LG": "assets/dcc/BAA1LG.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/BADDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/BADDTR.dcc"
+    },
+    "missingLayers": []
    }
   },
   "SOR": {
@@ -156,13 +295,13 @@
    "attack": {
     "cof": "assets/dcc/SOA1STF.COF",
     "layers": {
-     "HD": "assets/dcc/SORA1HD.dcc",
-     "TR": "assets/dcc/SORA1TR.dcc",
-     "LG": "assets/dcc/SORA1LG.dcc",
-     "LA": "assets/dcc/SORA1LA.dcc",
-     "RA": "assets/dcc/SORA1RA.dcc",
-     "S2": "assets/dcc/SORA1S2.dcc",
-     "RH": "assets/dcc/SORA1RH.dcc"
+     "HD": "assets/dcc/SOA1HD.dcc",
+     "TR": "assets/dcc/SOA1TR.dcc",
+     "LG": "assets/dcc/SOA1LG.dcc",
+     "LA": "assets/dcc/SOA1LA.dcc",
+     "RA": "assets/dcc/SOA1RA.dcc",
+     "S2": "assets/dcc/SOA1S2.dcc",
+     "RH": "assets/dcc/SOA1RH.dcc"
     },
     "missingLayers": [
      "LH",
@@ -172,10 +311,97 @@
    "death": {
     "cof": "assets/dcc/SODDHTH.COF",
     "layers": {
-     "TR": "assets/dcc/SORDDTR.dcc"
+     "TR": "assets/dcc/SODDTR.dcc"
     }
    },
-   "notes": "COF SONUSTF/SOWLSTF: couches corps en wc HTH (TR/LG/HD/S2), bras en STF — par-couche, voir evidence/DCC-SPEC.md. startWeapon sst: mindam/maxdam absents de patch_weapons.txt (2-4 v1.12 attendu), RH gfx = SORHSST*.dcc."
+   "notes": "COF SONUSTF/SOWLSTF: couches corps en wc HTH (TR/LG/HD/S2), bras en STF — par-couche, voir evidence/DCC-SPEC.md. startWeapon sst: mindam/maxdam absents de patch_weapons.txt (2-4 v1.12 attendu), RH gfx = SORHSST*.dcc.",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/SONUSTF.COF",
+     "layers": {
+      "RA": "assets/dcc/SONURA.dcc",
+      "LA": "assets/dcc/SONULA.dcc",
+      "TR": "assets/dcc/SONUTR.dcc",
+      "S2": "assets/dcc/SONUS2.dcc",
+      "HD": "assets/dcc/SONUHD.dcc",
+      "RH": "assets/dcc/SONURH.dcc",
+      "LG": "assets/dcc/SONULG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/SOWLSTF.COF",
+     "layers": {
+      "LA": "assets/dcc/SOWLLA.dcc",
+      "RA": "assets/dcc/SOWLRA.dcc",
+      "TR": "assets/dcc/SOWLTR.dcc",
+      "S2": "assets/dcc/SOWLS2.dcc",
+      "HD": "assets/dcc/SOWLHD.dcc",
+      "RH": "assets/dcc/SOWLRH.dcc",
+      "LG": "assets/dcc/SOWLLG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 0
+    },
+    "RN": {
+     "cof": "assets/dcc/SORNSTF.COF",
+     "layers": {
+      "RA": "assets/dcc/SORNRA.dcc",
+      "LA": "assets/dcc/SORNLA.dcc",
+      "TR": "assets/dcc/SORNTR.dcc",
+      "S2": "assets/dcc/SORNS2.dcc",
+      "HD": "assets/dcc/SORNHD.dcc",
+      "RH": "assets/dcc/SORNRH.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/SOA1STF.COF",
+     "layers": {
+      "LA": "assets/dcc/SOA1LA.dcc",
+      "RA": "assets/dcc/SOA1RA.dcc",
+      "TR": "assets/dcc/SOA1TR.dcc",
+      "S2": "assets/dcc/SOA1S2.dcc",
+      "HD": "assets/dcc/SOA1HD.dcc",
+      "RH": "assets/dcc/SOA1RH.dcc",
+      "LG": "assets/dcc/SOA1LG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 18,
+     "dirs": 16,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/SODDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/SODDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 16,
+     "speed": 0
+    }
+   }
   },
   "PA": {
    "class": "PA",
@@ -268,7 +494,99 @@
      "TR": "assets/dcc/PADDTR.dcc"
     }
    },
-   "notes": "RH épée = PARHSSD*1HS.dcc (startWeapon ssd). LH (bouclier) et S3 déclarés par les COF mais absents du retail — skippés au rendu."
+   "notes": "RH épée = PARHSSD*1HS.dcc (startWeapon ssd). LH (bouclier) et S3 déclarés par les COF mais absents du retail — skippés au rendu.",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/PANU1HS.COF",
+     "layers": {
+      "LA": "assets/dcc/PANULA.dcc",
+      "RA": "assets/dcc/PANURA.dcc",
+      "RH": "assets/dcc/PANURH.dcc",
+      "TR": "assets/dcc/PANUTR.dcc",
+      "S2": "assets/dcc/PANUS2.dcc",
+      "HD": "assets/dcc/PANUHD.dcc",
+      "S1": "assets/dcc/PANUS1.dcc",
+      "LG": "assets/dcc/PANULG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/PAWL1HS.COF",
+     "layers": {
+      "LA": "assets/dcc/PAWLLA.dcc",
+      "RH": "assets/dcc/PAWLRH.dcc",
+      "RA": "assets/dcc/PAWLRA.dcc",
+      "TR": "assets/dcc/PAWLTR.dcc",
+      "S2": "assets/dcc/PAWLS2.dcc",
+      "HD": "assets/dcc/PAWLHD.dcc",
+      "S1": "assets/dcc/PAWLS1.dcc",
+      "LG": "assets/dcc/PAWLLG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 10,
+     "dirs": 16,
+     "speed": 32
+    },
+    "RN": {
+     "cof": "assets/dcc/PARN1HS.COF",
+     "layers": {
+      "RA": "assets/dcc/PARNRA.dcc",
+      "LA": "assets/dcc/PARNLA.dcc",
+      "TR": "assets/dcc/PARNTR.dcc",
+      "S2": "assets/dcc/PARNS2.dcc",
+      "HD": "assets/dcc/PARNHD.dcc",
+      "RH": "assets/dcc/PARNRH.dcc",
+      "S1": "assets/dcc/PARNS1.dcc",
+      "LG": "assets/dcc/PARNLG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/PAA11HS.COF",
+     "layers": {
+      "RH": "assets/dcc/PAA1RH.dcc",
+      "LA": "assets/dcc/PAA1LA.dcc",
+      "RA": "assets/dcc/PAA1RA.dcc",
+      "TR": "assets/dcc/PAA1TR.dcc",
+      "S2": "assets/dcc/PAA1S2.dcc",
+      "HD": "assets/dcc/PAA1HD.dcc",
+      "S1": "assets/dcc/PAA1S1.dcc",
+      "LG": "assets/dcc/PAA1LG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 15,
+     "dirs": 16,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/PADDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/PADDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 16,
+     "speed": 0
+    }
+   }
   }
  },
  "monsters": [
@@ -297,9 +615,94 @@
      "S1": "assets/dcc/FAWLS1.dcc"
     },
     "missingLayers": [
-     "SH",
+     "S2",
      "RH"
     ]
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/FANUHTH.COF",
+     "layers": {
+      "S1": "assets/dcc/FANUS1.dcc",
+      "TR": "assets/dcc/FANUTR.dcc"
+     },
+     "missingLayers": [
+      "RH",
+      "S2"
+     ],
+     "frames": 20,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/FAWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/FAWLTR.dcc",
+      "S1": "assets/dcc/FAWLS1.dcc"
+     },
+     "missingLayers": [
+      "S2",
+      "RH"
+     ],
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/FAA1HTH.COF",
+     "layers": {
+      "S1": "assets/dcc/FAA1S1.dcc",
+      "TR": "assets/dcc/FAA1TR.dcc"
+     },
+     "missingLayers": [
+      "S2",
+      "RH"
+     ],
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/FADDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/FADDTR.dcc",
+      "S2": "assets/dcc/FADDS2.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0
+    }
+   },
+   "idle": {
+    "cof": "assets/dcc/FANUHTH.COF",
+    "layers": {
+     "S1": "assets/dcc/FANUS1.dcc",
+     "TR": "assets/dcc/FANUTR.dcc"
+    },
+    "missingLayers": [
+     "RH",
+     "S2"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/FAA1HTH.COF",
+    "layers": {
+     "S1": "assets/dcc/FAA1S1.dcc",
+     "TR": "assets/dcc/FAA1TR.dcc"
+    },
+    "missingLayers": [
+     "S2",
+     "RH"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/FADDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/FADDTR.dcc",
+     "S2": "assets/dcc/FADDS2.dcc"
+    },
+    "missingLayers": []
    }
   },
   {
@@ -324,14 +727,135 @@
     "cof": "assets/dcc/ZMWLHTH.COF",
     "layers": {
      "HD": "assets/dcc/ZMWLHD.dcc",
-     "TR": "assets/dcc/ZMWLTR.dcc",
-     "LG": "assets/dcc/ZMWLLG.dcc",
-     "RA": "assets/dcc/ZMWLRA.dcc",
      "LA": "assets/dcc/ZMWLLA.dcc",
-     "S1": "assets/dcc/ZMWLS1.dcc",
-     "S2": "assets/dcc/ZMWLS2.dcc"
+     "RA": "assets/dcc/ZMWLRA.dcc",
+     "TR": "assets/dcc/ZMWLTR.dcc",
+     "S2": "assets/dcc/ZMWLS2.dcc",
+     "LG": "assets/dcc/ZMWLLG.dcc"
     },
     "missingLayers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/ZMNUHTH.COF",
+     "layers": {
+      "HD": "assets/dcc/ZMNUHD.dcc",
+      "LA": "assets/dcc/ZMNULA.dcc",
+      "RA": "assets/dcc/ZMNURA.dcc",
+      "TR": "assets/dcc/ZMNUTR.dcc",
+      "S2": "assets/dcc/ZMNUS2.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S4",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 80
+    },
+    "WL": {
+     "cof": "assets/dcc/ZMWLHTH.COF",
+     "layers": {
+      "HD": "assets/dcc/ZMWLHD.dcc",
+      "LA": "assets/dcc/ZMWLLA.dcc",
+      "RA": "assets/dcc/ZMWLRA.dcc",
+      "TR": "assets/dcc/ZMWLTR.dcc",
+      "S2": "assets/dcc/ZMWLS2.dcc",
+      "LG": "assets/dcc/ZMWLLG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S4",
+      "S3"
+     ],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 104
+    },
+    "A1": {
+     "cof": "assets/dcc/ZMA1HTH.COF",
+     "layers": {
+      "HD": "assets/dcc/ZMA1HD.dcc",
+      "LA": "assets/dcc/ZMA1LA.dcc",
+      "RA": "assets/dcc/ZMA1RA.dcc",
+      "TR": "assets/dcc/ZMA1TR.dcc",
+      "S2": "assets/dcc/ZMA1S2.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S4",
+      "S3"
+     ],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/ZMDDHTH.COF",
+     "layers": {
+      "HD": "assets/dcc/ZMDDHD.dcc",
+      "LA": "assets/dcc/ZMDDLA.dcc",
+      "RA": "assets/dcc/ZMDDRA.dcc",
+      "TR": "assets/dcc/ZMDDTR.dcc",
+      "S2": "assets/dcc/ZMDDS2.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S4",
+      "S3"
+     ],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 208
+    }
+   },
+   "idle": {
+    "cof": "assets/dcc/ZMNUHTH.COF",
+    "layers": {
+     "HD": "assets/dcc/ZMNUHD.dcc",
+     "LA": "assets/dcc/ZMNULA.dcc",
+     "RA": "assets/dcc/ZMNURA.dcc",
+     "TR": "assets/dcc/ZMNUTR.dcc",
+     "S2": "assets/dcc/ZMNUS2.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/ZMA1HTH.COF",
+    "layers": {
+     "HD": "assets/dcc/ZMA1HD.dcc",
+     "LA": "assets/dcc/ZMA1LA.dcc",
+     "RA": "assets/dcc/ZMA1RA.dcc",
+     "TR": "assets/dcc/ZMA1TR.dcc",
+     "S2": "assets/dcc/ZMA1S2.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/ZMDDHTH.COF",
+    "layers": {
+     "HD": "assets/dcc/ZMDDHD.dcc",
+     "LA": "assets/dcc/ZMDDLA.dcc",
+     "RA": "assets/dcc/ZMDDRA.dcc",
+     "TR": "assets/dcc/ZMDDTR.dcc",
+     "S2": "assets/dcc/ZMDDS2.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S4",
      "S3"
     ]
    }
@@ -358,6 +882,404 @@
     "cof": "assets/dcc/SIWLHTH.COF",
     "layers": {
      "TR": "assets/dcc/SIWLTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/SINUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/SINUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/SIWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/SIWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 9,
+     "dirs": 8,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/SIA1HTH.COF",
+     "layers": {
+      "TR": "assets/dcc/SIA1TR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/SIDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/SIDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0
+    }
+   },
+   "idle": {
+    "cof": "assets/dcc/SINUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/SINUTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "attack": {
+    "cof": "assets/dcc/SIA1HTH.COF",
+    "layers": {
+     "TR": "assets/dcc/SIA1TR.dcc"
+    },
+    "missingLayers": []
+   },
+   "death": {
+    "cof": "assets/dcc/SIDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/SIDDTR.dcc"
+    },
+    "missingLayers": []
+   }
+  },
+  {
+   "code": "SK",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/SKNUHTH.COF",
+     "layers": {
+      "HD": "assets/dcc/SKNUHD.dcc",
+      "LA": "assets/dcc/SKNULA.dcc",
+      "RA": "assets/dcc/SKNURA.dcc",
+      "TR": "assets/dcc/SKNUTR.dcc",
+      "S3": "assets/dcc/SKNUS3.dcc",
+      "S2": "assets/dcc/SKNUS2.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S6",
+      "S5"
+     ],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/SKWLHTH.COF",
+     "layers": {
+      "HD": "assets/dcc/SKWLHD.dcc",
+      "LA": "assets/dcc/SKWLLA.dcc",
+      "RA": "assets/dcc/SKWLRA.dcc",
+      "TR": "assets/dcc/SKWLTR.dcc",
+      "S2": "assets/dcc/SKWLS2.dcc",
+      "S3": "assets/dcc/SKWLS3.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S5",
+      "S6"
+     ],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128
+    },
+    "A1": {
+     "cof": "assets/dcc/SKA1HTH.COF",
+     "layers": {
+      "HD": "assets/dcc/SKA1HD.dcc",
+      "LA": "assets/dcc/SKA1LA.dcc",
+      "RA": "assets/dcc/SKA1RA.dcc",
+      "TR": "assets/dcc/SKA1TR.dcc",
+      "S2": "assets/dcc/SKA1S2.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3",
+      "S5",
+      "S6"
+     ],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 208
+    },
+    "DD": {
+     "cof": "assets/dcc/SKDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/SKDDTR.dcc",
+      "HD": "assets/dcc/SKDDHD.dcc",
+      "LA": "assets/dcc/SKDDLA.dcc",
+      "RA": "assets/dcc/SKDDRA.dcc",
+      "S2": "assets/dcc/SKDDS2.dcc",
+      "S3": "assets/dcc/SKDDS3.dcc"
+     },
+     "missingLayers": [
+      "LH"
+     ],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 152
+    }
+   },
+   "stats": {
+    "level": 2,
+    "hp": 129,
+    "hpMin": 86,
+    "ac": 84,
+    "dmgMin": 34,
+    "dmgMax": 101,
+    "th": 101,
+    "exp": 86,
+    "speed": 3,
+    "runSpeed": 3,
+    "treasureClass": "Act 1 H2H A",
+    "sound": "skeleton"
+   },
+   "name": "Skeleton",
+   "id": "skeleton1",
+   "idle": {
+    "cof": "assets/dcc/SKNUHTH.COF",
+    "layers": {
+     "HD": "assets/dcc/SKNUHD.dcc",
+     "LA": "assets/dcc/SKNULA.dcc",
+     "RA": "assets/dcc/SKNURA.dcc",
+     "TR": "assets/dcc/SKNUTR.dcc",
+     "S3": "assets/dcc/SKNUS3.dcc",
+     "S2": "assets/dcc/SKNUS2.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S6",
+     "S5"
+    ]
+   },
+   "walk": {
+    "cof": "assets/dcc/SKWLHTH.COF",
+    "layers": {
+     "HD": "assets/dcc/SKWLHD.dcc",
+     "LA": "assets/dcc/SKWLLA.dcc",
+     "RA": "assets/dcc/SKWLRA.dcc",
+     "TR": "assets/dcc/SKWLTR.dcc",
+     "S2": "assets/dcc/SKWLS2.dcc",
+     "S3": "assets/dcc/SKWLS3.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S5",
+     "S6"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/SKA1HTH.COF",
+    "layers": {
+     "HD": "assets/dcc/SKA1HD.dcc",
+     "LA": "assets/dcc/SKA1LA.dcc",
+     "RA": "assets/dcc/SKA1RA.dcc",
+     "TR": "assets/dcc/SKA1TR.dcc",
+     "S2": "assets/dcc/SKA1S2.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3",
+     "S5",
+     "S6"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/SKDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/SKDDTR.dcc",
+     "HD": "assets/dcc/SKDDHD.dcc",
+     "LA": "assets/dcc/SKDDLA.dcc",
+     "RA": "assets/dcc/SKDDRA.dcc",
+     "S2": "assets/dcc/SKDDS2.dcc",
+     "S3": "assets/dcc/SKDDS3.dcc"
+    },
+    "missingLayers": [
+     "LH"
+    ]
+   }
+  },
+  {
+   "code": "FS",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/FSNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/FSNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/FSWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/FSWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/FSA1HTH.COF",
+     "layers": {
+      "TR": "assets/dcc/FSA1TR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 17,
+     "dirs": 8,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/FSDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/FSDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0
+    }
+   },
+   "stats": {
+    "level": 2,
+    "hp": 101,
+    "hpMin": 58,
+    "ac": 84,
+    "dmgMin": 34,
+    "dmgMax": 101,
+    "th": 101,
+    "exp": 81,
+    "speed": 4,
+    "runSpeed": 4,
+    "treasureClass": "Act 1 Cast A",
+    "sound": "fallenshaman"
+   },
+   "name": "FallenShaman",
+   "id": "fallenshaman1",
+   "idle": {
+    "cof": "assets/dcc/FSNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/FSNUTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "walk": {
+    "cof": "assets/dcc/FSWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/FSWLTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "attack": {
+    "cof": "assets/dcc/FSA1HTH.COF",
+    "layers": {
+     "TR": "assets/dcc/FSA1TR.dcc"
+    },
+    "missingLayers": []
+   },
+   "death": {
+    "cof": "assets/dcc/FSDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/FSDDTR.dcc"
+    },
+    "missingLayers": []
+   }
+  },
+  {
+   "code": "YE",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/YENUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/YENUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/YEWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/YEWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/YEA1HTH.COF",
+     "layers": {
+      "TR": "assets/dcc/YEA1TR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/YEDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/YEDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0
+    }
+   },
+   "stats": {
+    "level": 5,
+    "hp": 224,
+    "hpMin": 139,
+    "ac": 84,
+    "dmgMin": 76,
+    "dmgMax": 101,
+    "th": 91,
+    "exp": 121,
+    "speed": 4,
+    "runSpeed": 4,
+    "treasureClass": "Act 1 H2H B",
+    "sound": "brute"
+   },
+   "name": "Brute",
+   "id": "brute2",
+   "idle": {
+    "cof": "assets/dcc/YENUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/YENUTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "walk": {
+    "cof": "assets/dcc/YEWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/YEWLTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "attack": {
+    "cof": "assets/dcc/YEA1HTH.COF",
+    "layers": {
+     "TR": "assets/dcc/YEA1TR.dcc"
+    },
+    "missingLayers": []
+   },
+   "death": {
+    "cof": "assets/dcc/YEDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/YEDDTR.dcc"
     },
     "missingLayers": []
    }
@@ -409,5 +1331,169 @@
     "die": "assets/sfx/quillrat_die.wav"
    }
   }
- }
+ },
+ "levels": {
+  "town": {
+   "name": "Camp des Rousses",
+   "ds1": "assets/map/TownN1.ds1",
+   "dt1": [
+    "assets/map/town_floor.dt1",
+    "assets/map/town_fence.dt1",
+    "assets/map/town_objects.dt1",
+    "assets/map/out_treegroups.dt1",
+    "assets/map/out_stonewall.dt1",
+    "assets/map/out_river.dt1",
+    "assets/map/out_objects.dt1",
+    "assets/map/warp.dt1"
+   ],
+   "palette": "assets/map/pal_act1_pl2.dat",
+   "paletteSize": 767,
+   "palettePadTo": 768,
+   "sizeTiles": [
+    56,
+    40
+   ],
+   "levelsId": 1,
+   "paletteNote": "pal.dat release = R/B inverses; voir evidence/MAP-SPEC.md §7",
+   "collision": "assets/map/collision.json",
+   "render": "assets/map/level-render-v2.png",
+   "nameDisplay": "Camp des Rousses",
+   "monsters": [],
+   "warp": {
+    "to": "bloodmoor",
+    "at": [
+     282,
+     107
+    ],
+    "r": 4,
+    "entry": [
+     247,
+     107
+    ],
+    "note": "sortie Est du camp (cellule 56,21 — tunnel vers Blood Moor) ; arrivée dans le couloir, hors zone"
+   }
+  },
+  "bloodmoor": {
+   "name": "Blood Moor",
+   "nameDisplay": "Blood Moor (Acte I)",
+   "levelsId": 2,
+   "ds1": "assets/map/bloodmoor.ds1",
+   "dt1": [
+    "assets/map/out_treegroups.dt1",
+    "assets/map/out_stonewall.dt1",
+    "assets/map/floor.dt1",
+    "assets/map/out_stones.dt1",
+    "assets/map/out_river.dt1",
+    "assets/map/bloodmoor_cliff2.dt1",
+    "assets/map/bloodmoor_corner.dt1",
+    "assets/map/bloodmoor_cliff1.dt1"
+   ],
+   "palette": "assets/map/pal_act1_pl2.dat",
+   "paletteSize": 767,
+   "palettePadTo": 768,
+   "sizeTiles": [
+    71,
+    71
+   ],
+   "grid": [
+    72,
+    72
+   ],
+   "collision": "assets/map/bloodmoor-collision.json",
+   "render": "assets/map/bloodmoor-render.png",
+   "monsters": [
+    "FA",
+    "FA",
+    "FA",
+    "ZM",
+    "ZM",
+    "SI"
+   ],
+   "warp": {
+    "to": "town",
+    "at": [
+     137,
+     147
+    ],
+    "r": 4,
+    "entry": [
+     137,
+     162
+    ],
+    "note": "retour vers le camp (chemins du centre, chunk waypoint 27,27) ; arrivée au sud, hors zone"
+   },
+   "generated": {
+    "seed": 20261022,
+    "tool": "tools/bloodmoor_build.py",
+    "presets": "assets/map/presets_bloodmoor/",
+    "note": "niveau aléatoire retail composé ici en preset fixe type-DRLG (cf. evidence/MAP-SPEC-BLOODMOOR.md)"
+   },
+   "paletteNote": "pal.dat release = R/B inverses; voir evidence/MAP-SPEC.md §7"
+  }
+ },
+ "levelsNote": "levels = contrat multi-niveaux ; 'level' conservé (pointe sur town) pour compat d2game (pointers /level/*).",
+ "bosses": [
+  {
+   "code": "AN",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/ANNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ANNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 160
+    },
+    "WL": {
+     "cof": "assets/dcc/ANWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ANWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/ANA1HTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ANA1TR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/ANDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ANDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0
+    }
+   },
+   "questEvent": "andariel_dead",
+   "stats": {
+    "level": 12,
+    "hp": 2562,
+    "hpMin": 2562,
+    "ac": 84,
+    "dmgMin": 76,
+    "dmgMax": 238,
+    "th": 153,
+    "exp": 916,
+    "speed": 8,
+    "runSpeed": 8,
+    "treasureClass": "Andariel",
+    "sound": "andariel"
+   },
+   "name": "Andariel",
+   "id": "andariel"
+  }
+ ]
 }

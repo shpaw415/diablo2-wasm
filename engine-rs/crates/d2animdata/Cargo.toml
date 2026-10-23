@@ -1,0 +1,6 @@
+[package]
+name = "d2animdata"
+version = "0.1.0"
+edition = "2021"
+description = "Diablo 2 AnimData.d2 decoder (frames-per-direction / speed / trigger events per animation token), byte-faithful port of the OpenDiablo2 Go d2animdata package — no file IO, WASM-friendly"
+license = "MIT"

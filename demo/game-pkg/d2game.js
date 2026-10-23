@@ -1,6 +1,12 @@
 /* @ts-self-types="./d2game.d.ts" */
 
 export class D2Game {
+    static __wrap(ptr) {
+        const obj = Object.create(D2Game.prototype);
+        obj.__wbg_ptr = ptr;
+        D2GameFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
@@ -127,6 +133,23 @@ export class D2Game {
         }
     }
     /**
+     * Current level as JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
+     * — HUD zone name + level-switch banner. `{}` if the key is unknown.
+     * @returns {string}
+     */
+    levelInfo() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_levelInfo(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Restore a world from `saveGame` JSON. Throws (`JsValue`) on invalid
      * save or a save from another map. Map/sprites are untouched.
      * @param {string} json
@@ -149,6 +172,23 @@ export class D2Game {
         return v1;
     }
     /**
+     * Monster codes for the current level, parallel to the tick's monster
+     * indices — debug/E2E. JSON `["FA","ZM",…]`.
+     * @returns {string}
+     */
+    monsterCodes() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_monsterCodes(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Alive monster index nearest to a world point within `radius`
      * sub-tiles, or -1 (JS click router: attack vs move).
      * @param {number} wx
@@ -165,6 +205,7 @@ export class D2Game {
      * selected class code (`"BA"`, `"SOR"`, `"PA"`…, case-insensitive, default
      * `"BA"`): the hero's COF/DCC layers AND stats both come from
      * `manifest.heroes[code]` when present, else the legacy `hero` block.
+     * Initial level: `"town"`.
      * @param {string} manifest_json
      * @param {string} hero
      */
@@ -183,6 +224,7 @@ export class D2Game {
     }
     /**
      * Feed one asset blob (manifest path + bytes), e.g. fetched files.
+     * Accepted any time — including between level switches (hot provide).
      * @param {string} path
      * @param {Uint8Array} bytes
      */
@@ -257,12 +299,50 @@ export class D2Game {
         }
     }
     /**
+     * Switch level: reloads DS1/DT1/collision from the provided (or hot-
+     * provided) bytes, carries the hero over (stats/inventory/xp), spawns the
+     * target level's monsters, and lands the hero at `(spawn_x, spawn_y)`
+     * (snapped to the nearest walkable sub-tile). Throws on unknown level or
+     * missing assets.
+     * @param {string} name
+     * @param {number} spawn_x
+     * @param {number} spawn_y
+     */
+    switchLevel(name, spawn_x, spawn_y) {
+        const ptr0 = passStringToWasm0(name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.d2game_switchLevel(this.__wbg_ptr, ptr0, len0, spawn_x, spawn_y);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * Level-switch notes (degraded hero transfers…) as a JSON array.
+     * @returns {string}
+     */
+    switchNotes() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_switchNotes(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Advance the simulation. `input_json` (nullable) mirrors the
      * `PlayerInput` contract:
      * `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
      * · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
      * · `{"type":"useItem","slot":0}`.
-     * Returns the tick's `GameEvent`s as a JSON array string.
+     * Returns the tick's events as a JSON array string: the d2rules contract
+     * events ({"HeroMoved":…}…) plus the engine's multi-level extras
+     * `{"LevelSwitch":{"key":…,"name":…}}` / `{"LevelSwitchFailed":"…"}` —
+     * entering a warp zone switches the level INSIDE the tick, so the very
+     * next frame already renders the new level.
      * @param {number} dt_ms
      * @param {string | null} [input_json]
      * @returns {string}
@@ -294,6 +374,27 @@ export class D2Game {
     viewportWidth() {
         const ret = wasm.d2game_viewportWidth(this.__wbg_ptr);
         return ret >>> 0;
+    }
+    /**
+     * Like [`D2Game::new`] with the initial level key from the manifest's
+     * `levels` block (`"town"`, `"bloodmoor"`…, case-insensitive).
+     * @param {string} manifest_json
+     * @param {string} hero
+     * @param {string} level
+     * @returns {D2Game}
+     */
+    static withLevel(manifest_json, hero, level) {
+        const ptr0 = passStringToWasm0(manifest_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(hero, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(level, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ret = wasm.d2game_withLevel(ptr0, len0, ptr1, len1, ptr2, len2);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return D2Game.__wrap(ret[0]);
     }
 }
 if (Symbol.dispose) D2Game.prototype[Symbol.dispose] = D2Game.prototype.free;

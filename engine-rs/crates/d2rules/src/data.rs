@@ -56,6 +56,9 @@ pub(crate) struct MonTpl {
     pub exp: u32,
     /// Vitesse marche tuiles/s (`Velocity`).
     pub speed: f32,
+    /// Classe de trésor drop (`stats.treasureClass`, ex. "Act 1 H2H A") ;
+    /// vide ⇒ repli MVP dans `roll_drop`.
+    pub treasure_class: String,
 }
 
 fn u32_at(v: &Value, ptr: &str, d: u32) -> u32 {
@@ -129,6 +132,7 @@ pub(crate) fn parse_monsters(v: &Value) -> Vec<MonTpl> {
                 dmg_max: u32_at(m, "/stats/dmgMax", 101).max(u32_at(m, "/stats/dmgMin", 51)),
                 exp: u32_at(m, "/stats/exp", 61),
                 speed: f32_at(m, "/stats/speed", 3.0),
+                treasure_class: str_at(m, "/stats/treasureClass", ""),
             });
         }
     }

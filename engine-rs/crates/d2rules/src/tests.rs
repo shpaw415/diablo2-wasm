@@ -418,10 +418,12 @@ fn fallen_drops_potion_pickup_and_use_heals() {
     let life_before = w.hero_stats().life;
     assert!(life_before < w.hero_stats().max_life);
 
-    // 3) ramasser + boire : soin exact = min(60, max - vie)
+    // 3) ramasser + boire : soin exact = min(60, max - vie). Le drop réel
+    // (TreasureClassEx) peut lâcher n'importe quelle potion de vie (hp1..hp5,
+    // rejuv…) — toutes soignent `potion_heal` au MVP.
     run(&mut w, 200, Some(PlayerInput::Pickup));
     let slot = (0..40).find(|&s| w.inventory()[s].is_some()).expect("potion dans l'inventaire");
-    assert_eq!(w.inventory()[slot].as_ref().unwrap().code, "hp1");
+    assert_eq!(w.inventory()[slot].as_ref().unwrap().kind, ItemKind::Potion);
     let ev = run(&mut w, 200, Some(PlayerInput::UseItem(slot)));
     let heal = ev
         .iter()
@@ -624,7 +626,8 @@ fn save_rejects_garbage_and_wrong_version() {
 // Sélection de personnage (manifest.heroes)
 // ---------------------------------------------------------------------------
 
-/// Manifest réel + bloc `heroes` {BA, SOR} — SOR = stats de sorcière distinctes.
+/// Manifest réel + bloc `heroes` {BA, SOR, PA} — SOR = stats de sorcière
+/// distinctes, PA = paladin (stats du bloc `hero`).
 fn manifest_heroes() -> serde_json::Value {
     let mut m = manifest_full();
     let mut sor = m["hero"].clone();
@@ -634,7 +637,10 @@ fn manifest_heroes() -> serde_json::Value {
     sor["stats"]["mana"] = json!(60);
     sor["stats"]["strength"] = json!(10);
     sor["stats"]["dexterity"] = json!(25);
-    m["heroes"] = json!({ "BA": m["hero"].clone(), "SOR": sor });
+    let mut pal = m["hero"].clone();
+    pal["class"] = json!("PA");
+    pal["name"] = json!("Paladin");
+    m["heroes"] = json!({ "BA": m["hero"].clone(), "SOR": sor, "PA": pal });
     m
 }
 
@@ -843,6 +849,169 @@ fn ranged_attack_respects_cooldown_and_picks_nearest_target() {
     assert!(n1 >= 1, "première flèche partie");
     run(&mut w, 100, Some(PlayerInput::RangedAttack { x: hx + 9, y: hy + 3 }));
     assert_eq!(w.missiles().len(), n1, "cooldown : pas de 2e flèche avant 800 ms");
+}
+
+// ---------------------------------------------------------------------------
+// Compétences (skills de départ, câblage skill → missile, save v2)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn sorceress_starts_with_firebolt_and_ranged_fires_it() {
+    let m = manifest_heroes();
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 16, "SOR");
+    w.clear_monsters();
+    // état : Fire Bolt niv 1, missile firebolt, sélection par défaut
+    let skills = w.hero_skills();
+    assert_eq!(skills.len(), 1);
+    assert_eq!(skills[0].code, "Fire Bolt");
+    assert_eq!(skills[0].level, 1);
+    assert_eq!(skills[0].missile.as_deref(), Some("firebolt"));
+    assert_eq!(w.active_skill().unwrap().code, "Fire Bolt");
+    // exposé HUD (sérialisé vers la page via hero_stats_json d2game)
+    let s = w.hero_stats();
+    assert_eq!(s.skill, "Fire Bolt");
+    assert_eq!(s.skill_level, 1);
+
+    // tir : c'est un firebolt (vel 20), PAS une flèche (vel 24)
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert!(w.spawn_monster("FA", hx + 8, hy));
+    let ev = run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    assert!(ev.iter().any(|e| matches!(e, GameEvent::MissileSpawned)));
+    assert_eq!(w.missiles().len(), 1);
+    assert_eq!(w.missiles()[0].def_id, "firebolt", "le skill actif décoche son missile");
+    assert_eq!(w.missiles()[0].elem, d2missiles::DamageType::Fire, "firebolt = élément feu");
+    // vol 8 tuiles / 20 tps = 400 ms ; dégâts OFFICIELS du skill (3–8 feu),
+    // pas les dégâts d'arme ×force de la flèche.
+    let mut hit = None;
+    for _ in 0..60 {
+        let ev = w.tick(50, None);
+        for e in ev {
+            if let GameEvent::MissileHit { target, dmg } = e {
+                hit = Some((target, dmg));
+            }
+        }
+        if hit.is_some() {
+            break;
+        }
+    }
+    let (target, dmg) = hit.expect("le firebolt touche le Fallen");
+    assert_eq!(target, 0);
+    assert!((3..=8).contains(&dmg), "dégâts firebolt niv 1 = 3..8, trouvé {dmg}");
+}
+
+#[test]
+fn melee_classes_default_melee_and_fallback_arrow() {
+    let m = manifest_heroes();
+    // BA : Bash mêlée — le tir à distance garde la flèche (fallback).
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m.clone(), 17, "BA");
+    assert_eq!(w.active_skill().map(|s| s.code.as_str()), Some("Bash"));
+    assert!(w.active_skill().unwrap().is_melee());
+    assert_eq!(w.hero_stats().skill, "Bash");
+    w.clear_monsters();
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert!(w.spawn_monster("FA", hx + 8, hy));
+    run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    assert_eq!(w.missiles()[0].def_id, "arrow", "mêlée : repli arrow");
+    assert_eq!(w.missiles()[0].elem, d2missiles::DamageType::Physical);
+
+    // PA : Sacrifice mêlée, même repli.
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m.clone(), 17, "PA");
+    assert_eq!(w.active_skill().map(|s| s.code.as_str()), Some("Sacrifice"));
+    assert!(w.active_skill().unwrap().is_melee());
+    w.clear_monsters();
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert!(w.spawn_monster("FA", hx + 8, hy));
+    run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    assert_eq!(w.missiles()[0].def_id, "arrow");
+
+    // Classe sans skill de départ (code hors charstats connu) : aucun skill,
+    // arrow quand même (jamais de panic). hero_code inconnu ⇒ aucun skills.
+    let mut mx = manifest_full();
+    mx.as_object_mut().unwrap().remove("heroes");
+    mx["hero"]["class"] = json!("XX");
+    let w = World::with_seed_and_hero(open_grid(56, 40), mx, 17, "");
+    assert_eq!(w.hero_code(), "XX");
+    assert!(w.hero_skills().is_empty());
+    assert!(w.active_skill().is_none());
+    assert_eq!(w.hero_stats().skill, "");
+}
+
+#[test]
+fn select_skill_switches_active_and_stats() {
+    let m = manifest_heroes();
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 18, "SOR");
+    // un seul skill au MVP : index 1 refusé, état inchangé (jamais de panic)
+    assert!(!w.select_skill(1));
+    assert_eq!(w.active_skill().unwrap().code, "Fire Bolt");
+    assert!(w.select_skill(0));
+    assert_eq!(w.hero_stats().skill, "Fire Bolt");
+}
+
+#[test]
+fn skills_survive_save_load_and_v1_saves_load_with_defaults() {
+    let m = manifest_heroes();
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m.clone(), 4242, "SOR");
+    run(&mut w, 500, None);
+    let w2 = World::load(&w.save()).expect("rechargement v2");
+    assert_eq!(w2.hero_skills(), w.hero_skills(), "skills persistés");
+    assert_eq!(w2.active_skill().unwrap().code, "Fire Bolt");
+    assert_eq!(w2.hero_stats().skill, "Fire Bolt");
+
+    // sauvegarde v2 SANS champ skills (page intermédiaire) : défauts de classe
+    let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    v.as_object_mut().unwrap().remove("skills");
+    v.as_object_mut().unwrap().remove("active_skill");
+    let w3 = World::load(&v.to_string()).expect("rechargement v2 sans skills");
+    assert_eq!(w3.hero_skills(), crate::skills::starting_skills("SOR"));
+    assert_eq!(w3.active_skill().unwrap().code, "Fire Bolt");
+
+    // sauvegarde v1 RÉELLE (ancienne page) : version 1, aucun champ skill
+    let mut v1 = v;
+    v1["version"] = serde_json::json!(1);
+    let w4 = World::load(&v1.to_string()).expect("rechargement v1 rétro-compat");
+    assert_eq!(w4.hero_skills(), crate::skills::starting_skills("SOR"));
+
+    // index actif corrompu (hors bornes) : défaut par classe, pas de panic
+    let mut v5: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    v5["active_skill"] = serde_json::json!(9);
+    let w5 = World::load(&v5.to_string()).expect("index hors bornes toléré");
+    assert_eq!(w5.active_skill().unwrap().code, "Fire Bolt");
+}
+
+#[test]
+fn sor_firebolt_vs_barbarian_arrow_diverge_on_seed() {
+    // Le câblage skill → missile ne dérive PAS le RNG monde : même graine,
+    // SOR et BA produisent des événements de tir identiques SAUF la nature du
+    // projectile (déterminisme préservé, contrat save bit-exact).
+    let shoot = |hero: &str| -> (Vec<GameEvent>, Vec<d2missiles::Missile>) {
+        let m = manifest_heroes();
+        let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 0xBEEF, hero);
+        w.clear_monsters();
+        let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+        assert!(w.spawn_monster("FA", hx + 10, hy));
+        run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 10, y: hy }));
+        let mut out = Vec::new();
+        for _ in 0..40 {
+            out.extend(w.tick(50, None));
+            if w.missiles().is_empty() {
+                break;
+            }
+        }
+        let evs: Vec<GameEvent> = out
+            .into_iter()
+            .filter(|e| matches!(e, GameEvent::MissileHit { .. } | GameEvent::MissileMissed { .. }))
+            .collect();
+        (evs, w.missiles().to_vec())
+    };
+    let (sor_ev, _) = shoot("SOR");
+    let (ba_ev, _) = shoot("BA");
+    // le jet de toucher (RNG monde) est identique : déterminisme intact
+    assert_eq!(
+        sor_ev.iter().map(|e| matches!(e, GameEvent::MissileHit { .. })).collect::<Vec<_>>(),
+        ba_ev.iter().map(|e| matches!(e, GameEvent::MissileHit { .. })).collect::<Vec<_>>(),
+        "même graine ⇒ mêmes jets de toucher, quelle que soit la classe"
+    );
+    assert!(!sor_ev.is_empty());
 }
 
 impl World {

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/d2mpq", "crates/d2tool", "crates/d2dc6", "crates/d2dcc", "crates/d2wasm", "crates/d2game", "crates/d2rules", "crates/d2missiles"]
+members = ["crates/d2mpq", "crates/d2tool", "crates/d2dc6", "crates/d2dcc", "crates/d2animdata", "crates/d2wasm", "crates/d2game", "crates/d2rules", "crates/d2missiles"]
 
 [profile.release]
 opt-level = "z"

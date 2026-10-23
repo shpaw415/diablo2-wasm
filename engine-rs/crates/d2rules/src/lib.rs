@@ -26,21 +26,71 @@
 //!   niveau 1 Normal de `assets/MonLvl.txt` : HP ×7/100, dégâts ×2/100,
 //!   XP ×30/100, AC effectif 6, TH effectif 8 (§2.1 de GAME-DATA.md).
 //! * XP : seuils cumulés niv 2..10, colonne Barbarian de `patch_experience.txt`.
-//! * Drops MVP : 60 % rien / 25 % or (~niveau×10) / 15 % potion heal 60 —
-//!   structure prête pour TreasureClassEx réel (phase 3).
+//! * Drops : TreasureClassEx réel v1.12 — TC du monstre (manifest
+//!   `stats.treasureClass`, ex. "Act 1 H2H A") → picks/NoDrop → sous-TC →
+//!   item final (`loot.rs`, données embarquées) ; repli 60 % rien / 25 % or /
+//!   15 % potion si la table est absente ou la TC inconnue.
 
 #![forbid(unsafe_code)]
 
 mod data;
+mod loot;
 mod path;
 mod rng;
 mod save;
+mod skills;
 mod world;
+
+// --- Socles règles data-driven v1.12 (impl-regles-skills, 2026-10-22) ---
+/// Parseur/évaluateur CalcString (socle A2 — synergies, ToHitCalc, passives).
+pub mod calc;
+/// Arbre de compétences 210 skills (C1-C4 : prereqs, synergies, missiles, dégâts).
+pub mod skills_tree;
+/// Stat/StatList génériques + dictionnaire ItemStatCost (socle A1).
+pub mod stats;
+/// Table XP 1-99 × 7 classes (D5).
+pub mod xp;
+
+// --- Items & loot v1.12 (impl-items-loot, F1-F7 / F2-F5, 2026-10-22) ---
+/// Affixes magiques MagicPrefix/Suffix (+AutoMagic parsé) — filtres, tirage pondéré.
+pub mod affixes;
+/// Item générique X×Y, grille 10×4 canFit, 8 slots + belt 4×4, stats dérivées.
+pub mod inventory;
+/// Descripteurs de propriétés (prop/param/min/max) + liste typée (socle Stat).
+pub mod item_props;
+/// Qualités de drop via ItemRatio.txt (unique/set/rare/magic/supérieur/normal/low).
+pub mod item_quality;
+/// Uniques + sets identifiés (uniqueitems/setitems/sets v1.12).
+pub mod uniques_sets;
+/// Marchands & gamble v1.12 (domaine G — stock/prix/réserve, impl-vendors).
+pub mod vendor;
+
+// --- Quêtes W13 (moteur d'états + authoring Acte I, 2026-10-23) ---
+/// Moteur de quêtes : QuestEvent typé → états → QuestReward ; authoring A1.
+/// Pur (aucune dépendance World) ; câblage world/game + save EN INTÉGRATION.
+pub mod quests;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod parity_tests;
 
+pub use skills::HeroSkill;
 pub use world::World;
+/// Rang de monstre + règle de spawn data-driven (impl-monstres-boss) —
+/// consommés par d2game (tables réelles → spawn_monster_rule).
+pub use world::{MonKind, SpawnRule};
+
+// -- Types items/loot purs, consommables par d2game (F1-F7) --
+pub use affixes::{AffixKind, AffixRec, AffixTables, ItemTypeSet};
+pub use inventory::{
+    BaseInfo, Belt, DerivedStats, EquipSlot, Equipment, InventoryGrid, Item, GRID_H, GRID_W,
+};
+pub use item_props::{PropDescriptor, RolledProp, StatProp};
+pub use item_quality::{DropRatioInfo, Quality, QualityFactors, QualityTables, RatioRow};
+pub use loot::GeneratedItem;
+pub use quests::{QuestDef, QuestEvent, QuestLog, QuestProgress, QuestReward, QuestState, QuestTrigger};
+pub use uniques_sets::{SetItemRec, SetRec, UniqueRec, UniquesSets};
 
 /// Projectiles (crate sœur pure) : système embarqué dans le `World`,
 /// re-exporté pour le rendu d2game (positions/sprites des missiles en vol).
@@ -158,10 +208,12 @@ pub enum ItemKind {
     Potion,
     /// Or.
     Gold,
-    /// Arme (réservé phase 3).
+    /// Arme (drop TreasureClassEx réel, `loot.rs`).
     Weapon,
-    /// Armure (réservé phase 3).
+    /// Armure (drop TreasureClassEx réel, `loot.rs`).
     Armor,
+    /// Divers (gemmes, runes, clés, parchemins… — non utilisable au MVP).
+    Misc,
 }
 
 /// Définition d'objet. `amount` = quantité d'or pour [`ItemKind::Gold`], 0 sinon.
@@ -231,4 +283,10 @@ pub struct HeroStats {
     pub walk_speed: f32,
     /// Soin d'une potion (`hp1` = 60).
     pub potion_heal: u32,
+    /// Code du skill actif (`skills.txt`, ex. `"Fire Bolt"` ; `""` = aucun).
+    #[serde(default)]
+    pub skill: String,
+    /// Niveau du skill actif (1 aux skills de départ).
+    #[serde(default)]
+    pub skill_level: u32,
 }

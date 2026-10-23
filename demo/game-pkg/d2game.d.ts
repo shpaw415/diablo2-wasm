@@ -41,11 +41,21 @@ export class D2Game {
      */
     inventory(): string;
     /**
+     * Current level as JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
+     * — HUD zone name + level-switch banner. `{}` if the key is unknown.
+     */
+    levelInfo(): string;
+    /**
      * Restore a world from `saveGame` JSON. Throws (`JsValue`) on invalid
      * save or a save from another map. Map/sprites are untouched.
      */
     loadGame(json: string): void;
     mapPixelSize(): Uint32Array;
+    /**
+     * Monster codes for the current level, parallel to the tick's monster
+     * indices — debug/E2E. JSON `["FA","ZM",…]`.
+     */
+    monsterCodes(): string;
     /**
      * Alive monster index nearest to a world point within `radius`
      * sub-tiles, or -1 (JS click router: attack vs move).
@@ -56,10 +66,12 @@ export class D2Game {
      * selected class code (`"BA"`, `"SOR"`, `"PA"`…, case-insensitive, default
      * `"BA"`): the hero's COF/DCC layers AND stats both come from
      * `manifest.heroes[code]` when present, else the legacy `hero` block.
+     * Initial level: `"town"`.
      */
     constructor(manifest_json: string, hero: string);
     /**
      * Feed one asset blob (manifest path + bytes), e.g. fetched files.
+     * Accepted any time — including between level switches (hot provide).
      */
     provide(path: string, bytes: Uint8Array): void;
     /**
@@ -82,16 +94,37 @@ export class D2Game {
      */
     spriteNotes(): string;
     /**
+     * Switch level: reloads DS1/DT1/collision from the provided (or hot-
+     * provided) bytes, carries the hero over (stats/inventory/xp), spawns the
+     * target level's monsters, and lands the hero at `(spawn_x, spawn_y)`
+     * (snapped to the nearest walkable sub-tile). Throws on unknown level or
+     * missing assets.
+     */
+    switchLevel(name: string, spawn_x: number, spawn_y: number): void;
+    /**
+     * Level-switch notes (degraded hero transfers…) as a JSON array.
+     */
+    switchNotes(): string;
+    /**
      * Advance the simulation. `input_json` (nullable) mirrors the
      * `PlayerInput` contract:
      * `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
      * · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
      * · `{"type":"useItem","slot":0}`.
-     * Returns the tick's `GameEvent`s as a JSON array string.
+     * Returns the tick's events as a JSON array string: the d2rules contract
+     * events ({"HeroMoved":…}…) plus the engine's multi-level extras
+     * `{"LevelSwitch":{"key":…,"name":…}}` / `{"LevelSwitchFailed":"…"}` —
+     * entering a warp zone switches the level INSIDE the tick, so the very
+     * next frame already renders the new level.
      */
     tick(dt_ms: number, input_json?: string | null): string;
     viewportHeight(): number;
     viewportWidth(): number;
+    /**
+     * Like [`D2Game::new`] with the initial level key from the manifest's
+     * `levels` block (`"town"`, `"bloodmoor"`…, case-insensitive).
+     */
+    static withLevel(manifest_json: string, hero: string, level: string): D2Game;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -108,8 +141,10 @@ export interface InitOutput {
     readonly d2game_heroState: (a: number) => [number, number];
     readonly d2game_heroStats: (a: number) => [number, number];
     readonly d2game_inventory: (a: number) => [number, number];
+    readonly d2game_levelInfo: (a: number) => [number, number];
     readonly d2game_loadGame: (a: number, b: number, c: number) => [number, number];
     readonly d2game_mapPixelSize: (a: number) => [number, number];
+    readonly d2game_monsterCodes: (a: number) => [number, number];
     readonly d2game_monsterNear: (a: number, b: number, c: number, d: number) => number;
     readonly d2game_new: (a: number, b: number, c: number, d: number) => [number, number, number];
     readonly d2game_provide: (a: number, b: number, c: number, d: number, e: number) => void;
@@ -118,9 +153,12 @@ export interface InitOutput {
     readonly d2game_screenToWorld: (a: number, b: number, c: number) => [number, number];
     readonly d2game_setViewport: (a: number, b: number, c: number) => void;
     readonly d2game_spriteNotes: (a: number) => [number, number];
+    readonly d2game_switchLevel: (a: number, b: number, c: number, d: number, e: number) => [number, number];
+    readonly d2game_switchNotes: (a: number) => [number, number];
     readonly d2game_tick: (a: number, b: number, c: number, d: number) => [number, number];
     readonly d2game_viewportHeight: (a: number) => number;
     readonly d2game_viewportWidth: (a: number) => number;
+    readonly d2game_withLevel: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __externref_table_dealloc: (a: number) => void;

@@ -1,0 +1,222 @@
+skilldesc	SkillPage	SkillRow	SkillColumn	IconCel	str name	str short	str long
+attack	0	0	0	2	skillname0	skillsd0	skillld0
+kick	0	0	0	0	skillname1	skillsd1	skillld1
+throw	0	0	0	6	skillname2	skillsd2	skillld2
+unsummon	0	0	0	4	skillname3	skillsd3	skillld3
+left hand throw	0	0	0	12	skillname4	skillsd4	skillld4
+left hand swing	0	0	0	10	skillname5	skillsd5	skillld5
+magic arrow	1	1	2	0	skillname6	skillsd6	skillld6
+fire arrow	1	1	3	2	skillname7	skillsd7	skillxld7
+inner sight	2	1	1	4	skillname8	skillsd8	skillld8
+critical strike	2	1	3	6	skillname9	skillsd9	skillld9
+jab	3	1	1	8	skillname10	skillsd10	skillld10
+cold arrow	1	2	1	10	skillname11	skillsd11	skillxld11
+multiple shot	1	2	2	12	skillname12	skillsd12	skillld12
+dodge	2	2	2	14	skillname13	skillsd13	skillld13
+power strike	3	2	2	16	skillname14	skillsd14	skillld14
+poison javelin	3	2	3	18	skillname15	skillsd15	skillld15
+exploding arrow	1	3	3	20	skillname16	skillsd16	skillxld16
+slow missiles	2	3	1	22	skillname17	skillsd17	skillld17
+avoid	2	3	2	24	skillname18	skillsd18	skillld18
+impale	3	3	1	26	skillname19	skillsd19	skillld19
+lightning bolt	3	3	3	28	skillname20	skillsd20	skillld20
+ice arrow	1	4	1	30	skillname21	skillsd21	skillxld21
+guided arrow	1	4	2	32	skillname22	skillsd22	skillld22
+penetrate	2	4	3	34	skillname23	skillsd23	skillld23
+charged strike	3	4	2	36	skillname24	skillsd24	skillld24
+plague javelin	3	4	3	38	skillname25	skillsd25	skillld25
+strafe	1	5	2	40	skillname26	skillsd26	skillld26
+immolation arrow	1	5	3	42	skillname27	skillsd27	skillxld27
+dopplezon	2	5	1	44	skillname28	skillsd28	skillld28
+evade	2	5	2	46	skillname29	skillsd29	skillld29
+fend	3	5	1	48	skillname30	skillsd30	skillld30
+freezing arrow	1	6	1	50	skillname31	skillsd31	skillxld31
+valkyrie	2	6	1	52	skillname32	skillsd32	skillld32
+pierce	2	6	3	54	skillname33	skillsd33	skillld33
+lightning strike	3	6	2	56	skillname34	skillsd34	skillld34
+lightning fury	3	6	3	58	skillname35	skillsd35	skillld35
+fire bolt	1	1	2	0	skillname36	skillsd36	skillld36
+warmth	1	1	3	2	skillname37	skillsd37	skillld37
+charged bolt	2	1	2	4	skillname38	skillsd38	skillld38
+ice bolt	3	1	2	6	skillname39	skillsd39	skillld39
+frozen armor	3	1	3	8	skillname40	skillsd40	skillld40
+inferno	1	2	1	10	skillname41	skillsd41	skillld41
+static field	2	2	1	12	skillname42	skillsd42	skillxld42
+telekinesis	2	2	3	14	skillname43	skillsd43	skillld43
+frost nova	3	2	1	16	skillname44	skillsd44	skillld44
+ice blast	3	2	2	18	skillname45	skillsd45	skillld45
+blaze	1	3	1	20	skillname46	skillsd46	skillld46
+fire ball	1	3	2	22	skillname47	skillsd47	skillld47
+nova	2	3	1	24	skillname48	skillsd48	skillld48
+lightning	2	3	2	26	skillname49	skillsd49	skillld49
+shiver armor	3	3	3	28	skillname50	skillsd50	skillld50
+fire wall	1	4	1	30	skillname51	skillsd51	skillld51
+enchant	1	4	3	32	skillname52	skillsd52	skillld52
+chain lightning	2	4	2	34	skillname53	skillsd53	skillld53
+teleport	2	4	3	36	skillname54	skillsd54	skillld54
+glacial spike	3	4	2	38	skillname55	skillsd55	skillld55
+meteor	1	5	2	40	skillname56	skillsd56	skillld56
+thunder storm	2	5	1	42	skillname57	skillsd57	skillld57
+energy shield	2	5	3	44	skillname58	skillsd58	skillld58
+blizzard	3	5	1	46	skillname59	skillsd59	skillld59
+chilling armor	3	5	3	48	skillname60	skillsd60	skillld60
+fire mastery	1	6	2	50	skillsname61	skillsd61	skillld61
+hydra	1	6	3	52	skillname62	skillsd62	skillld62
+lightning mastery	2	6	2	54	skillname63	skillxsd63	skillxld63
+frozen orb	3	6	1	56	skillname64	skillsd64	skillld64
+cold mastery	3	6	2	58	skillname65	skillsd65	skillld65
+amplify damage	1	1	2	0	skillname66	skillsd66	skillld66
+teeth	2	1	2	2	skillname67	skillsd67	skillld67
+bone armor	2	1	3	4	skillname68	skillsd68	skillld68
+skeleton mastery	3	1	1	6	skillname69	skillsd69	skillld69
+raise skeleton	3	1	3	8	skillname70	skillsd70	skillld70
+dim vision	1	2	1	10	skillname71	skillsd71	skillld71
+weaken	1	2	3	12	skillname72	skillsd72	skillld72
+poison dagger	2	2	1	14	skillname73	skillsd73	skillld73
+corpse explosion	2	2	2	16	skillname74	skillsd74	skillld74
+clay golem	3	2	2	18	skillname75	skillsd75	skillld75
+iron maiden	1	3	2	20	skillname76	skillsd76	skillld76
+terror	1	3	3	22	skillname77	skillsd77	skillld77
+bone wall	2	3	3	24	skillname78	skillsd78	skillld78
+golem mastery	3	3	1	26	skillname79	skillsd79	skillld79
+raise skeletal mage	3	3	3	28	skillname80	skillsd80	skillld80
+confuse	1	4	1	30	skillname81	skillsd81	skillld81
+life tap	1	4	2	32	skillname82	skillsd82	skillld82
+poison explosion	2	4	1	34	skillname83	skillsd83	skillld83
+bone spear	2	4	2	36	skillname84	skillsd84	skillld84
+bloodgolem	3	4	2	38	skillname85	skillsd85	skillld85
+attract	1	5	1	40	skillname86	skillsd86	skillxld86
+decrepify	1	5	3	42	skillname87	skillsd87	skillld87
+bone prison	2	5	3	44	skillname88	skillsd88	skillld88
+summon resist	3	5	1	46	skillname89	skillsd89	skillld89
+irongolem	3	5	2	48	skillname90	skillsd90	skillld90
+lower resist	1	6	2	50	skillname91	skillsd91	skillld91
+poison nova	2	6	1	52	skillname92	skillsd92	skillld92
+bone spirit	2	6	2	54	skillname93	skillsd93	skillld93
+firegolem	3	6	2	56	skillname94	skillsd94	skillld94
+revive	3	6	3	58	skillname95	skillsd95	skillld95
+sacrifice	1	1	1	0	skillname96	skillsd96	skillld96
+smite	1	1	3	2	skillname97	skillsd97	skillld97
+might	2	1	1	4	skillname98	skillsd98	skillld98
+prayer	3	1	1	6	skillname99	skillsd99	skillld99
+resist fire	3	1	3	8	skillname100	skillsd100	skillld100
+holy bolt	1	2	2	10	skillname101	skillsd101	skillld101
+holy fire	2	2	2	12	skillname102	skillsd102	skillld102
+thorns	2	2	3	14	skillname103	skillsd103	skillld103
+defiance	3	2	2	16	skillname104	skillsd104	skillld104
+resist cold	3	2	3	18	skillname105	skillsd105	skillld105
+zeal	1	3	1	20	skillname106	skillsd106	skillld106
+charge	1	3	3	22	skillname107	skillsd107	skillld107
+blessed aim	2	3	1	24	skillname108	skillsd108	skillld108
+cleansing	3	3	1	38	skillname109	skillsd109	skillld109
+resist lightning	3	3	3	28	skillname110	skillsd110	skillld110
+vengeance	1	4	1	40	skillname111	skillsd111	skillld111
+blessed hammer	1	4	2	32	skillname112	skillsd112	skillld112
+concentration	2	4	1	34	skillname113	skillsd113	skillld113
+holy freeze	2	4	2	36	skillname114	skillsd114	skillld114
+vigor	3	4	2	26	skillname115	skillsd115	skillld115
+conversion	1	5	1	30	skillname116	skillsd116	skillld116
+holy shield	1	5	3	42	skillname117	skillsd117	skillld117
+holy shock	2	5	2	44	skillname118	skillsd118	skillxld118
+sanctuary	2	5	3	46	skillname119	skillsd119	skillld119
+meditation	3	5	1	48	skillname120	skillsd120	skillld120
+fist of the heavens	1	6	2	50	skillname121	skillsd121	skillld121
+fanaticism	2	6	1	52	skillname122	skillxsd122	skillxld122
+conviction	2	6	3	56	skillname123	skillxsd123	skillld123
+redemption	3	6	2	54	skillname124	skillsd124	skillxld124
+salvation	3	6	3	58	skillname125	skillsd125	skillld125
+bash	1	1	2	0	skillname126	skillsd126	skillld126
+sword mastery	2	1	1	2	skillname127	skillsd127	skillld127
+axe mastery	2	1	2	4	skillname128	skillsd128	skillld128
+mace mastery	2	1	3	6	skillname129	skillsd129	skillld129
+howl	3	1	1	8	skillname130	skillsd130	skillld130
+find potion	3	1	3	10	skillname131	skillsd131	skillld131
+leap	1	2	1	12	skillname132	skillsd132	skillld132
+double swing	1	2	3	14	skillname133	skillsd133	skillld133
+pole arm mastery	2	2	1	16	skillname134	skillsd134	skillld134
+throwing mastery	2	2	2	18	skillname135	skillsd135	skillld135
+spear mastery	2	2	3	20	skillname136	skillsd136	skillld136
+taunt	3	2	1	22	skillname137	skillsd137	skillld137
+shout	3	2	2	24	skillname138	skillsd138	skillld138
+stun	1	3	2	26	skillname139	skillsd139	skillld139
+double throw	1	3	3	28	skillname140	skillsd140	skillld140
+increased stamina	2	3	1	30	skillname141	skillsd141	skillld141
+find item	3	3	3	32	skillname142	skillsd142	skillld142
+leap attack	1	4	1	34	skillname143	skillsd143	skillld143
+concentrate	1	4	2	36	skillname144	skillsd144	skillld144
+iron skin	2	4	3	38	skillname145	skillsd145	skillld145
+battle cry	3	4	1	40	skillname146	skillsd146	skillld146
+frenzy	1	5	3	42	skillname147	skillsd147	skillld147
+increased speed	2	5	1	44	skillname148	skillsd148	skillld148
+battle orders	3	5	2	46	skillname149	skillsd149	skillld149
+grim ward	3	5	3	48	skillname150	skillsd150	skillld150
+whirlwind	1	6	1	50	skillname151	skillsd151	skillld151
+berserk	1	6	2	52	skillname152	skillsd152	skillld152
+natural resistance	2	6	3	54	skillname153	skillsd153	skillld153
+war cry	3	6	1	56	skillname154	skillsd154	skillld154
+battle command	3	6	2	58	skillname155	skillsd155	skillld155
+scroll of identify	0	0	0	14	skillname217	skillsd217	skillld217
+book of identify	0	0	0	14	skillname218	skillsd218	skillld218
+scroll of townportal	0	0	0	18	skillname219	skillsd219	skillld219
+book of townportal	0	0	0	18	skillname220	skillsd220	skillld220
+raven	1	1	2	0	Skillname222	Skillsd222	Skillld222
+plague poppy	1	1	3	2	Skillname223	Skillsd223	Skillld223
+wearwolf	2	1	1	20	Skillname224	Skillsd224	Skillld224
+shape shifting	2	1	2	52	Skillname225	Skillsd225	Skillld225
+firestorm	3	1	1	32	Skillname226	Skillsd226	Skillld226
+oak sage	1	2	1	16	Skillname227	Skillsd227	Skillld227
+summon spirit wolf	1	2	2	6	Skillname228	Skillsd228	Skillld228
+wearbear	2	2	3	22	Skillname229	Skillsd229	Skillld229
+molten boulder	3	2	1	34	Skillname230	Skillsd230	Skillld230
+arctic blast	3	2	3	36	Skillname231	Skillsd231	Skillld231
+cycle of life	1	3	3	8	Skillname232	Skillsd232	Skillld232
+feral rage	2	3	1	54	Skillname233	Skillsd233	Skillld233
+maul	2	3	3	56	Skillname234	Skillsd234	Skillld234
+eruption	3	3	1	38	Skillname235	Skillsd235	Skillld235
+cyclone armor	3	3	3	40	Skillname236	Skillsd236	Skillld236
+heart of wolverine	1	4	1	10	Skillname237	Skillsd237	Skillld237
+summon fenris	1	4	2	12	Skillname238	Skillsd238	Skillld238
+rabies	2	4	1	24	Skillname239	Skillsd239	Skillld239
+fire claws	2	4	2	26	Skillname240	Skillsd240	Skillld240
+twister	3	4	2	42	Skillname241	Skillsd241	Skillld241
+vines	1	5	3	14	Skillname242	Skillsd242	Skillld242
+hunger	2	5	2	58	Skillname243	Skillsd243	Skillld243
+shock wave	2	5	3	28	Skillname244	Skillsd244	Skillld244
+volcano	3	5	1	44	Skillname245	Skillsd245	Skillld245
+tornado	3	5	2	46	Skillname246	Skillsd246	Skillld246
+spirit of barbs	1	6	1	4	Skillname247	Skillsd247	Skillld247
+summon grizzly	1	6	2	18	Skillname248	Skillsd248	Skillld248
+fury	2	6	1	30	Skillname249	Skillsd249	Skillld249
+armageddon	3	6	1	50	Skillname250	Skillsd250	Skillld250
+hurricane	3	6	2	48	Skillname251	Skillsd251	Skillld251
+fire trauma	1	1	2	0	Skillname252	Skillsd252	Skillld252
+claw mastery	2	1	2	20	Skillname253	Skillsd253	Skillld253
+psychic hammer	2	1	3	22	Skillname254	Skillsd254	Skillld254
+tiger strike	3	1	2	40	Skillname255	Skillsd255	Skillld255
+dragon talon	3	1	3	42	Skillname256	Skillsd256	Skillld256
+shock field	1	2	1	2	Skillname257	Skillsd257	Skillld257
+blade sentinel	1	2	3	4	Skillname258	Skillsd258	Skillld258
+quickness	2	2	1	36	Skillname259	Skillsd259	Skillld259
+fists of fire	3	2	1	44	Skillname260	Skillsd260	Skillld260
+dragon claw	3	2	3	46	Skillname261	Skillsd261	Skillld261
+charged bolt sentry	1	3	1	6	Skillname262	Skillsd262	Skillld262
+wake of fire sentry	1	3	2	8	Skillname263	Skillsd263	Skillld263
+weapon block	2	3	2	26	Skillname264	Skillsd264	Skillld264
+cloak of shadows	2	3	3	24	Skillname265	Skillsd265	Skillld265
+cobra strike	3	3	2	50	Skillname266	Skillsd266	Skillld266
+blade fury	1	4	3	10	Skillname267	Skillsd267	Skillld267
+fade	2	4	1	30	Skillname268	Skillsd268	Skillld268
+shadow warrior	2	4	2	38	Skillname269	Skillsd269	Skillld269
+claws of thunder	3	4	1	58	Skillname270	Skillsd270	Skillld270
+dragon tail	3	4	3	48	Skillname271	Skillsd271	Skillld271
+lightning sentry	1	5	1	12	Skillname272	Skillsd272	Skillld272
+inferno sentry	1	5	2	14	Skillname273	Skillsd273	Skillld273
+mind blast	2	5	3	34	Skillname274	Skillsd274	Skillld274
+blades of ice	3	5	1	52	Skillname275	Skillsd275	Skillld275
+dragon flight	3	5	3	54	Skillname276	Skillsd276	Skillld276
+death sentry	1	6	1	16	Skillname277	Skillsd277	Skillld277
+blade shield	1	6	3	18	Skillname278	Skillsd278	Skillld278
+venom	2	6	1	28	Skillname279	Skillsd279	Skillld279
+shadow master	2	6	2	32	Skillname280	Skillsd280	Skillld280
+royal strike	3	6	2	56	Skillname281	Skillsd281	Skillld281
+delerium change	0	0	0	2	Runeword22	Runeword22	Runeword22

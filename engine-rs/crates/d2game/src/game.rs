@@ -16,14 +16,50 @@ use std::collections::BTreeMap;
 use serde_json::Value;
 
 use crate::compose::{self, ComposedMap};
-use crate::ds1;
+use crate::drlg;
+use crate::ds1::{self, Ds1};
 use crate::dt1::{self, Dt1Tile};
+use crate::levels;
+use crate::monsters::{
+    plan_level_spawns, LevelSpawnPlan, MonLvl, MonStats, MonUMods, SuperUniques,
+};
 use crate::pal::MapPalette;
 use crate::sprite::{sprite_palette, SpriteFrame, SpriteSet};
-use crate::world::{AnimState, Entity, GameEvent, PlayerInput, World};
+use crate::world::{AnimState, Entity, GameEvent, MonKind, PlayerInput, SpawnRule, World};
 
 pub const DEFAULT_VIEWPORT_W: u32 = 800;
 pub const DEFAULT_VIEWPORT_H: u32 = 600;
+
+/// Asset optionnel `AnimData.d2` (extraits MPQ v1.12, `docs/GAME-DATA.md`) :
+/// quand il est fourni via [`GameCore::provide`], chaque sprite set reçoit
+/// les frames/speed officiels de son token COF (audit od2-features-formats
+/// #19) ; sinon le comportement historique (octets COF) est conservé.
+pub const ANIMDATA_ASSET: &str = "assets/animdata/AnimData.d2";
+
+/// Asset optionnel `patch_levels.txt` (levels.txt final v1.12, W01) : quand
+/// il est fourni via [`GameCore::provide`], le moteur branche le graphe
+/// Vis/Warp (W04) et le DRLG wilderness seedé (W02) ; sinon — ou si la
+/// table est illisible — le manifest historique reste l'unique source
+/// (fallback gracieux, zéro régression).
+pub const LEVELS_ASSET: &str = "assets/patch_levels.txt";
+
+/// Assets optionnels du contenu monstre data-driven (W06-W08, brief
+/// `impl-monstres-boss`) : TOUS requis pour activer le spawn data-driven ;
+/// absents ou illisibles ⇒ repli intégral sur le chemin historique (codes du
+/// manifest, `DEFAULT_OUTDOOR_MONSTERS`), jamais fatal.
+pub const MONSTATS_ASSET: &str = "assets/patch_monstats.txt";
+pub const MONUMOD_ASSET: &str = "assets/monumod.txt";
+pub const SUPERUNIQUES_ASSET: &str = "assets/superuniques.txt";
+pub const MONLVL_ASSET: &str = "assets/MonLvl.txt";
+
+/// Les 4 tables monstre v1.12 parsées (`monsters.rs`).
+#[derive(Debug, Clone)]
+pub struct MonsterTables {
+    pub monstats: MonStats,
+    pub monumod: MonUMods,
+    pub superuniques: SuperUniques,
+    pub monlvl: MonLvl,
+}
 
 /// Anti-rebond après une transition : le héros arrive à quelques tuiles de la
 /// zone warp de retour — ce délai empêche un va-et-vient instantané.
@@ -41,6 +77,9 @@ const MONSTER_SPAWN_CLEAR_OF_WARP: f32 = 10.0;
 pub struct LevelDef {
     /// Clé manifest normalisée ("town" | "bloodmoor"…).
     pub key: String,
+    /// Id levels.txt (`levelsId` du bloc, W01) — relie le niveau au graphe
+    /// Vis/Warp et au DRLG seedé.
+    pub levels_id: Option<u32>,
     /// Nom affichable (`nameDisplay` > `name` > clé).
     pub name: String,
     pub ds1: String,
@@ -49,6 +88,9 @@ pub struct LevelDef {
     /// Codes monstres à spawn (`monsters` du bloc ; [] pour le town — zone
     /// sûre —, palette FA/ZM/SI par défaut pour un niveau extérieur).
     pub monsters: Vec<String>,
+    /// Boss de quête du niveau (W11) — code `manifest.bosses` (ex. "AN"
+    /// andariel), spawné SEUL hors des packs, loin du héros. `None` = aucun.
+    pub boss: Option<String>,
     /// Zone de transition vers un autre niveau (aucune si absente).
     pub warp: Option<WarpDef>,
 }
@@ -71,12 +113,16 @@ pub struct LevelSwitchInfo {
 }
 
 /// Événements du tick : ceux du monde (contrat d2rules) + les événements
-/// propres au moteur multi-niveaux (transitions, échecs de transition).
+/// propres au moteur multi-niveaux (transitions, échecs de transition) + les
+/// événements de quête (mort d'un boss, W11).
 #[derive(Debug, Clone)]
 pub enum CoreEvent {
     World(GameEvent),
     LevelSwitch(LevelSwitchInfo),
     LevelSwitchFailed(String),
+    /// Un boss de quête est mort (`manifest.bosses[].questEvent`, ex.
+    /// `"andariel_dead"`) — une quête/fin l'écoutera (W11/W13).
+    QuestEvent { id: String },
 }
 
 impl CoreEvent {
@@ -87,6 +133,7 @@ impl CoreEvent {
             CoreEvent::World(e) => serde_json::to_value(e).unwrap_or(Value::Null),
             CoreEvent::LevelSwitch(i) => serde_json::json!({ "LevelSwitch": i }),
             CoreEvent::LevelSwitchFailed(m) => serde_json::json!({ "LevelSwitchFailed": m }),
+            CoreEvent::QuestEvent { id } => serde_json::json!({ "QuestEvent": { "id": id } }),
         }
     }
 }
@@ -112,12 +159,36 @@ pub struct GameCore {
     /// aux spawns (d2game choisit les codes par niveau) et aux retraits
     /// (MonsterDied retire l'index, cf. contrat d2rules).
     mon_codes: Vec<String>,
+    /// Rangs (W08) par index de `monsters()` — parallèle à `mon_codes`,
+    /// alimenté par le plan data-driven (champion/unique/super-unique/boss).
+    mon_kinds: Vec<MonKind>,
+    /// Noms affichables par index (super-uniques nommés W10, boss W11) —
+    /// vide pour un monstre sans nom.
+    mon_names: Vec<String>,
+    /// Tables monstre v1.12 (W06-W08) si les 4 assets sont fournis et
+    /// lisibles — `None` sinon (repli historique intégral).
+    mon_tables: Option<MonsterTables>,
+    /// Événements de quête par code monstre (`manifest.bosses[].questEvent`,
+    /// W11) — émis à la mort du monstre correspondant.
+    quest_events: BTreeMap<String, String>,
     /// Délai anti-rebond restant après une transition (ms).
     warp_cd_ms: u32,
     world: Option<World>,
     /// Héros demandé ("BA"|"SOR"|"PA"…, normalisé uppercase) — résolu contre
     /// `manifest.heroes` (retombée `hero` à l'ancienne via d2rules).
     hero_request: String,
+    /// AnimData.d2 parsé si l'asset [`ANIMDATA_ASSET`] a été fourni — `None`
+    /// sinon (fallback historique, zéro changement de comportement).
+    animdata: Option<d2animdata::AnimationData>,
+    /// Tables de niveaux v1.12 (W01) si [`LEVELS_ASSET`] fourni — `None`
+    /// sinon (repli manifest historique intégral).
+    tables: Option<levels::LevelTables>,
+    /// Graphe Vis/Warp (W04) dérivé des tables — `None` sans tables.
+    warp_graph: Option<levels::WarpGraph>,
+    /// Graine de partie : combine la graine DRLG de chaque niveau (W02) —
+    /// même graine ⇒ mêmes cartes, parties différentes ⇒ mondes différents.
+    /// 0 par défaut (cartes stables d'un boot à l'autre, historique respecté).
+    game_seed: u64,
     vw: u32,
     vh: u32,
     cam_x: f32,
@@ -162,9 +233,17 @@ impl GameCore {
             sprite_notes: Vec::new(),
             switch_notes: Vec::new(),
             mon_codes: Vec::new(),
+            mon_kinds: Vec::new(),
+            mon_names: Vec::new(),
+            mon_tables: None,
+            quest_events: BTreeMap::new(),
             warp_cd_ms: 0,
             world: None,
             hero_request,
+            animdata: None,
+            tables: None,
+            warp_graph: None,
+            game_seed: 0,
             vw: DEFAULT_VIEWPORT_W,
             vh: DEFAULT_VIEWPORT_H,
             cam_x: 0.0,
@@ -181,6 +260,19 @@ impl GameCore {
         let base = lower.rsplit('/').next().unwrap_or(&lower).to_string();
         self.assets.insert(lower, bytes.clone());
         self.assets.entry(base).or_insert(bytes);
+    }
+
+    /// Fixe la graine de partie (W02) : chaque niveau DRLG dérive sa graine
+    /// de `drlg::level_seed(game_seed, clé)` — même graine ⇒ mêmes cartes,
+    /// graine différente ⇒ monde différent, tous déterministes. À appeler
+    /// avant `finalize`/`switch_level` (la carte est générée au chargement).
+    pub fn set_game_seed(&mut self, seed: u64) {
+        self.game_seed = seed;
+    }
+
+    /// Graine de partie courante (0 par défaut — cartes stables par boot).
+    pub fn game_seed(&self) -> u64 {
+        self.game_seed
     }
 
     fn asset(&self, path: &str) -> Result<&Vec<u8>, String> {
@@ -203,6 +295,27 @@ impl GameCore {
         let hero_code = d2rules::resolve_hero_code(&self.manifest, &self.hero_request);
         let mut sprites = BTreeMap::new();
         let mut notes: Vec<String> = Vec::new();
+        // AnimData.d2 (optionnel) : si fourni, les sets recevront les
+        // frames/speed officiels ; un fichier illisible produit une note,
+        // pas un échec (fallback octets COF).
+        self.animdata = match self.asset(ANIMDATA_ASSET) {
+            Ok(bytes) => match d2animdata::AnimationData::load(bytes) {
+                Ok(ad) => {
+                    notes.push(format!(
+                        "animdata branché : {} records / {} tokens ({})",
+                        ad.total_records(),
+                        ad.entry_count(),
+                        ANIMDATA_ASSET
+                    ));
+                    Some(ad)
+                }
+                Err(e) => {
+                    notes.push(format!("animdata fourni mais illisible ({e}) — repli octets COF"));
+                    None
+                }
+            },
+            Err(_) => None, // asset absent : fallback historique, pas une erreur
+        };
         if let Some(hero_def) = hero_def_for(&self.manifest, &hero_code) {
             Self::build_entity_sets("hero", &hero_def, &mut sprites, &mut notes, self)?;
         } else {
@@ -217,8 +330,48 @@ impl GameCore {
                 Self::build_entity_sets(&code, m, &mut sprites, &mut notes, self)?;
             }
         }
+        // Bosses de quête (W11) : sets de sprites sous leur CODE (ex. "AN"),
+        // jamais auto-spawnés — posés par le bloc `boss` d'un niveau.
+        if let Some(list) = self.manifest.get("bosses").and_then(|b| b.as_array()) {
+            for b in list {
+                let code = b.get("code").and_then(|c| c.as_str()).unwrap_or("??").to_string();
+                Self::build_entity_sets(&code, b, &mut sprites, &mut notes, self)?;
+                if let Some(ev) = b.get("questEvent").and_then(|e| e.as_str()) {
+                    self.quest_events.insert(code.to_ascii_uppercase(), ev.to_string());
+                }
+            }
+        }
         self.sprites = sprites;
         self.sprite_notes = notes;
+
+        // --- tables de niveaux (W01/W04, optionnelles) ----------------------
+        // Asset fourni ⇒ graphe Vis/Warp branché + DRLG seedé actif pour les
+        // niveaux DrlgType 3 supportés ; illisible ⇒ note + repli manifest.
+        match self.asset(LEVELS_ASSET) {
+            Ok(bytes) => match levels::LevelTables::parse(&String::from_utf8_lossy(bytes)) {
+                Ok(t) => {
+                    let g = levels::WarpGraph::build(&t);
+                    self.switch_notes.push(format!(
+                        "tables de niveaux branchées (W01/W04) : {} records, graphe Vis/Warp {} liens",
+                        t.len(),
+                        g.edge_count()
+                    ));
+                    self.tables = Some(t);
+                    self.warp_graph = Some(g);
+                }
+                Err(e) => {
+                    self.switch_notes
+                        .push(format!("tables de niveaux illisibles ({e}) — repli manifest"));
+                }
+            },
+            Err(_) => {} // asset absent : comportement historique, pas une note
+        }
+
+        // --- tables monstre (W06-W08, optionnelles) -------------------------
+        // Les 4 assets fournis et lisibles ⇒ spawn data-driven actif
+        // (planches MonDen/packs/champions/uniques/super-uniques/MonLvl) ;
+        // sinon repli historique intégral (codes manifest, jamais fatal).
+        self.mon_tables = self.load_monster_tables();
 
         // --- niveau initial : carte + monde + monstres ----------------------
         let def = self.resolve_level_def(&self.level_name)?;
@@ -231,7 +384,10 @@ impl GameCore {
     }
 
     /// Résout la définition d'un niveau : `levels.{key}` ; retombée sur le bloc
-    /// `level` historique pour "town" (avec ou sans bloc `levels`).
+    /// `level` historique pour "town" (avec ou sans bloc `levels`). Avec les
+    /// tables branchées (W01/W04), accepte aussi les clés par id de table —
+    /// `"2"` ou `"level:2"` — résolues vers le bloc manifest portant ce
+    /// `levelsId` (les transitions peuvent viser un id levels.txt).
     fn resolve_level_def(&self, key: &str) -> Result<LevelDef, String> {
         let norm = key.trim().to_ascii_lowercase();
         let key = if norm.is_empty() { "town".to_string() } else { norm };
@@ -243,6 +399,19 @@ impl GameCore {
         {
             return LevelDef::from_manifest(&key, block);
         }
+        // Résolution par id de table (W04) : "7" / "level:7" → bloc manifest
+        // dont `levelsId` vaut 7. Sans tables, les ids n'ont pas de sens.
+        let id_key = key.strip_prefix("level:").unwrap_or(&key);
+        if let Ok(id) = id_key.parse::<u32>() {
+            if self.tables.is_some() {
+                if let Some((block_key, block)) = self.manifest_block_for_level_id(id) {
+                    return LevelDef::from_manifest(&block_key, block);
+                }
+                return Err(format!(
+                    "tables : niveau {id} sans bloc manifest (assets ds1/dt1/palette introuvables)"
+                ));
+            }
+        }
         if let Some(levels) = self.manifest.get("levels").and_then(|l| l.as_object()) {
             Err(format!(
                 "manifest: niveau inconnu \"{key}\" (disponibles : {})",
@@ -251,6 +420,63 @@ impl GameCore {
         } else {
             Err(format!("manifest: niveau \"{key}\" indisponible (pas de bloc levels)"))
         }
+    }
+
+    /// Le bloc `levels.*` du manifest dont `levelsId` vaut `id` (clé incluse).
+    fn manifest_block_for_level_id(&self, id: u32) -> Option<(String, &Value)> {
+        self.manifest
+            .get("levels")?
+            .as_object()?
+            .iter()
+            .find(|(_, block)| block.get("levelsId").and_then(|v| v.as_u64()) == Some(id as u64))
+            .map(|(k, block)| (k.clone(), block))
+    }
+
+    /// Ce niveau doit-il passer par le DRLG seedé ? Oui si les tables sont
+    /// branchées, que le record levels.txt existe (`levelsId`) et déclare un
+    /// wilderness (DrlgType 3), et que [`drlg::supports`] couvre le niveau
+    /// (phase 1 : Blood Moor — banque de presets + tileset unifié extraits).
+    fn drlg_applies(&self, def: &LevelDef) -> bool {
+        let Some(tables) = &self.tables else { return false };
+        let Some(id) = def.levels_id else { return false };
+        let Some(rec) = tables.get(id) else { return false };
+        rec.drlg_type == 3 && drlg::supports(&def.key)
+    }
+
+    /// Chemin historique : DS1 figé du manifest + DT1 résolus par .tg1.
+    fn build_frozen_tiles(&self, def: &LevelDef) -> Result<(Ds1, Vec<Dt1Tile>), String> {
+        let ds1_bytes = self.asset(&def.ds1)?.clone();
+        let ds1 = ds1::decode_ds1(&ds1_bytes).map_err(|e| format!("{}: {e:?}", def.ds1))?;
+        let mut tilesets: Vec<Dt1Tile> = Vec::new();
+        for tg1 in &ds1.files {
+            let container = resolve_container(tg1, &def.dt1);
+            let bytes = self.asset(&container)?.clone();
+            let mut tiles = dt1::decode_dt1(&bytes).map_err(|e| format!("{container}: {e:?}"))?;
+            tilesets.append(&mut tiles);
+        }
+        Ok((ds1, tilesets))
+    }
+
+    /// Chemin DRLG (W02) : tuiles réelles des 8 conteneurs unifiés (ordre =
+    /// [`drlg::UNIFIED_FILES`], résolus par la liste `dt1` du niveau) →
+    /// comptes de tuiles → génération seedée du layout. L'ordre de
+    /// concaténation produit ici est exactement celui que la boucle
+    /// historique aurait suivi sur les fichiers du [`Ds1`] généré — les
+    /// indices des couches générées tombent donc dans le bon espace.
+    fn build_drlg_tiles(&self, def: &LevelDef) -> Result<(Ds1, Vec<Dt1Tile>), String> {
+        let mut tilesets: Vec<Dt1Tile> = Vec::new();
+        let mut counts: Vec<usize> = Vec::with_capacity(drlg::UNIFIED_FILES.len());
+        for tg1 in drlg::UNIFIED_TG1 {
+            let container = resolve_container(tg1, &def.dt1);
+            let bytes = self.asset(&container)?.clone();
+            let tiles = dt1::decode_dt1(&bytes).map_err(|e| format!("{container}: {e:?}"))?;
+            counts.push(tiles.len());
+            tilesets.extend(tiles);
+        }
+        let counts = drlg::UnifiedCounts::from_slices(&counts)?;
+        let seed = drlg::level_seed(self.game_seed, &def.key);
+        let (ds1, _stats) = drlg::generate_bloodmoor(seed, &counts)?;
+        Ok((ds1, tilesets))
     }
 
     /// (Re)charge un niveau : palette, DS1+DT1 (mapping .tg1 par niveau),
@@ -263,19 +489,38 @@ impl GameCore {
         self.map_rgba = build_map_rgba_lut(&raw_pal, 0.7);
         self.sprite_pal = sprite_palette(&raw_pal);
 
-        // --- tilesets, résolution .tg1 → DT1 du niveau --------------------
-        let ds1_bytes = self.asset(&def.ds1)?.clone();
-        let ds1 = ds1::decode_ds1(&ds1_bytes).map_err(|e| format!("{}: {e:?}", def.ds1))?;
-        let mut tilesets: Vec<Dt1Tile> = Vec::new();
-        for tg1 in &ds1.files {
-            let container = resolve_container(tg1, &def.dt1);
-            let bytes = self.asset(&container)?.clone();
-            let mut tiles = dt1::decode_dt1(&bytes).map_err(|e| format!("{container}: {e:?}"))?;
-            tilesets.append(&mut tiles);
+        // --- tilesets + layout, résolution .tg1 → DT1 du niveau -------------
+        // Deux chemins : DRLG seedé (W02) quand les tables sont branchées et
+        // que le niveau est un wilderness supporté (Blood Moor phase 1) —
+        // le layout est GÉNÉRÉ en mémoire depuis les presets, seedé par
+        // partie ; sinon le DS1 figé du manifest (comportement historique).
+        // Tout échec DRLG retombe sur le DS1 figé avec note (jamais fatal).
+        let mut drlg_used = false;
+        let (ds1, tilesets) = match self.drlg_applies(def) {
+            true => match self.build_drlg_tiles(def) {
+                Ok(tiles) => {
+                    drlg_used = true;
+                    tiles
+                }
+                Err(e) => {
+                    self.switch_notes
+                        .push(format!("niveau {} : DRLG en échec ({e}) — repli DS1 figé", def.key));
+                    self.build_frozen_tiles(def)?
+                }
+            },
+            false => self.build_frozen_tiles(def)?,
+        };
+        if drlg_used {
+            self.switch_notes.push(format!(
+                "drlg seedé actif (W02) : {} 72×72 généré, graine partie {}",
+                def.key, self.game_seed
+            ));
         }
 
         // --- map ----------------------------------------------------------
-        let map = compose::compose(&ds1, &tilesets);
+        // Variation seedée des tuiles (Go getRandomTile) : graine par clé
+        // de niveau — même niveau ⇒ même carte, indépendamment du combat.
+        let map = compose::compose_seeded(&ds1, &tilesets, fnv1a(&def.key));
         self.cam_x = 0.0;
         self.cam_y = 0.0;
 
@@ -354,68 +599,301 @@ impl GameCore {
         Ok(LevelSwitchInfo { key: def.key, name: def.name })
     }
 
-    /// Spawn les monstres du niveau chargé : town = zone sûre (aucun monstre),
-    /// niveaux extérieurs = la liste `monsters` du bloc (FA/ZM/SI par défaut),
-    /// sur tuiles marchables aléatoires (RNG déterministe par niveau), à
-    /// distance du héros, des autres monstres et de la zone warp.
+    /// Charge et parse les 4 tables monstre (`monsters.rs`) — `None` si un
+    /// asset manque ou est illisible (repli historique, note de visibilité).
+    fn load_monster_tables(&mut self) -> Option<MonsterTables> {
+        let read = |core: &Self, path: &str| -> Option<String> {
+            String::from_utf8(core.asset(path).ok()?.clone()).ok()
+        };
+        let (Some(monstats), Some(monumod), Some(superuniques), Some(monlvl)) = (
+            read(self, MONSTATS_ASSET),
+            read(self, MONUMOD_ASSET),
+            read(self, SUPERUNIQUES_ASSET),
+            read(self, MONLVL_ASSET),
+        ) else {
+            return None; // assets absents : comportement historique, pas une note
+        };
+        match (
+            MonStats::parse(&monstats),
+            MonUMods::parse(&monumod),
+            SuperUniques::parse(&superuniques),
+            MonLvl::parse(&monlvl),
+        ) {
+            (Ok(monstats), Ok(monumod), Ok(superuniques), Ok(monlvl)) => {
+                self.switch_notes.push(format!(
+                    "tables monstre branchées (W06-W08) : {} monstats, {} monumod, {} super-uniques, {} MonLvl",
+                    monstats.len(),
+                    monumod.mods.len(),
+                    superuniques.len(),
+                    monlvl.len()
+                ));
+                Some(MonsterTables { monstats, monumod, superuniques, monlvl })
+            }
+            _ => {
+                self.switch_notes
+                    .push("tables monstre illisibles — spawn historique (codes manifest)".into());
+                None
+            }
+        }
+    }
+
+    /// Un spot de spawn valide pour un monstre : tuile marchable, à distance
+    /// du héros, de la zone warp et des monstres déjà posés (relâchement
+    /// progressif des contraintes sur les cartes denses).
+    fn find_spawn_spot(
+        rng: &mut LevelRng,
+        world: &World,
+        hero: (f32, f32),
+        warp: Option<&(f32, f32)>,
+        clear_warp: f32,
+        spots: &[(f32, f32)],
+        clear_hero: f32,
+        spacing: f32,
+    ) -> Option<(i32, i32)> {
+        let (w, h) = (world.width().max(1) as u32, world.height().max(1) as u32);
+        for relax in 0u32..4 {
+            let ch = clear_hero * (1.0 - 0.25 * relax as f32);
+            let sp = spacing * (1.0 - 0.25 * relax as f32);
+            let cw = clear_warp * (1.0 - 0.25 * relax as f32);
+            for _ in 0..200 {
+                let (tx, ty) = (rng.below(w) as i32, rng.below(h) as i32);
+                if !world.is_walkable(tx, ty) {
+                    continue;
+                }
+                let (cx, cy) = (tx as f32 + 0.5, ty as f32 + 0.5);
+                if (cx - hero.0).hypot(cy - hero.1) < ch {
+                    continue;
+                }
+                if let Some(wp) = warp {
+                    if (cx - wp.0).hypot(cy - wp.1) < cw {
+                        continue;
+                    }
+                }
+                if spots.iter().any(|(sx, sy)| (cx - sx).hypot(cy - sy) < sp) {
+                    continue;
+                }
+                return Some((tx, ty));
+            }
+        }
+        None
+    }
+
+    /// Construit le plan data-driven du niveau chargé (`monsters.rs`) —
+    /// `None` si les tables sont absentes, le record levels.txt manque, ou la
+    /// planche/densité est vide (l'appelant garde son chemin historique).
+    fn data_driven_plan(&self) -> Option<(LevelSpawnPlan, LevelRng)> {
+        let tables = self.mon_tables.as_ref()?;
+        let def = self.level.as_ref()?;
+        let id = def.levels_id?;
+        let rec = self.tables.as_ref()?.get(id)?;
+        if rec.mon.is_empty() || rec.mon_den == 0 {
+            return None;
+        }
+        // Codes sprites disponibles : les sets construits au finalize
+        // (`monsters` du manifest + `bosses`) — une entrée de planche sans
+        // sprite est ignorée ; aucune → repli historique.
+        let resolve_code = |code: &str| -> Option<String> {
+            let up = code.to_ascii_uppercase();
+            if self.sprites.contains_key(&up) {
+                Some(up)
+            } else {
+                None
+            }
+        };
+        let mut rng = LevelRng::new(fnv1a(&format!("mon:{}", def.key)));
+        let plan = plan_level_spawns(
+            rec,
+            &tables.monstats,
+            &tables.monumod,
+            &tables.monlvl,
+            &tables.superuniques,
+            &mut rng,
+            resolve_code,
+        );
+        if plan.packs.is_empty() && plan.super_uniques.is_empty() {
+            return None;
+        }
+        Some((plan, rng))
+    }
+
+    /// Spawn les monstres du niveau chargé :
+    /// * **data-driven (W06-W08)** — tables branchées + planche `mon1-10` du
+    ///   record levels.txt : packs `MinGrp`/`MaxGrp` à la densité `MonDen`,
+    ///   champions (20 % monumod) / uniques garantis (`MonUMin`/`MonUMax`),
+    ///   super-uniques nommés de la planche, facteurs `MonLvl` réels ;
+    /// * **repli historique** — la liste `monsters` du bloc (FA/ZM/SI par
+    ///   défaut), town = zone sûre ; même comportement qu'avant ce cycle.
+    /// Le boss de quête du niveau (`boss` du bloc, W11) se pose en dernier,
+    /// loin du héros.
     fn spawn_level_monsters(&mut self) {
         let mut codes: Vec<String> = Vec::new();
+        let mut kinds: Vec<MonKind> = Vec::new();
+        let mut names: Vec<String> = Vec::new();
         let mut spots: Vec<(f32, f32)> = Vec::new();
-        let list = self
-            .level
-            .as_ref()
-            .map(|l| l.monsters.clone())
-            .unwrap_or_default();
-        if !list.is_empty() {
+        let plan = self.data_driven_plan();
+        let level_key = self.level.as_ref().map(|l| l.key.clone()).unwrap_or_default();
+        let warp_pt = self.level.as_ref().and_then(|l| l.warp.as_ref().map(|w| w.at));
+
+        if let Some((plan, mut rng)) = plan {
             let world = self.world.as_mut().expect("world avant spawn");
             world.clear_monsters();
-            let (w, h) = (world.width().max(1) as u32, world.height().max(1) as u32);
             let hero = *world.hero();
-            let seed = fnv1a(self.level.as_ref().map(|l| l.key.as_str()).unwrap_or("?"));
-            let mut rng = LevelRng::new(seed);
-            let warp = self.level.as_ref().and_then(|l| l.warp.clone());
-            for code in &list {
-                let mut placed = false;
-                // Relâchement progressif des contraintes (cartes denses).
-                for relax in 0u32..4 {
-                    let clear_hero = MONSTER_SPAWN_CLEAR_OF_HERO * (1.0 - 0.25 * relax as f32);
-                    let spacing = MONSTER_SPAWN_SPACING * (1.0 - 0.25 * relax as f32);
-                    let clear_warp = MONSTER_SPAWN_CLEAR_OF_WARP * (1.0 - 0.25 * relax as f32);
-                    for _ in 0..200 {
-                        let (tx, ty) = (rng.below(w) as i32, rng.below(h) as i32);
-                        if !world.is_walkable(tx, ty) {
-                            continue;
-                        }
-                        let (cx, cy) = (tx as f32 + 0.5, ty as f32 + 0.5);
-                        if (cx - hero.x).hypot(cy - hero.y) < clear_hero {
-                            continue;
-                        }
-                        if let Some(wp) = &warp {
-                            if (cx - wp.at.0).hypot(cy - wp.at.1) < clear_warp {
-                                continue;
-                            }
-                        }
-                        if spots.iter().any(|(sx, sy)| (cx - sx).hypot(cy - sy) < spacing) {
-                            continue;
-                        }
+            let (hx, hy) = (hero.x, hero.y);
+            let mut place_pack_member = |world: &mut World,
+                                         rng: &mut LevelRng,
+                                         code: &str,
+                                         rule: SpawnRule,
+                                         spots: &mut Vec<(f32, f32)>,
+                                         codes: &mut Vec<String>,
+                                         kinds: &mut Vec<MonKind>,
+                                         names: &mut Vec<String>,
+                                         name: &str| {
+                let Some((tx, ty)) = Self::find_spawn_spot(
+                    rng, world, (hx, hy), warp_pt.as_ref(), MONSTER_SPAWN_CLEAR_OF_WARP, spots,
+                    MONSTER_SPAWN_CLEAR_OF_HERO, MONSTER_SPAWN_SPACING,
+                ) else {
+                    return; // carte saturée : pack tronqué (comme le repli)
+                };
+                let rule_kind = rule.kind;
+                if world.spawn_monster_rule(code, tx, ty, rule) {
+                    let (cx, cy) = (tx as f32 + 0.5, ty as f32 + 0.5);
+                    spots.push((cx, cy));
+                    codes.push(code.to_string());
+                    kinds.push(rule_kind);
+                    names.push(name.to_string());
+                }
+            };
+            let packs = plan.packs.clone();
+            for pack in &packs {
+                let minions = pack.count.saturating_sub(1);
+                place_pack_member(
+                    world, &mut rng, &pack.code, pack.rule.clone(), &mut spots, &mut codes,
+                    &mut kinds, &mut names, "",
+                );
+                // Minions du pack : mêmes facteurs MonLvl, boost HP monumod.
+                let mut mrule = pack.rule.clone();
+                mrule.kind = MonKind::Normal;
+                if pack.minion_hp_pct > 0 {
+                    mrule.hp_pct = mrule.hp_pct.saturating_mul(100 + pack.minion_hp_pct) / 100;
+                }
+                for _ in 0..minions {
+                    place_pack_member(
+                        world, &mut rng, &pack.code, mrule.clone(), &mut spots, &mut codes,
+                        &mut kinds, &mut names, "",
+                    );
+                }
+            }
+            let sus = plan.super_uniques.clone();
+            for su in &sus {
+                let minions = su.count.saturating_sub(1);
+                place_pack_member(
+                    world, &mut rng, &su.code, su.rule.clone(), &mut spots, &mut codes,
+                    &mut kinds, &mut names, &su.name,
+                );
+                let mut mrule = su.rule.clone();
+                mrule.kind = MonKind::Normal;
+                mrule.hp_pct = mrule.hp_pct.saturating_mul(100 + su.minion_hp_pct) / 100;
+                mrule.treasure_class = None; // minions : TC normale du gabarit
+                for _ in 0..minions {
+                    place_pack_member(
+                        world, &mut rng, &su.code, mrule.clone(), &mut spots, &mut codes,
+                        &mut kinds, &mut names, "",
+                    );
+                }
+            }
+            self.switch_notes.push(format!(
+                "spawn data-driven (W06-W08) : {} packs + {} super-uniques, cible {} (MonDen)",
+                packs.len(),
+                sus.len(),
+                packs.iter().map(|p| p.count).sum::<u32>()
+                    + sus.iter().map(|s| s.count).sum::<u32>()
+            ));
+        } else {
+            let list = self
+                .level
+                .as_ref()
+                .map(|l| l.monsters.clone())
+                .unwrap_or_default();
+            if !list.is_empty() {
+                let world = self.world.as_mut().expect("world avant spawn");
+                world.clear_monsters();
+                let hero = *world.hero();
+                let (hx, hy) = (hero.x, hero.y);
+                let seed = fnv1a(&level_key);
+                let mut rng = LevelRng::new(seed);
+                for code in &list {
+                    if let Some((tx, ty)) = Self::find_spawn_spot(
+                        &mut rng, world, (hx, hy), warp_pt.as_ref(),
+                        MONSTER_SPAWN_CLEAR_OF_WARP, &spots, MONSTER_SPAWN_CLEAR_OF_HERO,
+                        MONSTER_SPAWN_SPACING,
+                    ) {
                         if world.spawn_monster(code, tx, ty) {
+                            spots.push((tx as f32 + 0.5, ty as f32 + 0.5));
                             codes.push(code.clone());
-                            spots.push((cx, cy));
+                        }
+                    }
+                }
+            } else if let Some(world) = self.world.as_mut() {
+                // Zone sûre (town) : aucun monstre, même si le monde neuf en a
+                // auto-spawné (comportement par défaut de d2rules).
+                world.clear_monsters();
+            }
+            kinds = vec![MonKind::Normal; codes.len()];
+            names = vec![String::new(); codes.len()];
+        }
+
+        // Boss de quête (W11) : `boss` du bloc niveau → spawn SEUL, loin du
+        // héros, avec ses stats manifest réelles + TC dédiée + événement.
+        if let Some(boss_code) = self.level.as_ref().and_then(|l| l.boss.clone()) {
+            if let Some(world) = self.world.as_mut() {
+                let hero = *world.hero();
+                let (hx, hy) = (hero.x, hero.y);
+                let mut rng = LevelRng::new(fnv1a(&format!("boss:{level_key}")));
+                // Le boss s'éloigne davantage ( zones boss = arènes retail) :
+                // on essaie des spots de plus en plus loin du héros.
+                let mut placed = false;
+                for min_dist in [40.0, 30.0, 20.0, MONSTER_SPAWN_CLEAR_OF_HERO] {
+                    if let Some((tx, ty)) = Self::find_spawn_spot(
+                        &mut rng, world, (hx, hy), warp_pt.as_ref(),
+                        MONSTER_SPAWN_CLEAR_OF_WARP, &spots, min_dist, MONSTER_SPAWN_SPACING,
+                    ) {
+                        if world.spawn_monster_rule(&boss_code, tx, ty, SpawnRule {
+                            kind: MonKind::Boss,
+                            ..SpawnRule::default()
+                        }) {
+                            spots.push((tx as f32 + 0.5, ty as f32 + 0.5));
+                            codes.push(boss_code.clone());
+                            kinds.push(MonKind::Boss);
+                            names.push(self.boss_display_name(&boss_code));
                             placed = true;
                             break;
                         }
                     }
-                    if placed {
-                        break;
-                    }
+                }
+                if !placed {
+                    self.switch_notes
+                        .push(format!("boss {boss_code} sans spot valide — absent du niveau"));
                 }
             }
-        } else if let Some(world) = self.world.as_mut() {
-            // Zone sûre (town) : aucun monstre, même si le monde neuf en a
-            // auto-spawné (comportement par défaut de d2rules).
-            world.clear_monsters();
         }
         self.mon_codes = codes;
+        self.mon_kinds = kinds;
+        self.mon_names = names;
+    }
+
+    /// Nom affichable d'un boss (`manifest.bosses[].name`), "" sinon.
+    fn boss_display_name(&self, code: &str) -> String {
+        self.manifest
+            .get("bosses")
+            .and_then(|b| b.as_array())
+            .and_then(|arr| {
+                arr.iter()
+                    .find(|b| b.get("code").and_then(|c| c.as_str()) == Some(code))
+                    .and_then(|b| b.get("name"))
+                    .and_then(|n| n.as_str())
+            })
+            .unwrap_or("")
+            .to_string()
     }
 
     fn build_sprite_set(&self, walk: &Value) -> Result<SpriteSet, String> {
@@ -425,6 +903,16 @@ impl GameCore {
             .ok_or("manifest: walk.cof missing")?;
         let cof = Cof::parse(self.asset(cof_path)?).map_err(|e| format!("{cof_path}: {e:?}"))?;
         let mut set = SpriteSet::new(cof);
+        // AnimData.d2 : le token de lookup est le stem du COF (ex.
+        // `assets/dcc/BAWL1HS.COF` → `BAWL1HS`) ; record absent du fichier
+        // (ex. BARNUHTH) → pas de branchement, octets COF conservés.
+        if let Some(ad) = &self.animdata {
+            let base = cof_path.rsplit('/').next().unwrap_or(cof_path);
+            let stem = base.split('.').next().unwrap_or(base).to_ascii_uppercase();
+            if let Some(rec) = ad.get_record(&stem) {
+                set.apply_animdata(rec);
+            }
+        }
         if let Some(layers) = walk.get("layers").and_then(|l| l.as_object()) {
             for (token, path) in layers {
                 let path = path.as_str().ok_or("manifest: layer path not a string")?;
@@ -568,6 +1056,7 @@ impl GameCore {
             hidden: s.hidden,
             empty: s.empty,
             out_of_bounds: s.out_of_bounds,
+            tall: s.tall,
         }
     }
 
@@ -631,16 +1120,41 @@ impl GameCore {
     /// Niveau chargé — JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
     /// pour le HUD (nom de zone, bannière de changement). Résolu même avant
     /// `finalize` (niveau initial demandé) ; `{}` si la clé est inconnue.
+    /// Tables branchées (W04) : ajoute `"neighbors"` — les voisins Vis/Warp
+    /// du niveau courant, `[{id, name}, …]` (append-only, clients existants
+    /// compatibles).
     pub fn level_info_json(&self) -> String {
         let info = match self.level.as_ref() {
-            Some(l) => Some(LevelSwitchInfo { key: l.key.clone(), name: l.name.clone() }),
+            Some(l) => Some((l.key.clone(), l.name.clone(), l.levels_id)),
             None => self
                 .resolve_level_def(&self.level_name)
                 .ok()
-                .map(|d| LevelSwitchInfo { key: d.key, name: d.name }),
+                .map(|d| (d.key, d.name, d.levels_id)),
         };
         match info {
-            Some(i) => serde_json::to_string(&i).unwrap_or_else(|_| "{}".into()),
+            Some((key, name, levels_id)) => {
+                let neighbors: Vec<Value> = match (&self.warp_graph, levels_id, &self.tables) {
+                    (Some(g), Some(id), Some(t)) => g
+                        .edges_of(id)
+                        .iter()
+                        .map(|e| {
+                            let n = t.get(e.to);
+                            serde_json::json!({
+                                "id": e.to,
+                                "name": n.map(|r| {
+                                    if r.level_name.is_empty() { r.name.clone() } else { r.level_name.clone() }
+                                }).unwrap_or_default(),
+                            })
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                };
+                let mut v = serde_json::json!({ "key": key, "name": name });
+                if !neighbors.is_empty() {
+                    v["neighbors"] = Value::Array(neighbors);
+                }
+                v.to_string()
+            }
             None => "{}".into(),
         }
     }
@@ -702,15 +1216,30 @@ impl GameCore {
         self.follow_camera();
 
         // d2rules retire les cadavres à la fin de l'anim DD (MonsterDied porte
-        // l'index au moment du retrait) : miroir exact sur mon_codes.
+        // l'index au moment du retrait) : miroir exact sur mon_codes,
+        // mon_kinds et mon_names + événement de quête si le code en porte un
+        // (`manifest.bosses[].questEvent`, ex. andariel → "andariel_dead").
+        let mut quest_events: Vec<CoreEvent> = Vec::new();
         for e in &events {
             if let CoreEvent::World(GameEvent::MonsterDied { index, .. }) = e {
                 let i = *index;
+                let code = self.mon_codes.get(i).cloned();
+                if let Some(id) = code.as_ref().and_then(|c| self.quest_events.get(c)) {
+                    let id = id.clone();
+                    quest_events.push(CoreEvent::QuestEvent { id });
+                }
                 if i < self.mon_codes.len() {
                     self.mon_codes.remove(i);
                 }
+                if i < self.mon_kinds.len() {
+                    self.mon_kinds.remove(i);
+                }
+                if i < self.mon_names.len() {
+                    self.mon_names.remove(i);
+                }
             }
         }
+        events.extend(quest_events);
 
         // --- zone warp ------------------------------------------------------
         if self.warp_cd_ms > 0 {
@@ -798,12 +1327,13 @@ impl GameCore {
             match *kind {
                 DrawKind::Hero => {
                     let h = *world.hero();
-                    self.blit_entity(&mut fb, vw, vh, "hero", &h);
+                    self.blit_entity(&mut fb, vw, vh, "hero", &h, None);
                 }
                 DrawKind::Monster(i) => {
                     let m = world.monsters()[i];
                     let key = self.monster_sprite_key(i);
-                    self.blit_entity(&mut fb, vw, vh, &key, &m);
+                    let tint = monster_tint(self.mon_kinds.get(i).copied().unwrap_or_default());
+                    self.blit_entity(&mut fb, vw, vh, &key, &m, tint);
                 }
                 DrawKind::Item(i) => {
                     let (sx, sy) = self.entity_screen(DrawKind::Item(i));
@@ -811,6 +1341,12 @@ impl GameCore {
                 }
             }
         }
+
+        // 3. tall walls: the second index buffer blitted OVER the entities
+        // (occlusion — a hero walking behind a tree/wall is masked by it;
+        // simplified Go renderer.go:231-358 passes 2/3: entities behind,
+        // then tall walls; entities in front keep only the y-sort).
+        blit_index_layer(&mut fb, vw, vh, self.cam_x, self.cam_y, &map.overlay, map.width, &lut);
 
         self.fb = fb;
         &self.fb
@@ -847,7 +1383,15 @@ impl GameCore {
         (sx - self.cam_x, sy - self.cam_y)
     }
 
-    fn blit_entity(&self, fb: &mut [u8], vw: usize, vh: usize, key: &str, e: &Entity) {
+    fn blit_entity(
+        &self,
+        fb: &mut [u8],
+        vw: usize,
+        vh: usize,
+        key: &str,
+        e: &Entity,
+        tint: Option<[f32; 3]>,
+    ) {
         // Set par mode "<key>:<ANIM>" en priorité, repli "<key>" (la marche).
         let tag = match e.anim {
             AnimState::NU => "NU",
@@ -877,7 +1421,19 @@ impl GameCore {
         let Some(sf) = set.compose(e.facing, frame, &self.sprite_pal) else { return };
         let map = self.map.as_ref().unwrap();
         let (wx, wy) = map.sub_to_screen(e.x, e.y);
-        blit_sprite(fb, vw, vh, &sf, wx - self.cam_x, wy - self.cam_y);
+        blit_sprite(fb, vw, vh, &sf, wx - self.cam_x, wy - self.cam_y, tint);
+    }
+}
+
+/// Teinte RGB d'un monstre selon son rang data-driven (W08) — simplification
+/// des transforms palette D2 : champion bleu, unique/super-unique doré, boss
+/// de quête rouge ; `None` = couleur d'origine.
+fn monster_tint(kind: MonKind) -> Option<[f32; 3]> {
+    match kind {
+        MonKind::Normal => None,
+        MonKind::Champion => Some([0.45, 0.55, 1.0]),
+        MonKind::Unique | MonKind::SuperUnique => Some([1.0, 0.85, 0.25]),
+        MonKind::Boss => Some([1.0, 0.3, 0.25]),
     }
 }
 
@@ -941,7 +1497,13 @@ impl LevelDef {
             let r = w.get("r").and_then(|v| v.as_f64()).unwrap_or(3.0) as f32;
             Some(WarpDef { to, at, r, entry })
         });
-        Ok(LevelDef { key: key.to_string(), name, ds1, dt1, palette, monsters, warp })
+        let levels_id = block.get("levelsId").and_then(|v| v.as_u64()).map(|v| v as u32);
+        let boss = block
+            .get("boss")
+            .and_then(|b| b.as_str())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_ascii_uppercase());
+        Ok(LevelDef { key: key.to_string(), levels_id, name, ds1, dt1, palette, monsters, boss, warp })
     }
 }
 
@@ -966,7 +1528,11 @@ fn patch_save_for_level(
     spawn: Option<(f32, f32)>,
 ) -> Result<World, String> {
     let mut v: Value = serde_json::from_str(save_json).map_err(|e| format!("save: {e}"))?;
-    if v.get("version").and_then(|x| x.as_u64()) != Some(1) {
+    // v2 = format courant (skills/missiles/hero_code) ; v1 = rétro-compat
+    // (d2rules::save charge les deux). Les champs patchés ci-dessous existent
+    // dans les deux — seul le numéro de version fait barrière ici.
+    let ver = v.get("version").and_then(|x| x.as_u64());
+    if ver != Some(1) && ver != Some(2) {
         return Err(format!("save: version inattendue {:?}", v.get("version")));
     }
     // Grille : '1' marchable / '0' bloqué (convention save d2rules).
@@ -997,24 +1563,10 @@ fn patch_save_for_level(
 }
 
 /// LCG déterministe (spawn des monstres par niveau) — indépendant du rng
-/// d2rules : le contenu d'un niveau ne dépend pas de l'historique de combat.
-struct LevelRng(u64);
-
-impl LevelRng {
-    fn new(seed: u64) -> Self {
-        LevelRng(seed ^ 0x9E37_79B9_7F4A_7C15)
-    }
-    fn next(&mut self) -> u64 {
-        self.0 = self
-            .0
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        self.0
-    }
-    fn below(&mut self, n: u32) -> u32 {
-        ((self.next() >> 33) as u32) % n.max(1)
-    }
-}
+/// d2rules : le contenu d'un niveau ne dépend pas de l'historique de
+/// combat. Le même générateur sert à la variation seedée des tuiles du
+/// composeur ([`compose::Lcg`], graine distincte par usage).
+use crate::compose::Lcg as LevelRng;
 
 /// FNV-1a 64 — graine de spawn stable par clé de niveau.
 fn fnv1a(s: &str) -> u64 {
@@ -1032,6 +1584,8 @@ pub struct ComposeStatsCopy {
     pub hidden: usize,
     pub empty: usize,
     pub out_of_bounds: usize,
+    /// Murs hauts routés vers le tampon overlay (occlusion).
+    pub tall: usize,
 }
 
 use d2dcc::{Cof, Dcc};
@@ -1120,8 +1674,52 @@ pub fn resolve_container(tg1: &str, level_dt1: &[String]) -> String {
     tg1_to_container(tg1)
 }
 
+/// Blit a palette-index map layer over the viewport through the LUT —
+/// used for the tall-wall overlay (`ComposedMap::overlay`): index 0
+/// (never painted) is transparent, so only wall pixels land on the frame.
+#[allow(clippy::too_many_arguments)] // même forme que `shadow`/`blit_sprite`
+fn blit_index_layer(
+    fb: &mut [u8],
+    vw: usize,
+    vh: usize,
+    cam_x: f32,
+    cam_y: f32,
+    src: &[u8],
+    map_w: usize,
+    lut: &[u8; 256 * 4],
+) {
+    let map_h = src.len() / map_w.max(1);
+    for y in 0..vh {
+        let my = y + cam_y as usize;
+        if my >= map_h {
+            continue; // above the map: transparent overlay
+        }
+        let x0 = cam_x as usize;
+        let xs = x0..(x0 + vw).min(map_w);
+        let row = &src[my * map_w..my * map_w + map_w];
+        let dst = &mut fb[y * vw * 4..(y + 1) * vw * 4];
+        let mut di = 0usize;
+        for mx in xs.clone() {
+            let v = row[mx];
+            if v != 0 {
+                let p = v as usize * 4;
+                dst[di..di + 4].copy_from_slice(&lut[p..p + 4]);
+            }
+            di += 4;
+        }
+    }
+}
+
 /// Blit a composed sprite: bottom-center anchored on the world position.
-fn blit_sprite(fb: &mut [u8], vw: usize, vh: usize, sf: &SpriteFrame, sx: f32, sy: f32) {
+fn blit_sprite(
+    fb: &mut [u8],
+    vw: usize,
+    vh: usize,
+    sf: &SpriteFrame,
+    sx: f32,
+    sy: f32,
+    tint: Option<[f32; 3]>,
+) {
     let dx0 = (sx - sf.width as f32 / 2.0).round() as i32;
     let dy0 = (sy - sf.height as f32).round() as i32;
     for y in 0..sf.height {
@@ -1140,7 +1738,19 @@ fn blit_sprite(fb: &mut [u8], vw: usize, vh: usize, sf: &SpriteFrame, sx: f32, s
                 continue;
             }
             let di = (fy as usize * vw + fx as usize) * 4;
-            fb[di..di + 4].copy_from_slice(&sf.rgba[si..si + 4]);
+            if let Some([r, g, b]) = tint {
+                // Teinte type monumod (champion bleu / unique doré) :
+                // multiplication RGB simple du sprite composé.
+                let px = [
+                    (sf.rgba[si] as f32 * r).round().clamp(0.0, 255.0) as u8,
+                    (sf.rgba[si + 1] as f32 * g).round().clamp(0.0, 255.0) as u8,
+                    (sf.rgba[si + 2] as f32 * b).round().clamp(0.0, 255.0) as u8,
+                    a,
+                ];
+                fb[di..di + 4].copy_from_slice(&px);
+            } else {
+                fb[di..di + 4].copy_from_slice(&sf.rgba[si..si + 4]);
+            }
         }
     }
 }
@@ -1220,6 +1830,36 @@ mod tests {
         assert_eq!(tg1_to_container("\\d2\\data\\global\\tiles\\act1\\outdoors\\river.tg1"), "out_river.dt1");
         assert_eq!(tg1_to_container("\\d2\\data\\global\\tiles\\act1\\outdoors\\objects.tg1"), "out_objects.dt1");
         assert_eq!(tg1_to_container("\\d2\\data\\global\\tiles\\act1\\barracks\\warp.tg1"), "warp.dt1");
+    }
+
+    #[test]
+    fn overlay_blit_covers_entities_only_where_walls_are() {
+        // blit_index_layer : l'overlay n'écrase que ses pixels peints —
+        // l'entité (pixel 200,200,200) reste visible hors du mur, masquée
+        // sous le mur (pixel LUT de l'index 42).
+        let (vw, vh) = (4usize, 2usize);
+        let mut fb = vec![0u8; vw * vh * 4];
+        let entity = |fb: &mut [u8], x: usize, y: usize| {
+            let di = (y * vw + x) * 4;
+            fb[di..di + 4].copy_from_slice(&[200, 200, 200, 255]);
+        };
+        entity(&mut fb, 1, 0);
+        entity(&mut fb, 2, 0);
+        // Carte 4×2 : mur (index 42) en (2,0), rien ailleurs.
+        let src = vec![0, 0, 42, 0, 0, 0, 0, 0];
+        let mut lut = [0u8; 256 * 4];
+        lut[42 * 4..42 * 4 + 4].copy_from_slice(&[10, 20, 30, 255]);
+        blit_index_layer(&mut fb, vw, vh, 0.0, 0.0, &src, 4, &lut);
+        let px = |fb: &[u8], x: usize, y: usize| {
+            let di = (y * vw + x) * 4;
+            (fb[di], fb[di + 1], fb[di + 2])
+        };
+        assert_eq!(px(&fb, 1, 0), (200, 200, 200), "entité hors mur intacte");
+        assert_eq!(px(&fb, 2, 0), (10, 20, 30), "entité sous le mur masquée");
+        // Caméra décalée : la ligne sous la carte reste transparente.
+        entity(&mut fb, 1, 1);
+        blit_index_layer(&mut fb, vw, vh, 0.0, 2.0, &src, 4, &lut);
+        assert_eq!(px(&fb, 1, 1), (200, 200, 200), "hors carte: rien de blitté");
     }
 
     #[test]
@@ -1304,7 +1944,9 @@ mod tests {
                 provide_anim_block(&mut g, &root, mv);
             }
         }
-        for mon in m.get("monsters").unwrap().as_array().unwrap() {
+        for mon in m.get("monsters").unwrap().as_array().unwrap().iter().chain(
+            m.get("bosses").and_then(|b| b.as_array()).map(|v| v.iter()).unwrap_or_default(),
+        ) {
             if mon.get("walk").and_then(|w| w.get("cof")).is_some() {
                 provide_anim_block(&mut g, &root, &mon["walk"]);
             }
@@ -1369,6 +2011,84 @@ mod tests {
         assert!(lit > 10_000);
     }
 
+    // --- AnimData.d2 (audit od2-features-formats #19) ----------------------
+
+    /// Fournit le niveau + les anims du héros BA et des monstres, puis finalize.
+    fn full_ba_game(root: &str) -> (GameCore, Value) {
+        let m: Value = serde_json::from_str(
+            &std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap(),
+        )
+        .unwrap();
+        let mut g = GameCore::new(&m.to_string(), "BA").unwrap();
+        g.provide(
+            m.pointer("/level/palette").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/palette").unwrap().as_str().unwrap())).unwrap(),
+        );
+        g.provide(
+            m.pointer("/level/ds1").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/ds1").unwrap().as_str().unwrap())).unwrap(),
+        );
+        for p in m.pointer("/level/dt1").unwrap().as_array().unwrap() {
+            let p = p.as_str().unwrap();
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        provide_anim_block(&mut g, root, &m["heroes"]["BA"]["walk"]);
+        for mon in m.get("monsters").unwrap().as_array().unwrap() {
+            provide_anim_block(&mut g, root, &mon["walk"]);
+        }
+        (g, m)
+    }
+
+    #[test]
+    fn animdata_provided_branches_official_frames_and_speed() {
+        let Some(root) = ws_root() else { return };
+        let (mut g, _) = full_ba_game(&root);
+        // Le vrai AnimData.d2 extrait des MPQ (data\global\animdata.d2).
+        g.provide(
+            ANIMDATA_ASSET,
+            std::fs::read(format!("{root}/assets/animdata/AnimData.d2")).unwrap(),
+        );
+        g.finalize().unwrap();
+
+        // Note de branchement visible côté JS (spriteNotes()).
+        let notes = g.sprite_notes_json();
+        assert!(notes.contains("animdata branché"), "{notes}");
+
+        // Héros BAWL1HS : record animdata = 8 frames, speed 168 → 16,406 fps.
+        let hero = g.sprites.get("hero").unwrap();
+        let rec = hero.animdata.as_ref().expect("hero set must carry its animdata record");
+        assert_eq!(rec.name, "BAWL1HS");
+        assert_eq!(hero.frames(), 8);
+        assert!((hero.fps().unwrap() - 25.0 * 168.0 / 256.0).abs() < 1e-9);
+
+        // Monstres : les tokens FAWLHTH/ZMWLHTH/SIWLHTH tombent aussi —
+        // et le COF FA ne disait même pas la bonne speed (octet 0 vs 256).
+        for (code, fpd, speed) in [("FA", 10u32, 256u16), ("ZM", 12, 104), ("SI", 9, 256)] {
+            let set = g.sprites.get(code).unwrap_or_else(|| panic!("set {code} attendu"));
+            let rec = set.animdata.as_ref().unwrap_or_else(|| panic!("{code} sans record"));
+            assert_eq!((rec.frames_per_direction, rec.speed), (fpd, speed), "{code}");
+        }
+
+        // Le jeu tourne toujours.
+        let _ = g.tick(16, None);
+        assert_eq!(g.render().len(), (DEFAULT_VIEWPORT_W * DEFAULT_VIEWPORT_H * 4) as usize);
+    }
+
+    #[test]
+    fn animdata_corrupt_falls_back_to_cof_with_note() {
+        let Some(root) = ws_root() else { return };
+        let (mut g, _) = full_ba_game(&root);
+        g.provide(ANIMDATA_ASSET, vec![0xFF; 512]); // illisible
+        g.finalize().unwrap(); // pas un échec
+        let notes = g.sprite_notes_json();
+        assert!(notes.contains("illisible"), "{notes}");
+        // Fallback : octets COF, aucun record branché.
+        let hero = g.sprites.get("hero").unwrap();
+        assert!(hero.animdata.is_none());
+        assert_eq!(hero.frames(), hero.cof.frames_per_direction);
+        assert!(hero.fps().is_none());
+    }
+
     #[test]
     fn hero_dead_without_dd_set_has_no_corpse_walk() {
         // BA n'a que walk : aucun set hero:DD ⇒ pas de set de mort construit,
@@ -1406,7 +2126,7 @@ mod tests {
         dead.anim_frame = 5;
         let fb_len = g.vw as usize * g.vh as usize * 4;
         let mut fb = vec![0u8; fb_len];
-        g.blit_entity(&mut fb, g.vw as usize, g.vh as usize, "hero", &dead);
+        g.blit_entity(&mut fb, g.vw as usize, g.vh as usize, "hero", &dead, None);
         assert!(fb.iter().all(|&b| b == 0), "aucun pixel héros en DD sans set");
     }
 
@@ -1459,6 +2179,12 @@ mod tests {
         let walkable = grid.iter().filter(|&&w| w == 1).count();
         let ratio = walkable as f32 / grid.len() as f32;
         assert!(ratio > 0.2 && ratio < 0.98, "walkable ratio suspicious: {ratio}");
+
+        // Occlusion : le town a des arbres hauts → tampon overlay peint.
+        assert!(stats.tall > 300, "arbres du town attendus en overlay: {stats:?}");
+        let map = g.map.as_ref().unwrap();
+        assert!(map.overlay.iter().any(|&v| v != 0), "overlay vide");
+        assert_eq!(map.overlay.len(), map.idx.len(), "overlay même géométrie");
 
         // Tick + render produce a sane framebuffer with non-black pixels.
         let _ = g.tick(16, None);
@@ -1681,5 +2407,110 @@ mod tests {
         assert!(walk_to(&mut g, 137, 147), "le warp BloodMoor→Town n'a pas déclenché");
         assert_eq!(g.grid_size(), (57 * 5, 41 * 5));
         assert!(g.world.as_ref().unwrap().monsters().is_empty());
+    }
+
+    // --- W01/W02/W04 : tables de niveaux + DRLG seedé ------------------------
+
+    /// Comme [`full_game`] avec graine de partie et l'asset tables de
+    /// niveaux fourni (branche W01/W04 active).
+    fn full_game_with_tables(manifest_text: &str, level: &str, root: &str, seed: u64) -> GameCore {
+        let m: Value = serde_json::from_str(manifest_text).unwrap();
+        let mut g = GameCore::with_level(manifest_text, "BA", level).unwrap();
+        g.set_game_seed(seed);
+        provide_all_levels(&mut g, &m, root);
+        g.provide(
+            LEVELS_ASSET,
+            std::fs::read(format!("{root}/{LEVELS_ASSET}")).expect("patch_levels.txt"),
+        );
+        g.finalize().unwrap();
+        g
+    }
+
+    #[test]
+    fn tables_branch_generates_seeded_bloodmoor() {
+        let Some(root) = ws_root() else { return };
+        let notes = |g: &GameCore| g.switch_notes_json();
+        // Boot sur Blood Moor avec tables : DRLG seedé (pas le DS1 figé).
+        let mut a = full_game_with_tables(MANIFEST, "bloodmoor", &root, 42);
+        assert!(notes(&a).contains("tables de niveaux branchées"), "{}", notes(&a));
+        assert!(notes(&a).contains("drlg seedé actif"), "{}", notes(&a));
+        assert_eq!(a.grid_size(), (72 * 5, 72 * 5));
+        // Le monde tourne et rend une carte non vide.
+        let _ = a.tick(16, None);
+        let lit = a
+            .render()
+            .chunks_exact(4)
+            .filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30)
+            .count();
+        assert!(lit > 10_000, "carte générée rendue trop sombre : {lit}");
+
+        // Déterminisme : même graine ⇒ grille de collision identique.
+        let b = full_game_with_tables(MANIFEST, "bloodmoor", &root, 42);
+        assert_eq!(a.collision(), b.collision(), "même partie ⇒ même Blood Moor");
+        // Graine différente ⇒ monde différent (mais rejouable à l'identique).
+        let c = full_game_with_tables(MANIFEST, "bloodmoor", &root, 43);
+        assert_ne!(a.collision(), c.collision(), "graine différente ⇒ monde différent");
+        let c2 = full_game_with_tables(MANIFEST, "bloodmoor", &root, 43);
+        assert_eq!(c.collision(), c2.collision(), "chaque graine est déterministe");
+        // Sans tables (fallback historique) : ni notes tables ni DRLG.
+        let frozen = full_game(MANIFEST, "bloodmoor", &root);
+        assert!(!notes(&frozen).contains("drlg seedé"));
+        assert!(!notes(&frozen).contains("tables de niveaux"));
+    }
+
+    #[test]
+    fn warp_round_trip_on_generated_map() {
+        let Some(root) = ws_root() else { return };
+        let mut g = full_game_with_tables(MANIFEST, "town", &root, 7);
+        let walk_to = |g: &mut GameCore, x: i32, y: i32| -> bool {
+            let _ = g.tick(16, Some(PlayerInput::MoveTo { x, y }));
+            for _ in 0..6000 {
+                let evs = g.tick(16, None);
+                if evs.iter().any(|e| matches!(e, CoreEvent::LevelSwitch(_))) {
+                    return true;
+                }
+            }
+            false
+        };
+        // Town → Blood Moor GÉNÉRÉE (levelsId 2, DrlgType 3).
+        assert!(walk_to(&mut g, 282, 107), "warp town→bloodmoor (générée) a échoué");
+        assert!(g.level_info_json().contains("Blood Moor"));
+        let world = g.world.as_ref().unwrap();
+        let h = *world.hero();
+        assert!(world.is_walkable(h.x as i32, h.y as i32), "héros posé hors marchable");
+        let n = world.monsters().len();
+        assert!((5..=8).contains(&n), "5-8 monstres sur la carte générée, eu {n}");
+        for m in world.monsters() {
+            assert!(world.is_walkable(m.x as i32, m.y as i32));
+        }
+        // Et retour au camp : zone sûre.
+        assert!(walk_to(&mut g, 137, 147), "warp bloodmoor(générée)→town a échoué");
+        assert_eq!(g.grid_size(), (57 * 5, 41 * 5));
+        assert!(g.world.as_ref().unwrap().monsters().is_empty());
+    }
+
+    #[test]
+    fn resolve_level_def_by_table_id_with_tables() {
+        let Some(root) = ws_root() else { return };
+        let g = full_game_with_tables(MANIFEST, "town", &root, 0);
+        // "2" / "level:2" → bloc manifest bloodmoor (levelsId 2).
+        let by_id = g.resolve_level_def("2").unwrap();
+        assert_eq!(by_id.key, "bloodmoor");
+        assert_eq!(by_id.levels_id, Some(2));
+        let by_prefixed = g.resolve_level_def("level:2").unwrap();
+        assert_eq!(by_prefixed.key, "bloodmoor");
+        // Le DRLG s'applique bien à cette définition (record DrlgType 3).
+        assert!(g.drlg_applies(&by_id));
+        // Id sans bloc manifest : erreur claire (assets introuvables).
+        assert!(g.resolve_level_def("20").is_err());
+        // Le switch par id génère la carte seedée.
+        let mut g2 = full_game_with_tables(MANIFEST, "town", &root, 0);
+        let info = g2.switch_level("2", 137.0, 147.0).unwrap();
+        assert_eq!(info.key, "bloodmoor");
+        assert!(g2.switch_notes_json().contains("drlg seedé actif"));
+        // Voisins Vis/Warp exposés dans level_info (W04, append-only).
+        let info: Value = serde_json::from_str(&g2.level_info_json()).unwrap();
+        let neighbors = info["neighbors"].as_array().expect("neighbors exposés");
+        assert!(neighbors.iter().any(|n| n["id"] == 8 && n["name"] == "Den of Evil"));
     }
 }

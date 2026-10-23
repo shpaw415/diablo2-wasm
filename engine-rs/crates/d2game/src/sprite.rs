@@ -10,6 +10,7 @@
 
 use std::collections::HashMap;
 
+use d2animdata::AnimationDataRecord;
 use d2dcc::render::{self, Palette};
 use d2dcc::{dir64_to_dcc, Cof, Dcc, DccDirection};
 
@@ -32,20 +33,50 @@ pub struct SpriteSet {
     /// Layer DCCs by two-letter token (HD, TR, LG, …). Missing tokens are
     /// simply absent — composition skips them (Fallen has no SH/RH).
     pub layers: HashMap<String, Dcc>,
+    /// AnimData.d2 record of this animation (key = COF file stem, e.g.
+    /// `BAWL1HS`), when the optional asset `assets/animdata/AnimData.d2`
+    /// was provided to [`GameCore`]. When set, the record's official
+    /// `frames_per_direction`/`speed` take precedence over the COF header
+    /// bytes (audit od2-features-formats #19 — the retail COF speed byte is
+    /// unreliable: FAWLHTH.COF stores 0 where AnimData.d2 says 256 = 25 fps).
+    pub animdata: Option<AnimationDataRecord>,
 }
 
 impl SpriteSet {
     pub fn new(cof: Cof) -> SpriteSet {
-        SpriteSet { cof, layers: HashMap::new() }
+        SpriteSet { cof, layers: HashMap::new(), animdata: None }
     }
 
     pub fn add_layer(&mut self, token: &str, dcc: Dcc) {
         self.layers.insert(token.to_ascii_uppercase(), dcc);
     }
 
-    /// Frame count of the underlying COF (frames per direction).
+    /// Branch the official AnimData.d2 record (frames/speed) onto this set.
+    /// `GameCore::finalize` does it automatically when the file was
+    /// provided; without it the set keeps the COF-header fallback.
+    pub fn apply_animdata(&mut self, record: &AnimationDataRecord) {
+        self.animdata = Some(record.clone());
+    }
+
+    /// Frames per direction — AnimData.d2 when branched, else the COF
+    /// header byte (historical behavior).
     pub fn frames(&self) -> usize {
-        self.cof.frames_per_direction.max(1)
+        let from_animdata = self
+            .animdata
+            .as_ref()
+            .map(|r| r.frames_per_direction as usize);
+        from_animdata.unwrap_or(self.cof.frames_per_direction).max(1)
+    }
+
+    /// Official FPS (25 × speed ÷ 256) when AnimData.d2 is branched, `None`
+    /// otherwise (the COF speed byte has no reliable fps meaning).
+    pub fn fps(&self) -> Option<f64> {
+        self.animdata.as_ref().map(|r| r.fps())
+    }
+
+    /// Official per-frame duration in ms when AnimData.d2 is branched.
+    pub fn frame_duration_ms(&self) -> Option<f64> {
+        self.animdata.as_ref().map(|r| r.frame_duration_ms())
     }
 
     /// Compose `frame` of game-facing `facing` (0–15) through `pal`.
@@ -112,5 +143,39 @@ mod tests {
         // must come through unchanged (old pal.dat had it blue = (8,16,88)).
         let pal = sprite_palette(&[89, 16, 8]);
         assert_eq!(pal.rgb[0], [89, 16, 8]);
+    }
+
+    #[test]
+    fn animdata_record_takes_precedence_over_cof_fallback() {
+        // COF synthétique : 4 dirs × 10 frames × 1 couche (TR).
+        let mut cof_bytes: Vec<u8> = vec![
+            1, 10, 4, // layers, frames_per_direction, directions
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 21 unknown
+            0, // speed (octet COF — la valeur FA réelle, 0, y est bien)
+            0, 0, 0, // 3 unknown body
+            // 1 layer: type TR, shadow/selectable/transparent/effect, wclass "HTH\0"
+            1, 0, 0, 0, 0, b'H', b'T', b'H', 0,
+        ];
+        cof_bytes.extend_from_slice(&[0; 10]); // animation_frames
+        cof_bytes.extend_from_slice(&[1; 40]); // priority 4 dirs × 10 frames × 1 layer
+        let cof = Cof::parse(&cof_bytes).unwrap();
+        let mut set = SpriteSet::new(cof);
+
+        // Fallback (pas d'animdata) : comportement historique — octets COF.
+        assert_eq!(set.frames(), 10);
+        assert!(set.fps().is_none());
+        assert!(set.frame_duration_ms().is_none());
+
+        // Branché : frames/speed officiels prennent la main.
+        let rec = d2animdata::AnimationDataRecord {
+            name: "FAWLHTH".into(),
+            frames_per_direction: 8, // volontairement ≠ COF pour prouver la priorité
+            speed: 256,
+            events: [0; 144],
+        };
+        set.apply_animdata(&rec);
+        assert_eq!(set.frames(), 8);
+        assert_eq!(set.fps(), Some(25.0));
+        assert_eq!(set.frame_duration_ms(), Some(40.0));
     }
 }

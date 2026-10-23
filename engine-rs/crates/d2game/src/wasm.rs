@@ -213,6 +213,7 @@ impl D2Game {
             s.hidden as u32,
             s.empty as u32,
             s.out_of_bounds as u32,
+            s.tall as u32, // murs hauts (overlay) — ajout append-only, JS existant compatible
         ]
     }
 }

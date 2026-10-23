@@ -1,0 +1,24 @@
+# own_skill	own_lvl	formula	skill_blvls	expected	note
+Fire Bolt	1	(skill('Fire Ball'.blvl)+skill('Meteor'.blvl))*par8	Fire Ball=0;Meteor=0	0	synergie nulle
+Fire Bolt	1	(skill('Fire Ball'.blvl)+skill('Meteor'.blvl))*par8	Fire Ball=20;Meteor=20	640	synergie 20/20
+Fire Bolt	10	(skill('Fire Ball'.blvl)+skill('Meteor'.blvl))*par8	Fire Ball=7;Meteor=3	160	synergie mixte
+Fire Ball	20	(skill('Fire Bolt'.blvl)+skill('Meteor'.blvl))*par8	Fire Bolt=5;Meteor=9	196	fireball synergie
+Meteor	12	(skill('Fire Bolt'.blvl)+skill('Fire Ball'.blvl))*par8	Fire Ball=8;Fire Bolt=3	55	meteor synergie
+Vengeance	7	ln12+skill('Resist Fire'.blvl)*par8+skill('Salvation'.blvl)*par7	Resist Fire=10;Salvation=5	216	vengeance feu ln12+synergies
+Vengeance	4	ln12+skill('Resist Lightning'.blvl)*par8+skill('Salvation'.blvl)*par7	Resist Lightning=2;Salvation=9	126	vengeance foudre
+Holy Bolt	5	ln12 * (100 + skill('Prayer'.blvl) * par7) / 100	Prayer=12	25	holy bolt ln12*prayer
+Teeth	30	min(ln12,24)		24	teeth min(ln12,24) plafond
+Frozen Armor	9	ln56*(100+((skill('Shiver Armor'.blvl)+skill('Chilling Armor'.blvl))*par8))/100	Chilling Armor=2;Shiver Armor=6	75	frozen armor nested
+Bash	3	15+lvl*5+skill('Concentrate'.blvl)*par7	Concentrate=8	70	bash tohitcalc bare lvl
+Concentrate	11	ln12+skill('Bash'.blvl)*par8+skill('Battle Orders'.blvl)*par7	Bash=6;Battle Orders=4	190	concentrate 2 synergies
+War Cry	13	(skill('Howl'.blvl)+skill('Taunt'.blvl)+skill('Battle Cry'.blvl))*par8	Battle Cry=6;Howl=9;Taunt=2	102	warcry dmg synergie
+Warmth	20	ln12		258	warmth ln12 niv20
+Sword Mastery	8	ln34		63	mastery ln34 paire
+Conviction	30	-min(ln34,150)		-150	conviction plafond negatif
+Static Field	6	par4		25	static par4
+Static Field	6	par3		0	static par3
+Frenzy	15	ln12+(skill('Double Swing'.blvl) + skill('Taunt'.blvl))*par8	Double Swing=10;Taunt=7	296	frenzy
+Molten Boulder	2	skill('Volcano'.blvl)*par7	Volcano=5	50	molten par7
+Charge	9	ln34+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8	Might=3;Vigor=11	580	charge 2 synergies par8
+Summon Spirit Wolf	4	(par4 * lvl) + ln56		108	spiritwolf par4*lvl+ln56
+Sacrifice	16	ln12+skill('Redemption'.blvl)*par8+skill('Fanaticism'.blvl)*par7	Fanaticism=12;Redemption=5	540	sacrifice 2 synergies
