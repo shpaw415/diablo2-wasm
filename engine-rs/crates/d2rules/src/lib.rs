@@ -41,6 +41,10 @@ mod save;
 mod skills;
 mod world;
 
+// --- Difficultés Normal/Nightmare/Hell (W08 + K, impl-difficultes, 2026-10-23) ---
+/// Enum difficulté + pénalités `patch_difficultylevels.txt` + résists v1.12.
+pub mod difficulty;
+
 // --- Socles règles data-driven v1.12 (impl-regles-skills, 2026-10-22) ---
 /// Parseur/évaluateur CalcString (socle A2 — synergies, ToHitCalc, passives).
 pub mod calc;
@@ -80,6 +84,9 @@ pub use world::World;
 /// Rang de monstre + règle de spawn data-driven (impl-monstres-boss) —
 /// consommés par d2game (tables réelles → spawn_monster_rule).
 pub use world::{MonKind, SpawnRule};
+/// Difficulté (W08/K) — consommée par d2game (wasm `setDifficulty`, plan de
+/// spawn) et persistée dans la save.
+pub use difficulty::Difficulty;
 
 // -- Types items/loot purs, consommables par d2game (F1-F7) --
 pub use affixes::{AffixKind, AffixRec, AffixTables, ItemTypeSet};

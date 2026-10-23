@@ -19,8 +19,8 @@
 //!   (false for out-of-range or DD corpses).
 
 pub use d2rules::{
-    AnimState, Entity, GameEvent, HeroStats, ItemDef, ItemOnGround, MonKind, PlayerInput,
-    SpawnRule, World,
+    AnimState, Difficulty, Entity, GameEvent, HeroStats, ItemDef, ItemOnGround, MonKind,
+    PlayerInput, SpawnRule, World,
 };
 
 /// The real `d2rules` behind the game loop.

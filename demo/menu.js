@@ -49,6 +49,34 @@
     try { new Audio('assets/sfx/ui_click.wav').play(); } catch (e) {}
   }
 
+  // bruitages de sélection/désélection par classe (extraits des MPQ)
+  const heroSfxCache = {};
+  function playHeroSfx(code, kind) {
+    const key = code + '-' + kind;
+    if (!heroSfxCache[key]) heroSfxCache[key] = new Audio(`assets/sfx/${code}-${kind}.wav`);
+    try { heroSfxCache[key].currentTime = 0; heroSfxCache[key].play(); } catch (e) {}
+  }
+
+  // ---- musique du menu original (thème du titre, ogg extrait du MPQ) ----
+  const menuAudio = new Audio('assets/menu/menu-music.ogg');
+  menuAudio.loop = true;
+  menuAudio.volume = 0.45;
+  let musicStarted = false, musicMuted = false;
+  function startMusic() {
+    if (musicStarted) return;
+    musicStarted = true;
+    if (!musicMuted) menuAudio.play().catch(() => { musicStarted = false; });
+  }
+  window.addEventListener('pointerdown', startMusic);
+  window.addEventListener('keydown', startMusic);
+  function toggleMusic() {
+    musicMuted = !musicMuted;
+    if (musicMuted) menuAudio.pause();
+    else { startMusic(); menuAudio.play().catch(() => {}); }
+    const b = document.getElementById('musicBtn');
+    if (b) b.textContent = musicMuted ? '🔇' : '🔊';
+  }
+
   // ---- écrans ----
   const screenTitle = document.getElementById('screenTitle');
   const screenSelect = document.getElementById('screenSelect');
@@ -213,9 +241,22 @@
   function selectHero(code, silent) {
     const entry = selectable().find((h) => h.code === code);
     if (!entry) return;
+    const prev = selectedCode;
     selectedCode = code;
     for (const h of heroList) h.el.classList.toggle('selected', h.code === code);
     playBtn.disabled = false;
+    // animations de marche façon D2 : le nouveau héros avance (FW), l'ancien
+    // recule (BW) — si les sheets du contrat sont présentes.
+    if (scene.on && prev !== code) {
+      const now = performance.now();
+      const prevH = heroList.find((h) => h.code === prev);
+      if (prevH && prevH.bw) prevH.walk = { kind: 'bw', start: now };
+      const newH = heroList.find((h) => h.code === code);
+      if (newH && newH.fw) newH.walk = { kind: 'fw', start: now };
+      // bruitages officiels par classe (Cursor/intro/*.wav)
+      if (prev) playHeroSfx(prev, 'des');
+      playHeroSfx(code, 'sel');
+    }
     if (scene.on) showSceneStats(entry);
     if (!silent) clickSfx();
   }
@@ -282,13 +323,15 @@
     const entries = [];
     for (const code of codes) {
       const e = sheetEntry(json, code);
-      let anim = null, animHover = null, animSel = null;
+      let anim = null, animHover = null, animSel = null, fw = null, bw = null;
       if (e) {
         anim = await loadState(e);
         animHover = (await loadState(e.nu2)) || anim;
         animSel = (await loadState(e.nu3)) || anim;
+        fw = await loadState(e.fw);   // marche avant (sélection)
+        bw = await loadState(e.bw);   // marche arrière (désélection)
       }
-      entries.push({ code, anim, animHover, animSel });
+      entries.push({ code, anim, animHover, animSel, fw, bw });
     }
     // aucune sheet utilisable -> on reste sur les cartes
     if (!entries.some((x) => x.anim)) return;
@@ -298,6 +341,9 @@
       h.anim = en && en.anim;
       h.animHover = en && en.animHover;
       h.animSel = en && en.animSel;
+      h.fw = en && en.fw;
+      h.bw = en && en.bw;
+      h.walk = null;
       h.pos = arcPos(idx, entries.length);
     }
     scene.on = true;
@@ -353,8 +399,15 @@
       const { x, y } = stageXY(h.pos);
       if (!h.anim) { drawMissingHero(h, x, y); continue; }
       const hovered = scene.hover === h.code, sel = selectedCode === h.code;
-      // état du sprite FrontEnd : sélectionné > survol > repos
-      const a = (sel && h.animSel) || (hovered && h.animHover) || h.anim;
+      // progression de la marche (FW/BW joués une fois, puis pose d'état)
+      if (h.walk) {
+        const sheet = h.walk.kind === 'fw' ? h.fw : h.bw;
+        const done = Math.floor((t - h.walk.start) / 1000 * sheet.fps) >= sheet.frames;
+        if (done) h.walk = null;
+      }
+      // état du sprite FrontEnd : marche > sélectionné > survol > repos
+      const a = h.walk ? (h.walk.kind === 'fw' ? h.fw : h.bw)
+        : (sel && h.animSel) || (hovered && h.animHover) || h.anim;
       const fi = Math.floor((t / 1000) * a.fps) % a.frames;
       const dw = a.w * SCALE, dh = a.h * SCALE;
       if (hovered || sel) drawHalo(x, y, sel);
@@ -509,4 +562,13 @@
     }
     e.preventDefault();
   });
+
+  // bouton bascule musique (créé dynamiquement, haut-droite du stage)
+  const musicBtn = document.createElement('button');
+  musicBtn.id = 'musicBtn';
+  musicBtn.textContent = '🔊';
+  musicBtn.title = 'Musique du menu';
+  musicBtn.addEventListener('click', (ev) => { ev.stopPropagation(); toggleMusic(); });
+  document.getElementById('stage').appendChild(musicBtn);
+  startMusic();
 })();

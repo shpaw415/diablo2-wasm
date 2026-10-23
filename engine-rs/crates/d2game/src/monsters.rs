@@ -27,7 +27,7 @@
 
 use crate::compose::Lcg;
 use crate::levels::{each_row, LevelRecord};
-use d2rules::{MonKind, SpawnRule};
+use d2rules::{Difficulty, MonKind, SpawnRule};
 use std::collections::HashMap;
 
 /// Cible de population maximale d'un niveau (garde-fou perf A*/rendu ;
@@ -62,6 +62,16 @@ pub struct MonStatsRec {
     pub max_grp: u32,
     /// Poids de tirage dans la planche (`Rarity`, 0 ⇒ 1).
     pub rarity: u32,
+    /// Niveaux par difficulté : `Level`/`Level(N)`/`Level(H)`
+    /// (`patch_monstats.txt` colonnes 32-34 ; ex. zombie1 1/36/67 ;
+    /// vide ⇒ 0 → retombée sur `level` Normal).
+    pub level_n: u32,
+    pub level_h: u32,
+    /// Résists par difficulté `[Normal, NM, Hell]`, ordre `[ResDm, ResMa,
+    /// ResFi, ResLi, ResCo, ResPo]` (colonnes 130-147 ; vides = 0 ; ≥100 =
+    /// immunité — ex. zombie1 `ResCo(H)`=120, fallen1 `ResFi(H)`=100,
+    /// skeleton1 `ResLi(H)`=100).
+    pub res: [[i32; 6]; 3],
 }
 
 /// La table monstats (735 records v1.12), indexée par Id.
@@ -80,6 +90,18 @@ impl MonStats {
                 return;
             }
             let tc = |n: &str| row.s(n).to_string();
+            // Résists d'une difficulté : colonnes Res{Dm,Ma,Fi,Li,Co,Po} ±
+            // suffixe `(N)`/`(H)` (cellule vide ⇒ 0 — lenient via Row::i).
+            let res = |suffix: &str| -> [i32; 6] {
+                [
+                    row.i(&format!("ResDm{suffix}")),
+                    row.i(&format!("ResMa{suffix}")),
+                    row.i(&format!("ResFi{suffix}")),
+                    row.i(&format!("ResLi{suffix}")),
+                    row.i(&format!("ResCo{suffix}")),
+                    row.i(&format!("ResPo{suffix}")),
+                ]
+            };
             let rec = MonStatsRec {
                 id: id.to_string(),
                 code: row.s("Code").to_string(),
@@ -95,6 +117,9 @@ impl MonStats {
                 min_grp: row.u("MinGrp"),
                 max_grp: row.u("MaxGrp"),
                 rarity: row.u("Rarity"),
+                level_n: row.u("Level(N)"),
+                level_h: row.u("Level(H)"),
+                res: [res(""), res("(N)"), res("(H)")],
             };
             t.index.insert(id.to_string(), t.recs.len());
             t.recs.push(rec);
@@ -115,6 +140,29 @@ impl MonStats {
 
     pub fn get(&self, id: &str) -> Option<&MonStatsRec> {
         self.index.get(id).map(|&i| &self.recs[i])
+    }
+
+    /// Record par CODE sprite (`"ZM"`, `"AN"`… — colonne `Code` ; les boss
+    /// manifest sont résolus par code, pas par Id table).
+    pub fn get_by_code(&self, code: &str) -> Option<&MonStatsRec> {
+        self.recs.iter().find(|r| r.code.eq_ignore_ascii_case(code))
+    }
+}
+
+impl MonStatsRec {
+    /// Niveau du monstre POUR LA DIFFICULTÉ (W08) : colonnes
+    /// `Level`/`Level(N)`/`Level(H)` — cellule vide (0) ⇒ niveau Normal.
+    pub fn level_for(&self, d: Difficulty) -> u32 {
+        match d {
+            Difficulty::Normal => self.level,
+            Difficulty::Nightmare => if self.level_n > 0 { self.level_n } else { self.level },
+            Difficulty::Hell => if self.level_h > 0 { self.level_h } else { self.level },
+        }
+    }
+
+    /// Résists POUR LA DIFFICULTÉ (`ResDm..ResPo` ± `(N)`/`(H)`).
+    pub fn res_for(&self, d: Difficulty) -> [i32; 6] {
+        self.res[d.index()]
     }
 }
 
@@ -355,9 +403,18 @@ pub struct MonLvlRow {
 }
 
 /// Table MonLvl (110 lignes), indexée par niveau de monstre.
+///
+/// W08 complet : les colonnes `(N)`/`(H)` sont parsées à côté des colonnes
+/// Normal — `row` (Normal, historique) et `row_at(level, difficulté)`.
+/// Ligne niveau 1 : AC 6/92/147, TH 8/108/216, HP 7/107/830, DM 2/3/4,
+/// XP 30/78/117 (`assets/MonLvl.txt`).
 #[derive(Debug, Clone, Default)]
 pub struct MonLvl {
     rows: Vec<MonLvlRow>,
+    /// Colonnes `AC(N)/TH(N)/HP(N)/DM(N)/XP(N)` (Nightmare).
+    rows_n: Vec<MonLvlRow>,
+    /// Colonnes `AC(H)/TH(H)/HP(H)/DM(H)/XP(H)` (Hell).
+    rows_h: Vec<MonLvlRow>,
 }
 
 impl MonLvl {
@@ -374,8 +431,33 @@ impl MonLvl {
             };
             if t.rows.len() <= level {
                 t.rows.resize(level + 1, MonLvlRow::default());
+                t.rows_n.resize(level + 1, MonLvlRow::default());
+                t.rows_h.resize(level + 1, MonLvlRow::default());
             }
             t.rows[level] = r;
+            // Colonnes (N)/(H) de la même ligne (W08).
+            let mut rn = MonLvlRow {
+                ac: row.u("AC(N)"),
+                th: row.u("TH(N)"),
+                hp_pct: row.u("HP(N)"),
+                dm_pct: row.u("DM(N)"),
+                xp_pct: row.u("XP(N)"),
+            };
+            let mut rh = MonLvlRow {
+                ac: row.u("AC(H)"),
+                th: row.u("TH(H)"),
+                hp_pct: row.u("HP(H)"),
+                dm_pct: row.u("DM(H)"),
+                xp_pct: row.u("XP(H)"),
+            };
+            if rn == MonLvlRow::default() && level > 0 {
+                rn = t.rows[1.min(t.rows.len() - 1)]; // trou (N) : repli ligne 1 Normal
+            }
+            if rh == MonLvlRow::default() && level > 0 {
+                rh = t.rows[1.min(t.rows.len() - 1)]; // trou (H) : repli ligne 1 Normal
+            }
+            t.rows_n[level] = rn;
+            t.rows_h[level] = rh;
         });
         if t.rows.len() < 100 {
             return Err(format!("MonLvl.txt : {} lignes seulement", t.rows.len()));
@@ -399,6 +481,28 @@ impl MonLvl {
             self.rows[1.min(self.rows.len() - 1)]
         } else {
             r
+        }
+    }
+
+    /// Ligne d'un niveau POUR LA DIFFICULTÉ (W08) : colonnes Normal, `(N)`
+    /// ou `(H)` de `assets/MonLvl.txt`. La ligne 1 donne exactement
+    /// 6/8/7/2/30 (Normal), 92/108/107/3/78 (N), 147/216/830/4/117 (H).
+    pub fn row_at(&self, level: u32, d: Difficulty) -> MonLvlRow {
+        match d {
+            Difficulty::Normal => self.row(level),
+            _ => {
+                let rows = if d == Difficulty::Nightmare { &self.rows_n } else { &self.rows_h };
+                if rows.is_empty() {
+                    return self.row(level);
+                }
+                let i = (level as usize).min(rows.len() - 1);
+                let r = rows[i];
+                if r == MonLvlRow::default() && i != 0 {
+                    self.row(level) // trou : repli colonnes Normal du niveau
+                } else {
+                    r
+                }
+            }
         }
     }
 }
@@ -460,7 +564,9 @@ pub fn density_target(mon_den: u32, size_x: u32, size_y: u32) -> u32 {
     (mon_den.saturating_mul(size_x).saturating_mul(size_y) / 100_000).min(MAX_SPAWN_TARGET)
 }
 
-/// Construit le plan de spawn data-driven d'un niveau.
+/// Construit le plan de spawn data-driven d'un niveau — DIFFICULTÉ NORMAL
+/// (comportement historique exact, chiffres et RNG identiques). Pour les
+/// difficultés NM/Enfer : [`plan_level_spawns_diff`].
 ///
 /// * `resolve_code` : monstats `Code` → code sprite manifest (`None` = pas de
 ///   sprite : l'entrée de planche est ignorée) ;
@@ -475,13 +581,44 @@ pub fn plan_level_spawns(
     monlvl: &MonLvl,
     superuniques: &SuperUniques,
     rng: &mut Lcg,
+    resolve_code: impl FnMut(&str) -> Option<String>,
+) -> LevelSpawnPlan {
+    plan_level_spawns_diff(rec, monstats, monumod, monlvl, superuniques, Difficulty::Normal, rng, resolve_code)
+}
+
+/// Comme [`plan_level_spawns`] POUR LA DIFFICULTÉ `d` (W08) :
+///
+/// * stats de niveau `SizeX/Y`, `MonDen`, `MonUMin/Max` colonnes `(N)/(H)`
+///   ([`LevelRecord::diff_stats`]) ;
+/// * niveau de monstre `Level(N)/(H)` ([`MonStatsRec::level_for`]) → ligne
+///   `MonLvl` `(N)/(H)` ([`MonLvl::row_at`]) — HP 7→107→830 au niveau 1 ;
+/// * résists `ResDm..ResPo (N)/(H)` posés sur chaque `SpawnRule::res`
+///   (immunités Hell) ;
+/// * TC de drop des monstres NORMAUX suffixée ` (N)`/` (H)` (variantes
+///   réelles de TreasureClassEx ; Normal garde `None` = TC manifest).
+///
+/// Normal : flux RNG et valeurs EXACTEMENT ceux de
+/// [`plan_level_spawns`] (zéro régression).
+pub fn plan_level_spawns_diff(
+    rec: &LevelRecord,
+    monstats: &MonStats,
+    monumod: &MonUMods,
+    monlvl: &MonLvl,
+    superuniques: &SuperUniques,
+    diff: Difficulty,
+    rng: &mut Lcg,
     mut resolve_code: impl FnMut(&str) -> Option<String>,
 ) -> LevelSpawnPlan {
     let mut plan = LevelSpawnPlan::default();
     if rec.mon.is_empty() || rec.mon_den == 0 {
         return plan;
     }
-    plan.target = density_target(rec.mon_den, rec.size_x.max(1), rec.size_y.max(1));
+    // Stats de niveau par difficulté (W08 : SizeX/Y, MonDen, MonU N/H).
+    let (size_x, size_y, mon_den, u_min, u_max) = rec.diff_stats(diff);
+    if rec.mon.is_empty() || mon_den == 0 {
+        return plan;
+    }
+    plan.target = density_target(mon_den, size_x.max(1), size_y.max(1));
 
     // Planche pondérée (Rarity, 0 ⇒ 1) restreinte aux codes à sprite.
     struct Entry<'a> {
@@ -503,9 +640,10 @@ pub fn plan_level_spawns(
     }
     let total_weight: u64 = entries.iter().map(|e| e.weight).sum();
 
-    // Uniques garantis du niveau (MonUMin..MonUMax ; vide ⇒ 0 — data fait foi).
-    let u_target = if rec.mon_u_max > 0 || rec.mon_u_min > 0 {
-        rng.below(rec.mon_u_max.saturating_sub(rec.mon_u_min) + 1) + rec.mon_u_min
+    // Uniques garantis du niveau (MonUMin..MonUMax de la difficulté ; vide
+    // ⇒ 0 — data fait foi. Blood Moor : 0/0 → 4/5 → 7/9).
+    let u_target = if u_max > 0 || u_min > 0 {
+        rng.below(u_max.saturating_sub(u_min) + 1) + u_min
     } else {
         0
     };
@@ -530,13 +668,16 @@ pub fn plan_level_spawns(
             })
             .expect("total_weight > 0");
         let r = entry.rec;
+        // Niveau MonLvl du monstre POUR LA DIFFICULTÉ (Level(N)/(H) → ligne
+        // AC/TH/HP/DM/XP (N)/(H)) — W08.
+        let base = monlvl.row_at(r.level_for(diff), diff);
+        let res = r.res_for(diff);
         // Pack MinGrp..MaxGrp (0 ⇒ 1).
         let (lo, hi) = (r.min_grp.max(1), r.max_grp.max(r.min_grp.max(1)));
         let count = rng.below(hi - lo + 1) + lo;
         // Rang du leader : unique garanti d'abord, sinon roue champion.
         let (kind, mod_name, rule) = if uniques < u_target {
             uniques += 1;
-            let base = monlvl.row(r.level);
             let mut rule = SpawnRule {
                 kind: MonKind::Unique,
                 hp_pct: pct_boost(base.hp_pct, c.unique_hp_pct),
@@ -545,11 +686,11 @@ pub fn plan_level_spawns(
                 xp_pct: base.xp_pct.saturating_mul(c.unique_xp_mult),
                 ac: base.ac,
                 treasure_class: Some(tc_of(r, MonKind::Unique)),
+                res,
             };
             rule.kind = MonKind::Unique;
             (MonKind::Unique, monumod.pick_unique_mod(rng).unwrap_or("").to_string(), rule)
         } else if rng.below(100) < c.champion_chance {
-            let base = monlvl.row(r.level);
             let rule = SpawnRule {
                 kind: MonKind::Champion,
                 hp_pct: pct_boost(base.hp_pct, c.champion_hp_pct),
@@ -558,10 +699,16 @@ pub fn plan_level_spawns(
                 xp_pct: base.xp_pct.saturating_mul(c.champion_xp_mult),
                 ac: base.ac,
                 treasure_class: Some(tc_of(r, MonKind::Champion)),
+                res,
             };
             (MonKind::Champion, monumod.pick_champion_mod(rng).unwrap_or("").to_string(), rule)
         } else {
-            let base = monlvl.row(r.level);
+            // TC du monstre normal : TC manifest en Normal (historique), TC
+            // suffixée ` (N)`/` (H)` en NM/Enfer (variantes TreasureClassEx).
+            let treasure_class = match diff.tc_suffix() {
+                Some(sfx) if !r.tc[0].is_empty() => Some(format!("{}{}", r.tc[0], sfx)),
+                _ => None,
+            };
             let rule = SpawnRule {
                 kind: MonKind::Normal,
                 hp_pct: base.hp_pct,
@@ -569,7 +716,8 @@ pub fn plan_level_spawns(
                 th_pct: base.th,
                 xp_pct: base.xp_pct,
                 ac: base.ac,
-                treasure_class: None, // TC du gabarit (= TreasureClass1)
+                treasure_class,
+                res,
             };
             (MonKind::Normal, String::new(), rule)
         };
@@ -594,7 +742,7 @@ pub fn plan_level_spawns(
         }
         let Some(cls) = monstats.get(&su.class) else { continue };
         let Some(code) = resolve_code(&cls.code) else { continue };
-        let base = monlvl.row(cls.level);
+        let base = monlvl.row_at(cls.level_for(diff), diff);
         let rule = SpawnRule {
             kind: MonKind::SuperUnique,
             hp_pct: pct_boost(base.hp_pct, c.unique_hp_pct),
@@ -603,6 +751,7 @@ pub fn plan_level_spawns(
             xp_pct: base.xp_pct.saturating_mul(c.unique_xp_mult),
             ac: base.ac,
             treasure_class: if su.tc.is_empty() { None } else { Some(su.tc.clone()) },
+            res: cls.res_for(diff),
         };
         let (lo, hi) = (su.min_grp.max(1), su.max_grp.max(su.min_grp.max(1)));
         let count = rng.below(hi - lo + 1) + lo;
@@ -856,5 +1005,114 @@ mod tests {
         let none = |_: &str| -> Option<String> { None };
         let plan = plan_level_spawns(bm, &ms, &mu, &ml, &su, &mut Lcg::new(1), none);
         assert!(plan.packs.is_empty() && plan.super_uniques.is_empty());
+    }
+
+    // ------------------------------------------------------------------
+    // W08 — difficultés NM/Enfer (impl-difficultes)
+    // ------------------------------------------------------------------
+
+    /// MonLvl.txt colonnes (N)/(H) réelles — la ligne 1 donne EXACTEMENT
+    /// 92/108/107/3/78 (NM) et 147/216/830/4/117 (Enfer).
+    #[test]
+    fn parses_real_monlvl_nightmare_hell_rows() {
+        let (_, _, _, ml, _) = tables();
+        assert_eq!(ml.row_at(1, Difficulty::Normal), MonLvlRow { ac: 6, th: 8, hp_pct: 7, dm_pct: 2, xp_pct: 30 });
+        assert_eq!(ml.row_at(1, Difficulty::Nightmare), MonLvlRow { ac: 92, th: 108, hp_pct: 107, dm_pct: 3, xp_pct: 78 });
+        assert_eq!(ml.row_at(1, Difficulty::Hell), MonLvlRow { ac: 147, th: 216, hp_pct: 830, dm_pct: 4, xp_pct: 117 });
+        // Niveau 12 (andariel) : N/H croissants ET >> Normal.
+        assert!(ml.row_at(12, Difficulty::Hell).hp_pct > ml.row_at(12, Difficulty::Nightmare).hp_pct);
+        assert!(ml.row_at(12, Difficulty::Nightmare).hp_pct > ml.row_at(12, Difficulty::Normal).hp_pct);
+        // `row` (Normal) reste l'accesseur historique.
+        assert_eq!(ml.row(1), ml.row_at(1, Difficulty::Normal));
+        // Hors bornes : clamp, pas de panic.
+        assert_eq!(ml.row_at(999, Difficulty::Hell), ml.row_at(110, Difficulty::Hell));
+    }
+
+    /// patch_monstats.txt Level(N)/(H) + résists (N)/(H) réels.
+    #[test]
+    fn parses_real_monstats_per_difficulty() {
+        let (ms, _, _, _, _) = tables();
+        let z = ms.get("zombie1").unwrap();
+        assert_eq!((z.level, z.level_n, z.level_h), (1, 36, 67), "zombie1 N/H réels");
+        // zombie1 : immunité froid en Enfer (ResCo(H)=120), ResDm(H)=50.
+        assert_eq!(z.res_for(Difficulty::Hell)[4], 120);
+        assert_eq!(z.res_for(Difficulty::Hell)[0], 50);
+        // Réel v1.12 : zombie1 a DÉJÀ des résists en Normal — ResPo(N)=50,
+        // ResPo(NM)=75, ResDm(H)=50 (patch_monstats.txt, colonnes Res*).
+        assert_eq!(z.res_for(Difficulty::Normal), [0, 0, 0, 0, 0, 50], "Normal : ResPo=50 réel");
+        assert_eq!(z.res_for(Difficulty::Nightmare)[5], 75, "NM : ResPo=75 réel");
+        let f = ms.get("fallen1").unwrap();
+        assert_eq!((f.level_n, f.level_h), (36, 67));
+        assert_eq!(f.res_for(Difficulty::Hell)[2], 100, "fallen1 immunité feu Enfer");
+        let s = ms.get("skeleton1").unwrap();
+        assert_eq!(s.res_for(Difficulty::Hell)[3], 100, "skeleton1 immunité foudre Enfer");
+        // Résolution par CODE sprite (boss manifest) : "AN" → andariel.
+        let a = ms.get_by_code("AN").unwrap();
+        assert_eq!(a.id, "andariel");
+        assert_eq!(a.level_for(Difficulty::Hell), ms.get("andariel").unwrap().level_h);
+    }
+
+    /// Plan Blood Moor POUR LA DIFFICULTÉ : Enfer = monstres plus durs
+    /// (facteurs MonLvl H, résists H, TC ` (H)`), uniques MonU 7-9, et
+    /// Normal = plan historique EXACT (même seed ⇒ même plan).
+    #[test]
+    fn bloodmoor_hell_plan_is_harder_than_normal() {
+        let (ms, mu, su, ml, lt) = tables();
+        let bm = lt.get(2).unwrap();
+        let resolve = |code: &str| -> Option<String> {
+            ["FA", "ZM", "SI", "SK", "FS", "YE"].iter().find(|c| **c == code).map(|c| c.to_string())
+        };
+        let normal = plan_level_spawns(bm, &ms, &mu, &ml, &su, &mut Lcg::new(42), resolve);
+        let hell = plan_level_spawns_diff(bm, &ms, &mu, &ml, &su, Difficulty::Hell, &mut Lcg::new(42), resolve);
+        // Même densité (MonDen(H)=520) ⇒ même cible 33.
+        assert_eq!(hell.target, 33);
+        // Uniques garantis : MonUMin/Max(H) = 7..9 (patch_levels id 2).
+        let hell_uniques = hell.packs.iter().filter(|p| p.rule.kind == MonKind::Unique).count();
+        assert!((7..=9).contains(&hell_uniques), "uniques Enfer 7..9, eu {hell_uniques}");
+        // Chaque pack Enfer porte les facteurs MonLvl (H) du monstre + résists H.
+        for p in &hell.packs {
+            let r = ms.get(&p.mon_id).unwrap();
+            let base = ml.row_at(r.level_for(Difficulty::Hell), Difficulty::Hell);
+            assert_eq!(p.rule.ac, base.ac, "AC (H) de {}", p.mon_id);
+            assert!(p.rule.hp_pct >= base.hp_pct, "HP% ≥ ligne (H)");
+            assert_eq!(p.rule.res, r.res_for(Difficulty::Hell), "résists (H) de {}", p.mon_id);
+            if p.rule.kind == MonKind::Normal {
+                assert_eq!(
+                    p.rule.treasure_class.as_deref(),
+                    Some(format!("{} (H)", r.tc[0]).as_str()),
+                    "TC suffixée (H) — variante réelle TreasureClassEx"
+                );
+            }
+        }
+        // Zombie (zombie1 niveau 67 Enfer) : HP ×830/100 = ×8,3 vs Normal.
+        let z_hell = hell.packs.iter().find(|p| p.mon_id == "zombie1");
+        let z_norm = normal.packs.iter().find(|p| p.mon_id == "zombie1");
+        if let (Some(zh), Some(zn)) = (z_hell, z_norm) {
+            assert!(zh.rule.hp_pct > zn.rule.hp_pct * 5, "zombie Enfer >> zombie Normal");
+        }
+        // Super-unique (Corpsefire) : facteurs (H) lui aussi.
+        if let Some(cf) = hell.super_uniques.first() {
+            let cls = ms.get(&cf.mon_id).unwrap();
+            assert_eq!(cf.rule.res, cls.res_for(Difficulty::Hell));
+        }
+        // Normal : plan_level_spawns_diff(Normal) = plan_level_spawns exacts.
+        let normal_bis = plan_level_spawns_diff(bm, &ms, &mu, &ml, &su, Difficulty::Normal, &mut Lcg::new(42), resolve);
+        assert_eq!(format!("{normal:?}"), format!("{normal_bis:?}"), "Normal = historique");
+    }
+
+    /// LevelRecord::diff_stats — colonnes (N)/(H) réelles + héritage vide.
+    #[test]
+    fn level_record_diff_stats() {
+        let (_, _, _, _, lt) = tables();
+        let bm = lt.get(2).unwrap();
+        // Blood Moor : MonDen identique (520), MonU 0/0 → 4/5 → 7/9.
+        assert_eq!(bm.diff_stats(Difficulty::Normal), (80, 80, 520, 0, 0));
+        assert_eq!(bm.diff_stats(Difficulty::Nightmare), (80, 80, 520, 4, 5));
+        assert_eq!(bm.diff_stats(Difficulty::Hell), (80, 80, 520, 7, 9));
+        // Niveau sans variante (héritage) : Den of Evil id 8 — cellules
+        // (N)/(H) vides ⇒ retombée Normal.
+        let den = lt.get(8).unwrap();
+        let (sx, sy, den_n, _, _) = den.diff_stats(Difficulty::Hell);
+        assert_eq!((sx, sy, den_n), (den.size_x, den.size_y, den.mon_den));
     }
 }

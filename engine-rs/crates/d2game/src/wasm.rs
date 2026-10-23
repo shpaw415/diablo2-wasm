@@ -46,6 +46,22 @@ impl D2Game {
         self.core.hero_class_json()
     }
 
+    /// Set the difficulty (`"normal"`, `"nm"`, `"nightmare"`, `"hell"` —
+    /// case-insensitive; unknown = normal). Call BEFORE `finalize` so the
+    /// boot level spawns difficulty-scaled monsters (MonLvl (N)/(H), MonDen/
+    /// MonUMin/Max (N)/(H), Res*(N)/(H) immunities). W08/K impl-difficultes.
+    #[wasm_bindgen(js_name = setDifficulty)]
+    pub fn set_difficulty(&mut self, diff: &str) {
+        self.core.set_difficulty(d2rules::Difficulty::parse(diff));
+    }
+
+    /// Current difficulty as JSON `{"difficulty":"hell","label":"Hell"}` —
+    /// HUD badge + E2E probe.
+    #[wasm_bindgen(js_name = difficultyInfo)]
+    pub fn difficulty_info(&self) -> String {
+        self.core.difficulty_json()
+    }
+
     /// Current level as JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
     /// — HUD zone name + level-switch banner. `{}` if the key is unknown.
     #[wasm_bindgen(js_name = levelInfo)]

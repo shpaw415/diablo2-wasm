@@ -138,6 +138,53 @@ pub struct LevelRecord {
     pub entry_file: String,
     /// Portal flag (`Portal` = 1 pour les villes).
     pub portal: i32,
+    // --- Variantes par difficulté (W08, impl-difficultes) — convention
+    // --- tables v1.12 : cellule vide/0 ⇒ hérite des colonnes Normal.
+    /// `SizeX(N)`/`SizeX(H)` (colonnes 10/12).
+    pub size_x_n: u32,
+    pub size_x_h: u32,
+    /// `SizeY(N)`/`SizeY(H)` (colonnes 11/13).
+    pub size_y_n: u32,
+    pub size_y_h: u32,
+    /// `MonDen(N)`/`MonDen(H)` (colonnes 64/65).
+    pub mon_den_n: u32,
+    pub mon_den_h: u32,
+    /// `MonUMin(N)`/`MonUMin(H)` (colonnes 68/70).
+    pub mon_u_min_n: u32,
+    pub mon_u_min_h: u32,
+    /// `MonUMax(N)`/`MonUMax(H)` (colonnes 69/71).
+    pub mon_u_max_n: u32,
+    pub mon_u_max_h: u32,
+}
+
+impl LevelRecord {
+    /// Stats de niveau POUR LA DIFFICULTÉ (W08) : `(size_x, size_y,
+    /// mon_den, mon_u_min, mon_u_max)` — colonnes `(N)`/`(H)` réelles
+    /// (ex. Blood Moor MonUMin/Max : 0/0 → 4/5 → 7/9, `patch_levels.txt`
+    /// id 2) avec héritage Normal quand la cellule est vide (convention
+    /// tables v1.12 : blank = même valeur que Normal).
+    pub fn diff_stats(&self, d: d2rules::Difficulty) -> (u32, u32, u32, u32, u32) {
+        let nz = |v: u32, base: u32| if v == 0 { base } else { v };
+        match d {
+            d2rules::Difficulty::Normal => {
+                (self.size_x, self.size_y, self.mon_den, self.mon_u_min, self.mon_u_max)
+            }
+            d2rules::Difficulty::Nightmare => (
+                nz(self.size_x_n, self.size_x),
+                nz(self.size_y_n, self.size_y),
+                nz(self.mon_den_n, self.mon_den),
+                nz(self.mon_u_min_n, self.mon_u_min),
+                nz(self.mon_u_max_n, self.mon_u_max),
+            ),
+            d2rules::Difficulty::Hell => (
+                nz(self.size_x_h, self.size_x),
+                nz(self.size_y_h, self.size_y),
+                nz(self.mon_den_h, self.mon_den),
+                nz(self.mon_u_min_h, self.mon_u_min),
+                nz(self.mon_u_max_h, self.mon_u_max),
+            ),
+        }
+    }
 }
 
 /// La table levels.txt complète, indexée par id.
@@ -195,6 +242,16 @@ impl LevelTables {
                 level_warp: row.s("LevelWarp").to_string(),
                 entry_file: row.s("EntryFile").to_string(),
                 portal: row.i("Portal"),
+                size_x_n: row.u("SizeX(N)"),
+                size_x_h: row.u("SizeX(H)"),
+                size_y_n: row.u("SizeY(N)"),
+                size_y_h: row.u("SizeY(H)"),
+                mon_den_n: row.u("MonDen(N)"),
+                mon_den_h: row.u("MonDen(H)"),
+                mon_u_min_n: row.u("MonUMin(N)"),
+                mon_u_min_h: row.u("MonUMin(H)"),
+                mon_u_max_n: row.u("MonUMax(N)"),
+                mon_u_max_h: row.u("MonUMax(H)"),
             };
             t.index.insert(id, t.records.len());
             t.records.push(rec);

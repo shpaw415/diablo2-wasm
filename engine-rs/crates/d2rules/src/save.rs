@@ -7,6 +7,7 @@
 //! défauts du manifest / systèmes vides / skills de départ de la classe.
 
 use super::world::*;
+use crate::difficulty::Difficulty;
 use crate::rng::Rng;
 use d2missiles::MissileSystem;
 use crate::{AnimState, Entity, HeroSkill, HeroStats, ItemDef, ItemOnGround};
@@ -46,6 +47,11 @@ struct Save {
     /// Index du skill actif (absent v1 — défaut par classe).
     #[serde(default)]
     active_skill: Option<usize>,
+    /// Difficulté (W08/K) — absent des sauvegardes antérieures à
+    /// impl-difficultes (rétro-compat : Normal). Champ OPTIONNEL : un autre
+    /// chantier fait évoluer save.rs en parallèle — l'intégrateur fusionne.
+    #[serde(default)]
+    difficulty: Option<Difficulty>,
 }
 
 /// État complet du héros.
@@ -106,6 +112,11 @@ struct MonSave {
     /// TC de drop effective (surcharge champion/unique/boss) — absent v2.1.
     #[serde(default)]
     tc: Option<Option<String>>,
+    /// Résists effectifs de la difficulté de spawn (W08/K, ordre
+    /// ResDm/Ma/Fi/Li/Co/Po) — absent des saves antérieures (rétro-compat :
+    /// tout à 0 = Normal).
+    #[serde(default)]
+    res: Option<[i32; 6]>,
 }
 
 fn grid_to_strings(grid: &[Vec<bool>]) -> Vec<String> {
@@ -151,6 +162,7 @@ pub(crate) fn save_json(w: &World) -> String {
         },
         skills: Some(w.hero.skills.clone()),
         active_skill: Some(w.hero.active_skill),
+        difficulty: Some(w.difficulty),
         monsters: w
             .mon_ent
             .iter()
@@ -176,6 +188,7 @@ pub(crate) fn save_json(w: &World) -> String {
                 speed: d.speed,
                 kind: Some(d.kind),
                 tc: Some(d.tc.clone()),
+                res: Some(d.res),
             })
             .collect(),
         items: w.items.clone(),
@@ -266,6 +279,7 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 speed: m.speed,
                 kind: m.kind.unwrap_or_default(),
                 tc: m.tc.clone().unwrap_or(None),
+                res: m.res.unwrap_or([0; 6]),
             })
             .collect(),
         items: s.items,
@@ -275,6 +289,7 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         },
         rng: Rng::new(s.rng),
         now_ms: s.now_ms,
+        difficulty: s.difficulty.unwrap_or_default(),
     };
     // sanité minimale : gabarits connus, entités dans les bornes
     for d in &world.mon_dat {
