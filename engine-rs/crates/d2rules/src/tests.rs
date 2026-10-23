@@ -1197,6 +1197,152 @@ fn save_rejects_or_ignores_blank_level_key() {
     assert_eq!(w4.level_key(), "town");
 }
 
+// ---------------------------------------------------------------------------
+// ARBRE DE COMPÉTENCES (C2/C3/C4 — mission arbre, 2026-10-23)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn levelup_grants_one_skill_point_per_level_and_quest_hook_adds() {
+    // C2 : +1 point de skill par niveau de perso (v1.12) ; les récompenses de
+    // quêtes (Den of Evil +1, Radament A2 +1, Izual A4 +2) passent par le
+    // hook `grant_skill_points` consommant le flag `skill_point` des quêtes.
+    let mut w = World::with_seed(open_grid(56, 40), manifest_full(), 7);
+    assert_eq!(w.unspent_skill_points(), 0, "aucun point au démarrage");
+    w.clear_monsters();
+    let mut leveled = false;
+    for _ in 0..45 {
+        assert!(spawn_near_hero(&mut w, "FA"));
+        let ev = kill_nearest(&mut w, 120);
+        if ev.iter().any(|e| matches!(e, GameEvent::HeroLeveled { level: 2 })) {
+            leveled = true;
+            break;
+        }
+    }
+    assert!(leveled, "montée niveau 2 (28 Fallen × 18 XP ≥ 500)");
+    assert_eq!(w.hero_stats().level, 2);
+    assert_eq!(w.unspent_skill_points(), 1, "exactement +1 point/niveau");
+    // Hook quête : Den of Evil (A1) +1 → total 2 (état cumulatif).
+    w.grant_skill_points(1);
+    assert_eq!(w.unspent_skill_points(), 2);
+}
+
+#[test]
+fn learn_skill_world_validates_prereqs_points_and_cap() {
+    // C3/C4 via l'API World (consommée par d2game learnSkill) : refus propres,
+    // dépense réelle, HUD rafraîchi si le skill actif est monté.
+    let m = manifest_heroes();
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 16, "SOR");
+    // 0 point : Fire Bolt (déjà niv 1 via StartSkill) refusé — NoPoints.
+    assert!(matches!(w.learn_skill("Fire Bolt"), Err(SkillTreeError::NoPoints)));
+    w.grant_skill_points(1);
+    // Prérequis d'arbre : Meteor exige Fire Ball + Fire Wall (reqskill1-2,
+    // patch_skills.txt) — Fire Ball absent ⇒ MissingPrereq (reqskill1).
+    assert_eq!(
+        w.learn_skill("Meteor"),
+        Err(SkillTreeError::MissingPrereq { skill: "Meteor".into(), required: "Fire Ball".into() })
+    );
+    // Fire Ball : prérequis SATISFAIT (Fire Bolt = skill de départ), mais
+    // reqlevel 12 > niveau héros 1 ⇒ LevelTooLow.
+    assert_eq!(
+        w.learn_skill("Fire Ball"),
+        Err(SkillTreeError::LevelTooLow { skill: "Fire Ball".into(), required: 12 })
+    );
+    // Les refus ne consomment PAS de point : Ice Bolt (reqlevel 1, sans
+    // prérequis) apprend avec le même point.
+    assert_eq!(w.learn_skill("Ice Bolt").unwrap(), 1);
+    assert_eq!(w.unspent_skill_points(), 0);
+    // Skill NOUVEAU : s'ajoute en fin de liste (sélectionnable via
+    // select_skill), missile de la table.
+    let skills = w.hero_skills();
+    assert_eq!(skills.len(), 2);
+    assert_eq!(skills[1].code, "Ice Bolt");
+    assert_eq!(skills[1].level, 1);
+    assert_eq!(skills[1].missile.as_deref(), Some("icebolt"), "srvmissile de la table");
+    // Sélection + état HUD.
+    assert!(w.select_skill(1));
+    assert_eq!(w.hero_stats().skill, "Ice Bolt");
+    assert_eq!(w.active_skill().unwrap().code, "Ice Bolt");
+    // Monter le skill ACTIF rafraîchit le miroir HUD (skill_level).
+    w.grant_skill_points(1);
+    assert_eq!(w.learn_skill("Ice Bolt").unwrap(), 2);
+    assert_eq!(w.hero_stats().skill_level, 2);
+    // WrongClass : le skill d'une autre classe est refusé proprement.
+    assert!(matches!(
+        w.learn_skill("Bash"),
+        Err(SkillTreeError::WrongClass { .. })
+    ));
+}
+
+#[test]
+fn synergy_scales_fired_missile_damage() {
+    // C4 branché au calcul existant : Fire Bolt tire 3–8 (table d2missiles)
+    // × (1 + 640 %/100) = 22–59 quand le héros porte Fire Ball 20 + Meteor 20
+    // (EDmgSymPerCalc Fire Bolt = (skill('Fire Ball'.blvl)+skill('Meteor'.blvl))
+    // × par8, par8=16 — patch_skills.txt). Sans synergie : 3–8 (test ci-dessus).
+    let m = manifest_heroes();
+    let w = World::with_seed_and_hero(open_grid(56, 40), m, 16, "SOR");
+    // État forcé par save/load : niveaux de skills + niveau héros (reqlevel
+    // ne porte QUE l'apprentissage, pas le tir).
+    let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    v["skills"] = serde_json::json!([
+        { "code": "Fire Bolt", "level": 10, "missile": "firebolt" },
+        { "code": "Fire Ball", "level": 20, "missile": "fireball" },
+        { "code": "Meteor", "level": 20, "missile": "meteor" }
+    ]);
+    let mut w = World::load(&v.to_string()).expect("save éditée : skills synergie");
+    assert_eq!(w.active_skill().unwrap().code, "Fire Bolt");
+    w.clear_monsters();
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert!(w.spawn_monster("FA", hx + 8, hy));
+    let ev = run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    assert_eq!(w.missiles()[0].def_id, "firebolt");
+    assert_eq!((w.missiles()[0].dmg_min, w.missiles()[0].dmg_max), (22, 59), "3×7.4 / 8×7.4");
+    let mut dmg = None;
+    for _ in 0..60 {
+        let ev = w.tick(50, None);
+        for e in ev {
+            if let GameEvent::MissileHit { dmg: d, .. } = e {
+                dmg = Some(d);
+            }
+        }
+        if dmg.is_some() {
+            break;
+        }
+    }
+    let d = dmg.expect("le firebolt synergisé touche");
+    assert!((22..=59).contains(&d), "dégâts firebolt + synergies = 22..59, trouvé {d}");
+    let _ = ev;
+}
+
+#[test]
+fn save_round_trips_skill_points_and_skills() {
+    // Champ additif `hero.stats.skill_points` (#[serde(default)]) : présent
+    // dans les nouvelles saves, absent = 0 dans les anciennes (v1/v2/v3),
+    // skills appris + niveau du skill actif bit-exact.
+    let m = manifest_heroes();
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 16, "SOR");
+    w.grant_skill_points(3);
+    assert_eq!(w.learn_skill("Fire Bolt").unwrap(), 2);
+    w.grant_skill_points(1); // 3 dépensés ? non : 3-1+1 = 3 non dépensés
+    assert_eq!(w.unspent_skill_points(), 3);
+
+    let v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    assert_eq!(v["hero"]["stats"]["skill_points"], 3, "champ persisté");
+    assert_eq!(v["skills"][0]["level"], 2);
+    let w2 = World::load(&v.to_string()).expect("round-trip");
+    assert_eq!(w2.unspent_skill_points(), 3);
+    assert_eq!(w2.hero_skills()[0].code, "Fire Bolt");
+    assert_eq!(w2.hero_skills()[0].level, 2);
+
+    // Save ANTÉRIEURE au champ (aucun "skill_points" dans hero.stats) : charge
+    // à 0, skills conservés (rétro-compat additive).
+    let mut old = v.clone();
+    old["hero"]["stats"].as_object_mut().unwrap().remove("skill_points");
+    let w3 = World::load(&old.to_string()).expect("save sans skill_points");
+    assert_eq!(w3.unspent_skill_points(), 0);
+    assert_eq!(w3.hero_skills()[0].level, 2, "skills v2 intacts");
+}
+
 impl World {
     /// Test uniquement : force un slot d'inventaire.
     pub(crate) fn debug_set_slot(&mut self, slot: usize, def: Option<ItemDef>) {

@@ -270,6 +270,27 @@ impl D2Game {
         self.core.select_skill(index)
     }
 
+    // ------------------------------------------------------------------
+    // ARBRE DE COMPÉTENCES (C2/C3/C4/C5, 2026-10-23) — endpoints additifs
+    // consommés par demo/skills-ui.js (window.D2Skills). Append-only.
+    // ------------------------------------------------------------------
+
+    /// Arbre complet de la classe du héros — JSON
+    /// `{class, hero, points, charLevel, skills:[{code,name,nameKey,level,
+    /// maxLevel,reqLevel,prereqs,page,row,column,icon,missile,mana,canLearn,
+    /// mvp},…]}` (30 skills/classe, tables réelles v1.12 embarquées).
+    #[wasm_bindgen(js_name = skillTree)]
+    pub fn skill_tree(&self) -> String {
+        self.core.skill_tree_json()
+    }
+
+    /// Apprend/monte le skill `code` (dépense 1 point) — JSON
+    /// `{"ok":true,"level":2,"points":1}` ou `{"ok":false,"error":"…"}`.
+    #[wasm_bindgen(js_name = learnSkill)]
+    pub fn learn_skill(&mut self, code: &str) -> String {
+        self.core.learn_skill(code)
+    }
+
     /// Fiche de survol du monstre `index` (EXP-H6) — JSON
     /// `{code,name,kind,alive,hp,maxHp,x,y,sx,sy}` ou `null`.
     #[wasm_bindgen(js_name = monsterInfo)]

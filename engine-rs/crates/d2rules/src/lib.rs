@@ -54,6 +54,9 @@ pub mod difficulty;
 pub mod calc;
 /// Arbre de compétences 210 skills (C1-C4 : prereqs, synergies, missiles, dégâts).
 pub mod skills_tree;
+/// Glue héros ⇄ arbre (C2/C3/C4) : apprentissage dans `Vec<HeroSkill>`,
+/// niveaux vus par les formules, dégâts × synergie — pur, testable.
+pub mod skills_hero;
 /// Stat/StatList génériques + dictionnaire ItemStatCost (socle A1).
 pub mod stats;
 /// Table XP 1-99 × 7 classes (D5).
@@ -84,6 +87,9 @@ mod tests;
 mod parity_tests;
 
 pub use skills::HeroSkill;
+/// Erreurs d'apprentissage de l'arbre (prérequis/plafond/points…) —
+/// consommées par d2game (learnSkill) et affichables telles quelles en UI.
+pub use skills_tree::SkillTreeError;
 pub use world::World;
 /// Rang de monstre + règle de spawn data-driven (impl-monstres-boss) —
 /// consommés par d2game (tables réelles → spawn_monster_rule).
@@ -316,4 +322,11 @@ pub struct HeroStats {
     /// Endurance max (gabarit du manifest).
     #[serde(default)]
     pub max_stamina: u32,
+    /// Points de skill NON DÉPENSÉS (C2 : +1/niveau de perso + récompenses de
+    /// quêtes — Den of Evil +1, Radament's Lair A2 +1, Izual A4 +2 ; od2
+    /// audit A2/L7 `d2core/d2hero/hero_stats_state.go:9-30` skillPoints).
+    /// `#[serde(default)]` OBLIGATOIRE : champ save additif (saves v1/v2/v3
+    /// antérieures chargent à 0) — un autre chantier ajoute d'autres champs.
+    #[serde(default)]
+    pub skill_points: u32,
 }

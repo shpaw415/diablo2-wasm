@@ -159,6 +159,11 @@ pub struct SkillRecord {
     pub start_mana: i64,
     /// Délai de cast en frames (`delay`).
     pub delay: i64,
+    /// Délai de re-cast partagé (`perdelay`, frames) — nombre OU formule
+    /// CalcString (`patch_skills.txt` col `perdelay` : auras = constante `50`,
+    /// Thunder Storm = `(100-dm56)*par4/100+par3`). `None` = aucun délai ;
+    /// évaluation à la demande dans un [`SkillEvalCtx`] (niveau du skill).
+    pub per_delay: Option<CalcString>,
     /// Param1-8 (pilotent `parN`/`lnXX` des formules).
     pub params: [i64; 8],
     /// Formules calc1-4.
@@ -497,6 +502,8 @@ impl SkillTreeData {
                 min_mana: num(&r, col("minmana")),
                 start_mana: num(&r, col("startmana")),
                 delay: num(&r, col("delay")),
+                per_delay: opt_str(cell(&r, col("perdelay")))
+                    .map(|v| CalcString::parse(&v)),
                 params,
                 calcs,
                 prg_calcs,
@@ -1094,6 +1101,26 @@ mod tests {
         assert_eq!(t.mana_cost("Fire Ball"), 10 + 19, "10 + 19×1 lvlmana");
         assert_eq!(t.missile_of("Fire Ball").as_deref(), Some("fireball"));
         assert_eq!(t.missile_of("Bash"), None);
+    }
+
+    #[test]
+    fn perdelay_parse_and_eval() {
+        let d = data();
+        // Auras : `perdelay` = constante 50 frames (patch_skills.txt col.
+        // `perdelay`, ligne Might/Prayer/Resist Fire…).
+        let might = d.get("Might").unwrap();
+        let calc = might.per_delay.clone().expect("Might porte perdelay=50");
+        assert_eq!(calc.eval(&mut SkillEvalCtx::new(might, 1, &NoLevels)), 50);
+        // Formule réelle : Thunder Storm `(100-dm56)*par4/100+par3` — parse ET
+        // évalue (Params 5/6/4/3 du record, dm56 à son niveau).
+        let ts = d.get("Thunder Storm").unwrap();
+        let ts_calc = ts.per_delay.clone().expect("Thunder Storm porte une formule perdelay");
+        assert!(
+            ts_calc.eval(&mut SkillEvalCtx::new(ts, 1, &NoLevels)) > 0,
+            "formule perdelay évaluable"
+        );
+        // Fire Bolt : aucun perdelay (colonne vide).
+        assert!(d.get("Fire Bolt").unwrap().per_delay.is_none());
     }
 
     #[test]

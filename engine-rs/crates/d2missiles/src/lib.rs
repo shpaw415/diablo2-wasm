@@ -272,6 +272,22 @@ impl MissileSystem {
         Some(self.spawn_def(def, from, to, Some((dmg_min.max(1), dmg_max.max(dmg_min.max(1))))))
     }
 
+    /// Comme [`MissileSystem::spawn`] pour un carrier `Skill` mais avec les
+    /// dégâts résolus par l'appelant (C4 : dégâts officiels de la table ×
+    /// synergie du skill — calcul d2rules via calc.rs). L'élément/comportement
+    /// restent ceux de la définition ; `dmg_min` planché à 1, `dmg_max` ≥ min.
+    pub fn spawn_skill(
+        &mut self,
+        def_id: &str,
+        from: (f32, f32),
+        to: (f32, f32),
+        dmg_min: u32,
+        dmg_max: u32,
+    ) -> Option<u32> {
+        let def = self.def(def_id)?.clone();
+        Some(self.spawn_def(def, from, to, Some((dmg_min.max(1), dmg_max.max(dmg_min.max(1))))))
+    }
+
     /// Cœur d'apparition : résout les dégâts et pousse le missile.
     fn spawn_def(&mut self, def: MissileDef, from: (f32, f32), to: (f32, f32), weapon: Option<(u32, u32)>) -> u32 {
         let (dx, dy) = (to.0 - from.0, to.1 - from.1);

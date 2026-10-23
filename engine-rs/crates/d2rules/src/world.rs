@@ -7,9 +7,8 @@ use crate::loot;
 use crate::path::{astar, snap_near, Grid};
 use crate::rng::Rng;
 use crate::skills::{default_active, starting_skills, HeroSkill};
-use crate::{
-    Entity, AnimState, GameEvent, HeroStats, ItemDef, ItemKind, ItemOnGround, PlayerInput,
-};
+use crate::skills_tree::SkillTreeError;
+use crate::{skills_hero, Entity, AnimState, GameEvent, HeroStats, ItemDef, ItemKind, ItemOnGround, PlayerInput};
 use d2missiles::MissileSystem;
 use serde::{Deserialize, Serialize};
 
@@ -456,6 +455,7 @@ impl World {
                     skill_level: 0,
                     stamina: 0,
                     max_stamina: 0,
+                    skill_points: 0,
                 },
                 path: Vec::new(),
                 swing_ms: 0,
@@ -519,6 +519,9 @@ impl World {
             // EXP-H2 : endurance pleine au gabarit (manifest `stats.stamina`).
             stamina: t.stamina,
             max_stamina: t.stamina,
+            // ARBRE COMPÉTENCES (C2) : aucun point au démarrage (1/niveau +
+            // quêtes) — champ save additif (`#[serde(default)]` HeroStats).
+            skill_points: 0,
         };
         self.hero.stamina_milli = (t.stamina as i64) * 1000;
         self.hero.spawn = (sx, sy);
@@ -741,6 +744,48 @@ impl World {
         self.hero.stats.skill = s.code.clone();
         self.hero.stats.skill_level = s.level;
         true
+    }
+
+    // ------------------------------------------------------------------
+    // ARBRE DE COMPÉTENCES (C2/C3/C4, 2026-10-23) — API additive pure,
+    // validation via `skills_hero`/`skills_tree` (tables patch_skills.txt).
+    // ------------------------------------------------------------------
+
+    /// Points de skill non dépensés (C2 : +1/niveau via `apply_xp`,
+    /// + récompenses de quêtes via [`World::grant_skill_points`]).
+    pub fn unspent_skill_points(&self) -> u32 {
+        self.hero.stats.skill_points
+    }
+
+    /// Accorde `n` points de skill non dépensés — hook des RÉCOMPENSES DE
+    /// QUÊTES v1.12 : Den of Evil A1 +1 (`QuestReward::Unlock{flag:
+    /// "skill_point"}`, quests.rs a1q1), Radament's Lair A2 +1, Izual A4 +2.
+    /// L'intégration quêtes (W13) appelle ceci en consommant le flag.
+    pub fn grant_skill_points(&mut self, n: u32) {
+        self.hero.stats.skill_points = self.hero.stats.skill_points.saturating_add(n);
+    }
+
+    /// Apprend (ou monte d'un niveau) le skill `code` en dépensant 1 point —
+    /// validation RÉELLE : classe du héros, prérequis `reqskill1-3`,
+    /// `reqlevel`, plafond `maxlvl` (20). `Err` = raison exacte
+    /// ([`SkillTreeError`], affichable UI arbre) ; état inchangé sur refus.
+    /// Le skill appris devient sélectionnable via [`World::select_skill`]
+    /// (index = position dans [`World::hero_skills`]).
+    pub fn learn_skill(&mut self, code: &str) -> Result<u32, SkillTreeError> {
+        let points = self.hero.stats.skill_points;
+        let class = skills_hero::class_code(&self.hero_code);
+        let level =
+            skills_hero::learn(&mut self.hero.skills, &class, self.hero.stats.level, code, points)?;
+        self.hero.stats.skill_points = points.saturating_sub(1);
+        // Skill ACTIF monté : rafraîchit le miroir HUD (stats.skill/_level),
+        // même contrat que `select_skill`.
+        if let Some(s) = self.hero.skills.get(self.hero.active_skill) {
+            if s.code.eq_ignore_ascii_case(code) {
+                self.hero.stats.skill = s.code.clone();
+                self.hero.stats.skill_level = s.level;
+            }
+        }
+        Ok(level)
     }
 
     /// Inventaire (lecture) : 40 slots 10×4.
@@ -1142,9 +1187,12 @@ impl World {
 
     /// Tir à distance : anime le swing, face à la cible, décoche le missile du
     /// skill actif. Skill porteur (`firebolt` SOR) : dégâts/élément OFFICIELS
-    /// de la table d2missiles (`dmgSrc=Skill`, firebolt 3–8 feu). Skill de
-    /// mêlée (BA/PA) ou aucun skill : repli `arrow` transportant les dégâts
-    /// d'arme (×force, résolus AU TIR — règle D2 « la flèche sait »).
+    /// de la table d2missiles (`dmgSrc=Skill`, firebolt 3–8 feu), MULTIPLIÉS
+    /// par la synergie du skill (skills.txt `EDmgSymPerCalc`/`DmgSymPerCalc`
+    /// évaluée via calc.rs — C4 ; sans synergie : base identique, zéro
+    /// régression). Skill de mêlée (BA/PA) ou aucun skill : repli `arrow`
+    /// transportant les dégâts d'arme (×force, résolus AU TIR — règle D2
+    /// « la flèche sait »).
     fn hero_ranged_attack(&mut self, aim: (f32, f32), ev: &mut Vec<GameEvent>) {
         if self.hero.swing_ms > 0 || self.hero.dead_ms > 0 {
             return; // cooldown en cours / héros mort
@@ -1154,14 +1202,33 @@ impl World {
         self.hero.swing_ms = HERO_SWING_MS;
         self.hero.anim_ms = 0;
         let from = (self.hero_ent.x, self.hero_ent.y);
-        let skill_missile = self
-            .active_skill()
-            .and_then(|s| s.missile.clone());
-        let spawned = match skill_missile {
-            // carrier Skill : la table porte les dégâts/élément du sort niv 1
-            Some(code) => self.missiles.spawn(&code, from, aim),
+        let active = self.active_skill().map(|s| (s.code.clone(), s.missile.clone()));
+        let spawned = match active {
+            // carrier Skill (C4) : dégâts résolus AU TIR = table (officiels
+            // niv 1) × facteur de synergie du skill — les niveaux des AUTRES
+            // skills du héros alimentent la formule CalcString.
+            Some((skill_code, Some(missile_code))) => {
+                let (dmin, dmax) = {
+                    let levels = skills_hero::HeroLevels::new(
+                        &self.hero.skills,
+                        self.hero.stats.level,
+                    );
+                    self.missiles
+                        .def(&missile_code)
+                        .map(|def| {
+                            skills_hero::synergy_scaled_damage(
+                                &skill_code,
+                                def.dmg_min,
+                                def.dmg_max,
+                                &levels,
+                            )
+                        })
+                        .unwrap_or((0, 0))
+                };
+                self.missiles.spawn_skill(&missile_code, from, aim, dmin, dmax)
+            }
             // carrier Weapon : l'appelant résout floor(min/max × (1 + force/100))
-            None => {
+            Some((_, None)) | None => {
                 let mult = 1.0 + self.hero.stats.strength as f32 / 100.0;
                 let dmin = ((self.hero_tpl.weapon_min as f32 * mult).floor() as u32).max(1);
                 let dmax = ((self.hero_tpl.weapon_max as f32 * mult).floor() as u32).max(dmin);
@@ -1284,6 +1351,11 @@ impl World {
                 self.hero.stats.life += self.hero_tpl.life_per_level;
                 self.hero.stats.max_mana += self.hero_tpl.mana_per_level;
                 self.hero.stats.mana += self.hero_tpl.mana_per_level;
+                // ARBRE COMPÉTENCES (C2) : +1 point de skill par niveau de
+                // perso (v1.12, od2 audit A2/L7 — d2core
+                // `hero_stats_state.go:9-30` skillPointsPerLevel = 1) ;
+                // récompenses de quêtes EN PLUS via `grant_skill_points`.
+                self.hero.stats.skill_points = self.hero.stats.skill_points.saturating_add(1);
                 ev.push(GameEvent::HeroLeveled { level: self.hero.stats.level });
             } else {
                 self.hero.stats.xp_to_next = need - xp;

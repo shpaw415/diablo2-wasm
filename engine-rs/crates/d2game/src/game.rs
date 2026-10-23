@@ -1276,6 +1276,100 @@ impl GameCore {
         }
     }
 
+    // ------------------------------------------------------------------
+    // ARBRE DE COMPÉTENCES (C2/C3/C4/C5 — mission arbre, 2026-10-23) :
+    // API additive consommée par demo/skills-ui.js (window.D2Skills).
+    // Append-only : aucun appelant existant modifié (game.js évolue en
+    // parallèle côté intégration — branchement minimal commenté).
+    // ------------------------------------------------------------------
+
+    /// Arbre complet de la classe du héros — JSON
+    /// `{"class":"bar","hero":"BA","points":2,"charLevel":5,"skills":[{…
+    /// code,name,nameKey,level,maxLevel,reqLevel,prereqs,page,row,column,
+    /// icon,missile,mana,canLearn,mvp},…]}` — 30 skills/classe (tables réelles
+    /// `patch_skills.txt` + `patch_skilldesc.txt` embarquées), trié par
+    /// onglet (`SkillPage`) puis géométrie d'arbre (`SkillRow`/`SkillColumn`).
+    /// `level` = points du héros ; `canLearn` = validation complète
+    /// (prérequis/reqlevel/plafond/points) ; `icon` = `IconCel` (feuille
+    /// générique `skillicon.dc6` 24 cellules — cellules ≥ 24 = sheets par
+    /// classe, hors portée MVP : l'UI affiche un placeholder).
+    pub fn skill_tree_json(&self) -> String {
+        let data = d2rules::skills_tree::SkillTreeData::global();
+        let hero_code = d2rules::resolve_hero_code(&self.manifest, &self.hero_request);
+        let class = d2rules::skills_hero::class_code(&hero_code);
+        let (mut tree, points, char_level) = match self.world.as_ref() {
+            Some(w) => {
+                let mut tree = d2rules::skills_tree::SkillTree::with_data(&class, data);
+                tree.set_char_level(w.hero_stats().level);
+                for s in w.hero_skills() {
+                    tree.set_level(&s.code, s.level);
+                }
+                tree.grant_points(w.unspent_skill_points());
+                (tree, w.unspent_skill_points(), w.hero_stats().level)
+            }
+            None => {
+                (d2rules::skills_tree::SkillTree::with_data(&class, data), 0, 1)
+            }
+        };
+        let mut rows: Vec<Value> = data
+            .class_indices(&class)
+            .iter()
+            .filter_map(|&i| {
+                let rec = &data.records()[i];
+                let desc = data.desc_of(&rec.code);
+                Some(serde_json::json!({
+                    "code": rec.code,
+                    "name": rec.code, // libellé table = code (TBL fr = W18)
+                    "nameKey": desc.map(|d| d.str_name.clone()).unwrap_or_default(),
+                    "level": tree.level_of(&rec.code),
+                    "maxLevel": rec.max_level,
+                    "reqLevel": rec.req_level,
+                    "prereqs": rec.req_skills,
+                    "page": desc.map(|d| d.page).unwrap_or(0),
+                    "row": desc.map(|d| d.row).unwrap_or(0),
+                    "column": desc.map(|d| d.column).unwrap_or(0),
+                    "icon": desc.map(|d| d.icon_cel).unwrap_or(0),
+                    "missile": rec.srv_missile,
+                    "mana": tree.mana_cost(&rec.code),
+                    "canLearn": tree.can_learn(&rec.code).is_ok(),
+                    "mvp": data.is_mvp(&rec.code),
+                }))
+            })
+            .collect();
+        rows.sort_by_key(|r| {
+            (r["page"].as_u64().unwrap_or(0), r["row"].as_u64().unwrap_or(0),
+             r["column"].as_u64().unwrap_or(0))
+        });
+        serde_json::to_string(&serde_json::json!({
+            "class": class,
+            "hero": hero_code,
+            "points": points,
+            "charLevel": char_level,
+            "skills": rows,
+        }))
+        .unwrap_or_else(|_| "{}".into())
+    }
+
+    /// Apprend (ou monte d'un niveau) le skill `code` en dépensant 1 point de
+    /// skill du héros — validation RÉELLE d2rules (classe, prérequis
+    /// `reqskill1-3`, `reqlevel`, plafond `maxlvl`) via
+    /// [`d2rules::World::learn_skill`]. JSON
+    /// `{"ok":true,"level":2,"points":1}` ou `{"ok":false,"error":"…"}`.
+    pub fn learn_skill(&mut self, code: &str) -> String {
+        let Some(w) = self.world.as_mut() else {
+            return serde_json::json!({"ok": false, "error": "monde non initialisé"}).to_string();
+        };
+        match w.learn_skill(code) {
+            Ok(level) => serde_json::json!({
+                "ok": true,
+                "level": level,
+                "points": w.unspent_skill_points(),
+            })
+            .to_string(),
+            Err(e) => serde_json::json!({"ok": false, "error": e.to_string()}).to_string(),
+        }
+    }
+
     /// Nom affichable du monstre `index` : nom d2game (super-unique/boss W10),
     /// sinon `monsters`/`bosses` du manifest par code, sinon le code brut.
     fn monster_display_name(&self, index: usize) -> String {
@@ -2791,5 +2885,136 @@ mod tests {
         let info: Value = serde_json::from_str(&g2.level_info_json()).unwrap();
         let neighbors = info["neighbors"].as_array().expect("neighbors exposés");
         assert!(neighbors.iter().any(|n| n["id"] == 8 && n["name"] == "Den of Evil"));
+    }
+
+    // --- ARBRE DE COMPÉTENCES (C2/C3/C4/C5, mission arbre 2026-10-23) ------
+
+    #[test]
+    fn skill_tree_json_lists_class_skills_with_prereqs_icons_and_geometry() {
+        let Some(root) = ws_root() else { return };
+        let (g, _) = full_ba_game(&root);
+        let t: Value = serde_json::from_str(&g.skill_tree_json()).unwrap();
+        assert_eq!(t["class"], "bar");
+        assert_eq!(t["hero"], "BA");
+        assert_eq!(t["points"], 0, "aucun point au démarrage");
+        let skills = t["skills"].as_array().unwrap();
+        assert_eq!(skills.len(), 30, "30 skills de classe (patch_skills.txt)");
+        // Tri onglet → rangée → colonne : Bash (page 1, row 1, col 2) premier.
+        assert_eq!(skills[0]["code"], "Bash");
+        assert_eq!(skills[0]["page"], 1);
+        assert_eq!(skills[0]["row"], 1);
+        assert_eq!(skills[0]["icon"], 0, "IconCel bash (skilldesc.txt)");
+        assert_eq!(skills[0]["nameKey"], "skillname126");
+        // Prérequis réels : Double Swing ET Stun exigent Bash (reqskill1).
+        let ds = skills.iter().find(|s| s["code"] == "Double Swing").unwrap();
+        assert_eq!(ds["prereqs"], serde_json::json!(["Bash"]));
+        assert_eq!(ds["reqLevel"], 6);
+        let stun = skills.iter().find(|s| s["code"] == "Stun").unwrap();
+        assert_eq!(stun["prereqs"], serde_json::json!(["Bash"]));
+        assert_eq!(stun["reqLevel"], 12);
+        assert_eq!(stun["icon"], 26, "IconCel stun (skilldesc.txt)");
+        // Niveau 0 partout avant apprentissage, plafond maxlvl 20 (col maxlvl).
+        assert!(skills.iter().all(|s| s["level"] == 0));
+        assert!(skills.iter().all(|s| s["maxLevel"] == 20));
+        // canLearn sans point : false partout (NoPoints).
+        assert!(skills.iter().all(|s| s["canLearn"] == false));
+        // Avant finalize (monde absent) : arbre vide de niveaux, pas de panic.
+        let g2 = GameCore::new(MANIFEST, "BA").unwrap();
+        let t2: Value = serde_json::from_str(&g2.skill_tree_json()).unwrap();
+        assert_eq!(t2["skills"].as_array().unwrap().len(), 30);
+        assert_eq!(t2["points"], 0);
+    }
+
+    #[test]
+    fn learn_skill_spends_points_and_enforces_prereqs() {
+        let Some(root) = ws_root() else { return };
+        let (mut g, _) = full_ba_game(&root);
+        g.finalize().unwrap();
+        // Sans point : refus explicite (NoPoints), état inchangé.
+        let r: Value = serde_json::from_str(&g.learn_skill("Bash")).unwrap();
+        assert_eq!(r["ok"], false);
+        assert!(r["error"].as_str().unwrap().contains("point"), "{}", r["error"]);
+        // Prérequis bloqué même avec un point : Double Swing exige Bash.
+        g.world.as_mut().unwrap().grant_skill_points(1);
+        let r: Value = serde_json::from_str(&g.learn_skill("Double Swing")).unwrap();
+        assert_eq!(r["ok"], false);
+        assert!(r["error"].as_str().unwrap().contains("Bash"), "{}", r["error"]);
+        // Apprend Bash (niv 1) : 1 point dépensé, skill connu, sélectionnable.
+        g.world.as_mut().unwrap().grant_skill_points(2);
+        let r: Value = serde_json::from_str(&g.learn_skill("Bash")).unwrap();
+        assert_eq!(r["ok"], true);
+        assert_eq!(r["level"], 1);
+        assert_eq!(r["points"], 2);
+        let skills: Value = serde_json::from_str(&g.hero_skills_json()).unwrap();
+        assert!(skills.as_array().unwrap().iter().any(|s| s["code"] == "Bash"));
+        // Monter Bash au plafond : 20 niveaux max (19 de plus refusés au 21e).
+        for _ in 0..19 {
+            g.world.as_mut().unwrap().grant_skill_points(1);
+            let r: Value = serde_json::from_str(&g.learn_skill("Bash")).unwrap();
+            assert_eq!(r["ok"], true);
+        }
+        let r: Value = serde_json::from_str(&g.learn_skill("Bash")).unwrap();
+        assert_eq!(r["ok"], false);
+        assert!(r["error"].as_str().unwrap().contains("plafond"), "{}", r["error"]);
+        // Le prérequis est maintenant SATISFAIT : Double Swing apprenable
+        // (reqlevel 6 > niv 1 du héros → refus reqlevel, pas prérequis).
+        g.world.as_mut().unwrap().grant_skill_points(1);
+        let r: Value = serde_json::from_str(&g.learn_skill("Double Swing")).unwrap();
+        assert_eq!(r["ok"], false);
+        assert!(r["error"].as_str().unwrap().contains("niveau"), "{}", r["error"]);
+        // Arbre rafraîchi : Bash niveau 20, canLearn reflète l'état.
+        let t: Value = serde_json::from_str(&g.skill_tree_json()).unwrap();
+        let bash = t["skills"].as_array().unwrap().iter().find(|s| s["code"] == "Bash").unwrap();
+        assert_eq!(bash["level"], 20);
+        assert_eq!(bash["canLearn"], false);
+        // 3 points restants : 2 de la boucle (grant 1 / spend 1 → solde
+        // inchangé après Bash niv 2..20) + 1 du refus reqlevel ci-dessus —
+        // un refus ne dépense JAMAIS de point.
+        assert_eq!(t["points"], 3, "seuls les apprentissages réussis coûtent");
+    }
+
+    #[test]
+    fn sor_tree_and_learn_flow_match_real_table() {
+        let Some(root) = ws_root() else { return };
+        // Héros SOR : Fire Bolt apprenable niv 1 (reqlevel 1, sans prérequis) ;
+        // Fire Ball exige Fire Bolt + reqlevel 12 (patch_skills.txt).
+        let m: Value = serde_json::from_str(
+            &std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap(),
+        )
+        .unwrap();
+        let mut g = GameCore::new(&m.to_string(), "SOR").unwrap();
+        // Assets du town (comme full_ba_game, héros SOR — anims inutiles ici).
+        g.provide(
+            m.pointer("/level/palette").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/palette").unwrap().as_str().unwrap())).unwrap(),
+        );
+        g.provide(
+            m.pointer("/level/ds1").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/ds1").unwrap().as_str().unwrap())).unwrap(),
+        );
+        for p in m.pointer("/level/dt1").unwrap().as_array().unwrap() {
+            let p = p.as_str().unwrap();
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        g.finalize().unwrap();
+        // Fire Bolt démarre CONNU (StartSkill charstats) niveau 1.
+        let t: Value = serde_json::from_str(&g.skill_tree_json()).unwrap();
+        assert_eq!(t["class"], "sor");
+        let skills = t["skills"].as_array().unwrap();
+        let fb = skills.iter().find(|s| s["code"] == "Fire Bolt").unwrap();
+        assert_eq!(fb["level"], 1, "skill de départ porté dans l'arbre");
+        assert_eq!(fb["missile"], "firebolt");
+        let ball = skills.iter().find(|s| s["code"] == "Fire Ball").unwrap();
+        assert_eq!(ball["prereqs"], serde_json::json!(["Fire Bolt"]));
+        assert_eq!(ball["level"], 0);
+        // 1 point : monter Fire Bolt marche ; Fire Ball refusé (reqlevel 12).
+        g.world.as_mut().unwrap().grant_skill_points(1);
+        let r: Value = serde_json::from_str(&g.learn_skill("Fire Bolt")).unwrap();
+        assert_eq!(r["ok"], true);
+        assert_eq!(r["level"], 2);
+        g.world.as_mut().unwrap().grant_skill_points(1);
+        let r: Value = serde_json::from_str(&g.learn_skill("Fire Ball")).unwrap();
+        assert_eq!(r["ok"], false);
+        assert!(r["error"].as_str().unwrap().contains("12"), "{}", r["error"]);
     }
 }
