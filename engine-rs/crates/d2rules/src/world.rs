@@ -2,6 +2,7 @@
 //! inventaire 10×4, save/load. Zéro IO, zéro rendu.
 
 use crate::data::{self, HeroTpl, MonTpl};
+use crate::difficulty::{self, Difficulty};
 use crate::loot;
 use crate::path::{astar, snap_near, Grid};
 use crate::rng::Rng;
@@ -175,6 +176,12 @@ pub struct SpawnRule {
     pub ac: u32,
     /// TC de drop effectives (aucune = celle du gabarit manifest).
     pub treasure_class: Option<String>,
+    /// Résists du monstre POUR LA DIFFICULTÉ du spawn (W08/K) — ordre
+    /// `[ResDm, ResMa, ResFi, ResLi, ResCo, ResPo]` (colonnes
+    /// `patch_monstats.txt` 130-147 ± `(N)/(H)` ; vides = 0 ; ≥100 =
+    /// immunité, négatif = amplifié — cf. `difficulty::apply_resist`).
+    /// Défaut `[0; 6]` : zéro changement pour les spawns existants.
+    pub res: [i32; 6],
 }
 
 impl Default for SpawnRule {
@@ -190,6 +197,7 @@ impl Default for SpawnRule {
             xp_pct: MONLVL_XP_NUM,
             ac: MONLVL_AC,
             treasure_class: None,
+            res: [0; 6],
         }
     }
 }
@@ -264,6 +272,9 @@ pub(crate) struct MonData {
     /// réelles de monstats TreasureClass2/3 ou TC dédiée boss) — `None` =
     /// TC du gabarit (comportement historique).
     pub tc: Option<String>,
+    /// Résists effectifs de la difficulté de spawn (`SpawnRule::res`, W08/K)
+    /// — indexés comme les colonnes ResDm/Ma/Fi/Li/Co/Po ; ≥100 = immunité.
+    pub res: [i32; 6],
 }
 
 /// Monde de jeu complet (pur : aucune IO, aucune dépendance de rendu).
@@ -298,6 +309,10 @@ pub struct World {
     pub(crate) wp: crate::waypoints::WaypointState,
     pub(crate) rng: Rng,
     pub(crate) now_ms: u64,
+    /// Difficulté courante (W08/K — Normal par défaut ; `set_difficulty`
+    /// avant les spawns pour des monstres scalés NM/Enfer). Persistée en
+    /// save (champ optionnel, rétro-compat v1/v2).
+    pub(crate) difficulty: Difficulty,
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
@@ -461,6 +476,7 @@ impl World {
             wp: crate::waypoints::WaypointState::default(),
             rng: Rng::new(seed),
             now_ms: 0,
+            difficulty: Difficulty::default(),
         };
         let mut world = world;
         world.init_hero();
@@ -645,6 +661,7 @@ impl World {
             speed: t.speed,
             kind: rule.kind,
             tc: rule.treasure_class,
+            res: rule.res,
         };
         self.mon_ent.push(ent);
         self.mon_dat.push(dat);
@@ -848,6 +865,24 @@ impl World {
     /// Le héros court-il (touche Maj, anim RN, vitesse course) ?
     pub fn hero_is_running(&self) -> bool {
         self.hero.run
+    }
+
+    // ------------------------------------------------------------------
+    // API difficulté (W08/K — additif impl-difficultes)
+    // ------------------------------------------------------------------
+
+    /// Fixe la difficulté (Normal/Nightmare/Hell). À appeler AVANT les
+    /// spawns pour des monstres scalés par la difficulté (`SpawnRule` de
+    /// d2game) ; après coup, seules les règles du tick (résists, pénalité
+    /// XP à la mort) basculent — les monstres déjà posés gardent leurs
+    /// stats. Normal par défaut : tout l'existant est inchangé.
+    pub fn set_difficulty(&mut self, d: Difficulty) {
+        self.difficulty = d;
+    }
+
+    /// Difficulté courante (lecture — HUD wasm, save, tests).
+    pub fn difficulty(&self) -> Difficulty {
+        self.difficulty
     }
 
     // ------------------------------------------------------------------
@@ -1085,6 +1120,9 @@ impl World {
             // dégâts héros = floor(rand(mindam..maxdam) × (1 + force/100))
             let base = self.rng.range_u32(self.hero_tpl.weapon_min, self.hero_tpl.weapon_max) as f32;
             let dmg = (base * (1.0 + self.hero.stats.strength as f32 / 100.0)).floor() as u32;
+            // Résist physique du monstre (ResDm — patch_monstats col 130/136/142,
+            // ex. skeleton1 ResDm(H)=33, zombie1 ResDm(H)=50) — W08/K.
+            let dmg = difficulty::apply_resist(dmg, self.mon_dat[i].res[0]);
             self.mon_dat[i].hp = self.mon_dat[i].hp.saturating_sub(dmg);
             ev.push(GameEvent::HeroAttacked { target: i, dmg });
             if self.mon_dat[i].hp == 0 {
@@ -1170,11 +1208,31 @@ impl World {
         );
         for me in events {
             match me {
-                d2missiles::MissileEvent::Hit { target, dmg, .. } => {
+                d2missiles::MissileEvent::Hit { id, target, dmg, .. } => {
                     // jet de toucher : attack rating héros vs AC monstre (§3)
                     let ac = self.mon_dat[target].ac;
                     let chance = hit_chance(self.hero.stats.to_hit, ac);
                     if (self.rng.below(100)) < chance {
+                        // Résist du monstre pour l'élément du missile (W08/K) :
+                        // ResFi/ResCo/ResLi… colonnes (N)/(H) de
+                        // `patch_monstats.txt` — immunité (≥100) ⇒ 0 dégât,
+                        // négatif (Hell) ⇒ amplifié. Physique : ResDm.
+                        let elem = self
+                            .missiles
+                            .missiles()
+                            .iter()
+                            .find(|m| m.id == id)
+                            .map(|m| m.elem)
+                            .unwrap_or_default();
+                        let dmg = difficulty::apply_resist(
+                            dmg,
+                            self.mon_dat[target].res[Difficulty::resist_index(elem)],
+                        );
+                        if dmg == 0 {
+                            // Immunité : le missile est consumé, rien ne passe.
+                            ev.push(GameEvent::MissileMissed { target });
+                            continue;
+                        }
                         self.mon_dat[target].hp = self.mon_dat[target].hp.saturating_sub(dmg);
                         ev.push(GameEvent::MissileHit { target, dmg });
                         if self.mon_dat[target].hp == 0 {
@@ -1196,6 +1254,17 @@ impl World {
                 | d2missiles::MissileEvent::Blocked { .. } => {}
             }
         }
+    }
+
+    /// Recalcule `xp_to_next` après une perte d'XP (pénalité de mort K3).
+    fn refresh_xp_to_next(&mut self) {
+        let lvl = self.hero.stats.level;
+        if lvl >= MAX_LEVEL {
+            self.hero.stats.xp_to_next = 0;
+            return;
+        }
+        let need = XP_TABLE[(lvl - 1) as usize];
+        self.hero.stats.xp_to_next = need.saturating_sub(self.hero.stats.xp);
     }
 
     /// Applique l'XP gagnée + paliers de niveau (événement par palier).
@@ -1388,6 +1457,21 @@ impl World {
                 self.hero.path.clear();
                 self.hero.swing_ms = 0;
                 self.hero.anim_ms = 0;
+                // Pénalité XP à la mort (K3) : DeathExpPenalty 0/5/10 %
+                // (`patch_difficultylevels.txt`), plafonnée au plancher du
+                // niveau courant (le retail ne fait jamais descendre de
+                // niveau). Normal : 0 % — zéro changement.
+                let pct = difficulty::embedded().row(self.difficulty).death_exp_penalty;
+                if pct > 0 {
+                    let lost = self.hero.stats.xp.saturating_mul(pct) / 100;
+                    let floor = if self.hero.stats.level > 1 {
+                        XP_TABLE[(self.hero.stats.level as usize - 2).min(XP_TABLE.len() - 1)]
+                    } else {
+                        0
+                    };
+                    self.hero.stats.xp = self.hero.stats.xp.saturating_sub(lost).max(floor);
+                    self.refresh_xp_to_next();
+                }
                 ev.push(GameEvent::HeroDied);
             }
         }

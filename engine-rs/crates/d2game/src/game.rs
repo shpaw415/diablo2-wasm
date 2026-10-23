@@ -21,11 +21,11 @@ use crate::ds1::{self, Ds1};
 use crate::dt1::{self, Dt1Tile};
 use crate::levels;
 use crate::monsters::{
-    plan_level_spawns, LevelSpawnPlan, MonLvl, MonStats, MonUMods, SuperUniques,
+    plan_level_spawns_diff, LevelSpawnPlan, MonLvl, MonStats, MonUMods, SuperUniques,
 };
 use crate::pal::MapPalette;
 use crate::sprite::{sprite_palette, SpriteFrame, SpriteSet};
-use crate::world::{AnimState, Entity, GameEvent, MonKind, PlayerInput, SpawnRule, World};
+use crate::world::{AnimState, Difficulty, Entity, GameEvent, MonKind, PlayerInput, SpawnRule, World};
 
 pub const DEFAULT_VIEWPORT_W: u32 = 800;
 pub const DEFAULT_VIEWPORT_H: u32 = 600;
@@ -183,6 +183,12 @@ pub struct GameCore {
     /// Tables de niveaux v1.12 (W01) si [`LEVELS_ASSET`] fourni — `None`
     /// sinon (repli manifest historique intégral).
     tables: Option<levels::LevelTables>,
+    /// Difficulté courante (W08/K, impl-difficultes) : Normal par défaut ;
+    /// `set_difficulty` (wasm `setDifficulty`, `?diff=` de la page) avant
+    /// `finalize` — gouverne le plan de spawn (MonLvl N/H, densités,
+    /// résists/immunités) et le monde (pénalité XP à la mort). Persistée
+    /// dans la save du monde (transferts de niveau).
+    difficulty: Difficulty,
     /// Graphe Vis/Warp (W04) dérivé des tables — `None` sans tables.
     warp_graph: Option<levels::WarpGraph>,
     /// Graine de partie : combine la graine DRLG de chaque niveau (W02) —
@@ -242,6 +248,7 @@ impl GameCore {
             hero_request,
             animdata: None,
             tables: None,
+            difficulty: Difficulty::default(),
             warp_graph: None,
             game_seed: 0,
             vw: DEFAULT_VIEWPORT_W,
@@ -273,6 +280,32 @@ impl GameCore {
     /// Graine de partie courante (0 par défaut — cartes stables par boot).
     pub fn game_seed(&self) -> u64 {
         self.game_seed
+    }
+
+    /// Fixe la difficulté (W08/K) : `Difficulty::parse` côté wasm — à
+    /// appeler avant `finalize` pour que le niveau initial spawn ses
+    /// monstres scalés (MonLvl N/H, densités MonUMin/Max N/H, résists/
+    /// immunités `Res*(N)/(H)`). Si un monde existe déjà (après finalize),
+    /// il bascule aussi (pénalité XP à la mort, résists appliqués au tick) ;
+    /// les monstres déjà posés gardent leurs stats.
+    pub fn set_difficulty(&mut self, d: Difficulty) {
+        self.difficulty = d;
+        if let Some(w) = self.world.as_mut() {
+            w.set_difficulty(d);
+        }
+    }
+
+    /// Difficulté courante (lecture).
+    pub fn difficulty(&self) -> Difficulty {
+        self.difficulty
+    }
+
+    /// Difficulté en JSON pour le HUD/E2E wasm : `{"difficulty":"hell",
+    /// "label":"Hell"}`.
+    pub fn difficulty_json(&self) -> String {
+        let d = self.difficulty;
+        serde_json::json!({ "difficulty": d.as_str(), "label": difficulty_label(d) })
+            .to_string()
     }
 
     fn asset(&self, path: &str) -> Result<&Vec<u8>, String> {
@@ -586,6 +619,9 @@ impl GameCore {
         if let Some((x, y)) = spawn {
             world.set_hero_spawn(x.floor() as i32, y.floor() as i32);
         }
+        // Difficulté courante (W08/K) : monde neuf OU transféré (la save
+        // porte déjà le champ ; remettre ici garde monde↔core synchrones).
+        world.set_difficulty(self.difficulty);
         Ok(world)
     }
 
@@ -709,12 +745,13 @@ impl GameCore {
             }
         };
         let mut rng = LevelRng::new(fnv1a(&format!("mon:{}", def.key)));
-        let plan = plan_level_spawns(
+        let plan = plan_level_spawns_diff(
             rec,
             &tables.monstats,
             &tables.monumod,
             &tables.monlvl,
             &tables.superuniques,
+            self.difficulty,
             &mut rng,
             resolve_code,
         );
@@ -810,11 +847,12 @@ impl GameCore {
                 }
             }
             self.switch_notes.push(format!(
-                "spawn data-driven (W06-W08) : {} packs + {} super-uniques, cible {} (MonDen)",
+                "spawn data-driven (W06-W08) : {} packs + {} super-uniques, cible {} (MonDen), difficulté {}",
                 packs.len(),
                 sus.len(),
                 packs.iter().map(|p| p.count).sum::<u32>()
-                    + sus.iter().map(|s| s.count).sum::<u32>()
+                    + sus.iter().map(|s| s.count).sum::<u32>(),
+                difficulty_label(self.difficulty)
             ));
         } else {
             let list = self
@@ -865,8 +903,19 @@ impl GameCore {
                         &mut rng, world, (hx, hy), warp_pt.as_ref(),
                         MONSTER_SPAWN_CLEAR_OF_WARP, &spots, min_dist, MONSTER_SPAWN_SPACING,
                     ) {
+                        // Résists du boss POUR LA DIFFICULTÉ (W08/K) : record
+                        // monstats du code sprite (`AN`→andariel), colonnes
+                        // Res*(N)/(H) — défaut [0;6] si le code est inconnu
+                        // de la table (boss manifest-only).
+                        let boss_res = self
+                            .mon_tables
+                            .as_ref()
+                            .and_then(|t| t.monstats.get_by_code(&boss_code))
+                            .map(|r| r.res_for(self.difficulty))
+                            .unwrap_or([0; 6]);
                         if world.spawn_monster_rule(&boss_code, tx, ty, SpawnRule {
                             kind: MonKind::Boss,
+                            res: boss_res,
                             ..SpawnRule::default()
                         }) {
                             spots.push((tx as f32 + 0.5, ty as f32 + 0.5));
@@ -1757,6 +1806,15 @@ fn fnv1a(s: &str) -> u64 {
         h = h.wrapping_mul(0x0000_0100_0000_01B3);
     }
     h
+}
+
+/// Libellé HUD d'une difficulté (affichage, pas une donnée table).
+fn difficulty_label(d: Difficulty) -> &'static str {
+    match d {
+        Difficulty::Normal => "Normal",
+        Difficulty::Nightmare => "Nightmare",
+        Difficulty::Hell => "Hell",
+    }
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize)]
