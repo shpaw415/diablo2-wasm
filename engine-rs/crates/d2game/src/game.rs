@@ -145,7 +145,7 @@ pub struct GameCore {
     /// [`LevelDef`] au `finalize`.
     level_name: String,
     /// Niveau chargé (carte + warp + monstres) — `None` avant `finalize`.
-    level: Option<LevelDef>,
+    pub(crate) level: Option<LevelDef>,
     map: Option<ComposedMap>,
     map_rgba: [u8; 256 * 4], // palette-index → RGBA, precomputed for blits
     sprite_pal: d2dcc::render::Palette,
@@ -173,7 +173,7 @@ pub struct GameCore {
     quest_events: BTreeMap<String, String>,
     /// Délai anti-rebond restant après une transition (ms).
     warp_cd_ms: u32,
-    world: Option<World>,
+    pub(crate) world: Option<World>,
     /// Héros demandé ("BA"|"SOR"|"PA"…, normalisé uppercase) — résolu contre
     /// `manifest.heroes` (retombée `hero` à l'ancienne via d2rules).
     hero_request: String,
@@ -423,7 +423,7 @@ impl GameCore {
     }
 
     /// Le bloc `levels.*` du manifest dont `levelsId` vaut `id` (clé incluse).
-    fn manifest_block_for_level_id(&self, id: u32) -> Option<(String, &Value)> {
+    pub(crate) fn manifest_block_for_level_id(&self, id: u32) -> Option<(String, &Value)> {
         self.manifest
             .get("levels")?
             .as_object()?
@@ -544,7 +544,9 @@ impl GameCore {
             }
             None => None,
         };
-        let world = self.build_level_world(blocked, spawn, def)?;
+        let mut world = self.build_level_world(blocked, spawn, def)?;
+        // W05 : attache le waypoint du niveau (table réelle waypoints.rs).
+        crate::waypoint_travel::attach_level_waypoint(&mut world, def);
         self.level = Some(def.clone());
         self.map = Some(map);
         self.world = Some(world);
@@ -1364,6 +1366,13 @@ impl GameCore {
         }
         self.level_name = world.level_key().to_string();
         self.world = Some(world);
+        // W05 : ré-attache le waypoint du niveau courant (le save ne le
+        // porte pas — il est dérivé du niveau chargé, cf. waypoints.rs).
+        if let Some(def) = self.level.clone() {
+            if let Some(w) = self.world.as_mut() {
+                crate::waypoint_travel::attach_level_waypoint(w, &def);
+            }
+        }
         self.follow_camera();
         Ok(())
     }

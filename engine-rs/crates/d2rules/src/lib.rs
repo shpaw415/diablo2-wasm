@@ -41,6 +41,9 @@ mod save;
 mod skills;
 mod stamina;
 mod world;
+/// Waypoints W05/W19 (table réelle v1.12, activation au contact, voyage,
+/// save additive) — état dans `World`, blocs `impl World` additifs.
+pub mod waypoints;
 
 // --- Socles règles data-driven v1.12 (impl-regles-skills, 2026-10-22) ---
 /// Parseur/évaluateur CalcString (socle A2 — synergies, ToHitCalc, passives).
@@ -81,6 +84,10 @@ pub use world::World;
 /// Rang de monstre + règle de spawn data-driven (impl-monstres-boss) —
 /// consommés par d2game (tables réelles → spawn_monster_rule).
 pub use world::{MonKind, SpawnRule};
+
+/// Waypoints W05 : table réelle v1.12 + état (d2game attache au chargement
+/// du niveau et branche le voyage UI).
+pub use waypoints::{for_level as waypoint_for_level, by_slot as waypoint_by_slot, WaypointDef, WAYPOINTS};
 
 // -- Types items/loot purs, consommables par d2game (F1-F7) --
 pub use affixes::{AffixKind, AffixRec, AffixTables, ItemTypeSet};
@@ -169,6 +176,10 @@ pub enum GameEvent {
     PotionUsed { heal: u32 },
     /// Inventaire plein : l'objet reste au sol.
     InventoryFull,
+    /// Waypoint activé au contact (W05) — `slot` = rang du panneau retail
+    /// (colonne `Waypoint` de `patch_levels.txt` ; 39 = extension MVP Blood
+    /// Moor, cf. `waypoints.rs`). Émis une seule fois par slot.
+    WaypointActivated { slot: u8 },
 }
 
 /// État d'animation (code mode COF D2 : NU=neutral, WL=walk, RN=run, A1=attack1, DD=death).

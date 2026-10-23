@@ -53,6 +53,24 @@ impl D2Game {
         self.core.level_info_json()
     }
 
+    /// Waypoints (W05) — full panel state as JSON:
+    /// `{"current":{"key","name","levelId","slot","activated"},"list":[…]}`
+    /// (see `waypoint_travel.rs` / `d2rules::waypoints` for the shape).
+    #[wasm_bindgen(js_name = waypoints)]
+    pub fn waypoints(&self) -> String {
+        self.core.waypoints_json()
+    }
+
+    /// Direct travel to an ACTIVATED waypoint (W05): reloads the target
+    /// level (seeded regen, cf. impl-drlg) and lands the hero on the target
+    /// stone. Returns the transition JSON `{"slot","key","name"}`; throws
+    /// on unknown slot, non-activated waypoint or level missing from the
+    /// port's manifest.
+    #[wasm_bindgen(js_name = travelWaypoint)]
+    pub fn travel_waypoint(&mut self, slot: u8) -> Result<String, JsValue> {
+        self.core.travel_waypoint(slot).map_err(js_err)
+    }
+
     /// Switch level: reloads DS1/DT1/collision from the provided (or hot-
     /// provided) bytes, carries the hero over (stats/inventory/xp), spawns the
     /// target level's monsters, and lands the hero at `(spawn_x, spawn_y)`
