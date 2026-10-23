@@ -62,6 +62,7 @@
   menuAudio.loop = true;
   menuAudio.volume = 0.45;
   let musicStarted = false, musicMuted = false;
+  try { musicMuted = localStorage.getItem('d2wasm.musicMuted') === '1'; } catch (e) {} // EXP-A1 : clé partagée avec demo/music.js (mute persistant menu/jeu)
   function startMusic() {
     if (musicStarted) return;
     musicStarted = true;
@@ -71,6 +72,7 @@
   window.addEventListener('keydown', startMusic);
   function toggleMusic() {
     musicMuted = !musicMuted;
+    try { localStorage.setItem('d2wasm.musicMuted', musicMuted ? '1' : '0'); } catch (e) {} // EXP-A1 : persiste la même clé que le jeu
     if (musicMuted) menuAudio.pause();
     else { startMusic(); menuAudio.play().catch(() => {}); }
     const b = document.getElementById('musicBtn');
@@ -669,7 +671,7 @@
   // bouton bascule musique (créé dynamiquement, haut-droite du stage)
   const musicBtn = document.createElement('button');
   musicBtn.id = 'musicBtn';
-  musicBtn.textContent = '🔊';
+  musicBtn.textContent = musicMuted ? '🔇' : '🔊'; // EXP-A1 : reflète l'état persistant
   musicBtn.title = 'Musique du menu';
   musicBtn.addEventListener('click', (ev) => { ev.stopPropagation(); toggleMusic(); });
   document.getElementById('stage').appendChild(musicBtn);
