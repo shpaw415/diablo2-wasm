@@ -2,9 +2,10 @@
 //!
 //! Le format embarque la grille (RLE trivial : '1' marchable, '0' bloqué) et le
 //! manifest — `World::load(json)` n'a pas d'autres paramètres, conformément au
-//! contrat. Versionnée (`version: 2`) ; tout écart ⇒ `Err(())`. Rétro-compat :
-//! une sauvegarde v1 (sans `hero_code`, `missiles` ni `skills`) se charge —
-//! défauts du manifest / systèmes vides / skills de départ de la classe.
+//! contrat. Versionnée (`version: 3`) ; tout écart ⇒ `Err(())`. Rétro-compat :
+//! une sauvegarde v1 (sans `hero_code`, `missiles` ni `skills`) ou v2 (sans
+//! `level`) se charge — défauts du manifest / systèmes vides / skills de départ
+//! de la classe / niveau "town".
 
 use super::world::*;
 use crate::rng::Rng;
@@ -29,6 +30,11 @@ struct Save {
     /// la sélection de personnage (rétro-compat : défaut du manifest).
     #[serde(default)]
     hero_code: Option<String>,
+    /// Clé du niveau courant dans le manifest (`"town"`, `"bloodmoor"`…) —
+    /// absent des sauvegardes v1/v2 antérieures au multi-niveaux persistant
+    /// (rétro-compat : défaut "town", cf. `DEFAULT_LEVEL_KEY`).
+    #[serde(default)]
+    level: Option<String>,
     /// Héros.
     hero: HeroSave,
     /// Monstres (même ordre que `monsters()`).
@@ -139,6 +145,7 @@ pub(crate) fn save_json(w: &World) -> String {
         collision: grid_to_strings(&w.grid),
         manifest: w.manifest.clone(),
         hero_code: Some(w.hero_code.clone()),
+        level: Some(w.level_key.clone()),
         hero: HeroSave {
             ent: w.hero_ent,
             stats: w.hero.stats.clone(),
@@ -187,7 +194,9 @@ pub(crate) fn save_json(w: &World) -> String {
 /// Reconstruit le monde (contracte `World::load`).
 pub(crate) fn load_json(json: &str) -> Result<World, ()> {
     let s: Save = serde_json::from_str(json).map_err(|_| ())?;
-    if s.version != SAVE_VERSION && s.version != SAVE_VERSION_OLDEST {
+    // versions acceptées : plage [SAVE_VERSION_OLDEST..=SAVE_VERSION] —
+    // 1 (sans skills/hero_code/level), 2 (sans level), 3 (courant).
+    if s.version < SAVE_VERSION_OLDEST || s.version > SAVE_VERSION {
         return Err(());
     }
     let grid = strings_to_grid(&s.collision)?;
@@ -209,6 +218,15 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         .hero_code
         .clone()
         .unwrap_or_else(|| super::data::resolve_hero(&s.manifest, "BA"));
+    // clé de niveau : champ v3, défaut "town" pour les sauvegardes v1/v2
+    // (rétro-compat multi-niveaux — le Camp des Rousses est le niveau
+    // historique de tous les saves antérieurs). Chaîne vide = défaut aussi.
+    let level_key = s
+        .level
+        .clone()
+        .map(|k| k.trim().to_ascii_lowercase())
+        .filter(|k| !k.is_empty())
+        .unwrap_or_else(|| super::world::DEFAULT_LEVEL_KEY.to_string());
     // skills : champ v2 sinon skills de départ de la classe (sauvegardes v1) ;
     // index actif hors bornes ⇒ défaut par classe.
     let skills = match s.skills {
@@ -225,6 +243,7 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         grid,
         manifest: s.manifest.clone(),
         hero_code: hero_code.clone(),
+        level_key,
         hero_tpl: super::data::parse_hero_code(&s.manifest, &hero_code),
         mon_tpls: super::data::parse_monsters(&s.manifest),
         // Tables de loot statiques (embarquées) — pas d'état à recharger.

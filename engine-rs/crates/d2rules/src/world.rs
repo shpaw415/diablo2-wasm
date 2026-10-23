@@ -86,11 +86,16 @@ pub(crate) const MONLVL_XP_DEN: u32 = 100;
 pub(crate) const DROP_NOTHING_PCT: u32 = 60;
 /// % or (ensuite : % potion).
 pub(crate) const DROP_GOLD_PCT: u32 = 25;
-/// Version du format de sauvegarde (2 = skills héros).
-pub(crate) const SAVE_VERSION: u32 = 2;
+/// Version du format de sauvegarde (3 = clé du niveau courant, save P0).
+pub(crate) const SAVE_VERSION: u32 = 3;
 /// Plus ancienne version acceptée au chargement (1 = sans skills — rétro-compat
-/// : les skills de départ de la classe sont reconstitués, cf. `skills.rs`).
+/// : les skills de départ de la classe sont reconstitués, cf. `skills.rs` ;
+/// 2 = sans clé de niveau — rétro-compat : niveau "town" par défaut).
 pub(crate) const SAVE_VERSION_OLDEST: u32 = 1;
+/// Clé de niveau par défaut (bloc `levels.town` du manifest, alias du bloc
+/// `level` historique) — appliquée aux mondes neufs et aux sauvegardes
+/// v1/v2 qui ne portent pas de clé de niveau.
+pub(crate) const DEFAULT_LEVEL_KEY: &str = "town";
 /// Grille d'inventaire MVP : 10 colonnes × 4 rangées.
 pub(crate) const INV_COLS: usize = 10;
 pub(crate) const INV_ROWS: usize = 4;
@@ -265,6 +270,11 @@ pub struct World {
     pub(crate) manifest: serde_json::Value,
     /// Code héros effectif (ex. "BA") — persisté dans la sauvegarde.
     pub(crate) hero_code: String,
+    /// Clé du niveau courant dans le manifest (`"town"`, `"bloodmoor"`…) —
+    /// persistée dans la sauvegarde v3 pour reprendre dans la bonne zone
+    /// (warps multi-niveaux Town<->Blood Moor). La simulation n'y touche pas :
+    /// c'est d2game qui la pose au chargement / switch de niveau.
+    pub(crate) level_key: String,
     pub(crate) hero_tpl: HeroTpl,
     pub(crate) mon_tpls: Vec<MonTpl>,
     pub(crate) hero_ent: Entity,
@@ -392,6 +402,7 @@ impl World {
             h,
             grid: level_collision,
             hero_code: hero_code.clone(),
+            level_key: DEFAULT_LEVEL_KEY.to_string(),
             manifest: manifest.clone(),
             hero_tpl: data::parse_hero_code(&manifest, &hero_code),
             mon_tpls: data::parse_monsters(&manifest),
@@ -789,6 +800,21 @@ impl World {
     /// Code du héros effectif (ex. `"BA"` — résolu via `heroes[code]`/`hero`).
     pub fn hero_code(&self) -> &str {
         &self.hero_code
+    }
+
+    /// Clé du niveau courant (`"town"`, `"bloodmoor"`…) — persistée v3.
+    pub fn level_key(&self) -> &str {
+        &self.level_key
+    }
+
+    /// Pose la clé du niveau courant (d2game au chargement / switch de niveau).
+    /// Trim + minuscules (même normalisation que `GameCore::with_level`) ;
+    /// chaîne vide ignorée (état inchangé).
+    pub fn set_level_key(&mut self, key: &str) {
+        let k = key.trim().to_ascii_lowercase();
+        if !k.is_empty() {
+            self.level_key = k;
+        }
     }
 
     /// Le héros a-t-il un déplacement en cours ?

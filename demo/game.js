@@ -59,24 +59,44 @@ const PARAMS = new URLSearchParams(location.search);
 // effective (heroes[code] sinon bloc hero) est faite côté moteur Rust —
 // ci-dessous on reflète la même règle pour les assets et le HUD.
 let HERO_REQ = (PARAMS.get('hero') || 'BA').toUpperCase();
-// ?continue=1 : « Continuer » du menu — le héros vient de la sauvegarde.
+// ?continue=1 : « Continuer » du menu — le héros vient de la sauvegarde la
+// plus récente (slots v1, miroir clé historique d2wasm.save.v1).
+// ?slot=<id> : reprise d'un slot précis depuis l'écran « Parties » du menu.
 let CONTINUE_SAVE = null;
-let SAVE_LEVEL = null; // niveau détecté dans la sauvegarde (dimensions de grille)
-if (PARAMS.get('continue') === '1') {
+let CONTINUE_SLOT_ID = null; // slot d'origine (ré-écrit par Sauvegarder)
+if (PARAMS.get('slot')) {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) {
-      CONTINUE_SAVE = raw;
-      const hc = JSON.parse(raw).hero_code;
-      if (typeof hc === 'string' && hc) HERO_REQ = hc.toUpperCase();
+    const slot = window.D2Slots && window.D2Slots.get(PARAMS.get('slot'));
+    if (slot && slot.save) {
+      CONTINUE_SAVE = slot.save;
+      CONTINUE_SLOT_ID = slot.id;
     }
+  } catch { CONTINUE_SAVE = null; } // slot inconnu : nouvelle partie
+}
+if (!CONTINUE_SAVE && PARAMS.get('continue') === '1') {
+  try {
+    let raw = null;
+    const newest = window.D2Slots && window.D2Slots.mostRecent();
+    if (newest && newest.save) { raw = newest.save; CONTINUE_SLOT_ID = newest.id; }
+    else raw = localStorage.getItem(SAVE_KEY); // rétro-compat sans slots
+    if (raw) CONTINUE_SAVE = raw;
   } catch { CONTINUE_SAVE = null; } // save corrompue : nouvelle partie
+}
+if (CONTINUE_SAVE) {
+  try {
+    const hc = JSON.parse(CONTINUE_SAVE).hero_code;
+    if (typeof hc === 'string' && hc) HERO_REQ = hc.toUpperCase();
+  } catch { CONTINUE_SAVE = null; }
 }
 
 // Niveau de boot : ?level=bloodmoor… ; sinon le niveau de la sauvegarde
-// (« Continuer » — la grille du save identifie la carte : town 285, bloodmoor
-// 360 colonnes), sinon town.
+// (« Continuer ») — save v3 : la clé `level` explicite du JSON ; save v1/v2 :
+// repli historique sur les dimensions de grille (town 285, bloodmoor 360
+// colonnes) ; sinon town.
 function detectSaveLevel(manifest, saveJson) {
+  try {
+    if (typeof saveJson.level === 'string' && saveJson.level) return saveJson.level.toLowerCase();
+  } catch { /* save illisible : niveau par défaut */ }
   try {
     const cols = saveJson.collision?.[0]?.length;
     if (!cols || !manifest.levels) return null;
@@ -494,6 +514,21 @@ function drawClickRing(x, y, k) {
   ctx.stroke();
   ctx.restore();
 }
+// Après un loadGame multi-zones (save v3) : le HUD et le statut suivent le
+// niveau réellement restauré par le moteur (levelInfo()).
+function syncZoneAfterLoad() {
+  const game = window.__d2.game;
+  if (!game || !game.isFinalized()) return;
+  try {
+    const li = JSON.parse(game.levelInfo() || '{}');
+    window.__d2.level = li.key || window.__d2.level;
+    if (li.name) {
+      hud.zone.textContent = li.name;
+      showLevelBanner(li.name);
+    }
+    if (window.__d2.refreshStatus) window.__d2.refreshStatus();
+  } catch { /* HUD : ne bloque jamais le chargement */ }
+}
 function wireCommon(manifest) {
   canvas.addEventListener('mousemove', (e) => {
     [mouse.x, mouse.y] = canvasXY(e);
@@ -558,16 +593,27 @@ function wireCommon(manifest) {
   $('btn-save').addEventListener('click', () => {
     try {
       const json = window.__d2.game.saveGame();
-      localStorage.setItem(SAVE_KEY, json);
+      localStorage.setItem(SAVE_KEY, json); // miroir rétro-compat (clé historique)
+      let slotName = 'fiche héros';
+      try {
+        // Slots nommés (save P0) : identité par héros, nom conservé si déjà
+        // nommé. En reprise (?slot=), c'est CE slot qui est mis à jour.
+        const slot = window.D2Slots.upsertFromSave(json);
+        slotName = slot.name;
+        if (CONTINUE_SLOT_ID && slot.id !== CONTINUE_SLOT_ID) {
+          CONTINUE_SLOT_ID = slot.id; // slot (re)créé : les prochaines saves suivent
+        }
+      } catch (se) { note('Slots : ' + (se && se.message ? se.message : se)); }
       sfx(manifest.sfx.uiClick, 0.6, 1.3);
-      flash('Partie sauvegardée.');
+      flash('Partie sauvegardée — ' + slotName + '.');
     } catch (err) { fail('Sauvegarde', err); }
   });
   $('btn-load').addEventListener('click', () => {
     try {
       const json = localStorage.getItem(SAVE_KEY);
       if (!json) { flash('Aucune sauvegarde trouvée.'); return; }
-      window.__d2.game.loadGame(json);
+      window.__d2.game.loadGame(json); // peut changer de zone (save v3 multi-niveaux)
+      syncZoneAfterLoad();
       sfx(manifest.sfx.uiClick, 0.6, 0.9);
       flash('Partie chargée.');
     } catch (err) { fail('Chargement', err); }
@@ -642,8 +688,9 @@ async function main() {
   const manifestText = await (await fetch(new URL('assets/manifest.json', ROOT))).text();
   const manifest = JSON.parse(manifestText);
 
-  // Niveau de boot : ?level=bloodmoor… > niveau de la sauvegarde (« Continuer »)
-  // > town. Le bloc `level` historique reste l'alias de town côté moteur.
+  // Niveau de boot : ?level=bloodmoor… > niveau de la sauvegarde (« Continuer »,
+  // clé v3 `level` — repli dimensions pour saves v1/v2) > town. Le bloc
+  // `level` historique reste l'alias de town côté moteur.
   let LEVEL_REQ = (PARAMS.get('level') || '').toLowerCase();
   if (!LEVEL_REQ && CONTINUE_SAVE) {
     try { LEVEL_REQ = detectSaveLevel(manifest, JSON.parse(CONTINUE_SAVE)) || 'town'; }
@@ -697,11 +744,14 @@ async function main() {
   for (const n of JSON.parse(game.switchNotes())) note(n);
   if (skipped.size) note(`${skipped.size} fichier(s) optionnel(s) absent(s) — modes en repli marche.`);
 
-  // « Continuer » : restaure la sauvegarde (même niveau ⇒ grille identique ;
-  // le niveau de boot a déjà été aligné sur celui du save).
-  if (CONTINUE_SAVE && (PARAMS.get('level') || 'town') === LEVEL_REQ) {
+  // « Continuer » : restaure la sauvegarde. Le niveau de boot est déjà
+  // aligné sur celui du save (clé v3 ou repli dimensions), donc on restaure
+  // toujours ; un ?level= explicite aurait déjà priorisé (résolution
+  // au-dessus) et le moteur re-switch de toute façon (load v3 multi-zones).
+  if (CONTINUE_SAVE) {
     try {
-      game.loadGame(CONTINUE_SAVE);
+      game.loadGame(CONTINUE_SAVE); // re-switch interne si le save v3 vise une autre zone
+      syncZoneAfterLoad();
       flash('Partie chargée — bon retour dans la zone.');
     } catch (e) {
       note(`Sauvegarde incompatible (${e && e.message ? e.message : e}) — nouvelle partie.`);

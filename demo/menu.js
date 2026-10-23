@@ -49,12 +49,43 @@
     try { new Audio('assets/sfx/ui_click.wav').play(); } catch (e) {}
   }
 
+  // bruitages de sélection/désélection par classe (extraits des MPQ)
+  const heroSfxCache = {};
+  function playHeroSfx(code, kind) {
+    const key = code + '-' + kind;
+    if (!heroSfxCache[key]) heroSfxCache[key] = new Audio(`assets/sfx/${code}-${kind}.wav`);
+    try { heroSfxCache[key].currentTime = 0; heroSfxCache[key].play(); } catch (e) {}
+  }
+
+  // ---- musique du menu original (thème du titre, ogg extrait du MPQ) ----
+  const menuAudio = new Audio('assets/menu/menu-music.ogg');
+  menuAudio.loop = true;
+  menuAudio.volume = 0.45;
+  let musicStarted = false, musicMuted = false;
+  function startMusic() {
+    if (musicStarted) return;
+    musicStarted = true;
+    if (!musicMuted) menuAudio.play().catch(() => { musicStarted = false; });
+  }
+  window.addEventListener('pointerdown', startMusic);
+  window.addEventListener('keydown', startMusic);
+  function toggleMusic() {
+    musicMuted = !musicMuted;
+    if (musicMuted) menuAudio.pause();
+    else { startMusic(); menuAudio.play().catch(() => {}); }
+    const b = document.getElementById('musicBtn');
+    if (b) b.textContent = musicMuted ? '🔇' : '🔊';
+  }
+
   // ---- écrans ----
   const screenTitle = document.getElementById('screenTitle');
   const screenSelect = document.getElementById('screenSelect');
+  const screenSlots = document.getElementById('screenSlots');
   let onTitle = true;
-  function showSelect() { onTitle = false; screenTitle.classList.remove('on'); screenSelect.classList.add('on'); }
-  function showTitle() { onTitle = true; screenSelect.classList.remove('on'); screenTitle.classList.add('on'); }
+  let onSlots = false;
+  function showSelect() { onTitle = false; onSlots = false; screenTitle.classList.remove('on'); screenSlots.classList.remove('on'); screenSelect.classList.add('on'); }
+  function showTitle() { onTitle = true; onSlots = false; screenSelect.classList.remove('on'); screenSlots.classList.remove('on'); screenTitle.classList.add('on'); }
+  function showSlots() { onTitle = false; onSlots = true; screenTitle.classList.remove('on'); screenSelect.classList.remove('on'); screenSlots.classList.add('on'); renderSlots(); }
 
   // ---- dégradation des assets du titre ----
   // fond : si le png manque, le dégradé radial du #stage (CSS) prend le relais
@@ -213,9 +244,22 @@
   function selectHero(code, silent) {
     const entry = selectable().find((h) => h.code === code);
     if (!entry) return;
+    const prev = selectedCode;
     selectedCode = code;
     for (const h of heroList) h.el.classList.toggle('selected', h.code === code);
     playBtn.disabled = false;
+    // animations de marche façon D2 : le nouveau héros avance (FW), l'ancien
+    // recule (BW) — si les sheets du contrat sont présentes.
+    if (scene.on && prev !== code) {
+      const now = performance.now();
+      const prevH = heroList.find((h) => h.code === prev);
+      if (prevH && prevH.bw) prevH.walk = { kind: 'bw', start: now };
+      const newH = heroList.find((h) => h.code === code);
+      if (newH && newH.fw) newH.walk = { kind: 'fw', start: now };
+      // bruitages officiels par classe (Cursor/intro/*.wav)
+      if (prev) playHeroSfx(prev, 'des');
+      playHeroSfx(code, 'sel');
+    }
     if (scene.on) showSceneStats(entry);
     if (!silent) clickSfx();
   }
@@ -282,13 +326,15 @@
     const entries = [];
     for (const code of codes) {
       const e = sheetEntry(json, code);
-      let anim = null, animHover = null, animSel = null;
+      let anim = null, animHover = null, animSel = null, fw = null, bw = null;
       if (e) {
         anim = await loadState(e);
         animHover = (await loadState(e.nu2)) || anim;
         animSel = (await loadState(e.nu3)) || anim;
+        fw = await loadState(e.fw);   // marche avant (sélection)
+        bw = await loadState(e.bw);   // marche arrière (désélection)
       }
-      entries.push({ code, anim, animHover, animSel });
+      entries.push({ code, anim, animHover, animSel, fw, bw });
     }
     // aucune sheet utilisable -> on reste sur les cartes
     if (!entries.some((x) => x.anim)) return;
@@ -298,6 +344,9 @@
       h.anim = en && en.anim;
       h.animHover = en && en.animHover;
       h.animSel = en && en.animSel;
+      h.fw = en && en.fw;
+      h.bw = en && en.bw;
+      h.walk = null;
       h.pos = arcPos(idx, entries.length);
     }
     scene.on = true;
@@ -353,8 +402,15 @@
       const { x, y } = stageXY(h.pos);
       if (!h.anim) { drawMissingHero(h, x, y); continue; }
       const hovered = scene.hover === h.code, sel = selectedCode === h.code;
-      // état du sprite FrontEnd : sélectionné > survol > repos
-      const a = (sel && h.animSel) || (hovered && h.animHover) || h.anim;
+      // progression de la marche (FW/BW joués une fois, puis pose d'état)
+      if (h.walk) {
+        const sheet = h.walk.kind === 'fw' ? h.fw : h.bw;
+        const done = Math.floor((t - h.walk.start) / 1000 * sheet.fps) >= sheet.frames;
+        if (done) h.walk = null;
+      }
+      // état du sprite FrontEnd : marche > sélectionné > survol > repos
+      const a = h.walk ? (h.walk.kind === 'fw' ? h.fw : h.bw)
+        : (sel && h.animSel) || (hovered && h.animHover) || h.anim;
       const fi = Math.floor((t / 1000) * a.fps) % a.frames;
       const dw = a.w * SCALE, dh = a.h * SCALE;
       if (hovered || sel) drawHalo(x, y, sel);
@@ -476,6 +532,7 @@
       const action = b.dataset.action;
       if (action === 'solo') showSelect();
       else if (action === 'continue') location.href = 'game.html?continue=1';
+      else if (action === 'slots') showSlots();
       else if (action === 'github') open('https://github.com/shpaw415/diablo2-wasm', '_blank');
       else if (action === 'quit') window.close();
     });
@@ -483,8 +540,113 @@
   playBtn.addEventListener('click', play);
   document.getElementById('back').addEventListener('click', showTitle);
 
-  // ---- Continuer grisé sans sauvegarde (clé posée par game.js) ----
-  if (!localStorage.getItem('d2wasm.save.v1')) document.getElementById('btnContinue').disabled = true;
+  // ================= écran « Parties » (slots de sauvegarde) =================
+  const slotsList = document.getElementById('slotsList');
+  const slotsEmpty = document.getElementById('slotsEmpty');
+  const slotsMsg = document.getElementById('slotsMsg');
+  const slotFile = document.getElementById('slotFile');
+
+  function fmtPlaytime(ms) {
+    const s = Math.floor((ms || 0) / 1000);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h ? h + ' h ' + m + ' min' : m ? m + ' min' : s + ' s';
+  }
+  function slotsMessage(t) {
+    slotsMsg.hidden = !t;
+    slotsMsg.textContent = t || '';
+  }
+  function renderSlots() {
+    slotsMessage('');
+    const slots = window.D2Slots ? D2Slots.list() : [];
+    slotsList.textContent = '';
+    slotsEmpty.hidden = slots.length > 0;
+    for (const slot of slots) {
+      const row = document.createElement('div');
+      row.className = 'slotrow';
+      const info = document.createElement('div');
+      info.className = 'slotinfo';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'slotname';
+      nameEl.textContent = slot.name;
+      const meta = document.createElement('div');
+      meta.className = 'slotmeta';
+      const d = new Date(slot.ts);
+      meta.innerHTML = '<b></b> · niv. <b></b> · <b></b> · <b></b> · <b></b>';
+      const bs = meta.querySelectorAll('b');
+      bs[0].textContent = slot.hero_label || slot.hero_code;
+      bs[1].textContent = slot.level != null ? slot.level : '?';
+      bs[2].textContent = slot.zone || slot.level_key || 'town';
+      bs[3].textContent = fmtPlaytime(slot.playtime_ms);
+      bs[4].textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString().slice(0, 5);
+      info.append(nameEl, meta);
+      const btns = document.createElement('div');
+      btns.className = 'slotbtns';
+      const mk = (label, cls, fn, title) => {
+        const b = document.createElement('button');
+        b.className = 'sbtn' + (cls ? ' ' + cls : '');
+        b.textContent = label;
+        if (title) b.title = title;
+        b.addEventListener('click', (ev) => { ev.stopPropagation(); clickSfx(); fn(); });
+        return b;
+      };
+      btns.append(
+        mk('Jouer', '', () => { location.href = 'game.html?slot=' + encodeURIComponent(slot.id); }, 'Reprendre ce héros'),
+        mk('Renommer', '', () => beginRename(slot, nameEl), 'Modifier le nom du slot'),
+        mk('Exporter', '', () => {
+          try { D2Slots.exportSlot(slot.id); slotsMessage('Exporté : ' + slot.name + ' (.json téléchargé).'); }
+          catch (e) { slotsMessage('Export impossible : ' + e.message); }
+        }, 'Télécharger la sauvegarde (.json)'),
+        mk('Supprimer', 'danger', () => { D2Slots.remove(slot.id); renderSlots(); }, 'Effacer ce slot')
+      );
+      row.append(info, btns);
+      slotsList.appendChild(row);
+    }
+  }
+  // Renommage inline : le nom devient un input, Entrée/flou valident.
+  function beginRename(slot, nameEl) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = 24;
+    input.value = slot.name;
+    nameEl.textContent = '';
+    nameEl.appendChild(input);
+    input.focus();
+    input.select();
+    const commit = () => {
+      D2Slots.rename(slot.id, input.value);
+      renderSlots();
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      if (e.key === 'Escape') { e.stopPropagation(); renderSlots(); }
+      e.stopPropagation(); // le clavier global (flèches…) ne vole pas la saisie
+    });
+    input.addEventListener('blur', commit);
+    input.addEventListener('click', (e) => e.stopPropagation());
+  }
+  document.getElementById('slotsBack').addEventListener('click', showTitle);
+  document.getElementById('slotImport').addEventListener('click', () => slotFile.click());
+  slotFile.addEventListener('change', () => {
+    const f = slotFile.files && slotFile.files[0];
+    slotFile.value = '';
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const slot = D2Slots.importSlot(String(r.result));
+        renderSlots();
+        slotsMessage('Importé : ' + slot.name + ' (' + (slot.hero_label || slot.hero_code) + ').');
+      } catch (e) {
+        slotsMessage('Import refusé : ' + (e.message || e));
+      }
+    };
+    r.readAsText(f);
+  });
+
+  // ---- Continuer grisé sans sauvegarde (slots ou clé historique) ----
+  if (!localStorage.getItem('d2wasm.save.v1') && !(window.D2Slots && D2Slots.mostRecent())) {
+    document.getElementById('btnContinue').disabled = true;
+  }
 
   // ---- clavier ----
   document.addEventListener('keydown', (e) => {
@@ -492,6 +654,10 @@
       if (e.key === 'Enter') { e.preventDefault(); play(); }
       else if (e.key === 'Escape') nameInput.blur();
       return;
+    }
+    if (onSlots) {
+      if (e.key === 'Escape') { showTitle(); clickSfx(); }
+      return; // saisie/clavier des slots gérés localement (inputs)
     }
     if (onTitle) {
       if (e.key === 'Enter') { showSelect(); clickSfx(); }
@@ -509,4 +675,13 @@
     }
     e.preventDefault();
   });
+
+  // bouton bascule musique (créé dynamiquement, haut-droite du stage)
+  const musicBtn = document.createElement('button');
+  musicBtn.id = 'musicBtn';
+  musicBtn.textContent = '🔊';
+  musicBtn.title = 'Musique du menu';
+  musicBtn.addEventListener('click', (ev) => { ev.stopPropagation(); toggleMusic(); });
+  document.getElementById('stage').appendChild(musicBtn);
+  startMusic();
 })();
