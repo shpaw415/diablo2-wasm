@@ -1119,6 +1119,84 @@ fn sor_firebolt_vs_barbarian_arrow_diverge_on_seed() {
     assert!(!sor_ev.is_empty());
 }
 
+// ---------------------------------------------------------------------------
+// Save v3 — clé du niveau courant (save P0, finish-jeu.md EXP-S1/S3/E1)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn save_v3_roundtrip_preserves_level_key() {
+    let mut w = World::with_seed(open_grid(12, 12), manifest_no_monsters(), 7);
+    assert_eq!(w.level_key(), "town", "monde neuf : niveau historique par défaut");
+    // normalisation attendue : trim + minuscules (même règle que GameCore)
+    w.set_level_key("  BloodMoor  ");
+    assert_eq!(w.level_key(), "bloodmoor");
+    run(&mut w, 500, None);
+
+    let snapshot = w.save();
+    let v: serde_json::Value = serde_json::from_str(&snapshot).unwrap();
+    assert_eq!(v["version"], serde_json::json!(3), "format courant = v3");
+    assert_eq!(v["level"], serde_json::json!("bloodmoor"), "clé de niveau persistée");
+
+    let w2 = World::load(&snapshot).expect("rechargement v3");
+    assert_eq!(w2.level_key(), "bloodmoor", "clé de niveau restaurée");
+    assert_eq!(w.hero(), w2.hero());
+    // double round-trip : la clé ne se dégrade pas
+    let w3 = World::load(&w2.save()).expect("re-rechargement");
+    assert_eq!(w3.level_key(), "bloodmoor");
+}
+
+#[test]
+fn save_v2_without_level_loads_in_town() {
+    let mut w = World::with_seed(open_grid(12, 12), manifest_no_monsters(), 7);
+    w.set_level_key("bloodmoor");
+    // rétro-compat v2 : pas de champ `level` (saves antérieurs au P0 save)
+    let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    v["version"] = serde_json::json!(2);
+    v.as_object_mut().unwrap().remove("level");
+    let w2 = World::load(&v.to_string()).expect("chargement v2 sans level");
+    assert_eq!(w2.level_key(), "town", "défaut sensible : Camp des Rousses");
+    assert_eq!(w2.hero_code(), w.hero_code());
+    // re-sauvegarde : le monde migré ressort en v3 avec sa clé par défaut
+    let v3: serde_json::Value = serde_json::from_str(&w2.save()).unwrap();
+    assert_eq!(v3["version"], serde_json::json!(3));
+    assert_eq!(v3["level"], serde_json::json!("town"));
+}
+
+#[test]
+fn save_v1_retrocompat_without_level_or_hero_code() {
+    let w = World::with_seed(open_grid(12, 12), manifest_no_monsters(), 7);
+    let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    v["version"] = serde_json::json!(1);
+    let obj = v.as_object_mut().unwrap();
+    obj.remove("level");
+    obj.remove("hero_code");
+    obj.remove("skills");
+    obj.remove("missiles");
+    let w2 = World::load(&v.to_string()).expect("chargement v1 rétro-compat");
+    assert_eq!(w2.level_key(), "town");
+    // skills de départ reconstitués (comportement v1 historique préservé) —
+    // BA n'a pas de StartSkill dans charstats v1.12 : jeu vide attendu.
+    assert_eq!(w2.hero_skills(), crate::skills::starting_skills("BA"));
+}
+
+#[test]
+fn save_rejects_or_ignores_blank_level_key() {
+    let w = World::with_seed(open_grid(12, 12), manifest_no_monsters(), 7);
+    // chaîne vide / espaces : défaut appliqué, pas d'erreur
+    let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    v["level"] = serde_json::json!("");
+    let w2 = World::load(&v.to_string()).expect("level vide = défaut");
+    assert_eq!(w2.level_key(), "town");
+    let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
+    v["level"] = serde_json::json!("   ");
+    let w3 = World::load(&v.to_string()).expect("level blanc = défaut");
+    assert_eq!(w3.level_key(), "town");
+    // set_level_key : chaîne vide = no-op (état inchangé)
+    let mut w4 = World::with_seed(open_grid(12, 12), manifest_no_monsters(), 7);
+    w4.set_level_key("");
+    assert_eq!(w4.level_key(), "town");
+}
+
 impl World {
     /// Test uniquement : force un slot d'inventaire.
     pub(crate) fn debug_set_slot(&mut self, slot: usize, def: Option<ItemDef>) {

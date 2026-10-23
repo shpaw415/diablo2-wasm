@@ -80,9 +80,12 @@
   // ---- écrans ----
   const screenTitle = document.getElementById('screenTitle');
   const screenSelect = document.getElementById('screenSelect');
+  const screenSlots = document.getElementById('screenSlots');
   let onTitle = true;
-  function showSelect() { onTitle = false; screenTitle.classList.remove('on'); screenSelect.classList.add('on'); }
-  function showTitle() { onTitle = true; screenSelect.classList.remove('on'); screenTitle.classList.add('on'); }
+  let onSlots = false;
+  function showSelect() { onTitle = false; onSlots = false; screenTitle.classList.remove('on'); screenSlots.classList.remove('on'); screenSelect.classList.add('on'); }
+  function showTitle() { onTitle = true; onSlots = false; screenSelect.classList.remove('on'); screenSlots.classList.remove('on'); screenTitle.classList.add('on'); }
+  function showSlots() { onTitle = false; onSlots = true; screenTitle.classList.remove('on'); screenSelect.classList.remove('on'); screenSlots.classList.add('on'); renderSlots(); }
 
   // ---- dégradation des assets du titre ----
   // fond : si le png manque, le dégradé radial du #stage (CSS) prend le relais
@@ -519,6 +522,7 @@
       const action = b.dataset.action;
       if (action === 'solo') showSelect();
       else if (action === 'continue') location.href = 'game.html?continue=1';
+      else if (action === 'slots') showSlots();
       else if (action === 'github') open('https://github.com/shpaw415/diablo2-wasm', '_blank');
       else if (action === 'quit') window.close();
     });
@@ -526,8 +530,113 @@
   playBtn.addEventListener('click', play);
   document.getElementById('back').addEventListener('click', showTitle);
 
-  // ---- Continuer grisé sans sauvegarde (clé posée par game.js) ----
-  if (!localStorage.getItem('d2wasm.save.v1')) document.getElementById('btnContinue').disabled = true;
+  // ================= écran « Parties » (slots de sauvegarde) =================
+  const slotsList = document.getElementById('slotsList');
+  const slotsEmpty = document.getElementById('slotsEmpty');
+  const slotsMsg = document.getElementById('slotsMsg');
+  const slotFile = document.getElementById('slotFile');
+
+  function fmtPlaytime(ms) {
+    const s = Math.floor((ms || 0) / 1000);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h ? h + ' h ' + m + ' min' : m ? m + ' min' : s + ' s';
+  }
+  function slotsMessage(t) {
+    slotsMsg.hidden = !t;
+    slotsMsg.textContent = t || '';
+  }
+  function renderSlots() {
+    slotsMessage('');
+    const slots = window.D2Slots ? D2Slots.list() : [];
+    slotsList.textContent = '';
+    slotsEmpty.hidden = slots.length > 0;
+    for (const slot of slots) {
+      const row = document.createElement('div');
+      row.className = 'slotrow';
+      const info = document.createElement('div');
+      info.className = 'slotinfo';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'slotname';
+      nameEl.textContent = slot.name;
+      const meta = document.createElement('div');
+      meta.className = 'slotmeta';
+      const d = new Date(slot.ts);
+      meta.innerHTML = '<b></b> · niv. <b></b> · <b></b> · <b></b> · <b></b>';
+      const bs = meta.querySelectorAll('b');
+      bs[0].textContent = slot.hero_label || slot.hero_code;
+      bs[1].textContent = slot.level != null ? slot.level : '?';
+      bs[2].textContent = slot.zone || slot.level_key || 'town';
+      bs[3].textContent = fmtPlaytime(slot.playtime_ms);
+      bs[4].textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString().slice(0, 5);
+      info.append(nameEl, meta);
+      const btns = document.createElement('div');
+      btns.className = 'slotbtns';
+      const mk = (label, cls, fn, title) => {
+        const b = document.createElement('button');
+        b.className = 'sbtn' + (cls ? ' ' + cls : '');
+        b.textContent = label;
+        if (title) b.title = title;
+        b.addEventListener('click', (ev) => { ev.stopPropagation(); clickSfx(); fn(); });
+        return b;
+      };
+      btns.append(
+        mk('Jouer', '', () => { location.href = 'game.html?slot=' + encodeURIComponent(slot.id); }, 'Reprendre ce héros'),
+        mk('Renommer', '', () => beginRename(slot, nameEl), 'Modifier le nom du slot'),
+        mk('Exporter', '', () => {
+          try { D2Slots.exportSlot(slot.id); slotsMessage('Exporté : ' + slot.name + ' (.json téléchargé).'); }
+          catch (e) { slotsMessage('Export impossible : ' + e.message); }
+        }, 'Télécharger la sauvegarde (.json)'),
+        mk('Supprimer', 'danger', () => { D2Slots.remove(slot.id); renderSlots(); }, 'Effacer ce slot')
+      );
+      row.append(info, btns);
+      slotsList.appendChild(row);
+    }
+  }
+  // Renommage inline : le nom devient un input, Entrée/flou valident.
+  function beginRename(slot, nameEl) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = 24;
+    input.value = slot.name;
+    nameEl.textContent = '';
+    nameEl.appendChild(input);
+    input.focus();
+    input.select();
+    const commit = () => {
+      D2Slots.rename(slot.id, input.value);
+      renderSlots();
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      if (e.key === 'Escape') { e.stopPropagation(); renderSlots(); }
+      e.stopPropagation(); // le clavier global (flèches…) ne vole pas la saisie
+    });
+    input.addEventListener('blur', commit);
+    input.addEventListener('click', (e) => e.stopPropagation());
+  }
+  document.getElementById('slotsBack').addEventListener('click', showTitle);
+  document.getElementById('slotImport').addEventListener('click', () => slotFile.click());
+  slotFile.addEventListener('change', () => {
+    const f = slotFile.files && slotFile.files[0];
+    slotFile.value = '';
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const slot = D2Slots.importSlot(String(r.result));
+        renderSlots();
+        slotsMessage('Importé : ' + slot.name + ' (' + (slot.hero_label || slot.hero_code) + ').');
+      } catch (e) {
+        slotsMessage('Import refusé : ' + (e.message || e));
+      }
+    };
+    r.readAsText(f);
+  });
+
+  // ---- Continuer grisé sans sauvegarde (slots ou clé historique) ----
+  if (!localStorage.getItem('d2wasm.save.v1') && !(window.D2Slots && D2Slots.mostRecent())) {
+    document.getElementById('btnContinue').disabled = true;
+  }
 
   // ---- clavier ----
   document.addEventListener('keydown', (e) => {
@@ -535,6 +644,10 @@
       if (e.key === 'Enter') { e.preventDefault(); play(); }
       else if (e.key === 'Escape') nameInput.blur();
       return;
+    }
+    if (onSlots) {
+      if (e.key === 'Escape') { showTitle(); clickSfx(); }
+      return; // saisie/clavier des slots gérés localement (inputs)
     }
     if (onTitle) {
       if (e.key === 'Enter') { showSelect(); clickSfx(); }

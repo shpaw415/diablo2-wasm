@@ -565,7 +565,7 @@ impl GameCore {
         let mut world = match self.world.take() {
             Some(old) => {
                 let json = old.save();
-                match patch_save_for_level(&json, &blocked, spawn) {
+                match patch_save_for_level(&json, &blocked, spawn, &def.key) {
                     Ok(w) => w,
                     Err(e) => {
                         let msg = format!("niveau {}: transfert du héros impossible ({e}) — monde neuf", def.key);
@@ -576,6 +576,9 @@ impl GameCore {
             }
             None => World::with_hero(blocked, self.manifest.clone(), &self.hero_request),
         };
+        // Clé du niveau courant (save v3) : cohérente avec le bloc `levels`
+        // du manifest, y compris après un transfert de héros par warp.
+        world.set_level_key(&def.key);
         // Monde neuf (boot sans transfert) avec point d'entrée demandé :
         // le respawn y est posé (l'auto-spawn centre reste la position initiale).
         if let Some((x, y)) = spawn {
@@ -595,6 +598,9 @@ impl GameCore {
             return Ok(LevelSwitchInfo { key: def.key, name: def.name });
         }
         self.load_level(&def, Some((spawn_x, spawn_y)))?;
+        // `level_name` suit le niveau réel (levelInfo()/save cohérents après
+        // un switch — le HUD page reçoit déjà l'événement LevelSwitch).
+        self.level_name = def.key.clone();
         self.warp_cd_ms = WARP_COOLDOWN_MS;
         Ok(LevelSwitchInfo { key: def.key, name: def.name })
     }
@@ -1179,15 +1185,48 @@ impl GameCore {
         }
     }
 
-    /// Serialize the world (d2rules save format, JSON v1) for the demo's
-    /// Save button. Empty string when not finalized.
+    /// Serialize the world (d2rules save format, JSON v3 : grille + manifest +
+    /// héros + monstres + objets + missiles + skills + clé du niveau courant)
+    /// for the demo's Save button. Empty string when not finalized.
     pub fn save_world(&self) -> String {
         self.world.as_ref().map(|w| w.save()).unwrap_or_default()
     }
 
-    /// Replace the world with one deserialized from `json` (d2rules save).
-    /// The map/sprites stay as-is (same level, same assets).
+    /// Replace the world with one deserialized from `json` (d2rules save v1..v3).
+    /// Si la sauvegarde porte une clé de niveau différente du niveau courant
+    /// (save v3, warps multi-niveaux Town<->Blood Moor), le niveau cible est
+    /// rechargé d'abord (même graine ⇒ même carte) et le héros est posé à sa
+    /// position sauvegardée — la reprise "Continuer" retombe dans la bonne
+    /// zone. Map/sprites suivent la sauvegarde.
     pub fn load_world(&mut self, json: &str) -> Result<(), String> {
+        // Clé de niveau du save (v3 ; absent v1/v2 ⇒ "town", même défaut que
+        // d2rules::save) + position héros pour le snap d'entrée.
+        let (save_level, hero_at): (String, Option<(f32, f32)>) =
+            serde_json::from_str::<Value>(json)
+                .map(|v| {
+                    let lvl = v
+                        .get("level")
+                        .and_then(|x| x.as_str())
+                        .map(|s| s.trim().to_ascii_lowercase())
+                        .filter(|s| !s.is_empty())
+                        .unwrap_or_else(|| "town".to_string());
+                    let pos = || -> Option<(f32, f32)> {
+                        Some((
+                            v.pointer("/hero/ent/x")?.as_f64()? as f32,
+                            v.pointer("/hero/ent/y")?.as_f64()? as f32,
+                        ))
+                    }();
+                    (lvl, pos)
+                })
+                .map_err(|e| format!("sauvegarde illisible : {e}"))?;
+        // Sauvegarde d'une autre zone : on y va d'abord (assets déjà fournis
+        // au boot pour tous les `levels`) — échec ⇒ erreur carte ci-dessous.
+        if save_level != self.level_name {
+            let spawn = hero_at.unwrap_or((0.0, 0.0));
+            // Err ignoré volontairement : le contrôle de grille ci-dessous
+            // reste l'arbitre (niveau inconnu/assets manquants).
+            let _ = self.switch_level(&save_level, spawn.0, spawn.1);
+        }
         let world = World::load(json).map_err(|()| "sauvegarde invalide ou version inconnue".to_string())?;
         // Sanity: the save's grid must match this map's (same level).
         if world.width() as usize != self.grid_size().0 as usize
@@ -1195,6 +1234,7 @@ impl GameCore {
         {
             return Err("sauvegarde d'une autre carte".into());
         }
+        self.level_name = world.level_key().to_string();
         self.world = Some(world);
         self.follow_camera();
         Ok(())
@@ -1516,23 +1556,25 @@ fn json_point2(v: &Value) -> Option<(f32, f32)> {
     Some((a[0].as_f64()? as f32, a[1].as_f64()? as f32))
 }
 
-/// Adapte un save d2rules (JSON v1) à un changement de niveau : grille
+/// Adapte un save d2rules (JSON v1..v3) à un changement de niveau : grille
 /// remplacée par celle du niveau cible, héros reposé au point d'entrée
 /// (pleine vie, mort annulée), monstres et objets au sol vidés (le niveau
-/// spawn les siens). Stats/inventaire/xp/rng conservés tels quels — c'est le
-/// mécanisme de transfert du héros entre niveaux (aucun setter d2rules requis,
-/// le format save v1 est le contrat public).
+/// spawn les siens), clé de niveau réécrite vers la cible (save v3 — la
+/// reprise "Continuer" retombe dans la bonne zone). Stats/inventaire/xp/rng
+/// conservés tels quels — c'est le mécanisme de transfert du héros entre
+/// niveaux (aucun setter d2rules requis, le format save est le contrat public).
 fn patch_save_for_level(
     save_json: &str,
     blocked: &[Vec<bool>],
     spawn: Option<(f32, f32)>,
+    level_key: &str,
 ) -> Result<World, String> {
     let mut v: Value = serde_json::from_str(save_json).map_err(|e| format!("save: {e}"))?;
-    // v2 = format courant (skills/missiles/hero_code) ; v1 = rétro-compat
-    // (d2rules::save charge les deux). Les champs patchés ci-dessous existent
-    // dans les deux — seul le numéro de version fait barrière ici.
+    // v3 = format courant (clé de niveau) ; v2/v1 = rétro-compat (d2rules::save
+    // charge les trois). Les champs patchés ci-dessous existent dans les trois
+    // — seul le numéro de version fait barrière ici.
     let ver = v.get("version").and_then(|x| x.as_u64());
-    if ver != Some(1) && ver != Some(2) {
+    if ver != Some(1) && ver != Some(2) && ver != Some(3) {
         return Err(format!("save: version inattendue {:?}", v.get("version")));
     }
     // Grille : '1' marchable / '0' bloqué (convention save d2rules).
@@ -1543,6 +1585,8 @@ fn patch_save_for_level(
     v["collision"] = Value::Array(rows.into_iter().map(Value::String).collect());
     v["monsters"] = Value::Array(Vec::new());
     v["items"] = Value::Array(Vec::new());
+    // La sauvegarde suit le héros : le niveau patché devient LE niveau du save.
+    v["level"] = serde_json::json!(level_key);
     if let Some((x, y)) = spawn {
         v["hero"]["ent"]["x"] = serde_json::json!(x);
         v["hero"]["ent"]["y"] = serde_json::json!(y);
@@ -2320,6 +2364,46 @@ mod tests {
         assert_eq!(g.grid_size(), (57 * 5, 41 * 5));
         assert!(g.world.as_ref().unwrap().monsters().is_empty(), "town sans monstres");
         assert!(g.mon_codes.is_empty());
+    }
+
+    #[test]
+    fn save_v3_keeps_level_key_across_switch_and_load_world() {
+        let Some(root) = ws_root() else { return };
+        // --- town : save v3 portant la clé "town"
+        let mut g = full_game(MANIFEST, "town", &root);
+        let save_town = g.save_world();
+        let v: Value = serde_json::from_str(&save_town).unwrap();
+        assert_eq!(v["version"], serde_json::json!(3), "format courant v3");
+        assert_eq!(v["level"], serde_json::json!("town"));
+
+        // --- bloodmoor : le save suit le héros (warp ⇒ patch_save_for_level)
+        g.switch_level("bloodmoor", 137.0, 162.0).unwrap();
+        let save_bm = g.save_world();
+        let v: Value = serde_json::from_str(&save_bm).unwrap();
+        assert_eq!(v["level"], serde_json::json!("bloodmoor"), "clé alignée sur le switch");
+
+        // --- retour au camp, puis « Continuer » sur le save bloodmoor :
+        // load_world recharge la bonne zone tout seul (grille 72×72 tuiles).
+        g.switch_level("town", 247.0, 107.0).unwrap();
+        g.load_world(&save_bm).unwrap();
+        assert_eq!(g.grid_size(), (72 * 5, 72 * 5), "carte Blood Moor restaurée");
+        let w = g.world.as_ref().unwrap();
+        assert_eq!(w.level_key(), "bloodmoor");
+        assert!(g.level_info_json().contains("Blood Moor (Acte I)"));
+        // héros rendu à sa position sauvegardée
+        let hv: Value = serde_json::from_str(&save_bm).unwrap();
+        let hx = hv.pointer("/hero/ent/x").unwrap().as_f64().unwrap() as f32;
+        let hy = hv.pointer("/hero/ent/y").unwrap().as_f64().unwrap() as f32;
+        let h = w.hero();
+        assert!((h.x - hx).abs() < 2.0 && (h.y - hy).abs() < 2.0, "({hx},{hy}) vs ({},{})", h.x, h.y);
+
+        // --- rétro-compat : save v2 sans `level` ⇒ défaut town (re-switch auto)
+        let mut v2 = serde_json::from_str::<Value>(&save_town).unwrap();
+        v2["version"] = serde_json::json!(2);
+        v2.as_object_mut().unwrap().remove("level");
+        g.load_world(&v2.to_string()).unwrap();
+        assert_eq!(g.grid_size(), (57 * 5, 41 * 5), "retour Camp des Rousses");
+        assert_eq!(g.world.as_ref().unwrap().level_key(), "town");
     }
 
     #[test]

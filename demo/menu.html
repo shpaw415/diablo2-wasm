@@ -22,9 +22,27 @@
     <nav id="buttons">
       <button class="dbtn" data-action="solo"><span>Solo</span></button>
       <button class="dbtn" data-action="continue" id="btnContinue"><span>Continuer</span></button>
+      <button class="dbtn" data-action="slots"><span>Parties</span></button>
       <button class="dbtn" data-action="github"><span>Projet GitHub</span></button>
       <button class="dbtn" data-action="quit"><span>Quitter</span></button>
     </nav>
+  </section>
+
+  <!-- ============ Écran 3 : parties sauvegardées (save P0) ============
+       Slots nommés (5 max, un par héros) : classe/niveau/temps de jeu/zone,
+       reprise directe, renommage, suppression, export/import .json.
+       Les données viennent de slots.js (localStorage d2wasm.slots.v1). -->
+  <section id="screenSlots" class="screen">
+    <div id="slotsHead">Parties sauvegardées</div>
+    <div id="slotsMsg" hidden></div>
+    <div id="slotsList"></div>
+    <div id="slotsEmpty" hidden>Aucune partie sauvegardée.<br>Lancez <b>Solo</b>, jouez, puis <b>Sauvegarder</b> en jeu.</div>
+    <div id="slotsBar">
+      <button id="slotImport" class="dbtn small"><span>Importer un .json…</span></button>
+      <input id="slotFile" type="file" accept=".json,application/json" hidden>
+      <button id="slotsBack" class="dbtn small"><span>Retour</span></button>
+    </div>
+    <div id="slotsHint">Jouer : reprend ce héros · × : supprimer · les sauvegardes restent dans ce navigateur</div>
   </section>
 
   <!-- ============ Écran 2 : sélection de héros ============
@@ -61,6 +79,7 @@
   <div id="copyright">portage non officiel — données © Blizzard Entertainment</div>
   <div id="errlog"></div>
 </div>
+<script src="slots.js"></script>
 <script src="menu.js"></script>
 </body>
 </html>
