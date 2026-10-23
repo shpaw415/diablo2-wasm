@@ -52,7 +52,7 @@ def main():
             frames = decode_dc6(data)
             info = render_frames(frames, pal, os.path.join(MENU, 'sel', f'{code}-{state}.png'))
             if info:
-                info['fps'] = 12
+                info['fps'] = max(8, round(len(frames) / (2.4 if suf == 'FW' else 1.1)))  # durées od2 (barbForward 2500 ms, back 1000 ms)
                 heroes[code][state] = info
                 print(f'{code}/{state} OK {len(frames)} frames {info["w"]}x{info["h"]}')
     json.dump(heroes, open(jp, 'w'), indent=1)

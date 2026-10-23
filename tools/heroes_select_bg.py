@@ -64,7 +64,7 @@ def render_frames(frames, pal, path, scale=1):
                     px[x, y] = (r, g, b, 255)
         if scale != 1:
             fi = fi.resize((f['width']*scale, f['height']*scale), Image.NEAREST)
-        img.paste(fi, (i*w, h - fi.height))
+        img.paste(fi, (i*w + (w - fi.width)//2, h - fi.height))  # centré + sol aligné
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path)
     return {'file': os.path.relpath(path, MENU).replace('\\', '/'), 'frames': len(frames), 'w': w, 'h': h, 'fps': 8}

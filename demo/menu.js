@@ -49,6 +49,14 @@
     try { new Audio('assets/sfx/ui_click.wav').play(); } catch (e) {}
   }
 
+  // bruitages de sélection/désélection par classe (extraits des MPQ)
+  const heroSfxCache = {};
+  function playHeroSfx(code, kind) {
+    const key = code + '-' + kind;
+    if (!heroSfxCache[key]) heroSfxCache[key] = new Audio(`assets/sfx/${code}-${kind}.wav`);
+    try { heroSfxCache[key].currentTime = 0; heroSfxCache[key].play(); } catch (e) {}
+  }
+
   // ---- musique du menu original (thème du titre, ogg extrait du MPQ) ----
   const menuAudio = new Audio('assets/menu/menu-music.ogg');
   menuAudio.loop = true;
@@ -245,6 +253,9 @@
       if (prevH && prevH.bw) prevH.walk = { kind: 'bw', start: now };
       const newH = heroList.find((h) => h.code === code);
       if (newH && newH.fw) newH.walk = { kind: 'fw', start: now };
+      // bruitages officiels par classe (Cursor/intro/*.wav)
+      if (prev) playHeroSfx(prev, 'des');
+      playHeroSfx(code, 'sel');
     }
     if (scene.on) showSceneStats(entry);
     if (!silent) clickSfx();
