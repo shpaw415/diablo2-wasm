@@ -470,6 +470,9 @@ function handleEvents(events, manifest) {
 
 // --- boucle commune ---------------------------------------------------------
 const loop = { queue: [], lastClick: null, last: performance.now(), frames: 0, fpsClock: performance.now() };
+// EXP-H* (HUD parité) : la file d'inputs est exposée à demo/hud.js pour le
+// routage clic droit / `rangedAttack` (boutons de compétence L/R).
+window.__d2.queue = loop.queue;
 const mouse = { x: -1, y: -1, inside: false };
 function canvasXY(e) {
   const r = canvas.getBoundingClientRect();
@@ -736,6 +739,9 @@ async function main() {
 
   await loadSfx(manifest);
   wireCommon(manifest);
+  // EXP-H* (HUD parité) : init de l'overlay DOM (boutons L/R, minipanel,
+  // survol monstre, labels Alt, dégâts flottants, endurance) — hud.js.
+  if (window.D2HUD) window.D2HUD.init(manifest, window.__d2.game);
   $('loading').style.display = 'none';
   window.__d2.mode = 'wasm';
 
@@ -747,8 +753,10 @@ async function main() {
       const inputJson = loop.queue.length ? JSON.stringify(loop.queue.shift()) : null;
       const events = JSON.parse(game.tick(dt, inputJson));
       handleEvents(events, manifest);
+      if (window.D2HUD) window.D2HUD.events(events); // EXP-H7 : dégâts flottants
       const stats = JSON.parse(game.heroStats());
       updateHud(stats);
+      if (window.D2HUD) window.D2HUD.update(stats); // EXP-H2 : barre d'endurance
       window.__d2.invCache = JSON.parse(game.inventory());
       window.__d2.monCodes = JSON.parse(game.monsterCodes());
       const hs = JSON.parse(game.heroState());
@@ -762,6 +770,7 @@ async function main() {
       if (loop.lastClick && now - loop.lastClick.t < 450) {
         drawClickRing(loop.lastClick.sx, loop.lastClick.sy, 1 - (now - loop.lastClick.t) / 450);
       }
+      if (window.D2HUD) window.D2HUD.frame(canvas, game); // EXP-H6/H8 : survol monstre + labels Alt
       fpsTick(loop.statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
       requestAnimationFrame(frame);
     } catch (err) {

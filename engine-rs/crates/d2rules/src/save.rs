@@ -230,17 +230,29 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         // Tables de loot statiques (embarquées) — pas d'état à recharger.
         loot: super::loot::build(),
         hero_ent: s.hero.ent,
-        hero: HeroData {
-            stats: s.hero.stats,
-            path: s.hero.path,
-            swing_ms: s.hero.swing_ms,
-            dead_ms: s.hero.dead_ms,
-            anim_ms: s.hero.anim_ms,
-            run: false, // transient (touche Maj) — jamais persisté
-            spawn: s.hero.spawn,
-            inv,
-            skills,
-            active_skill,
+        hero: {
+            let mut stats = s.hero.stats;
+            // EXP-H2 (stamina) : les saves antérieures au champ chargent
+            // `stamina = max_stamina = 0` (serde default) — reconcile au
+            // gabarit du manifest et aligne l'accumulateur (transitoire).
+            if stats.max_stamina == 0 {
+                stats.max_stamina = super::data::parse_hero_code(&s.manifest, &hero_code).stamina;
+                stats.stamina = stats.max_stamina;
+            }
+            let stamina_milli = (stats.stamina as i64) * 1000;
+            HeroData {
+                stats,
+                path: s.hero.path,
+                swing_ms: s.hero.swing_ms,
+                dead_ms: s.hero.dead_ms,
+                anim_ms: s.hero.anim_ms,
+                run: false, // transient (touche Maj) — jamais persisté
+                spawn: s.hero.spawn,
+                inv,
+                skills,
+                active_skill,
+                stamina_milli, // EXP-H2 : transitoire, recalé à la valeur chargée
+            }
         },
         mon_ent: s.monsters.iter().map(|m| m.ent).collect(),
         mon_dat: s

@@ -39,6 +39,7 @@ mod path;
 mod rng;
 mod save;
 mod skills;
+mod stamina;
 mod world;
 
 // --- Socles règles data-driven v1.12 (impl-regles-skills, 2026-10-22) ---
@@ -289,4 +290,12 @@ pub struct HeroStats {
     /// Niveau du skill actif (1 aux skills de départ).
     #[serde(default)]
     pub skill_level: u32,
+    /// Endurance courante (EXP-H2, `patch_charstats` col `stamina`) ;
+    /// `#[serde(default)]` : les saves antérieures chargent à 0 puis sont
+    /// reconciliées au gabarit (`stamina::`/`save::load_json`).
+    #[serde(default)]
+    pub stamina: u32,
+    /// Endurance max (gabarit du manifest).
+    #[serde(default)]
+    pub max_stamina: u32,
 }

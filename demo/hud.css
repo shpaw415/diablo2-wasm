@@ -1,0 +1,89 @@
+/* HUD parité D2 — overlay DOM (EXP-H2/H3/H4/H6/H7/H8).
+   Se superpose au canvas via #hudx (inset 0, pointer-events none) — les
+   éléments cliquables repassent en pointer-events:auto. Tout est positionné
+   en espace canvas (800×600) comme les globes dessinés côté game.js. */
+
+#hudx { position: absolute; inset: 0; pointer-events: none; z-index: 3;
+        font: 11px/1.3 system-ui, sans-serif; color: #e8dcbf; }
+#hudx * { box-sizing: border-box; }
+
+/* --- EXP-H2 : barre d'endurance (à droite du globe de vie) ---------------- */
+#staminawrap { position: absolute; left: 134px; bottom: 48px; width: 116px; height: 8px;
+               background: #16120ccc; border: 1px solid #000000aa; border-radius: 3px;
+               box-shadow: inset 0 1px 2px #000; }
+#staminafill { height: 100%; width: 100%; border-radius: 2px;
+               background: linear-gradient(#7ec850, #2e6b1e); transition: width .12s linear; }
+#staminawrap.low #staminafill { background: linear-gradient(#d8b23a, #7a5c14); }
+#staminawrap.empty #staminafill { background: linear-gradient(#a04030, #5a1c10); }
+
+/* --- EXP-H4 : boutons de compétence L/R + popup --------------------------- */
+.skbtn { position: absolute; bottom: 40px; width: 38px; height: 34px; pointer-events: auto;
+         background: linear-gradient(#3a2f1c, #241c10); color: #d9b96a;
+         border: 1px solid #5a4a2a; border-radius: 4px; cursor: pointer;
+         font: 700 10px system-ui; letter-spacing: .02em;
+         box-shadow: inset 0 1px 0 #ffffff14, 0 1px 3px #000c; }
+.skbtn:hover { border-color: #c7a45a; color: #ffe9ad; }
+.skbtn.selected { border-color: #d9b96a; box-shadow: 0 0 6px #d9b96a55; }
+#skbtn-L { left: 262px; }
+#skbtn-R { right: 262px; }
+#skpopup { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%);
+           width: 250px; max-height: 240px; overflow-y: auto; pointer-events: auto;
+           background: #17120bee; border: 1px solid #5a4a2a; border-radius: 4px;
+           padding: 8px; display: none; box-shadow: 0 4px 18px #000d; }
+#skpopup.open { display: block; }
+#skpopup h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .1em; color: #c7a45a;
+              text-transform: uppercase; }
+#skpopup .skrow { display: flex; justify-content: space-between; align-items: center;
+                  padding: 5px 6px; margin: 2px 0; border: 1px solid #2e2718;
+                  border-radius: 3px; cursor: pointer; background: #201808; }
+#skpopup .skrow:hover { border-color: #c7a45a; background: #33270d; }
+#skpopup .skrow .lvl { color: #8f8676; }
+#skpopup .skrow .missile { color: #6fa7d8; }
+
+/* --- EXP-H3 : minipanel 8 boutons (barre centrale bas) -------------------- */
+#minipanel { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
+             display: flex; gap: 3px; padding: 3px; pointer-events: auto;
+             background: linear-gradient(#2e2517, #1a140c); border: 1px solid #5a4a2a;
+             border-radius: 5px; box-shadow: inset 0 1px 0 #ffffff10, 0 2px 6px #000c; }
+#minipanel button { width: 44px; height: 26px; padding: 0; background: #241c10;
+                    color: #c7a45a; border: 1px solid #4a3c22; border-radius: 3px;
+                    font: 600 10px system-ui; cursor: pointer; }
+#minipanel button:hover { background: #38290f; color: #ffe9ad; border-color: #c7a45a; }
+#minipanel button.soon { opacity: .55; }
+#minipanel button:active { transform: translateY(1px); }
+
+/* --- EXP-H6 : survol monstre (nom + barre de vie) -------------------------- */
+#monhover { position: absolute; transform: translate(-50%, -100%); display: none;
+            text-align: center; text-shadow: 0 1px 2px #000, 0 0 6px #000; }
+#monhover .monname { font-weight: 700; font-size: 12px; color: #f0e6d2; }
+#monhover.k-champion .monname { color: #6fa7ff; }
+#monhover.k-unique .monname, #monhover.k-super_unique .monname { color: #d9b96a; }
+#monhover.k-boss .monname { color: #b48be0; }
+#monhpwrap { width: 72px; height: 5px; margin: 2px auto 0; background: #160a08cc;
+             border: 1px solid #000; border-radius: 2px; }
+#monhpfill { height: 100%; width: 100%; border-radius: 1px;
+             background: linear-gradient(#d8503c, #7a1408); }
+
+/* --- EXP-H8 : étiquettes d'objets au sol (touche Alt) ---------------------- */
+.ilabel { position: absolute; transform: translate(-50%, -100%); pointer-events: auto;
+          padding: 1px 7px; border-radius: 3px; cursor: pointer; white-space: nowrap;
+          background: #000000b8; border: 1px solid #6a5a34; color: #e8dcbf;
+          font-size: 11px; text-shadow: 0 1px 2px #000; }
+.ilabel:hover { border-color: #d9b96a; color: #ffe9ad; }
+.ilabel.k-Gold { color: #d9b96a; }
+.ilabel.k-Potion { color: #e07060; }
+
+/* --- EXP-H7 : dégâts flottants --------------------------------------------- */
+.dmgfloat { position: absolute; transform: translate(-50%, -100%); font-weight: 800;
+            font-size: 13px; pointer-events: none; white-space: nowrap;
+            text-shadow: 0 1px 2px #000, 0 0 6px #000;
+            animation: dmgfloat-up .9s ease-out forwards; }
+@keyframes dmgfloat-up {
+  0% { opacity: 0; margin-top: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; margin-top: -42px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dmgfloat { animation-duration: .01s; }
+}
