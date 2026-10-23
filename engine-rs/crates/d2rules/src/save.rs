@@ -46,6 +46,12 @@ struct Save {
     /// Index du skill actif (absent v1 — défaut par classe).
     #[serde(default)]
     active_skill: Option<usize>,
+    /// Waypoints activés (slots du panneau, W19) — absent des sauvegardes
+    /// antérieures aux waypoints : rétro-compat, actifs vides. Champ
+    /// OPTIONNEL additive : pas de bump de version (les saves existantes
+    /// restent valides dans les deux sens — un champ inconnu est ignoré).
+    #[serde(default)]
+    waypoints: Option<Vec<u8>>,
 }
 
 /// État complet du héros.
@@ -180,6 +186,7 @@ pub(crate) fn save_json(w: &World) -> String {
             .collect(),
         items: w.items.clone(),
         missiles: Some(serde_json::to_value(&w.missiles).expect("d2rules: sérialisation missiles")),
+        waypoints: Some(w.wp.active.clone()),
     };
     serde_json::to_string(&save).expect("d2rules: sérialisation save")
 }
@@ -272,6 +279,12 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         missiles: match s.missiles {
             Some(v) => serde_json::from_value(v).map_err(|_| ())?,
             None => MissileSystem::with_seed(s.rng ^ 0x4D49_5353_1A4E_0001),
+        },
+        // Waypoints W19 : champ optionnel (saves antérieures = actifs vides) ;
+        // `here` n'est pas persisté — d2game le rattache au niveau chargé.
+        wp: crate::waypoints::WaypointState {
+            here: None,
+            active: s.waypoints.clone().unwrap_or_default(),
         },
         rng: Rng::new(s.rng),
         now_ms: s.now_ms,

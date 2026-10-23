@@ -279,6 +279,9 @@ pub struct World {
     pub(crate) loot: Option<loot::Loot>,
     /// Projectiles en vol (crate pure d2missiles, table réelle embarquée).
     pub(crate) missiles: MissileSystem,
+    /// Waypoints W05/W19 (waypoint du niveau + slots activés, sauvegardé) —
+    /// état et logique dans `waypoints.rs` (blocs additifs).
+    pub(crate) wp: crate::waypoints::WaypointState,
     pub(crate) rng: Rng,
     pub(crate) now_ms: u64,
 }
@@ -436,6 +439,7 @@ impl World {
             mon_dat: Vec::new(),
             items: Vec::new(),
             missiles: MissileSystem::with_seed(seed ^ 0x4D49_5353_1A4E_0001),
+            wp: crate::waypoints::WaypointState::default(),
             rng: Rng::new(seed),
             now_ms: 0,
         };
@@ -641,6 +645,7 @@ impl World {
         self.update_hero(dt, &mut ev);
         self.update_monsters(dt, &mut ev);
         self.update_missiles(dt, &mut ev);
+        self.update_waypoints(&mut ev); // W05 : activation au contact (waypoints.rs)
         ev
     }
 

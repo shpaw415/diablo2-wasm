@@ -35,6 +35,9 @@ pub mod monsters;
 pub mod pal;
 pub mod png_mini;
 pub mod sprite;
+/// Waypoints W05 côté moteur (attach, état JSON UI, voyage direct) —
+/// blocs `impl GameCore` additifs (`waypoint_travel.rs`).
+pub mod waypoint_travel;
 pub mod world;
 
 #[cfg(target_arch = "wasm32")]
