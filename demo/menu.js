@@ -253,12 +253,11 @@
     return file.indexOf('/') >= 0 ? MENU + file : MENU + 'heroes/' + file;
   }
 
-  // arc autour du feu (façon D2R) : les héros du centre sont plus en retrait
-  // (plus haut sur l'écran), ceux des bords plus proches ; le feu occupe le
-  // centre-avant entre eux.
+  // rangée à plat comme l'écran original : pieds alignés sur la cour, le feu
+  // (braises du fond + animation) occupe l'avant-centre.
   function arcPos(i, n) {
     const t = n > 1 ? i / (n - 1) : 0.5;
-    return { x: 9 + 82 * t, y: 88 - 16 * Math.sin(Math.PI * t) };
+    return { x: 9 + 82 * t, y: 68 };
   }
 
   async function tryScene(manifest) {

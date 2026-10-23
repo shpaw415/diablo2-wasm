@@ -96,17 +96,19 @@ def render_bg(frames, pal, path, out_w=800, out_h=600):
     return os.path.relpath(path, MENU).replace('\\', '/')
 
 def main():
-    pal = load_pl2_loading(os.path.join(MENU, 'pal_loading.pl2'))
+    fechar = read_file('data/d2data.mpq', r'data\global\palette\fechar\pal.dat')
+    fechar = (fechar + b'\0'*768)[:768]
+    pal = [tuple(fechar[i*3:i*3+3]) for i in range(256)]  # palette fechar = vraie palette des écrans FrontEnd (vérifiée vs référence)
     out = {}
 
     # --- fond ---
     # le VRAI fond de l'écran de sélection : CharSelect\characterselectscreenEXP
     # (palette loading PL2 vérifiée visuellement — cadre doré, sol, ciel d'orage).
     # FrontEnd\charactercreationscreenEXP = l'écran de CRÉATION, pas celui-ci.
-    name = r'data\global\ui\CharSelect\characterselectscreenEXP.dc6'
+    name = r'data\global\ui\FrontEnd\charactercreationscreenEXP.dc6'
     data, src = probe(name)
     if not data:
-        name = r'data\global\ui\FrontEnd\charactercreationscreenEXP.dc6'
+        name = r'data\global\ui\CharSelect\characterselectscreenEXP.dc6'
         data, src = probe(name)
     if data:
         frames = decode_dc6(data)
