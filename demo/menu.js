@@ -253,11 +253,12 @@
     return file.indexOf('/') >= 0 ? MENU + file : MENU + 'heroes/' + file;
   }
 
-  // rangée à plat comme l'écran original : x réparti sur la largeur, pieds
-  // alignés sur le sol du fond charactercreationscreen (bas du stage).
+  // arc autour du feu (façon D2R) : les héros du centre sont plus en retrait
+  // (plus haut sur l'écran), ceux des bords plus proches ; le feu occupe le
+  // centre-avant entre eux.
   function arcPos(i, n) {
     const t = n > 1 ? i / (n - 1) : 0.5;
-    return { x: 9 + 82 * t, y: 85 };
+    return { x: 9 + 82 * t, y: 88 - 16 * Math.sin(Math.PI * t) };
   }
 
   async function tryScene(manifest) {

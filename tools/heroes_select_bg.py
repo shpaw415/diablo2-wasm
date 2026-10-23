@@ -70,24 +70,28 @@ def render_frames(frames, pal, path, scale=1):
     return {'file': os.path.relpath(path, MENU).replace('\\', '/'), 'frames': len(frames), 'w': w, 'h': h, 'fps': 8}
 
 def render_bg(frames, pal, path, out_w=800, out_h=600):
-    """Les fonds FrontEnd sont des grilles row-major de tuiles 256x256
-    (12 tuiles 4x3 = 1024x768, crop 800x600 — même pipeline que title.png)."""
+    """Les fonds FrontEnd/CharSelect sont des rangées implicites : les tuiles
+    se posent séquentiellement (x += w), nouvelle rangée quand on dépasse la
+    largeur (ex. CharSelect : 3×256+32 = 800, hauteurs 256+256+88 = 600)."""
     from PIL import Image
-    tw = frames[0]['width']
-    th = frames[0]['height']
-    cols = max(1, round(out_w / tw))
-    img = Image.new('RGBA', (cols * tw, ((len(frames) + cols - 1) // cols) * th), (0, 0, 0, 255))
-    for i, f in enumerate(frames):
+    img = Image.new('RGBA', (out_w, out_h), (0, 0, 0, 255))
+    x = y = row_h = 0
+    for f in frames:
+        if x + f['width'] > out_w:      # nouvelle rangée
+            x = 0
+            y += row_h
+            row_h = 0
         fi = Image.new('RGBA', (f['width'], f['height']), (0, 0, 0, 0))
         px = fi.load()
-        for y in range(f['height']):
-            row = f['pixels'][y*f['width']:(y+1)*f['width']]
-            for x, idx in enumerate(row):
+        for yy in range(f['height']):
+            row = f['pixels'][yy*f['width']:(yy+1)*f['width']]
+            for xx, idx in enumerate(row):
                 if idx:
                     r, g, b = pal[idx]
-                    px[x, y] = (r, g, b, 255)
-        img.paste(fi, ((i % cols) * tw, (i // cols) * th))
-    img = img.crop((0, 0, out_w, out_h))
+                    px[xx, yy] = (r, g, b, 255)
+        img.paste(fi, (x, y))
+        x += f['width']
+        row_h = max(row_h, f['height'])
     img.save(path)
     return os.path.relpath(path, MENU).replace('\\', '/')
 
