@@ -440,6 +440,7 @@ function handleEvents(events, manifest) {
       hud.zone.textContent = info.name;
       levelFade();
       showLevelBanner(info.name);
+      if (window.D2Music) window.D2Music.setLevel(info.key, info.name); // EXP-A1 : musique par zone (fondu doux)
       sfx(manifest.sfx.uiClick, 0.5, 0.7);
       note(`— ${info.name} —`);
       if (window.__d2.refreshStatus) window.__d2.refreshStatus();
@@ -549,6 +550,7 @@ function syncZoneAfterLoad() {
       showLevelBanner(li.name);
     }
     if (window.__d2.refreshStatus) window.__d2.refreshStatus();
+    if (window.D2Music) window.D2Music.setLevel(li.key, li.name); // EXP-A1 : musique par zone (waypoints/Charger)
   } catch { /* HUD : ne bloque jamais le chargement */ }
 }
 function wireCommon(manifest) {
@@ -808,6 +810,7 @@ async function main() {
   window.__d2.level = li.key || LEVEL_REQ;
   hud.zone.textContent = li.name || manifest.level.name || 'Camp des Rousses';
   showLevelBanner(hud.zone.textContent);
+  if (window.D2Music) window.D2Music.setLevel(li.key, li.name); // EXP-A1 : thème de la zone de boot
   // Debug/E2E : téléporte via le moteur (mêmes points d'entrée que les warps).
   window.__d2.goto = (lvl) => {
     const block = manifest.levels && manifest.levels[lvl];
