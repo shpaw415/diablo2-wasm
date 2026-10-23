@@ -412,7 +412,6 @@
       const dw = a.w * SCALE, dh = a.h * SCALE;
       if (hovered || sel) drawHalo(x, y, sel);
       sctx.drawImage(a.img, fi * a.w, 0, a.w, a.h, x - dw / 2, y - dh, dw, dh);
-      if (sel) drawSelFrame(x, y, dw, dh);
       if (hovered) drawLabel(x, Math.max(22, y - dh - 12), heroName(h.def, h.code));
     }
   }
@@ -429,15 +428,6 @@
     sctx.arc(0, 0, 70, 0, Math.PI * 2);
     sctx.fill();
     sctx.restore();
-  }
-
-  function drawSelFrame(x, y, dw, dh) {
-    sctx.strokeStyle = '#ffd873';
-    sctx.lineWidth = 2;
-    sctx.shadowColor = 'rgba(255,216,115,.75)';
-    sctx.shadowBlur = 10;
-    sctx.strokeRect(x - dw / 2 - 6, y - dh - 6, dw + 12, dh + 12);
-    sctx.shadowBlur = 0;
   }
 
   function drawLabel(x, y, text) {
