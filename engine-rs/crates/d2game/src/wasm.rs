@@ -216,6 +216,39 @@ impl D2Game {
             s.tall as u32, // murs hauts (overlay) — ajout append-only, JS existant compatible
         ]
     }
+
+    // ------------------------------------------------------------------
+    // EXP-H* (HUD parité, docs/parity/impl-hud-parite.md) — endpoints
+    // additifs consommés par demo/hud.js. Append-only.
+    // ------------------------------------------------------------------
+
+    /// Compétences connues du héros (EXP-H4) — JSON array
+    /// `[{index,code,name,level,missile},…]` pour les boutons L/R de hud.js.
+    #[wasm_bindgen(js_name = heroSkills)]
+    pub fn hero_skills(&self) -> String {
+        self.core.hero_skills_json()
+    }
+
+    /// Sélectionne la compétence active (main droite D2, EXP-H4) — l'input
+    /// `RangedAttack` consomme ce skill. `false` si hors bornes.
+    #[wasm_bindgen(js_name = selectSkill)]
+    pub fn select_skill(&mut self, index: usize) -> bool {
+        self.core.select_skill(index)
+    }
+
+    /// Fiche de survol du monstre `index` (EXP-H6) — JSON
+    /// `{code,name,kind,alive,hp,maxHp,x,y,sx,sy}` ou `null`.
+    #[wasm_bindgen(js_name = monsterInfo)]
+    pub fn monster_info(&self, index: usize) -> String {
+        self.core.monster_info_json(index)
+    }
+
+    /// Objets au sol projetés (EXP-H8, labels Alt) — JSON array
+    /// `[{index,code,name,kind,amount,x,y,sx,sy},…]`.
+    #[wasm_bindgen(js_name = groundItems)]
+    pub fn ground_items(&self) -> String {
+        self.core.ground_items_json()
+    }
 }
 
 fn parse_input(json: &str) -> Option<PlayerInput> {
@@ -232,6 +265,9 @@ fn parse_input(json: &str) -> Option<PlayerInput> {
         "useItem" => Some(PlayerInput::UseItem(
             v.get("slot").and_then(|n| n.as_u64()).unwrap_or(0) as usize,
         )),
+        // EXP-H4 (clic droit / skill avec missile) — variante existante du
+        // contrat `PlayerInput`, branchée append-only pour hud.js.
+        "rangedAttack" => Some(PlayerInput::RangedAttack { x: x(&v), y: y(&v) }),
         _ => None,
     }
 }

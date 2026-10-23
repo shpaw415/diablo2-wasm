@@ -1185,7 +1185,135 @@ impl GameCore {
         }
     }
 
-    /// Serialize the world (d2rules save format, JSON v3 : grille + manifest +
+    // ------------------------------------------------------------------
+    // EXP-H* (HUD parité, docs/parity/impl-hud-parite.md) — API additive
+    // consommée par demo/hud.js. Append-only : aucun appelant existant modifié.
+    // ------------------------------------------------------------------
+
+    /// Compétences connues du héros (EXP-H4, boutons L/R) — JSON
+    /// `[{"index":0,"code":"Fire Bolt","name":"Fire Bolt","level":1,
+    /// "missile":"firebolt"},…]` ; `[]` avant `finalize` ou sans skill.
+    pub fn hero_skills_json(&self) -> String {
+        match self.world.as_ref() {
+            Some(w) => serde_json::to_string(
+                &w.hero_skills()
+                    .iter()
+                    .enumerate()
+                    .map(|(index, s)| {
+                        serde_json::json!({
+                            "index": index,
+                            "code": s.code,
+                            "name": s.code, // libellé table = code au MVP (EXP-T1 à venir)
+                            "level": s.level,
+                            "missile": s.missile,
+                        })
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap_or_else(|_| "[]".into()),
+            None => "[]".into(),
+        }
+    }
+
+    /// Sélectionne la compétence `index` (EXP-H4) : la main droite D2 — celle
+    /// que l'input `RangedAttack` consomme via [`d2rules::World::select_skill`].
+    /// `false` si hors bornes (état inchangé).
+    pub fn select_skill(&mut self, index: usize) -> bool {
+        match self.world.as_mut() {
+            Some(w) => w.select_skill(index),
+            None => false,
+        }
+    }
+
+    /// Nom affichable du monstre `index` : nom d2game (super-unique/boss W10),
+    /// sinon `monsters`/`bosses` du manifest par code, sinon le code brut.
+    fn monster_display_name(&self, index: usize) -> String {
+        if let Some(n) = self.mon_names.get(index) {
+            if !n.is_empty() {
+                return n.clone();
+            }
+        }
+        if let Some(code) = self.mon_codes.get(index) {
+            for key in ["monsters", "bosses"] {
+                if let Some(arr) = self.manifest.get(key).and_then(|v| v.as_array()) {
+                    if let Some(m) = arr.iter().find(|m| {
+                        m.get("code").and_then(|c| c.as_str()) == Some(code.as_str())
+                    }) {
+                        if let Some(n) = m.get("name").and_then(|n| n.as_str()) {
+                            return n.to_string();
+                        }
+                    }
+                }
+            }
+            return code.clone();
+        }
+        "?".into()
+    }
+
+    /// Projette un point monde (sous-tuiles) en px viewport — miroir de
+    /// [`GameCore::hero_screen`] pour n'importe quel point (labels, survol).
+    fn world_to_screen(&self, x: f32, y: f32) -> (f32, f32) {
+        match self.map.as_ref() {
+            Some(map) => {
+                let (sx, sy) = map.sub_to_screen(x, y);
+                (sx - self.cam_x, sy - self.cam_y)
+            }
+            None => (x, y),
+        }
+    }
+
+    /// Fiche de survol du monstre `index` (EXP-H6) — JSON
+    /// `{"code","name","kind","alive","hp","maxHp","x","y","sx","sy"}`
+    /// (`x/y` monde sous-tuiles, `sx/sy` px viewport, pieds de l'entité) ;
+    /// `"null"` si hors bornes. Pollé chaque frame par hud.js pendant le survol.
+    pub fn monster_info_json(&self, index: usize) -> String {
+        let Some(w) = self.world.as_ref() else { return "null".into() };
+        let Some(e) = w.monsters().get(index) else { return "null".into() };
+        let (sx, sy) = self.world_to_screen(e.x, e.y);
+        let (hp, max_hp) = w.monster_hp(index).unwrap_or((0, 0));
+        let info = serde_json::json!({
+            "code": self.mon_codes.get(index).cloned().unwrap_or_default(),
+            "name": self.monster_display_name(index),
+            "kind": w.monster_kind(index).map(|k| k.as_str()).unwrap_or("normal"),
+            "alive": w.monster_alive(index),
+            "hp": hp,
+            "maxHp": max_hp,
+            "x": e.x,
+            "y": e.y,
+            "sx": sx,
+            "sy": sy,
+        });
+        info.to_string()
+    }
+
+    /// Objets au sol avec projection écran (EXP-H8, labels Alt) — JSON
+    /// `[{"index","code","name","kind","amount","x","y","sx","sy"},…]`.
+    /// `[]` avant `finalize`. Pollé chaque frame quand Alt est maintenu.
+    pub fn ground_items_json(&self) -> String {
+        let Some(w) = self.world.as_ref() else { return "[]".into() };
+        let items: Vec<Value> = w
+            .items()
+            .iter()
+            .enumerate()
+            .map(|(index, it)| {
+                let (sx, sy) = self.world_to_screen(it.x, it.y);
+                serde_json::json!({
+                    "index": index,
+                    "code": it.def.code,
+                    "name": it.def.name,
+                    "kind": it.def.kind,
+                    "amount": it.def.amount,
+                    "x": it.x,
+                    "y": it.y,
+                    "sx": sx,
+                    "sy": sy,
+                })
+            })
+            .collect();
+        serde_json::to_string(&items).unwrap_or_else(|_| "[]".into())
+    }
+
+/// Serialize the world (d2rules save format, JSON v3 : grille + manifest +
     /// héros + monstres + objets + missiles + skills + clé du niveau courant)
     /// for the demo's Save button. Empty string when not finalized.
     pub fn save_world(&self) -> String {

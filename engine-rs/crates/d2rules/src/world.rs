@@ -216,6 +216,10 @@ pub(crate) struct HeroData {
     pub skills: Vec<HeroSkill>,
     /// Index du skill actif dans `skills` (hors bornes = aucun).
     pub active_skill: usize,
+    /// EXP-H2 : accumulateur d'endurance sous-unitaire (1000 milli = 1 pt,
+    /// `stamina.rs`) — TRANSITOIRE, jamais sauvegardé (la valeur affichée
+    /// `stats.stamina` l'est ; recalé au chargement, cf. `save::load_json`).
+    pub stamina_milli: i64,
 }
 
 /// Données monstre (l'`Entity` est à côté, cf. `World.mon_ent`).
@@ -432,6 +436,8 @@ impl World {
                     potion_heal: POTION_HEAL,
                     skill: String::new(),
                     skill_level: 0,
+                    stamina: 0,
+                    max_stamina: 0,
                 },
                 path: Vec::new(),
                 swing_ms: 0,
@@ -442,6 +448,8 @@ impl World {
                 inv: vec![None; INV_SLOTS],
                 active_skill: default_active(&hero_code),
                 skills: hero_skills,
+                // EXP-H2 : accumulateur sous-unitaire (stamina.rs) — transitoire.
+                stamina_milli: 0,
             },
             mon_ent: Vec::new(),
             mon_dat: Vec::new(),
@@ -488,7 +496,11 @@ impl World {
             potion_heal: POTION_HEAL,
             skill,
             skill_level,
+            // EXP-H2 : endurance pleine au gabarit (manifest `stats.stamina`).
+            stamina: t.stamina,
+            max_stamina: t.stamina,
         };
+        self.hero.stamina_milli = (t.stamina as i64) * 1000;
         self.hero.spawn = (sx, sy);
     }
 
@@ -757,6 +769,12 @@ impl World {
         self.mon_dat.get(index).map(|d| d.kind)
     }
 
+    /// PV courants/max du monstre `index` — EXP-H6 (survol : barre de vie),
+    /// additif pour d2game. `None` hors bornes.
+    pub fn monster_hp(&self, index: usize) -> Option<(u32, u32)> {
+        self.mon_dat.get(index).map(|d| (d.hp, d.max_hp))
+    }
+
     /// Retire tous les monstres (vivants ou mourants) — tests / placement fin.
     pub fn clear_monsters(&mut self) {
         self.mon_ent.clear();
@@ -973,6 +991,7 @@ impl World {
 
         // déplacement (course = RunVelocity du manifest, sinon marche)
         let mut arrived = false;
+        let moving = !self.hero.path.is_empty();
         if !self.hero.path.is_empty() {
             let speed = if self.hero.run {
                 self.hero_tpl.run_speed.max(self.hero.stats.walk_speed)
@@ -980,6 +999,20 @@ impl World {
                 self.hero.stats.walk_speed
             };
             arrived = advance_along_path(&mut self.hero_ent, &mut self.hero.path, speed, dt);
+        }
+
+        // EXP-H2 : drain/régénération d'endurance (`stamina.rs`). Course +
+        // déplacement ⇒ drain ; à zéro, la course est forcée à la marche
+        // (idempotent — Maj relancera quand il y aura de l'endurance).
+        if crate::stamina::tick_stamina(
+            self.hero.run,
+            moving,
+            dt,
+            self.hero.stats.max_stamina,
+            &mut self.hero.stamina_milli,
+            &mut self.hero.stats.stamina,
+        ) {
+            self.hero.run = false;
         }
 
         // sélection anim
@@ -1015,6 +1048,9 @@ impl World {
         self.hero_ent.facing = 0;
         self.hero.stats.life = self.hero.stats.max_life;
         self.hero.stats.mana = self.hero.stats.max_mana;
+        // EXP-H2 : le respawn remet aussi l'endurance pleine.
+        self.hero.stats.stamina = self.hero.stats.max_stamina;
+        self.hero.stamina_milli = (self.hero.stats.max_stamina as i64) * 1000;
         self.hero.dead_ms = 0;
         self.hero.swing_ms = 0;
         self.hero.path.clear();

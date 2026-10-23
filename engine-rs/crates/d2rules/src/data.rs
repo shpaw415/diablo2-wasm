@@ -9,6 +9,8 @@ pub(crate) struct HeroTpl {
     pub life: u32,
     /// Mana niveau 1 (`int` + 5 = 15).
     pub mana: u32,
+    /// Endurance niveau 1 (EXP-H2, col `stamina`, BA = 92).
+    pub stamina: u32,
     /// Vitesse de marche en tuiles/s (`WalkVelocity` = 6 yards/s).
     pub walk_speed: f32,
     /// Vitesse de course en tuiles/s (`RunVelocity` = 9 yards/s ; absent ⇒
@@ -100,6 +102,7 @@ pub(crate) fn parse_hero_code(v: &Value, code: &str) -> HeroTpl {
     HeroTpl {
         life: u32_at(v, &format!("{base}/life"), 55),
         mana: u32_at(v, &format!("{base}/mana"), 15),
+        stamina: u32_at(v, &format!("{base}/stamina"), 92),
         walk_speed: f32_at(v, &format!("{base}/walkSpeed"), 6.0),
         run_speed: {
             let walk = f32_at(v, &format!("{base}/walkSpeed"), 6.0);
