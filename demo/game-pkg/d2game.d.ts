@@ -13,10 +13,20 @@ export class D2Game {
      */
     composeStats(): Uint32Array;
     /**
+     * Current difficulty as JSON `{"difficulty":"hell","label":"Hell"}` —
+     * HUD badge + E2E probe.
+     */
+    difficultyInfo(): string;
+    /**
      * Compose the map + build sprites + spawn the world. Call once.
      */
     finalize(): void;
     gridSize(): Uint32Array;
+    /**
+     * Objets au sol projetés (EXP-H8, labels Alt) — JSON array
+     * `[{index,code,name,kind,amount,x,y,sx,sy},…]`.
+     */
+    groundItems(): string;
     /**
      * Resolved hero class as JSON `{"code":"BA","name":"Barbare"}` — HUD
      * display + E2E probe. Valid before `finalize` too.
@@ -26,6 +36,11 @@ export class D2Game {
      * Hero feet position in viewport px — for the JS click ring / cursor.
      */
     heroScreen(): Float32Array;
+    /**
+     * Compétences connues du héros (EXP-H4) — JSON array
+     * `[{index,code,name,level,missile},…]` pour les boutons L/R de hud.js.
+     */
+    heroSkills(): string;
     /**
      * Hero animation state as JSON `{"anim":"RN","frame":3,"facing":6,
      * "run":true,"moving":false}` — HUD run flag + E2E probes.
@@ -57,6 +72,11 @@ export class D2Game {
      */
     monsterCodes(): string;
     /**
+     * Fiche de survol du monstre `index` (EXP-H6) — JSON
+     * `{code,name,kind,alive,hp,maxHp,x,y,sx,sy}` ou `null`.
+     */
+    monsterInfo(index: number): string;
+    /**
      * Alive monster index nearest to a world point within `radius`
      * sub-tiles, or -1 (JS click router: attack vs move).
      */
@@ -87,6 +107,18 @@ export class D2Game {
      * Click (viewport px) → world sub-tile coords `[x, y]`.
      */
     screenToWorld(px: number, py: number): Float32Array;
+    /**
+     * Sélectionne la compétence active (main droite D2, EXP-H4) — l'input
+     * `RangedAttack` consomme ce skill. `false` si hors bornes.
+     */
+    selectSkill(index: number): boolean;
+    /**
+     * Set the difficulty (`"normal"`, `"nm"`, `"nightmare"`, `"hell"` —
+     * case-insensitive; unknown = normal). Call BEFORE `finalize` so the
+     * boot level spawns difficulty-scaled monsters (MonLvl (N)/(H), MonDen/
+     * MonUMin/Max (N)/(H), Res*(N)/(H) immunities). W08/K impl-difficultes.
+     */
+    setDifficulty(diff: string): void;
     setViewport(w: number, h: number): void;
     /**
      * Animation modes listed in the manifest but skipped (missing files),
@@ -118,8 +150,22 @@ export class D2Game {
      * next frame already renders the new level.
      */
     tick(dt_ms: number, input_json?: string | null): string;
+    /**
+     * Direct travel to an ACTIVATED waypoint (W05): reloads the target
+     * level (seeded regen, cf. impl-drlg) and lands the hero on the target
+     * stone. Returns the transition JSON `{"slot","key","name"}`; throws
+     * on unknown slot, non-activated waypoint or level missing from the
+     * port's manifest.
+     */
+    travelWaypoint(slot: number): string;
     viewportHeight(): number;
     viewportWidth(): number;
+    /**
+     * Waypoints (W05) — full panel state as JSON:
+     * `{"current":{"key","name","levelId","slot","activated"},"list":[…]}`
+     * (see `waypoint_travel.rs` / `d2rules::waypoints` for the shape).
+     */
+    waypoints(): string;
     /**
      * Like [`D2Game::new`] with the initial level key from the manifest's
      * `levels` block (`"town"`, `"bloodmoor"`…, case-insensitive).
@@ -134,10 +180,13 @@ export interface InitOutput {
     readonly __wbg_d2game_free: (a: number, b: number) => void;
     readonly d2game_collisionGrid: (a: number) => [number, number];
     readonly d2game_composeStats: (a: number) => [number, number];
+    readonly d2game_difficultyInfo: (a: number) => [number, number];
     readonly d2game_finalize: (a: number) => [number, number];
     readonly d2game_gridSize: (a: number) => [number, number];
+    readonly d2game_groundItems: (a: number) => [number, number];
     readonly d2game_heroClass: (a: number) => [number, number];
     readonly d2game_heroScreen: (a: number) => [number, number];
+    readonly d2game_heroSkills: (a: number) => [number, number];
     readonly d2game_heroState: (a: number) => [number, number];
     readonly d2game_heroStats: (a: number) => [number, number];
     readonly d2game_inventory: (a: number) => [number, number];
@@ -145,19 +194,24 @@ export interface InitOutput {
     readonly d2game_loadGame: (a: number, b: number, c: number) => [number, number];
     readonly d2game_mapPixelSize: (a: number) => [number, number];
     readonly d2game_monsterCodes: (a: number) => [number, number];
+    readonly d2game_monsterInfo: (a: number, b: number) => [number, number];
     readonly d2game_monsterNear: (a: number, b: number, c: number, d: number) => number;
     readonly d2game_new: (a: number, b: number, c: number, d: number) => [number, number, number];
     readonly d2game_provide: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly d2game_render: (a: number) => [number, number];
     readonly d2game_saveGame: (a: number) => [number, number];
     readonly d2game_screenToWorld: (a: number, b: number, c: number) => [number, number];
+    readonly d2game_selectSkill: (a: number, b: number) => number;
+    readonly d2game_setDifficulty: (a: number, b: number, c: number) => void;
     readonly d2game_setViewport: (a: number, b: number, c: number) => void;
     readonly d2game_spriteNotes: (a: number) => [number, number];
     readonly d2game_switchLevel: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly d2game_switchNotes: (a: number) => [number, number];
     readonly d2game_tick: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly d2game_travelWaypoint: (a: number, b: number) => [number, number, number, number];
     readonly d2game_viewportHeight: (a: number) => number;
     readonly d2game_viewportWidth: (a: number) => number;
+    readonly d2game_waypoints: (a: number) => [number, number];
     readonly d2game_withLevel: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;

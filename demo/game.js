@@ -715,6 +715,14 @@ async function main() {
   const game = D2Game.withLevel(manifestText, HERO_REQ, LEVEL_REQ);
   window.__d2.game = game;
 
+  // Difficulté (W08/K, impl-difficultes) : ?diff=nm|hell — appliquée AVANT
+  // finalize : le niveau de boot instancie ses monstres avec les facteurs
+  // MonLvl (N)/(H), résists et densités de la difficulté demandée.
+  const DIFF_REQ = (PARAMS.get('diff') || '').toLowerCase();
+  if (DIFF_REQ && DIFF_REQ !== 'normal') {
+    try { game.setDifficulty(DIFF_REQ); } catch (e) { flash(`Difficulté « ${DIFF_REQ} » refusée (${e.message}) — Normal.`); }
+  }
+
   // Sanité : le moteur Rust doit résoudre le héros comme le JS (même règle).
   const hcRust = JSON.parse(game.heroClass());
   if (hcRust.code !== hero.code) {
@@ -746,6 +754,16 @@ async function main() {
   for (const n of JSON.parse(game.spriteNotes())) note(`anim sautée : ${n}`);
   for (const n of JSON.parse(game.switchNotes())) note(n);
   if (skipped.size) note(`${skipped.size} fichier(s) optionnel(s) absent(s) — modes en repli marche.`);
+
+  // Badge difficulté (W08/K) : masqué en Normal, visible NM/Enfer.
+  try {
+    const di = JSON.parse(game.difficultyInfo());
+    const badge = $('diffbadge');
+    if (badge && di && di.difficulty && di.difficulty !== 'normal') {
+      badge.textContent = `Difficulté : ${di.label}`;
+      badge.style.display = 'block';
+    }
+  } catch { /* cosmétique : jamais bloquant */ }
 
   // « Continuer » : restaure la sauvegarde. Le niveau de boot est déjà
   // aligné sur celui du save (clé v3 ou repli dimensions), donc on restaure
@@ -821,11 +839,29 @@ async function main() {
         drawClickRing(loop.lastClick.sx, loop.lastClick.sy, 1 - (now - loop.lastClick.t) / 450);
       }
       if (window.D2HUD) window.D2HUD.frame(canvas, game); // EXP-H6/H8 : survol monstre + labels Alt
+      if (window.D2Waypoints && (!loop.lastWp || now - loop.lastWp > 500)) {
+        loop.lastWp = now; // W19 : état waypoints ~2×/s (découverte au contact)
+        try { window.D2Waypoints.refresh(JSON.parse(game.waypoints())); } catch { /* cosmétique */ }
+      }
       fpsTick(loop.statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
       requestAnimationFrame(frame);
     } catch (err) {
       fail('tick', err);
     }
+  }
+  // Waypoints (W05/W19) : panneau + rafraîchissement ~2×/s de l'état
+  // (waypoints découverts/activés — game.waypoints() est du JSON du moteur).
+  if (window.D2Waypoints) {
+    window.D2Waypoints.init({
+      getGame: () => window.__d2.game,
+      queue: loop.queue,
+      note,
+      flash,
+      manifest,
+      sfx,
+      onTraveled: () => syncZoneAfterLoad(),
+    });
+    try { window.D2Waypoints.refresh(JSON.parse(game.waypoints())); } catch { /* panneau cosmétique */ }
   }
   requestAnimationFrame(frame);
 }

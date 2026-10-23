@@ -38,6 +38,23 @@ export class D2Game {
         return v1;
     }
     /**
+     * Current difficulty as JSON `{"difficulty":"hell","label":"Hell"}` —
+     * HUD badge + E2E probe.
+     * @returns {string}
+     */
+    difficultyInfo() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_difficultyInfo(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Compose the map + build sprites + spawn the world. Call once.
      */
     finalize() {
@@ -54,6 +71,23 @@ export class D2Game {
         var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v1;
+    }
+    /**
+     * Objets au sol projetés (EXP-H8, labels Alt) — JSON array
+     * `[{index,code,name,kind,amount,x,y,sx,sy},…]`.
+     * @returns {string}
+     */
+    groundItems() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_groundItems(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * Resolved hero class as JSON `{"code":"BA","name":"Barbare"}` — HUD
@@ -81,6 +115,23 @@ export class D2Game {
         var v1 = getArrayF32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v1;
+    }
+    /**
+     * Compétences connues du héros (EXP-H4) — JSON array
+     * `[{index,code,name,level,missile},…]` pour les boutons L/R de hud.js.
+     * @returns {string}
+     */
+    heroSkills() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_heroSkills(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * Hero animation state as JSON `{"anim":"RN","frame":3,"facing":6,
@@ -189,6 +240,24 @@ export class D2Game {
         }
     }
     /**
+     * Fiche de survol du monstre `index` (EXP-H6) — JSON
+     * `{code,name,kind,alive,hp,maxHp,x,y,sx,sy}` ou `null`.
+     * @param {number} index
+     * @returns {string}
+     */
+    monsterInfo(index) {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_monsterInfo(this.__wbg_ptr, index);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Alive monster index nearest to a world point within `radius`
      * sub-tiles, or -1 (JS click router: attack vs move).
      * @param {number} wx
@@ -273,6 +342,28 @@ export class D2Game {
         var v1 = getArrayF32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v1;
+    }
+    /**
+     * Sélectionne la compétence active (main droite D2, EXP-H4) — l'input
+     * `RangedAttack` consomme ce skill. `false` si hors bornes.
+     * @param {number} index
+     * @returns {boolean}
+     */
+    selectSkill(index) {
+        const ret = wasm.d2game_selectSkill(this.__wbg_ptr, index);
+        return ret !== 0;
+    }
+    /**
+     * Set the difficulty (`"normal"`, `"nm"`, `"nightmare"`, `"hell"` —
+     * case-insensitive; unknown = normal). Call BEFORE `finalize` so the
+     * boot level spawns difficulty-scaled monsters (MonLvl (N)/(H), MonDen/
+     * MonUMin/Max (N)/(H), Res*(N)/(H) immunities). W08/K impl-difficultes.
+     * @param {string} diff
+     */
+    setDifficulty(diff) {
+        const ptr0 = passStringToWasm0(diff, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.d2game_setDifficulty(this.__wbg_ptr, ptr0, len0);
     }
     /**
      * @param {number} w
@@ -362,6 +453,33 @@ export class D2Game {
         }
     }
     /**
+     * Direct travel to an ACTIVATED waypoint (W05): reloads the target
+     * level (seeded regen, cf. impl-drlg) and lands the hero on the target
+     * stone. Returns the transition JSON `{"slot","key","name"}`; throws
+     * on unknown slot, non-activated waypoint or level missing from the
+     * port's manifest.
+     * @param {number} slot
+     * @returns {string}
+     */
+    travelWaypoint(slot) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.d2game_travelWaypoint(this.__wbg_ptr, slot);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
      * @returns {number}
      */
     viewportHeight() {
@@ -374,6 +492,24 @@ export class D2Game {
     viewportWidth() {
         const ret = wasm.d2game_viewportWidth(this.__wbg_ptr);
         return ret >>> 0;
+    }
+    /**
+     * Waypoints (W05) — full panel state as JSON:
+     * `{"current":{"key","name","levelId","slot","activated"},"list":[…]}`
+     * (see `waypoint_travel.rs` / `d2rules::waypoints` for the shape).
+     * @returns {string}
+     */
+    waypoints() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_waypoints(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * Like [`D2Game::new`] with the initial level key from the manifest's
