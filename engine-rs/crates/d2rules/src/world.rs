@@ -330,8 +330,17 @@ pub struct World {
     /// Événements produits HORS tick (`talk_to_npc`…) — flushés au début du
     /// tick suivant (le contrat d2rules émet toujours via `tick`).
     pub(crate) pending_events: Vec<GameEvent>,
-        let mut deferred_ev = std::mem::take(&mut self.deferred);
-        ev.extend(deferred_ev);
+    /// Mercenaire (H, `mercenary.rs`) — `None` jusqu'à `hire_merc` ; save
+    /// additive `mercenary` (champ `#[serde(default)]`, save v3 inchangée).
+    pub(crate) merc: Option<crate::mercenary::MercData>,
+    /// Dernière cible du héros (TRANSIENT, jamais sauvegardé) — le
+    /// mercenaire l'attaque en priorité (règle du brief H). `None` quand le
+    /// monstre visé meurt/disparaît (les indices monstres se décalent à la
+    /// suppression — même caveat REPORT.md §4).
+    pub(crate) merc_target: Option<usize>,
+    /// Événements différés (embauche/résurrection — API directes hors tick)
+    /// : livrés en tête du PROCHAIN `tick`.
+    pub(crate) deferred: Vec<GameEvent>,
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
@@ -507,8 +516,9 @@ impl World {
             npcs: Vec::new(),
             quests: None,
             pending_events: Vec::new(),
-        let mut deferred_ev = std::mem::take(&mut self.deferred);
-        ev.extend(deferred_ev);
+            merc: None,
+            merc_target: None,
+            deferred: Vec::new(),
         };
         let mut world = world;
         world.init_hero();
