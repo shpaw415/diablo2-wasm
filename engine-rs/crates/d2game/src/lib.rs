@@ -32,6 +32,9 @@ pub mod levels;
 /// Contenu monstre data-driven (W06-W08 + super-uniques + MonLvl) —
 /// tables v1.12 réelles + plan de spawn pur (`monsters.rs`).
 pub mod monsters;
+/// NPC de ville W16 côté moteur (attach au camp, état JSON UI, talkNpc) —
+/// blocs `impl GameCore` additifs (`npc_bridge.rs`).
+pub mod npc_bridge;
 pub mod pal;
 pub mod png_mini;
 pub mod sprite;

@@ -81,6 +81,11 @@ pub mod vendor;
 /// Pur (aucune dépendance World) ; câblage world/game + save EN INTÉGRATION.
 pub mod quests;
 
+// --- NPC de ville W16 (villes vivantes, 2026-10-23) ---
+/// Roster réel Acte I (monstats + PATH TownN1.ds1), spawn, patrouilles,
+/// rôles (soin/forge/mercenaires/gamble/caravane/érudit), clic → NpcTalked.
+pub mod npc;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
@@ -112,6 +117,12 @@ pub use item_quality::{DropRatioInfo, Quality, QualityFactors, QualityTables, Ra
 pub use loot::GeneratedItem;
 pub use quests::{QuestDef, QuestEvent, QuestLog, QuestProgress, QuestReward, QuestState, QuestTrigger};
 pub use uniques_sets::{SetItemRec, SetRec, UniqueRec, UniquesSets};
+
+// -- NPC de ville W16 (roster réel, rôles, interaction) — consommés par d2game --
+pub use npc::{
+    MercenaryResurrect, NpcDef, NpcInteraction, NpcRepair, NpcRole, NpcState, NpcTalkError,
+    NpcTravel, NPCS,
+};
 
 /// Projectiles (crate sœur pure) : système embarqué dans le `World`,
 /// re-exporté pour le rendu d2game (positions/sprites des missiles en vol).
@@ -193,6 +204,10 @@ pub enum GameEvent {
     /// (colonne `Waypoint` de `patch_levels.txt` ; 39 = extension MVP Blood
     /// Moor, cf. `waypoints.rs`). Émis une seule fois par slot.
     WaypointActivated { slot: u8 },
+    /// Le héros a parlé au NPC de ville `npc` (W16, code quête bas de casse,
+    /// ex. `"akara"`) — émis par [`World::talk_to_npc`] (clic NPC) et consommé
+    /// par les quêtes ([`QuestEvent::NpcTalked`] : étapes q3/q4).
+    NpcTalked { npc: String },
 }
 
 /// État d'animation (code mode COF D2 : NU=neutral, WL=walk, RN=run, A1=attack1, DD=death).

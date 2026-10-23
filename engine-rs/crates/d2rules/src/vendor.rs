@@ -93,7 +93,8 @@ const BOW_TYPES: &[&str] = &["bow", "xbow", "abow"];
 
 /// Les vendeurs implantés (acte I — les colonnes des 20 vendeurs des tables
 /// sont parsées de la même façon ; ajouter un vendeur = une variante ici).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// Sérialisable : porté par les définitions NPC de ville (`npc.rs`, W16).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum VendorId {
     /// Akara — potions/scrolls/clés/tomes + baguettes/bâtons.
     Akara,

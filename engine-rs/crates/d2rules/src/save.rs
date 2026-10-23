@@ -64,6 +64,19 @@ struct Save {
     /// chantier fait évoluer save.rs en parallèle — l'intégrateur fusionne.
     #[serde(default)]
     difficulty: Option<Difficulty>,
+    /// NPC de ville (W16, `npc.rs`) — absent des sauvegardes antérieures aux
+    /// villes vivantes (rétro-compat : roster vide, l'attach d2game
+    /// re-spawn). Champ OPTIONNEL `#[serde(default)]` : les saves existantes
+    /// restent valides dans les deux sens. Les NPC sont PERSISTANTS
+    /// (position + compteur de dialogues + patrouille résolue).
+    #[serde(default)]
+    npcs: Option<Vec<crate::npc::NpcState>>,
+    /// Journal de quêtes (W13, JSON de `QuestLog::to_json`) — absent des
+    /// sauvegardes antérieures (rétro-compat : pas de journal branché).
+    /// Champ OPTIONNEL ; un journal PRÉSENT mais invalide ⇒ `Err` (contrat
+    /// quests.rs : tout écart = pas d'état incohérent).
+    #[serde(default)]
+    quests: Option<serde_json::Value>,
 }
 
 /// État complet du héros.
@@ -207,6 +220,10 @@ pub(crate) fn save_json(w: &World) -> String {
         items: w.items.clone(),
         missiles: Some(serde_json::to_value(&w.missiles).expect("d2rules: sérialisation missiles")),
         waypoints: Some(w.wp.active.clone()),
+        npcs: Some(w.npcs.clone()),
+        quests: w.quests.as_ref().map(|log| {
+            serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation journal quêtes")
+        }),
     };
     serde_json::to_string(&save).expect("d2rules: sérialisation save")
 }
@@ -334,6 +351,24 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         rng: Rng::new(s.rng),
         now_ms: s.now_ms,
         difficulty: s.difficulty.unwrap_or_default(),
+        // NPC de ville (W16) : champ optionnel (saves antérieures = roster
+        // vide — l'attach d2game re-spawn). Validation stricte : index de
+        // définition dans la table + entité dans les bornes (boucle sanity
+        // plus bas) — tout écart ⇒ Err, jamais d'état incohérent.
+        npcs: {
+            let list = s.npcs.unwrap_or_default();
+            if list.iter().any(|n| n.def >= crate::npc::NPCS.len()) {
+                return Err(());
+            }
+            list
+        },
+        // Journal de quêtes : JSON versionné strict (`QuestLog::from_json`) —
+        // présent mais invalide ⇒ Err (contrat quests.rs).
+        quests: match s.quests {
+            Some(v) => Some(crate::quests::QuestLog::from_json(&v.to_string()).map_err(|_| ())?),
+            None => None,
+        },
+        pending_events: Vec::new(),
     };
     // sanité minimale : gabarits connus, entités dans les bornes
     for d in &world.mon_dat {
@@ -341,7 +376,12 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             return Err(());
         }
     }
-    for e in world.mon_ent.iter().chain(std::iter::once(&world.hero_ent)) {
+    for e in world
+        .mon_ent
+        .iter()
+        .chain(world.npcs.iter().map(|n| &n.ent))
+        .chain(std::iter::once(&world.hero_ent))
+    {
         if e.x < 0.0 || e.y < 0.0 || e.x >= w as f32 || e.y >= h as f32 {
             return Err(());
         }
