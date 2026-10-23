@@ -35,6 +35,12 @@ function drawFrame(ctx, frame, palette, dx, dy, scale) {
 async function fetchBytes(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`fetch ${url} -> HTTP ${r.status}`);
+  // Fallback SPA des hébergeurs statiques (ex. Pages sans 404.html) : un
+  // asset manquant revient en 200 text/html (l'index). Refuser proprement.
+  const ct = (r.headers.get('content-type') || '').toLowerCase();
+  if (ct.includes('text/html')) {
+    throw new Error(`fetch ${url} -> HTML au lieu d'un binaire (asset absent du déploiement)`);
+  }
   return new Uint8Array(await r.arrayBuffer());
 }
 
@@ -75,9 +81,16 @@ async function renderFromMpq(bytes, label) {
     return;
   }
   const dc6 = decode_dc6(mpq.read(NAME_DC6));
-  let palette = padPalette(await fetchBytes('assets/pal_act1.dat'));
+  // Palette : celle de l'archive d'abord, sinon la palette locale de démo
+  // (absente des déploiements BYO).
+  let palette = PAL;
   const rawPal = mpq.read(NAME_PAL);
   if (rawPal) palette = padPalette(rawPal); // l'archive fournit sa propre palette
+  if (!palette) {
+    msg.textContent = `${label} décodé, mais ni le déploiement ni l'archive ne fournissent data\\global\\palette\\act1\\pal.dat — impossible d'appliquer les couleurs.`;
+    msg.style.color = 'var(--red)';
+    return;
+  }
   const frame = dc6[0];
   const canvas = $('helm');
   const ctx = canvas.getContext('2d');
@@ -130,6 +143,7 @@ $('mpq-sample').addEventListener('click', () => {
       // pas de MPQ ici : on décode directement l'asset extrait de d2data.mpq
       const frames = decode_dc6(dc6bytes);
       const palette = padPaletteSync();
+      if (!palette) throw new Error('palette locale absente (déploiement BYO) — chargez votre MPQ, qui fournit la sienne');
       const frame = frames[0];
       const canvas = $('helm');
       const ctx = canvas.getContext('2d');
@@ -147,12 +161,37 @@ $('mpq-sample').addEventListener('click', () => {
 let PAL = null;
 function padPaletteSync() { return PAL; }
 
+// Note visible de dégradation (assets de démo absents du déploiement BYO).
+function degrade(sectionId, msgId, text) {
+  const sec = $(sectionId);
+  if (sec) sec.style.opacity = '0.45';
+  const m = $(msgId);
+  if (m) { m.textContent = text; m.style.color = 'var(--red)'; }
+}
+
 init()
   .then(async () => {
-    PAL = padPalette(await fetchBytes('assets/pal_act1.dat'));
-    await renderIcons(PAL);
-    await renderArmor();
-    status.textContent = 'Moteur WebAssembly prêt — les 24 icônes et le TSV sont décodés côté navigateur.';
+    let missing = [];
+    try {
+      PAL = padPalette(await fetchBytes('assets/pal_act1.dat'));
+    } catch (e) {
+      missing.push('palette act1');
+    }
+    try {
+      await renderIcons(PAL);
+    } catch (e) {
+      missing.push('skillicon.dc6');
+      degrade('icons-section', 'icons-info', 'Icônes indisponibles : asset non inclus dans ce déploiement (BYO).');
+    }
+    try {
+      await renderArmor();
+    } catch (e) {
+      missing.push('patch_armor.txt');
+      degrade('armor-section', 'armor-info', 'Table d\'armures indisponible : asset non inclus dans ce déploiement (BYO).');
+    }
+    status.textContent = missing.length === 0
+      ? 'Moteur WebAssembly prêt — les 24 icônes et le TSV sont décodés côté navigateur.'
+      : `Moteur WebAssembly prêt (mode BYO — assets de démo absents : ${missing.join(', ')}). Chargez votre MPQ ci-dessous : tout est décodé en direct depuis votre archive.`;
     $('app').hidden = false;
     // ?mpq=<url> : charge une archive au démarrage (deep-link de test/veille).
     const mpqUrl = new URLSearchParams(location.search).get('mpq');
