@@ -141,7 +141,7 @@
   const sceneCanvas = document.getElementById('sceneCanvas');
   const sctx = sceneCanvas.getContext('2d');
   const sceneStats = document.getElementById('sceneStats');
-  const SCALE = 0.8;       // sprites idle NU ~220-270px de haut → ×0.8 tient dans la scène 800x600
+  const SCALE = 1.0;       // poses FrontEnd (charactercreationscreen) déjà à l'échelle écran
   let heroList = [];       // [{code, def, playable, el, anim?, pos?}] ordre d'affichage
   let selectedCode = null;
   const scene = { on: false, hover: null };   // mode scène animée
@@ -253,11 +253,11 @@
     return file.indexOf('/') >= 0 ? MENU + file : MENU + 'heroes/' + file;
   }
 
-  // arc autour du feu, en pourcentage du stage 800x600 (pieds du perso) :
-  // x régulier de 14 % à 86 %, hauteur en arc de cercle au-dessus du feu.
+  // rangée à plat comme l'écran original : x réparti sur la largeur, pieds
+  // alignés sur le sol du fond charactercreationscreen (bas du stage).
   function arcPos(i, n) {
     const t = n > 1 ? i / (n - 1) : 0.5;
-    return { x: 14 + 72 * t, y: 63 - 14 * Math.sin(Math.PI * t) };
+    return { x: 9 + 82 * t, y: 85 };
   }
 
   async function tryScene(manifest) {
@@ -268,24 +268,36 @@
     } catch (e) { /* contrat absent -> cartes */ }
     if (!json) return;
     applyContractFire(json);
+    // fond original de l'écran de sélection (charactercreationscreenEXP)
+    if (json.background) {
+      const bg = await loadImg(MENU + json.background);
+      if (bg) stage.style.backgroundImage = `url(${bg.src})`;
+    }
     const heroes = (manifest && manifest.heroes) || {};
     const codes = orderedCodes(heroes);
-    // préchargement des sheets (échec -> null, le héros sera « bientôt »)
+    // préchargement des sheets (échec -> null, le héros sera « bientôt ») ;
+    // contrat v2 : nu1 = repos, nu2 = survol, nu3 = sélectionné (DC6 FrontEnd)
+    const loadState = (o) => !o ? Promise.resolve(null) : loadImg(sheetURL(o.file))
+      .then((img) => img && { img, frames: o.frames | 0, w: o.w | 0, h: o.h | 0, fps: +o.fps > 0 ? +o.fps : 8 });
     const entries = [];
     for (const code of codes) {
       const e = sheetEntry(json, code);
-      let anim = null;
+      let anim = null, animHover = null, animSel = null;
       if (e) {
-        const img = await loadImg(sheetURL(e.file));
-        if (img) anim = { img, frames: e.frames | 0, w: e.w | 0, h: e.h | 0, fps: +e.fps > 0 ? +e.fps : 15 };
+        anim = await loadState(e);
+        animHover = (await loadState(e.nu2)) || anim;
+        animSel = (await loadState(e.nu3)) || anim;
       }
-      entries.push({ code, anim });
+      entries.push({ code, anim, animHover, animSel });
     }
     // aucune sheet utilisable -> on reste sur les cartes
     if (!entries.some((x) => x.anim)) return;
     for (const h of heroList) {
       const idx = entries.findIndex((x) => x.code === h.code);
-      h.anim = idx >= 0 ? entries[idx].anim : null;
+      const en = idx >= 0 ? entries[idx] : null;
+      h.anim = en && en.anim;
+      h.animHover = en && en.animHover;
+      h.animSel = en && en.animSel;
       h.pos = arcPos(idx, entries.length);
     }
     scene.on = true;
@@ -336,10 +348,11 @@
     for (const h of list) {
       const { x, y } = stageXY(h.pos);
       if (!h.anim) { drawMissingHero(h, x, y); continue; }
-      const a = h.anim;
+      const hovered = scene.hover === h.code, sel = selectedCode === h.code;
+      // état du sprite FrontEnd : sélectionné > survol > repos
+      const a = (sel && h.animSel) || (hovered && h.animHover) || h.anim;
       const fi = Math.floor((t / 1000) * a.fps) % a.frames;
       const dw = a.w * SCALE, dh = a.h * SCALE;
-      const hovered = scene.hover === h.code, sel = selectedCode === h.code;
       if (hovered || sel) drawHalo(x, y, sel);
       sctx.drawImage(a.img, fi * a.w, 0, a.w, a.h, x - dw / 2, y - dh, dw, dh);
       if (sel) drawSelFrame(x, y, dw, dh);
