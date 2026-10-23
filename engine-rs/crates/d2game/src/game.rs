@@ -1482,6 +1482,24 @@ impl GameCore {
         serde_json::to_string(&items).unwrap_or_else(|_| "[]".into())
     }
 
+    /// Corps au sol (J1) avec projection écran — JSON
+    /// `{"x","y","sx","sy","items"}` ou `null` (aucun corps). `items` =
+    /// nombre d'objets encore portés par le corps. Pollé par la page pour
+    /// le flare du corps + le hint, et pour le clic « récupérer ».
+    pub fn corpse_info_json(&self) -> String {
+        let Some(w) = self.world.as_ref() else { return "null".into() };
+        let Some(c) = w.corpse() else { return "null".into() };
+        let (sx, sy) = self.world_to_screen(c.x, c.y);
+        let info = serde_json::json!({
+            "x": c.x,
+            "y": c.y,
+            "sx": sx,
+            "sy": sy,
+            "items": c.inv.iter().filter(|s| s.is_some()).count(),
+        });
+        serde_json::to_string(&info).unwrap_or_else(|_| "null".into())
+    }
+
 /// Serialize the world (d2rules save format, JSON v3 : grille + manifest +
     /// héros + monstres + objets + missiles + skills + clé du niveau courant)
     /// for the demo's Save button. Empty string when not finalized.

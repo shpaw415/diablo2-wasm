@@ -170,7 +170,7 @@ impl D2Game {
     /// `PlayerInput` contract:
     /// `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
     /// · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
-    /// · `{"type":"useItem","slot":0}`.
+    /// · `{"type":"useItem","slot":0}` · `{"type":"recoverCorpse"}` (J1).
     /// Returns the tick's events as a JSON array string: the d2rules contract
     /// events ({"HeroMoved":…}…) plus the engine's multi-level extras
     /// `{"LevelSwitch":{"key":…,"name":…}}` / `{"LevelSwitchFailed":"…"}` —
@@ -305,6 +305,7 @@ impl D2Game {
         self.core.ground_items_json()
     }
 
+<<<<<<< HEAD
     /// NPC de ville (W16, villes vivantes) — JSON array
     /// `[{index,id,code,name,questCode,role,x,y,vendor,assumed,talked},…]`
     /// (coordonnées cellules ; projection écran ancrée sur `heroScreen()`).
@@ -335,6 +336,13 @@ impl D2Game {
     #[wasm_bindgen(js_name = mercInfo)]
     pub fn merc_info(&self) -> String {
         self.core.merc_info_json()
+=======
+    /// Corps au sol (J1) — JSON `{"x","y","sx","sy","items"}` ou `null`.
+    /// Pollé par corpse-ui.js (flare + hint) et le clic « récupérer ».
+    #[wasm_bindgen(js_name = corpseInfo)]
+    pub fn corpse_info(&self) -> String {
+        self.core.corpse_info_json()
+>>>>>>> member-corps
     }
 }
 
@@ -355,6 +363,8 @@ fn parse_input(json: &str) -> Option<PlayerInput> {
         // EXP-H4 (clic droit / skill avec missile) — variante existante du
         // contrat `PlayerInput`, branchée append-only pour hud.js.
         "rangedAttack" => Some(PlayerInput::RangedAttack { x: x(&v), y: y(&v) }),
+        // J1 (corpse.rs) : clic sur son corps au sol (corpse-ui.js).
+        "recoverCorpse" => Some(PlayerInput::RecoverCorpse),
         _ => None,
     }
 }
