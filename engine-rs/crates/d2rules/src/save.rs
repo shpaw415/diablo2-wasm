@@ -77,6 +77,12 @@ struct Save {
     /// quests.rs : tout écart = pas d'état incohérent).
     #[serde(default)]
     quests: Option<serde_json::Value>,
+    /// Mercenaire (H, `mercenary.rs`) — absent des sauvegardes antérieures au
+    /// chantier mercenaires (rétro-compat : aucun mercenaire). Champ
+    /// OPTIONNEL ADDITIF `#[serde(default)]` : save v3 inchangée, les stats
+    /// effectives sont recalculées au chargement depuis `hireling.txt`.
+    #[serde(default)]
+    mercenary: Option<crate::mercenary::MercSave>,
 }
 
 /// État complet du héros.
@@ -224,6 +230,7 @@ pub(crate) fn save_json(w: &World) -> String {
         quests: w.quests.as_ref().map(|log| {
             serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation journal quêtes")
         }),
+        mercenary: w.merc.as_ref().map(crate::mercenary::MercSave::of),
     };
     serde_json::to_string(&save).expect("d2rules: sérialisation save")
 }
@@ -369,6 +376,19 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             None => None,
         },
         pending_events: Vec::new(),
+        // Mercenaire H : champ optionnel (saves antérieures = aucun) ; stats
+        // effectives recalculées depuis hireling.txt au niveau sauvegardé.
+        // Record introuvable (table d'une autre version) ⇒ mercenaire IGNORÉ
+        // (jamais un save invalide pour un compagnon).
+        merc: match s.mercenary {
+            Some(ms) => match ms.rebuild(s.difficulty.unwrap_or_default()) {
+                Ok(m) => Some(m),
+                Err(()) => None,
+            },
+            None => None,
+        },
+        merc_target: None, // transient — jamais persisté
+        deferred: Vec::new(),
     };
     // sanité minimale : gabarits connus, entités dans les bornes
     for d in &world.mon_dat {
@@ -393,6 +413,17 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
     }
     if world.hero_ent.anim == AnimState::DD && world.hero.dead_ms == 0 {
         return Err(()); // anim DD héros sans compte de mort : état incohérent
+    }
+    // mercenaire H : entité et missiles dans les bornes (symétrique héros)
+    if let Some(m) = &world.merc {
+        if m.ent.x < 0.0 || m.ent.y < 0.0 || m.ent.x >= w as f32 || m.ent.y >= h as f32 {
+            return Err(());
+        }
+        if m.missiles.missiles().iter().any(|mm| {
+            mm.x < 0.0 || mm.y < 0.0 || mm.x >= w as f32 || mm.y >= h as f32
+        }) {
+            return Err(()); // missile merc hors carte : état incohérent
+        }
     }
     Ok(world)
 }

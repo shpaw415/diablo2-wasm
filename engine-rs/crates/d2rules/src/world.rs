@@ -323,16 +323,18 @@ pub struct World {
     /// Événements produits HORS tick (`talk_to_npc`…) — flushés au début du
     /// tick suivant (le contrat d2rules émet toujours via `tick`).
     pub(crate) pending_events: Vec<GameEvent>,
+        let mut deferred_ev = std::mem::take(&mut self.deferred);
+        ev.extend(deferred_ev);
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
-fn hit_chance(th: u32, ac: u32) -> u32 {
+pub(crate) fn hit_chance(th: u32, ac: u32) -> u32 {
     let c = 200 * th / (th + ac.max(1));
     c.clamp(5, 95)
 }
 
 /// Distance euclidienne.
-fn dist(dx: f32, dy: f32) -> f32 {
+pub(crate) fn dist(dx: f32, dy: f32) -> f32 {
     (dx * dx + dy * dy).sqrt()
 }
 
@@ -347,7 +349,7 @@ pub(crate) fn facing_from(dx: f32, dy: f32) -> u8 {
 }
 
 /// Change d'animation (reset horloge + frame si changement).
-fn set_anim(ent: &mut Entity, s: AnimState, anim_ms: &mut u32) {
+pub(crate) fn set_anim(ent: &mut Entity, s: AnimState, anim_ms: &mut u32) {
     if ent.anim != s {
         ent.anim = s;
         *anim_ms = 0;
@@ -356,7 +358,7 @@ fn set_anim(ent: &mut Entity, s: AnimState, anim_ms: &mut u32) {
 }
 
 /// Avance l'horloge d'anim et met à jour la frame (boucle ou clamp sur DD/A1).
-fn advance_anim(ent: &mut Entity, anim_ms: &mut u32, dt: u32, looping: bool) {
+pub(crate) fn advance_anim(ent: &mut Entity, anim_ms: &mut u32, dt: u32, looping: bool) {
     *anim_ms = anim_ms.saturating_add(dt);
     let f = *anim_ms / FRAME_MS;
     ent.anim_frame = if looping {
@@ -368,7 +370,12 @@ fn advance_anim(ent: &mut Entity, anim_ms: &mut u32, dt: u32, looping: bool) {
 
 /// Avance le long du chemin à `speed` tuiles/s. Renvoie true si le chemin est
 /// épuisé (arrivé). Met à jour x/y/facing.
-fn advance_along_path(ent: &mut Entity, path: &mut Vec<(f32, f32)>, speed: f32, dt_ms: u32) -> bool {
+pub(crate) fn advance_along_path(
+    ent: &mut Entity,
+    path: &mut Vec<(f32, f32)>,
+    speed: f32,
+    dt_ms: u32,
+) -> bool {
     let mut step = speed * dt_ms as f32 / 1000.0;
     while step > 0.0 {
         let Some(wp) = path.first().copied() else { break };
@@ -491,6 +498,8 @@ impl World {
             npcs: Vec::new(),
             quests: None,
             pending_events: Vec::new(),
+        let mut deferred_ev = std::mem::take(&mut self.deferred);
+        ev.extend(deferred_ev);
         };
         let mut world = world;
         world.init_hero();
@@ -689,10 +698,13 @@ impl World {
     // ------------------------------------------------------------------
 
     /// Un pas de simulation. `dt_ms` est tronqué à 100 ms. Renvoie les événements
-    /// du tick dans l'ordre d'émission.
+    /// du tick dans l'ordre d'émission (les événements différés d'API directes —
+    /// embauche/résurrection du mercenaire — arrivent en tête).
     pub fn tick(&mut self, dt_ms: u32, input: Option<PlayerInput>) -> Vec<GameEvent> {
         // Événements produits hors tick (clic NPC W16…) d'abord, ordre réel.
         let mut ev = std::mem::take(&mut self.pending_events);
+        let mut deferred_ev = std::mem::take(&mut self.deferred);
+        ev.extend(deferred_ev);
         let dt = dt_ms.min(MAX_DT_MS);
         self.now_ms += dt as u64;
         if let Some(input) = input {
@@ -705,6 +717,8 @@ impl World {
         self.update_missiles(dt, &mut ev);
         self.update_waypoints(&mut ev); // W05 : activation au contact (waypoints.rs)
         self.update_npcs(dt); // W16 : patrouilles NPC de ville (npc.rs)
+        crate::mercenary::tick_mercenary(self, dt, &mut ev); // H : FSM mercenaire
+        crate::mercenary::tick_merc_missiles(self, dt, &mut ev); // H : missiles du merc
         ev
     }
 
@@ -975,6 +989,7 @@ impl World {
                     }
                 }
                 if let Some(i) = best {
+                    self.merc_target = Some(i); // H : cible partagée au mercenaire
                     let d = dist(self.mon_ent[i].x - self.hero_ent.x, self.mon_ent[i].y - self.hero_ent.y);
                     if d <= ATTACK_RANGE {
                         if self.hero.swing_ms == 0 {
@@ -1009,6 +1024,7 @@ impl World {
                     if d <= bd {
                         bd = d;
                         aim = (e.x, e.y);
+                        self.merc_target = Some(i); // H : cible partagée au mercenaire
                     }
                 }
                 self.hero_ranged_attack(aim, ev);
@@ -1409,13 +1425,25 @@ impl World {
                     ev.push(GameEvent::MonsterDied { index: i, xp });
                     self.mon_dat.remove(i);
                     self.mon_ent.remove(i);
+                    self.merc_target = None; // H : indice périmé (décalage), on relâche
                     continue; // pas de i += 1 : l'élément suivant prend l'index i
                 }
                 i += 1;
                 continue;
             }
 
-            let d = dist(self.mon_ent[i].x - hero_pos.0, self.mon_ent[i].y - hero_pos.1);
+            // H (mercenaire, additif) : la cible effective de poursuite/frappe
+            // est la PLUS PROCHE de (héros, mercenaire vivant). Sans mercenaire
+            // (ou KO) : héros, flux historique inchangé, zéro RNG ajouté.
+            let (tgt_pos, _tgt_is_merc) = match self.merc.as_ref().filter(|m| m.alive) {
+                Some(m) => {
+                    let dm = dist(self.mon_ent[i].x - m.ent.x, self.mon_ent[i].y - m.ent.y);
+                    let dh = dist(self.mon_ent[i].x - hero_pos.0, self.mon_ent[i].y - hero_pos.1);
+                    if dm < dh { ((m.ent.x, m.ent.y), true) } else { (hero_pos, false) }
+                }
+                None => (hero_pos, false),
+            };
+            let d = dist(self.mon_ent[i].x - tgt_pos.0, self.mon_ent[i].y - tgt_pos.1);
             let hero_dead = self.hero.dead_ms > 0;
 
             match self.mon_dat[i].state {
@@ -1454,7 +1482,7 @@ impl World {
                                 self.mon_ent[i].x.floor() as i32,
                                 self.mon_ent[i].y.floor() as i32,
                             );
-                            let ht = (hero_pos.0.floor() as i32, hero_pos.1.floor() as i32);
+                            let ht = (tgt_pos.0.floor() as i32, tgt_pos.1.floor() as i32);
                             if let Some(p) = self.path_between(mt, ht) {
                                 self.mon_dat[i].path = p;
                             }
@@ -1470,7 +1498,7 @@ impl World {
                         self.mon_dat[i].repath_ms = 0;
                         self.mon_dat[i].path.clear();
                     } else {
-                        let (dx, dy) = (hero_pos.0 - self.mon_ent[i].x, hero_pos.1 - self.mon_ent[i].y);
+                        let (dx, dy) = (tgt_pos.0 - self.mon_ent[i].x, tgt_pos.1 - self.mon_ent[i].y);
                         self.mon_ent[i].facing = facing_from(dx, dy);
                         self.mon_dat[i].atk_cd_ms = self.mon_dat[i].atk_cd_ms.saturating_sub(dt);
                         if self.mon_dat[i].atk_cd_ms == 0 {
@@ -1528,6 +1556,20 @@ impl World {
 
     /// Frappe monstre → héros (jet de toucher vs défense, dégâts scalés MonLvl).
     fn monster_strike(&mut self, i: usize, ev: &mut Vec<GameEvent>) {
+        // H (mercenaire, additif) : le monstre frappe la cible la plus PROCHE —
+        // héros ou mercenaire VIVANT. Sans mercenaire (ou KO), le flux
+        // historique est inchangé (aucun tirage RNG supplémentaire).
+        let (mx, my) = (self.mon_ent[i].x, self.mon_ent[i].y);
+        if let Some(m) = self.merc.as_ref().filter(|m| m.alive) {
+            let dm = dist(m.ent.x - mx, m.ent.y - my);
+            let dh = dist(self.hero_ent.x - mx, self.hero_ent.y - my);
+            // Égalité → mercenaire : le merc spawn collé au héros, l'arbitrer
+            // sur un strict < ferait du héros la cible permanente (le merc
+            // ne servirait jamais d'encaisseur, son rôle D2).
+            if dm <= dh {
+                return crate::mercenary::monster_strike_merc(self, i, ev);
+            }
+        }
         let (dmin, dmax, th) = {
             let d = &self.mon_dat[i];
             (d.dmg_min, d.dmg_max, d.th)
