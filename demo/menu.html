@@ -28,11 +28,18 @@
   </section>
 
   <!-- ============ Écran 2 : sélection de héros ============
-       Les cartes sont générées depuis assets/manifest.json (heroes{})
-       par menu.js — aucune classe codée en dur dans ce fichier. -->
+       Deux modes gérés par menu.js, liste/ordre/noms/stats TOUJOURS depuis
+       assets/manifest.json (heroes{}) — aucune classe codée en dur ici :
+       - scène animée si le contrat assets/menu/heroes.json est présent
+         ({CODE:{file,frames,w,h,fps}} + heroes/<CODE>.png) ;
+       - sinon cartes ci-dessous (repli historique, ex : build Pages). -->
   <section id="screenSelect" class="screen">
     <div id="selectHead">Choisissez votre héros</div>
     <div id="manifestErr" hidden></div>
+    <div id="sceneWrap">
+      <canvas id="sceneCanvas" width="800" height="600"></canvas>
+    </div>
+    <div id="sceneStats"></div>
     <div id="heroGrid"></div>
     <div id="fireWrap">
       <div id="fireGlow"></div>
