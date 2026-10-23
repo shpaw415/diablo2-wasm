@@ -1,0 +1,304 @@
+{
+ "AM": {
+  "nu1": {
+   "file": "sel/AM-nu1.png",
+   "frames": 26,
+   "w": 118,
+   "h": 198,
+   "fps": 8
+  },
+  "nu2": {
+   "file": "sel/AM-nu2.png",
+   "frames": 26,
+   "w": 118,
+   "h": 198,
+   "fps": 8
+  },
+  "nu3": {
+   "file": "sel/AM-nu3.png",
+   "frames": 18,
+   "w": 123,
+   "h": 234,
+   "fps": 8
+  },
+  "file": "sel/AM-nu1.png",
+  "frames": 26,
+  "w": 118,
+  "h": 198,
+  "fps": 8,
+  "fw": {
+   "file": "sel/AM-fw.png",
+   "frames": 54,
+   "w": 215,
+   "h": 255,
+   "fps": 22
+  },
+  "bw": {
+   "file": "sel/AM-bw.png",
+   "frames": 30,
+   "w": 121,
+   "h": 233,
+   "fps": 27
+  }
+ },
+ "AS": {
+  "nu1": {
+   "file": "sel/AS-nu1.png",
+   "frames": 31,
+   "w": 52,
+   "h": 189,
+   "fps": 8
+  },
+  "nu2": {
+   "file": "sel/AS-nu2.png",
+   "frames": 31,
+   "w": 52,
+   "h": 189,
+   "fps": 8
+  },
+  "nu3": {
+   "file": "sel/AS-nu3.png",
+   "frames": 31,
+   "w": 86,
+   "h": 187,
+   "fps": 8
+  },
+  "file": "sel/AS-nu1.png",
+  "frames": 31,
+  "w": 52,
+  "h": 189,
+  "fps": 8,
+  "fw": {
+   "file": "sel/AS-fw.png",
+   "frames": 91,
+   "w": 158,
+   "h": 210,
+   "fps": 38
+  },
+  "bw": {
+   "file": "sel/AS-bw.png",
+   "frames": 51,
+   "w": 94,
+   "h": 192,
+   "fps": 46
+  }
+ },
+ "BA": {
+  "nu1": {
+   "file": "sel/BA-nu1.png",
+   "frames": 16,
+   "w": 87,
+   "h": 183,
+   "fps": 8
+  },
+  "nu2": {
+   "file": "sel/BA-nu2.png",
+   "frames": 16,
+   "w": 87,
+   "h": 183,
+   "fps": 8
+  },
+  "nu3": {
+   "file": "sel/BA-nu3.png",
+   "frames": 26,
+   "w": 97,
+   "h": 202,
+   "fps": 8
+  },
+  "file": "sel/BA-nu1.png",
+  "frames": 16,
+  "w": 87,
+  "h": 183,
+  "fps": 8,
+  "fw": {
+   "file": "sel/BA-fw.png",
+   "frames": 64,
+   "w": 149,
+   "h": 220,
+   "fps": 27
+  },
+  "bw": {
+   "file": "sel/BA-bw.png",
+   "frames": 19,
+   "w": 111,
+   "h": 201,
+   "fps": 17
+  }
+ },
+ "DZ": {
+  "nu1": {
+   "file": "sel/DZ-nu1.png",
+   "frames": 21,
+   "w": 87,
+   "h": 199,
+   "fps": 8
+  },
+  "nu2": {
+   "file": "sel/DZ-nu2.png",
+   "frames": 21,
+   "w": 87,
+   "h": 199,
+   "fps": 8
+  },
+  "nu3": {
+   "file": "sel/DZ-nu3.png",
+   "frames": 21,
+   "w": 112,
+   "h": 241,
+   "fps": 8
+  },
+  "file": "sel/DZ-nu1.png",
+  "frames": 21,
+  "w": 87,
+  "h": 199,
+  "fps": 8,
+  "fw": {
+   "file": "sel/DZ-fw.png",
+   "frames": 121,
+   "w": 113,
+   "h": 244,
+   "fps": 50
+  },
+  "bw": {
+   "file": "sel/DZ-bw.png",
+   "frames": 40,
+   "w": 112,
+   "h": 241,
+   "fps": 36
+  }
+ },
+ "NE": {
+  "nu1": {
+   "file": "sel/NE-nu1.png",
+   "frames": 12,
+   "w": 60,
+   "h": 183,
+   "fps": 8
+  },
+  "nu2": {
+   "file": "sel/NE-nu2.png",
+   "frames": 12,
+   "w": 60,
+   "h": 183,
+   "fps": 8
+  },
+  "nu3": {
+   "file": "sel/NE-nu3.png",
+   "frames": 12,
+   "w": 131,
+   "h": 233,
+   "fps": 8
+  },
+  "file": "sel/NE-nu1.png",
+  "frames": 12,
+  "w": 60,
+  "h": 183,
+  "fps": 8,
+  "fw": {
+   "file": "sel/NE-fw.png",
+   "frames": 38,
+   "w": 147,
+   "h": 233,
+   "fps": 16
+  },
+  "bw": {
+   "file": "sel/NE-bw.png",
+   "frames": 28,
+   "w": 162,
+   "h": 235,
+   "fps": 25
+  }
+ },
+ "PA": {
+  "nu1": {
+   "file": "sel/PA-nu1.png",
+   "frames": 26,
+   "w": 83,
+   "h": 179,
+   "fps": 8
+  },
+  "nu2": {
+   "file": "sel/PA-nu2.png",
+   "frames": 26,
+   "w": 83,
+   "h": 179,
+   "fps": 8
+  },
+  "nu3": {
+   "file": "sel/PA-nu3.png",
+   "frames": 9,
+   "w": 132,
+   "h": 173,
+   "fps": 8
+  },
+  "file": "sel/PA-nu1.png",
+  "frames": 26,
+  "w": 83,
+  "h": 179,
+  "fps": 8,
+  "fw": {
+   "file": "sel/PA-fw.png",
+   "frames": 80,
+   "w": 154,
+   "h": 231,
+   "fps": 33
+  },
+  "bw": {
+   "file": "sel/PA-bw.png",
+   "frames": 40,
+   "w": 139,
+   "h": 209,
+   "fps": 36
+  }
+ },
+ "SO": {
+  "nu1": {
+   "file": "sel/SO-nu1.png",
+   "frames": 32,
+   "w": 93,
+   "h": 166,
+   "fps": 8
+  },
+  "nu2": {
+   "file": "sel/SO-nu2.png",
+   "frames": 32,
+   "w": 93,
+   "h": 166,
+   "fps": 8
+  },
+  "nu3": {
+   "file": "sel/SO-nu3.png",
+   "frames": 12,
+   "w": 109,
+   "h": 209,
+   "fps": 8
+  },
+  "file": "sel/SO-nu1.png",
+  "frames": 32,
+  "w": 93,
+  "h": 166,
+  "fps": 8,
+  "fw": {
+   "file": "sel/SO-fw.png",
+   "frames": 52,
+   "w": 118,
+   "h": 217,
+   "fps": 22
+  },
+  "bw": {
+   "file": "sel/SO-bw.png",
+   "frames": 30,
+   "w": 111,
+   "h": 212,
+   "fps": 27
+  }
+ },
+ "fire": {
+  "file": "../fire-sheet.png",
+  "frames": 30,
+  "w": 180,
+  "h": 140,
+  "fps": 15
+ },
+ "background": "select-bg.png"
+}
