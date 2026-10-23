@@ -33,6 +33,11 @@ struct Args {
     layers: Vec<(String, String)>,
     dcc_dir: Option<String>,
     stem: String,
+    /// Tolère un DCC dont dirs/frames diffèrent du COF (warn au lieu de die).
+    /// Cas retail réel : AIDDHTH.COF déclare 8 dirs, AIDDTR.dcc en a 16 —
+    /// le jeu compose par couche (SpriteSet::compose) et s'en accommode ;
+    /// défaut reste STRICT pour ne pas masquer une vraie erreur d'extraction.
+    lenient_topology: bool,
 }
 
 fn main() {
@@ -101,6 +106,7 @@ fn parse_args(rest: &[String]) -> Args {
         layers: Vec::new(),
         dcc_dir: None,
         stem: String::new(),
+        lenient_topology: false,
     };
     let mut i = 0;
     while i < rest.len() {
@@ -137,6 +143,7 @@ fn parse_args(rest: &[String]) -> Args {
                 let (tok, path) = spec.split_once('=').unwrap_or_else(|| die("--layer TOK=FILE"));
                 args.layers.push((tok.to_string(), path.to_string()));
             }
+            "--lenient-topology" => args.lenient_topology = true,
             "--dcc-dir" => args.dcc_dir = Some(next()),
             "--stem" => args.stem = next(),
             other => die(format!("unknown arg {other}\n{USAGE}")),
@@ -217,10 +224,15 @@ fn render_compose(cof_path: &str, pal: &render::Palette, args: &Args) -> (u32, u
     let n_frames = cof.frames_per_direction;
     for (tok, dcc) in &loaded {
         if dcc.number_of_directions != n_dirs || dcc.frames_per_direction != n_frames {
-            die(format!(
+            let msg = format!(
                 "layer {tok}: {}/{} dirs vs COF {}/{} — topology mismatch",
                 dcc.number_of_directions, dcc.frames_per_direction, n_dirs, n_frames
-            ));
+            );
+            if args.lenient_topology {
+                eprintln!("warning (lenient): {msg}");
+            } else {
+                die(msg);
+            }
         }
     }
 

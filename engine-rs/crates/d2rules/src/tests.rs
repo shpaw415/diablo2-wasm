@@ -900,29 +900,32 @@ fn sorceress_starts_with_firebolt_and_ranged_fires_it() {
 }
 
 #[test]
-fn melee_classes_default_melee_and_fallback_arrow() {
-    let m = manifest_heroes();
-    // BA : Bash mêlée — le tir à distance garde la flèche (fallback).
-    let mut w = World::with_seed_and_hero(open_grid(56, 40), m.clone(), 17, "BA");
-    assert_eq!(w.active_skill().map(|s| s.code.as_str()), Some("Bash"));
-    assert!(w.active_skill().unwrap().is_melee());
-    assert_eq!(w.hero_stats().skill, "Bash");
-    w.clear_monsters();
-    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
-    assert!(w.spawn_monster("FA", hx + 8, hy));
-    run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
-    assert_eq!(w.missiles()[0].def_id, "arrow", "mêlée : repli arrow");
-    assert_eq!(w.missiles()[0].elem, d2missiles::DamageType::Physical);
+fn classes_without_start_skill_fallback_to_weapon_arrow() {
+    let m = manifest_full();
+    // BA/PA (StartSkill vide dans charstats v1.12) : AUCUN skill actif —
+    // le tir à distance garde la flèche transportant les dégâts d'arme.
+    for code in ["BA", "PA", "AM", "AS", "DZ"] {
+        let mut w = World::with_seed_and_hero(open_grid(56, 40), m.clone(), 17, code);
+        assert!(w.active_skill().is_none(), "{code} : pas de skill de départ");
+        assert!(w.hero_skills().is_empty(), "{code} : aucune compétence");
+        assert_eq!(w.hero_stats().skill, "", "{code} : HUD sans skill");
+        w.clear_monsters();
+        let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+        assert!(w.spawn_monster("FA", hx + 8, hy));
+        run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+        assert_eq!(w.missiles()[0].def_id, "arrow", "{code} : repli arrow");
+        assert_eq!(w.missiles()[0].elem, d2missiles::DamageType::Physical);
+    }
 
-    // PA : Sacrifice mêlée, même repli.
-    let mut w = World::with_seed_and_hero(open_grid(56, 40), m.clone(), 17, "PA");
-    assert_eq!(w.active_skill().map(|s| s.code.as_str()), Some("Sacrifice"));
+    // NE a BIEN un skill de départ (raise skeleton) — sans missile : arrow.
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 17, "NE");
+    assert_eq!(w.active_skill().map(|s| s.code.as_str()), Some("Raise Skeleton"));
     assert!(w.active_skill().unwrap().is_melee());
     w.clear_monsters();
     let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
     assert!(w.spawn_monster("FA", hx + 8, hy));
     run(&mut w, 50, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
-    assert_eq!(w.missiles()[0].def_id, "arrow");
+    assert_eq!(w.missiles()[0].def_id, "arrow", "invocation : repli arrow");
 
     // Classe sans skill de départ (code hors charstats connu) : aucun skill,
     // arrow quand même (jamais de panic). hero_code inconnu ⇒ aucun skills.
@@ -934,6 +937,108 @@ fn melee_classes_default_melee_and_fallback_arrow() {
     assert!(w.hero_skills().is_empty());
     assert!(w.active_skill().is_none());
     assert_eq!(w.hero_stats().skill, "");
+}
+
+/// Lecture directe de `patch_charstats.txt` (la table fait foi) : classe →
+/// colonne `StartSkill` (nom lowercase du skill, vide si aucun).
+fn charstats_start_skill() -> Vec<(String, String)> {
+    const CHARSTATS: &str = include_str!("../../../../assets/patch_charstats.txt");
+    let mut lines = CHARSTATS.lines();
+    let hdr: Vec<&str> = lines.next().unwrap().split('\t').collect();
+    let (ci, si) = (hdr.iter().position(|h| *h == "class").unwrap(),
+                    hdr.iter().position(|h| *h == "StartSkill").unwrap());
+    lines
+        .filter_map(|l| {
+            let f: Vec<&str> = l.split('\t').collect();
+            let cls = f.get(ci)?.to_string();
+            (matches!(cls.as_str(), "Amazon" | "Sorceress" | "Necromancer" | "Paladin"
+                | "Barbarian" | "Druid" | "Assassin"))
+                .then(|| (cls, f.get(si).unwrap_or(&"").to_string()))
+        })
+        .collect()
+}
+
+#[test]
+fn starting_skills_match_charstats_all_7_classes() {
+    // Golden 7/7 : la table charstats réelle (lue ci-dessus) est l'autorité.
+    // Canonisation du nom lowercase → code exact via la table skills embarquée.
+    let tree = crate::skills_tree::SkillTreeData::global();
+    let classes = [
+        ("Amazon", "AM"), ("Sorceress", "SOR"), ("Necromancer", "NE"),
+        ("Paladin", "PA"), ("Barbarian", "BA"), ("Druid", "DZ"), ("Assassin", "AS"),
+    ];
+    let by_class = charstats_start_skill();
+    assert_eq!(by_class.len(), 7, "charstats : 7 lignes de classe");
+    for (cls, code) in classes {
+        let start = by_class
+            .iter()
+            .find(|(c, _)| c == cls)
+            .map(|(_, s)| s.as_str())
+            .unwrap_or_else(|| panic!("{cls} absente de charstats"));
+        let expected: Vec<crate::skills::HeroSkill> = if start.is_empty() {
+            Vec::new()
+        } else {
+            let rec = tree
+                .records()
+                .iter()
+                .find(|r| r.code.eq_ignore_ascii_case(start))
+                .unwrap_or_else(|| panic!("{start:?} introuvable dans patch_skills.txt"));
+            assert_eq!(rec.req_level, 1, "{cls}: le skill de départ est niv 1");
+            vec![crate::skills::HeroSkill {
+                code: rec.code.clone(),
+                level: 1,
+                missile: rec.srv_missile.clone(),
+            }]
+        };
+        assert_eq!(
+            crate::skills::starting_skills(code),
+            expected,
+            "{cls} ({code}) : StartSkill={start:?}"
+        );
+    }
+    // Amorçage monde : NE naît avec Raise Skeleton, SOR avec Fire Bolt.
+    let m = manifest_full();
+    let wne = World::with_hero(open_grid(56, 40), m.clone(), "NE");
+    assert_eq!(wne.hero_skills(), crate::skills::starting_skills("NE"));
+    let wsor = World::with_hero(open_grid(56, 40), m, "SOR");
+    assert_eq!(wsor.active_skill().map(|s| s.code.as_str()), Some("Fire Bolt"));
+}
+
+#[test]
+fn manifest_carries_seven_playable_heroes() {
+    // Vague 7 classes : le manifest réel porte BA/SOR/PA + AM/AS/DZ/NE, tous
+    // avec les 4 modes du moteur (NU/WL/A1/DD) et des stats charstats réelles.
+    let m = manifest_full();
+    let heroes = m["heroes"].as_object().unwrap();
+    for code in ["BA", "SOR", "PA", "AM", "AS", "DZ", "NE"] {
+        let def = heroes
+            .get(code)
+            .unwrap_or_else(|| panic!("heroes[{code}] absent du manifest"));
+        assert!(def["name"].is_string(), "{code}: nom manquant");
+        for mode in ["NU", "WL", "A1", "DD"] {
+            let blk = &def["modes"][mode];
+            assert!(blk["cof"].is_string(), "{code}/{mode}: cof manquant");
+            assert!(blk["frames"].is_u64(), "{code}/{mode}: frames manquantes");
+            assert!(!blk["layers"].as_object().unwrap().is_empty(), "{code}/{mode}: 0 couche");
+        }
+    }
+    // Stats réelles (patch_charstats.txt : life = vit + hpadd, mana = energy).
+    let stats = [
+        // code, life, mana, str, dex
+        ("AM", 50, 15, 20, 25),
+        ("AS", 50, 25, 20, 20),
+        ("DZ", 55, 20, 15, 20),
+        ("NE", 45, 25, 15, 25),
+    ];
+    for (code, life, mana, str_, dex) in stats {
+        let s = &m["heroes"][code]["stats"];
+        assert_eq!((s["life"].as_u64().unwrap() as u32, s["mana"].as_u64().unwrap() as u32), (life, mana), "{code}");
+        assert_eq!((s["strength"].as_u64().unwrap() as u32, s["dexterity"].as_u64().unwrap() as u32), (str_, dex), "{code}");
+        let w = World::with_hero(open_grid(56, 40), m.clone(), code);
+        assert_eq!(w.hero_code(), code, "{code} : résolution manifest");
+        assert_eq!(w.hero_stats().max_life, life, "{code} : vie chargée du manifest");
+        assert_eq!(w.hero_stats().max_mana, mana, "{code} : mana chargé du manifest");
+    }
 }
 
 #[test]

@@ -587,14 +587,55 @@ function fpsTick(statusBase, extra = '') {
 }
 
 // --- chemin principal : moteur WASM -----------------------------------------
+// Chargement du module moteur, tolérant aux proxys (embed dashboard) :
+// 1) import avec buste de cache (?cb=) — idéal en direct, mais un proxy peut
+//    refuser les query strings ;
+// 2) import nu, sans query ;
+// 3) réemballage blob — contourne un proxy qui servirait le JS avec un
+//    mauvais MIME (les imports de module exigent un type JavaScript).
+// Chaque tentative ratée est notée en console.info (sans polluer le journal
+// d'erreurs) ; la dernière erreur remonte au fallback avec son vrai message.
+async function loadEngine() {
+  const base = './game-pkg/d2game.js';
+  const attempts = [
+    () => import(`${base}?cb=${Date.now()}`),
+    () => import(base),
+    async () => {
+      const txt = await (await fetch(base)).text();
+      return import(URL.createObjectURL(new Blob([txt], { type: 'text/javascript' })));
+    },
+  ];
+  let lastErr;
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      return await attempts[i]();
+    } catch (e) {
+      lastErr = e;
+      console.info(`moteur : tentative ${i + 1}/3 échouée — ${e && e.message ? e.message : e}`);
+    }
+  }
+  throw lastErr;
+}
+
 async function main() {
   $('loadmsg').textContent = 'Compilation JIT du moteur…';
-  const cb = Date.now();
-  const mod = await import(`./game-pkg/d2game.js?cb=${cb}`);
+  const mod = await loadEngine();
   const D2Game = mod.D2Game;
-  // Le .wasm est chargé explicitement (buste de cache : le module généré
-  // résout d2game_bg.wasm sans query, resté collé au cache après rebuild).
-  const wasmBytes = await (await fetch(`./game-pkg/d2game_bg.wasm?cb=${cb}`)).arrayBuffer();
+  if (typeof D2Game !== 'function') throw new Error('module moteur chargé mais export D2Game absent');
+  // Le .wasm est chargé explicitement en octets (MIME-agnostique), avec le
+  // même repli sans query si le proxy refuse les query strings.
+  const wasmBytes = await (async () => {
+    const urls = [`./game-pkg/d2game_bg.wasm?cb=${Date.now()}`, './game-pkg/d2game_bg.wasm'];
+    let lastErr;
+    for (const url of urls) {
+      try {
+        const r = await fetch(url);
+        if (r.ok) return await r.arrayBuffer();
+        lastErr = new Error(`fetch ${url} -> HTTP ${r.status}`);
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr;
+  })();
   await mod.default(wasmBytes);
 
   $('loadmsg').textContent = 'Lecture du manifest…';

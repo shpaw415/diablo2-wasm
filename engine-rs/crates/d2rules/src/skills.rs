@@ -1,19 +1,23 @@
 //! État des compétences du héros — équivalent `d2core/d2hero/hero_skill.go`
 //! (MVP : skills de DÉPART uniquement, un point de sélection par classe).
 //!
-//! # Données réelles (`assets/patch_skills.txt` v1.12)
-//! * `Fire Bolt` (Id 36, `charclass=sor`, `srvmissile=firebolt`, `EType=fire`,
-//!   `h2h=none`) — skill de départ sorcière, niv 1.
-//! * `Bash` (Id 126, `charclass=bar`, mêlée `h2h`, aucun `srvmissile`) —
-//!   skill de départ barbare, niv 1.
-//! * `Sacrifice` (Id 96, `charclass=pal`, mêlée `h2h`, aucun `srvmissile`) —
-//!   skill de départ paladin, niv 1.
+//! # Données réelles (`assets/patch_charstats.txt` v1.12, colonne `StartSkill`)
+//! La table fait foi : seules DEUX classes démarrent avec une compétence.
+//! * Sorceress → `fire bolt` = `Fire Bolt` (Id 36, `charclass=sor`,
+//!   `srvmissile=firebolt`, `EType=fire`, niv 1).
+//! * Necromancer → `raise skeleton` = `Raise Skeleton` (Id 70,
+//!   `charclass=nec`, invocation sans `srvmissile` — repli mêlée/flèche du
+//!   moteur).
+//! * Amazon, Paladin, Barbarian, Druid, Assassin → `StartSkill` VIDE : aucune
+//!   compétence de classe au démarrage (l'hypothèse MVP initiale Bash/Sacrifice
+//!   n'est PAS dans la table — corrigée ici).
 //!
 //! Les dégâts/élément des bolts vivent dans la table `d2missiles`
 //! (`dmgSrc=Skill` : firebolt 3–8 feu) — ce module ne porte QUE l'état
 //! (code, niveau, missile), conformément à la frontière des crates.
 //! Le missile du skill actif alimente `hero_ranged_attack` (world.rs) ;
-//! un skill sans missile (mêlée) retombe sur `arrow`.
+//! un skill sans missile (mêlée/invocation) ou AUCUN skill retombe sur
+//! `arrow` transportant les dégâts d'arme.
 
 use serde::{Deserialize, Serialize};
 
@@ -36,31 +40,33 @@ impl HeroSkill {
     }
 }
 
-/// Skills de départ réels par classe (`hero_state_factory.go:111-148` :
-/// une compétence de classe niv 1 ; classes non couvertes ⇒ vide — le tir
-/// garde `arrow` en fallback).
+/// Skills de départ RÉELS par classe — colonne `StartSkill` de
+/// `assets/patch_charstats.txt` v1.12 (cf. doc de module) : SOR = Fire Bolt,
+/// NE = Raise Skeleton, les 5 autres classes démarrent SANS compétence
+/// (`hero_ranged_attack` replie alors sur `arrow` + dégâts d'arme).
 pub(crate) fn starting_skills(hero_code: &str) -> Vec<HeroSkill> {
     match hero_code.to_ascii_uppercase().as_str() {
-        // sor : Fire Bolt → srvmissile `firebolt` (3–8 feu, table d2missiles)
+        // sor : `fire bolt` → srvmissile `firebolt` (3–8 feu, table d2missiles)
         "SOR" => vec![HeroSkill {
             code: "Fire Bolt".into(),
             level: 1,
             missile: Some("firebolt".into()),
         }],
-        // bar : Bash — mêlée pure (`h2h`), bonus dégâts non câblés au MVP
-        "BA" => vec![HeroSkill { code: "Bash".into(), level: 1, missile: None }],
-        // pal : Sacrifice — mêlée pure (`h2h`), % dégâts non câblés au MVP
-        "PA" => vec![HeroSkill {
-            code: "Sacrifice".into(),
+        // nec : `raise skeleton` — invocation, aucun srvmissile (repli mêlée) ;
+        // l'effet de summon n'est pas câblé au MVP (état seul, frontière crates)
+        "NE" => vec![HeroSkill {
+            code: "Raise Skeleton".into(),
             level: 1,
             missile: None,
         }],
+        // ama / pal / bar / dru / ass : StartSkill vide dans charstats v1.12
         _ => Vec::new(),
     }
 }
 
-/// Index du skill sélectionné par défaut : la première (et seule au MVP)
-/// compétence de départ — SOR tire `firebolt`, BA/PA attaque en mêlée.
+/// Index du skill sélectionné par défaut : la première compétence de départ —
+/// SOR tire `firebolt`, NE invoque (mêlée au MVP), les 5 autres classes n'ont
+/// aucun skill (index ignoré, `active_skill()` = None).
 pub(crate) fn default_active(hero_code: &str) -> usize {
     let _ = hero_code; // sélection uniforme au MVP (une compétence par classe)
     0
