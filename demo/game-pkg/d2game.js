@@ -38,6 +38,23 @@ export class D2Game {
         return v1;
     }
     /**
+     * Corps au sol (J1) — JSON `{"x","y","sx","sy","items"}` ou `null`.
+     * Pollé par corpse-ui.js (flare + hint) et le clic « récupérer ».
+     * @returns {string}
+     */
+    corpseInfo() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_corpseInfo(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Current difficulty as JSON `{"difficulty":"hell","label":"Hell"}` —
      * HUD badge + E2E probe.
      * @returns {string}
@@ -184,6 +201,26 @@ export class D2Game {
         }
     }
     /**
+     * Apprend/monte le skill `code` (dépense 1 point) — JSON
+     * `{"ok":true,"level":2,"points":1}` ou `{"ok":false,"error":"…"}`.
+     * @param {string} code
+     * @returns {string}
+     */
+    learnSkill(code) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(code, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.d2game_learnSkill(this.__wbg_ptr, ptr0, len0);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
      * Current level as JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
      * — HUD zone name + level-switch banner. `{}` if the key is unknown.
      * @returns {string}
@@ -221,6 +258,24 @@ export class D2Game {
         var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v1;
+    }
+    /**
+     * Fiche du mercenaire (H) — JSON
+     * `{kind,subtype,level,hp,maxHp,alive,x,y,sx,sy}` ou `null` (aucun
+     * mercenaire embauché). Pollé chaque frame par merc-ui.js.
+     * @returns {string}
+     */
+    mercInfo() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_mercInfo(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * Monster codes for the current level, parallel to the tick's monster
@@ -290,6 +345,25 @@ export class D2Game {
         this.__wbg_ptr = ret[0];
         D2GameFinalization.register(this, this.__wbg_ptr, this);
         return this;
+    }
+    /**
+     * NPC de ville (W16, villes vivantes) — JSON array
+     * `[{index,id,code,name,questCode,role,x,y,vendor,assumed,talked},…]`
+     * (coordonnées cellules ; projection écran ancrée sur `heroScreen()`).
+     * `[]` hors camp. Contrat UI : demo/npc-ui.js (`npc_bridge.rs`).
+     * @returns {string}
+     */
+    npcs() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_npcs(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * Feed one asset blob (manifest path + bytes), e.g. fetched files.
@@ -373,6 +447,25 @@ export class D2Game {
         wasm.d2game_setViewport(this.__wbg_ptr, w, h);
     }
     /**
+     * Arbre complet de la classe du héros — JSON
+     * `{class, hero, points, charLevel, skills:[{code,name,nameKey,level,
+     * maxLevel,reqLevel,prereqs,page,row,column,icon,missile,mana,canLearn,
+     * mvp},…]}` (30 skills/classe, tables réelles v1.12 embarquées).
+     * @returns {string}
+     */
+    skillTree() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_skillTree(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Animation modes listed in the manifest but skipped (missing files),
      * as a JSON array of strings — the page logs them, the game still runs.
      * @returns {string}
@@ -424,11 +517,38 @@ export class D2Game {
         }
     }
     /**
+     * Clic NPC (W16) : interaction si le héros est à portée (2.5 cellules) —
+     * JSON `NpcInteraction` `{name,role,dialogue,actions,healed,quest_rewards}`
+     * ou `Err` descriptif (`"trop loin — approchez-vous du NPC"`). Émet
+     * `NpcTalked` (flux de tick) et avance le journal de quêtes branché
+     * (q3/q4).
+     * @param {number} index
+     * @returns {string}
+     */
+    talkNpc(index) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.d2game_talkNpc(this.__wbg_ptr, index);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
      * Advance the simulation. `input_json` (nullable) mirrors the
      * `PlayerInput` contract:
      * `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
      * · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
-     * · `{"type":"useItem","slot":0}`.
+     * · `{"type":"useItem","slot":0}` · `{"type":"recoverCorpse"}` (J1).
      * Returns the tick's events as a JSON array string: the d2rules contract
      * events ({"HeroMoved":…}…) plus the engine's multi-level extras
      * `{"LevelSwitch":{"key":…,"name":…}}` / `{"LevelSwitchFailed":"…"}` —

@@ -99,11 +99,29 @@
     #d2-waypoints .wp-locked-title { margin-top: 8px; color: #7a6a4a; }
     #d2-waypoints .wp-locked-row, #d2-waypoints .wp-empty { color: #7a6a4a; padding: 2px 4px; }
     #d2-waypoints .wp-hint { margin-top: 8px; color: #7a6a4a; font-size: 11px; }
+    /* Panneau compétences (C) — même famille que #d2-waypoints */
+    #d2-skills { position: absolute; left: 50%; top: 64px; transform: translateX(-50%);
+      width: 340px; max-height: 60vh; overflow-y: auto; z-index: 40;
+      background: rgba(16, 12, 6, .94); border: 2px solid #5a3c1e; padding: 10px 14px;
+      font: 12px monospace; color: #d0b070; }
+    #d2-skills .sk-title { font-weight: bold; letter-spacing: 2px; color: #e8dcbf; text-align: center; }
+    #d2-skills #sk-points { text-align: center; color: #a89670; margin: 4px 0 8px; }
+    #d2-skills .sk-page { margin: 8px 0 4px; color: #e8dcbf; border-bottom: 1px solid #5a3c1e; }
+    #d2-skills .sk-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+    #d2-skills .sk-locked { color: #7a6a4a; }
+    #d2-skills .sk-name { flex: 1; }
+    #d2-skills .sk-lvl { color: #a89670; }
+    #d2-skills button.sk-plus { width: 22px; cursor: pointer; background: #241c10; color: #e8dcbf;
+      border: 1px solid #5a3c1e; font: 12px monospace; }
+    #d2-skills button.sk-plus:hover { background: #3a2c18; }
+    #d2-skills .sk-dot { width: 22px; text-align: center; }
+    #d2-skills .sk-hint { margin-top: 8px; color: #7a6a4a; font-size: 11px; }
   </style>
   <div id="toolbar">
     <button id="btn-save" title="Sauvegarde la partie dans le navigateur">Sauvegarder</button>
     <button id="btn-load" title="Recharge la partie sauvegardée">Charger</button>
     <button id="btn-waypoints" title="Panneau des waypoints (Tab)">Waypoints</button>
+    <button id="btn-skills" title="Arbre de compétences (T)">Skills</button>
     <button id="btn-sound" title="Active/coupe le son">Son : oui</button>
   </div>
   <div id="status">Chargement du moteur…</div>
@@ -117,6 +135,8 @@
   <script src="./music.js"></script> <!-- EXP-A1 musique par zone : window.D2Music (autoplay 1er geste, bouton toolbar, mute persistant) -->
   <script src="./vendor.js"></script>
   <script src="./npc-ui.js"></script> <!-- W16 villes vivantes : NPC du camp (marqueurs + dialogues) : window.D2Npc -->
+  <script src="./skills-ui.js"></script> <!-- C arbre de compétences : window.D2Skills -->
+  <script src="./merc-ui.js"></script> <!-- H mercenaire : window.D2Merc (carte vie/KO) -->
   <script type="module" src="./game.js"></script>
 </body>
 </html>

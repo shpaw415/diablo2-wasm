@@ -868,6 +868,7 @@ async function main() {
       if (window.D2Waypoints && (!loop.lastWp || now - loop.lastWp > 500)) {
         loop.lastWp = now; // W19 : état waypoints ~2×/s (découverte au contact)
         try { window.D2Waypoints.refresh(JSON.parse(game.waypoints())); } catch { /* cosmétique */ }
+        if (window.D2Merc) window.D2Merc.frame(game); // H : carte mercenaire (même throttle)
       }
       if (window.D2Npc) window.D2Npc.frame(canvas, game); // W16 : marqueurs NPC + bulles de dialogue
       fpsTick(loop.statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
@@ -890,6 +891,12 @@ async function main() {
     });
     try { window.D2Waypoints.refresh(JSON.parse(game.waypoints())); } catch { /* panneau cosmétique */ }
   }
+  // Compétences (C) : panneau arbre (T / bouton) — refresh à l'ouverture.
+  if (window.D2Skills) {
+    window.D2Skills.init({ getGame: () => window.__d2.game, flash, note });
+  }
+  // Mercenaire (H) : carte vie/KO — pollée dans la boucle (throttle waypoints).
+  if (window.D2Merc) window.D2Merc.init({ getGame: () => window.__d2.game });
   // W16 villes vivantes : NPC du camp — marqueurs + bulles au clic
   // (npc-ui.js ; no-op si le pkg wasm ne porte pas encore npcs()/talkNpc()).
   if (window.D2Npc) {

@@ -13,6 +13,11 @@ export class D2Game {
      */
     composeStats(): Uint32Array;
     /**
+     * Corps au sol (J1) — JSON `{"x","y","sx","sy","items"}` ou `null`.
+     * Pollé par corpse-ui.js (flare + hint) et le clic « récupérer ».
+     */
+    corpseInfo(): string;
+    /**
      * Current difficulty as JSON `{"difficulty":"hell","label":"Hell"}` —
      * HUD badge + E2E probe.
      */
@@ -56,6 +61,11 @@ export class D2Game {
      */
     inventory(): string;
     /**
+     * Apprend/monte le skill `code` (dépense 1 point) — JSON
+     * `{"ok":true,"level":2,"points":1}` ou `{"ok":false,"error":"…"}`.
+     */
+    learnSkill(code: string): string;
+    /**
      * Current level as JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
      * — HUD zone name + level-switch banner. `{}` if the key is unknown.
      */
@@ -66,6 +76,12 @@ export class D2Game {
      */
     loadGame(json: string): void;
     mapPixelSize(): Uint32Array;
+    /**
+     * Fiche du mercenaire (H) — JSON
+     * `{kind,subtype,level,hp,maxHp,alive,x,y,sx,sy}` ou `null` (aucun
+     * mercenaire embauché). Pollé chaque frame par merc-ui.js.
+     */
+    mercInfo(): string;
     /**
      * Monster codes for the current level, parallel to the tick's monster
      * indices — debug/E2E. JSON `["FA","ZM",…]`.
@@ -89,6 +105,13 @@ export class D2Game {
      * Initial level: `"town"`.
      */
     constructor(manifest_json: string, hero: string);
+    /**
+     * NPC de ville (W16, villes vivantes) — JSON array
+     * `[{index,id,code,name,questCode,role,x,y,vendor,assumed,talked},…]`
+     * (coordonnées cellules ; projection écran ancrée sur `heroScreen()`).
+     * `[]` hors camp. Contrat UI : demo/npc-ui.js (`npc_bridge.rs`).
+     */
+    npcs(): string;
     /**
      * Feed one asset blob (manifest path + bytes), e.g. fetched files.
      * Accepted any time — including between level switches (hot provide).
@@ -121,6 +144,13 @@ export class D2Game {
     setDifficulty(diff: string): void;
     setViewport(w: number, h: number): void;
     /**
+     * Arbre complet de la classe du héros — JSON
+     * `{class, hero, points, charLevel, skills:[{code,name,nameKey,level,
+     * maxLevel,reqLevel,prereqs,page,row,column,icon,missile,mana,canLearn,
+     * mvp},…]}` (30 skills/classe, tables réelles v1.12 embarquées).
+     */
+    skillTree(): string;
+    /**
      * Animation modes listed in the manifest but skipped (missing files),
      * as a JSON array of strings — the page logs them, the game still runs.
      */
@@ -138,11 +168,19 @@ export class D2Game {
      */
     switchNotes(): string;
     /**
+     * Clic NPC (W16) : interaction si le héros est à portée (2.5 cellules) —
+     * JSON `NpcInteraction` `{name,role,dialogue,actions,healed,quest_rewards}`
+     * ou `Err` descriptif (`"trop loin — approchez-vous du NPC"`). Émet
+     * `NpcTalked` (flux de tick) et avance le journal de quêtes branché
+     * (q3/q4).
+     */
+    talkNpc(index: number): string;
+    /**
      * Advance the simulation. `input_json` (nullable) mirrors the
      * `PlayerInput` contract:
      * `{"type":"move","x":123,"y":45}` · `{"type":"attack","x":..,"y":..}`
      * · `{"type":"pickup"}` · `{"type":"setRun","on":true}`
-     * · `{"type":"useItem","slot":0}`.
+     * · `{"type":"useItem","slot":0}` · `{"type":"recoverCorpse"}` (J1).
      * Returns the tick's events as a JSON array string: the d2rules contract
      * events ({"HeroMoved":…}…) plus the engine's multi-level extras
      * `{"LevelSwitch":{"key":…,"name":…}}` / `{"LevelSwitchFailed":"…"}` —
@@ -180,6 +218,7 @@ export interface InitOutput {
     readonly __wbg_d2game_free: (a: number, b: number) => void;
     readonly d2game_collisionGrid: (a: number) => [number, number];
     readonly d2game_composeStats: (a: number) => [number, number];
+    readonly d2game_corpseInfo: (a: number) => [number, number];
     readonly d2game_difficultyInfo: (a: number) => [number, number];
     readonly d2game_finalize: (a: number) => [number, number];
     readonly d2game_gridSize: (a: number) => [number, number];
@@ -190,13 +229,16 @@ export interface InitOutput {
     readonly d2game_heroState: (a: number) => [number, number];
     readonly d2game_heroStats: (a: number) => [number, number];
     readonly d2game_inventory: (a: number) => [number, number];
+    readonly d2game_learnSkill: (a: number, b: number, c: number) => [number, number];
     readonly d2game_levelInfo: (a: number) => [number, number];
     readonly d2game_loadGame: (a: number, b: number, c: number) => [number, number];
     readonly d2game_mapPixelSize: (a: number) => [number, number];
+    readonly d2game_mercInfo: (a: number) => [number, number];
     readonly d2game_monsterCodes: (a: number) => [number, number];
     readonly d2game_monsterInfo: (a: number, b: number) => [number, number];
     readonly d2game_monsterNear: (a: number, b: number, c: number, d: number) => number;
     readonly d2game_new: (a: number, b: number, c: number, d: number) => [number, number, number];
+    readonly d2game_npcs: (a: number) => [number, number];
     readonly d2game_provide: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly d2game_render: (a: number) => [number, number];
     readonly d2game_saveGame: (a: number) => [number, number];
@@ -204,9 +246,11 @@ export interface InitOutput {
     readonly d2game_selectSkill: (a: number, b: number) => number;
     readonly d2game_setDifficulty: (a: number, b: number, c: number) => void;
     readonly d2game_setViewport: (a: number, b: number, c: number) => void;
+    readonly d2game_skillTree: (a: number) => [number, number];
     readonly d2game_spriteNotes: (a: number) => [number, number];
     readonly d2game_switchLevel: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly d2game_switchNotes: (a: number) => [number, number];
+    readonly d2game_talkNpc: (a: number, b: number) => [number, number, number, number];
     readonly d2game_tick: (a: number, b: number, c: number, d: number) => [number, number];
     readonly d2game_travelWaypoint: (a: number, b: number) => [number, number, number, number];
     readonly d2game_viewportHeight: (a: number) => number;
