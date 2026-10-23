@@ -587,6 +587,657 @@
      "speed": 0
     }
    }
+  },
+  "AM": {
+   "class": "AM",
+   "name": "Amazone",
+   "stats": {
+    "walkSpeed": 6,
+    "runSpeed": 9,
+    "life": 50,
+    "mana": 15,
+    "stamina": 84,
+    "strength": 20,
+    "dexterity": 25,
+    "vitality": 20,
+    "energy": 15,
+    "lifePerLevel": 2,
+    "lifePerVitality": 3,
+    "manaPerLevel": 1.5,
+    "manaPerEnergy": 1.5,
+    "statPerLevel": 5,
+    "toHitFactor": 5,
+    "startWeapon": {
+     "code": "jav",
+     "name": "Javelin",
+     "dmgMin": 1,
+     "dmgMax": 5,
+     "wclass": "1ht"
+    },
+    "startShield": {
+     "code": "buc",
+     "name": "Buckler",
+     "acMin": 4,
+     "acMax": 6,
+     "blockRate": 25
+    }
+   },
+   "walk": {
+    "cof": "assets/dcc/AMWL1HT.COF",
+    "layers": {
+     "HD": "assets/dcc/AMWLHD.dcc",
+     "LA": "assets/dcc/AMWLLA.dcc",
+     "RA": "assets/dcc/AMWLRA.dcc",
+     "RH": "assets/dcc/AMWLRH.dcc",
+     "S2": "assets/dcc/AMWLS2.dcc",
+     "S1": "assets/dcc/AMWLS1.dcc",
+     "TR": "assets/dcc/AMWLTR.dcc",
+     "LG": "assets/dcc/AMWLLG.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "idle": {
+    "cof": "assets/dcc/AMNU1HT.COF",
+    "layers": {
+     "HD": "assets/dcc/AMNUHD.dcc",
+     "LA": "assets/dcc/AMNULA.dcc",
+     "RA": "assets/dcc/AMNURA.dcc",
+     "RH": "assets/dcc/AMNURH.dcc",
+     "S2": "assets/dcc/AMNUS2.dcc",
+     "S1": "assets/dcc/AMNUS1.dcc",
+     "TR": "assets/dcc/AMNUTR.dcc",
+     "LG": "assets/dcc/AMNULG.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/AMA11HT.COF",
+    "layers": {
+     "HD": "assets/dcc/AMA1HD.dcc",
+     "LA": "assets/dcc/AMA1LA.dcc",
+     "RA": "assets/dcc/AMA1RA.dcc",
+     "RH": "assets/dcc/AMA1RH.dcc",
+     "S2": "assets/dcc/AMA1S2.dcc",
+     "S1": "assets/dcc/AMA1S1.dcc",
+     "TR": "assets/dcc/AMA1TR.dcc",
+     "LG": "assets/dcc/AMA1LG.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/AMDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/AMDDTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "notes": "startWeapon jav (Javelin 1-5, wc 1ht) ; dégâts de jet réels 6-14 (minmisdam/maxmisdam patch_weapons.txt) non portés au MVP. RH gfx = AMRHJAV*. LH/S3 déclarées par les COF, absentes du retail — skippées au rendu. BlockFactor classe 25 (charstats).",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/AMNU1HT.COF",
+     "layers": {
+      "HD": "assets/dcc/AMNUHD.dcc",
+      "LA": "assets/dcc/AMNULA.dcc",
+      "RA": "assets/dcc/AMNURA.dcc",
+      "RH": "assets/dcc/AMNURH.dcc",
+      "S2": "assets/dcc/AMNUS2.dcc",
+      "S1": "assets/dcc/AMNUS1.dcc",
+      "TR": "assets/dcc/AMNUTR.dcc",
+      "LG": "assets/dcc/AMNULG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/AMWL1HT.COF",
+     "layers": {
+      "HD": "assets/dcc/AMWLHD.dcc",
+      "LA": "assets/dcc/AMWLLA.dcc",
+      "RA": "assets/dcc/AMWLRA.dcc",
+      "RH": "assets/dcc/AMWLRH.dcc",
+      "S2": "assets/dcc/AMWLS2.dcc",
+      "S1": "assets/dcc/AMWLS1.dcc",
+      "TR": "assets/dcc/AMWLTR.dcc",
+      "LG": "assets/dcc/AMWLLG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/AMA11HT.COF",
+     "layers": {
+      "HD": "assets/dcc/AMA1HD.dcc",
+      "LA": "assets/dcc/AMA1LA.dcc",
+      "RA": "assets/dcc/AMA1RA.dcc",
+      "RH": "assets/dcc/AMA1RH.dcc",
+      "S2": "assets/dcc/AMA1S2.dcc",
+      "S1": "assets/dcc/AMA1S1.dcc",
+      "TR": "assets/dcc/AMA1TR.dcc",
+      "LG": "assets/dcc/AMA1LG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 15,
+     "dirs": 16,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/AMDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/AMDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 16,
+     "speed": 0
+    }
+   }
+  },
+  "AS": {
+   "class": "AI",
+   "name": "Assassin",
+   "stats": {
+    "walkSpeed": 6,
+    "runSpeed": 9,
+    "life": 50,
+    "mana": 25,
+    "stamina": 95,
+    "strength": 20,
+    "dexterity": 20,
+    "vitality": 20,
+    "energy": 25,
+    "lifePerLevel": 2,
+    "lifePerVitality": 3,
+    "manaPerLevel": 1.5,
+    "manaPerEnergy": 1.5,
+    "statPerLevel": 5,
+    "toHitFactor": 15,
+    "startWeapon": {
+     "code": "ktr",
+     "name": "Katar",
+     "dmgMin": 4,
+     "dmgMax": 7,
+     "wclass": "ht1"
+    },
+    "startShield": {
+     "code": "buc",
+     "name": "Buckler",
+     "acMin": 4,
+     "acMax": 6,
+     "blockRate": 25
+    }
+   },
+   "walk": {
+    "cof": "assets/dcc/AIWLHT1.COF",
+    "layers": {
+     "RA": "assets/dcc/AIWLRA.dcc",
+     "LA": "assets/dcc/AIWLLA.dcc",
+     "TR": "assets/dcc/AIWLTR.dcc",
+     "LH": "assets/dcc/AIWLLH.dcc",
+     "S2": "assets/dcc/AIWLS2.dcc",
+     "HD": "assets/dcc/AIWLHD.dcc",
+     "S1": "assets/dcc/AIWLS1.dcc",
+     "RH": "assets/dcc/AIWLRH.dcc",
+     "SH": "assets/dcc/AIWLSH.dcc"
+    },
+    "missingLayers": [
+     "S3"
+    ]
+   },
+   "idle": {
+    "cof": "assets/dcc/AINUHT1.COF",
+    "layers": {
+     "LA": "assets/dcc/AINULA.dcc",
+     "RA": "assets/dcc/AINURA.dcc",
+     "TR": "assets/dcc/AINUTR.dcc",
+     "S2": "assets/dcc/AINUS2.dcc",
+     "HD": "assets/dcc/AINUHD.dcc",
+     "LH": "assets/dcc/AINULH.dcc",
+     "S1": "assets/dcc/AINUS1.dcc",
+     "SH": "assets/dcc/AINUSH.dcc",
+     "RH": "assets/dcc/AINURH.dcc"
+    },
+    "missingLayers": [
+     "S3"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/AIA1HT1.COF",
+    "layers": {
+     "LA": "assets/dcc/AIA1LA.dcc",
+     "RA": "assets/dcc/AIA1RA.dcc",
+     "TR": "assets/dcc/AIA1TR.dcc",
+     "LH": "assets/dcc/AIA1LH.dcc",
+     "SH": "assets/dcc/AIA1SH.dcc",
+     "HD": "assets/dcc/AIA1HD.dcc",
+     "S2": "assets/dcc/AIA1S2.dcc",
+     "S1": "assets/dcc/AIA1S1.dcc",
+     "RH": "assets/dcc/AIA1RH.dcc"
+    },
+    "missingLayers": [
+     "S3"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/AIDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/AIDDTR.dcc",
+     "LG": "assets/dcc/AIDDLG.dcc"
+    },
+    "missingLayers": []
+   },
+   "notes": "Sprite token réel du release = AI (sonde hash d2exp.mpq ; charstats ne porte pas le token). startWeapon ktr (Katar 4-7, wc ht1, req 20/20). Corps en hth, RH griffe en ht1 (WC PAR COUCHE). DD = 8 dirs seulement (retail). S3 absente du retail. BlockFactor classe 25.",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/AINUHT1.COF",
+     "layers": {
+      "LA": "assets/dcc/AINULA.dcc",
+      "RA": "assets/dcc/AINURA.dcc",
+      "TR": "assets/dcc/AINUTR.dcc",
+      "S2": "assets/dcc/AINUS2.dcc",
+      "HD": "assets/dcc/AINUHD.dcc",
+      "LH": "assets/dcc/AINULH.dcc",
+      "S1": "assets/dcc/AINUS1.dcc",
+      "SH": "assets/dcc/AINUSH.dcc",
+      "RH": "assets/dcc/AINURH.dcc"
+     },
+     "missingLayers": [
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/AIWLHT1.COF",
+     "layers": {
+      "RA": "assets/dcc/AIWLRA.dcc",
+      "LA": "assets/dcc/AIWLLA.dcc",
+      "TR": "assets/dcc/AIWLTR.dcc",
+      "LH": "assets/dcc/AIWLLH.dcc",
+      "S2": "assets/dcc/AIWLS2.dcc",
+      "HD": "assets/dcc/AIWLHD.dcc",
+      "S1": "assets/dcc/AIWLS1.dcc",
+      "RH": "assets/dcc/AIWLRH.dcc",
+      "SH": "assets/dcc/AIWLSH.dcc"
+     },
+     "missingLayers": [
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/AIA1HT1.COF",
+     "layers": {
+      "LA": "assets/dcc/AIA1LA.dcc",
+      "RA": "assets/dcc/AIA1RA.dcc",
+      "TR": "assets/dcc/AIA1TR.dcc",
+      "LH": "assets/dcc/AIA1LH.dcc",
+      "SH": "assets/dcc/AIA1SH.dcc",
+      "HD": "assets/dcc/AIA1HD.dcc",
+      "S2": "assets/dcc/AIA1S2.dcc",
+      "S1": "assets/dcc/AIA1S1.dcc",
+      "RH": "assets/dcc/AIA1RH.dcc"
+     },
+     "missingLayers": [
+      "S3"
+     ],
+     "frames": 11,
+     "dirs": 16,
+     "speed": 208
+    },
+    "DD": {
+     "cof": "assets/dcc/AIDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/AIDDTR.dcc",
+      "LG": "assets/dcc/AIDDLG.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  "DZ": {
+   "class": "DZ",
+   "name": "Druide",
+   "stats": {
+    "walkSpeed": 6,
+    "runSpeed": 9,
+    "life": 55,
+    "mana": 20,
+    "stamina": 84,
+    "strength": 15,
+    "dexterity": 20,
+    "vitality": 25,
+    "energy": 20,
+    "lifePerLevel": 1.5,
+    "lifePerVitality": 2,
+    "manaPerLevel": 2,
+    "manaPerEnergy": 2,
+    "statPerLevel": 5,
+    "toHitFactor": 5,
+    "startWeapon": {
+     "code": "clb",
+     "name": "Club",
+     "dmgMin": 1,
+     "dmgMax": 6,
+     "wclass": "1hs"
+    },
+    "startShield": {
+     "code": "buc",
+     "name": "Buckler",
+     "acMin": 4,
+     "acMax": 6,
+     "blockRate": 20
+    }
+   },
+   "walk": {
+    "cof": "assets/dcc/DZWL1HS.COF",
+    "layers": {
+     "HD": "assets/dcc/DZWLHD.dcc",
+     "LA": "assets/dcc/DZWLLA.dcc",
+     "RA": "assets/dcc/DZWLRA.dcc",
+     "S1": "assets/dcc/DZWLS1.dcc",
+     "TR": "assets/dcc/DZWLTR.dcc",
+     "RH": "assets/dcc/DZWLRH.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S2",
+     "S3"
+    ]
+   },
+   "idle": {
+    "cof": "assets/dcc/DZNU1HS.COF",
+    "layers": {
+     "HD": "assets/dcc/DZNUHD.dcc",
+     "LA": "assets/dcc/DZNULA.dcc",
+     "RA": "assets/dcc/DZNURA.dcc",
+     "S1": "assets/dcc/DZNUS1.dcc",
+     "TR": "assets/dcc/DZNUTR.dcc",
+     "RH": "assets/dcc/DZNURH.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S2",
+     "S3"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/DZA11HS.COF",
+    "layers": {
+     "HD": "assets/dcc/DZA1HD.dcc",
+     "LA": "assets/dcc/DZA1LA.dcc",
+     "RA": "assets/dcc/DZA1RA.dcc",
+     "RH": "assets/dcc/DZA1RH.dcc",
+     "S2": "assets/dcc/DZA1S2.dcc",
+     "S1": "assets/dcc/DZA1S1.dcc",
+     "TR": "assets/dcc/DZA1TR.dcc",
+     "LG": "assets/dcc/DZA1LG.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/DZDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/DZDDTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "notes": "Token réel = DZ. startWeapon clb (Club 1-6, wc 1hs). NU/WL : RA/S2/RH en 1hs, corps en hth (WC PAR COUCHE) ; A1 tout en 1hs. LH/S2/S3 (NU/WL) et LH/S3 (A1) absentes du retail. BlockFactor classe 20.",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/DZNU1HS.COF",
+     "layers": {
+      "HD": "assets/dcc/DZNUHD.dcc",
+      "LA": "assets/dcc/DZNULA.dcc",
+      "RA": "assets/dcc/DZNURA.dcc",
+      "S1": "assets/dcc/DZNUS1.dcc",
+      "TR": "assets/dcc/DZNUTR.dcc",
+      "RH": "assets/dcc/DZNURH.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S2",
+      "S3"
+     ],
+     "frames": 6,
+     "dirs": 16,
+     "speed": 120
+    },
+    "WL": {
+     "cof": "assets/dcc/DZWL1HS.COF",
+     "layers": {
+      "HD": "assets/dcc/DZWLHD.dcc",
+      "LA": "assets/dcc/DZWLLA.dcc",
+      "RA": "assets/dcc/DZWLRA.dcc",
+      "S1": "assets/dcc/DZWLS1.dcc",
+      "TR": "assets/dcc/DZWLTR.dcc",
+      "RH": "assets/dcc/DZWLRH.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S2",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 136
+    },
+    "A1": {
+     "cof": "assets/dcc/DZA11HS.COF",
+     "layers": {
+      "HD": "assets/dcc/DZA1HD.dcc",
+      "LA": "assets/dcc/DZA1LA.dcc",
+      "RA": "assets/dcc/DZA1RA.dcc",
+      "RH": "assets/dcc/DZA1RH.dcc",
+      "S2": "assets/dcc/DZA1S2.dcc",
+      "S1": "assets/dcc/DZA1S1.dcc",
+      "TR": "assets/dcc/DZA1TR.dcc",
+      "LG": "assets/dcc/DZA1LG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 19,
+     "dirs": 16,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/DZDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/DZDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 16,
+     "speed": 0
+    }
+   }
+  },
+  "NE": {
+   "class": "NE",
+   "name": "Nécromancien",
+   "stats": {
+    "walkSpeed": 6,
+    "runSpeed": 9,
+    "life": 45,
+    "mana": 25,
+    "stamina": 79,
+    "strength": 15,
+    "dexterity": 25,
+    "vitality": 15,
+    "energy": 25,
+    "lifePerLevel": 1.5,
+    "lifePerVitality": 2,
+    "manaPerLevel": 2,
+    "manaPerEnergy": 2,
+    "statPerLevel": 5,
+    "toHitFactor": -10,
+    "startWeapon": {
+     "code": "wnd",
+     "name": "Wand",
+     "dmgMin": 2,
+     "dmgMax": 4,
+     "wclass": "1hs"
+    }
+   },
+   "walk": {
+    "cof": "assets/dcc/NEWL1HS.COF",
+    "layers": {
+     "LA": "assets/dcc/NEWLLA.dcc",
+     "TR": "assets/dcc/NEWLTR.dcc",
+     "RA": "assets/dcc/NEWLRA.dcc",
+     "S2": "assets/dcc/NEWLS2.dcc",
+     "HD": "assets/dcc/NEWLHD.dcc",
+     "S1": "assets/dcc/NEWLS1.dcc",
+     "RH": "assets/dcc/NEWLRH.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "idle": {
+    "cof": "assets/dcc/NENU1HS.COF",
+    "layers": {
+     "LA": "assets/dcc/NENULA.dcc",
+     "TR": "assets/dcc/NENUTR.dcc",
+     "RA": "assets/dcc/NENURA.dcc",
+     "S2": "assets/dcc/NENUS2.dcc",
+     "HD": "assets/dcc/NENUHD.dcc",
+     "S1": "assets/dcc/NENUS1.dcc",
+     "RH": "assets/dcc/NENURH.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "attack": {
+    "cof": "assets/dcc/NEA11HS.COF",
+    "layers": {
+     "LA": "assets/dcc/NEA1LA.dcc",
+     "TR": "assets/dcc/NEA1TR.dcc",
+     "RA": "assets/dcc/NEA1RA.dcc",
+     "RH": "assets/dcc/NEA1RH.dcc",
+     "S2": "assets/dcc/NEA1S2.dcc",
+     "HD": "assets/dcc/NEA1HD.dcc",
+     "S1": "assets/dcc/NEA1S1.dcc",
+     "LG": "assets/dcc/NEA1LG.dcc"
+    },
+    "missingLayers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "death": {
+    "cof": "assets/dcc/NEDDHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/NEDDTR.dcc"
+    },
+    "missingLayers": []
+   },
+   "notes": "startWeapon wnd (Wand 2-4, wc 1hs) ; pas de bouclier de départ (item2 = hp1, comme la sorcière). NU/WL : RH/RA en 1hs, corps en hth ; A1 tout en 1hs. LH/S3 absentes du retail. StartSkill charstats = raise skeleton (cf. d2rules skills.rs).",
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/NENU1HS.COF",
+     "layers": {
+      "LA": "assets/dcc/NENULA.dcc",
+      "TR": "assets/dcc/NENUTR.dcc",
+      "RA": "assets/dcc/NENURA.dcc",
+      "S2": "assets/dcc/NENUS2.dcc",
+      "HD": "assets/dcc/NENUHD.dcc",
+      "S1": "assets/dcc/NENUS1.dcc",
+      "RH": "assets/dcc/NENURH.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/NEWL1HS.COF",
+     "layers": {
+      "LA": "assets/dcc/NEWLLA.dcc",
+      "TR": "assets/dcc/NEWLTR.dcc",
+      "RA": "assets/dcc/NEWLRA.dcc",
+      "S2": "assets/dcc/NEWLS2.dcc",
+      "HD": "assets/dcc/NEWLHD.dcc",
+      "S1": "assets/dcc/NEWLS1.dcc",
+      "RH": "assets/dcc/NEWLRH.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 8,
+     "dirs": 16,
+     "speed": 0
+    },
+    "A1": {
+     "cof": "assets/dcc/NEA11HS.COF",
+     "layers": {
+      "LA": "assets/dcc/NEA1LA.dcc",
+      "TR": "assets/dcc/NEA1TR.dcc",
+      "RA": "assets/dcc/NEA1RA.dcc",
+      "RH": "assets/dcc/NEA1RH.dcc",
+      "S2": "assets/dcc/NEA1S2.dcc",
+      "HD": "assets/dcc/NEA1HD.dcc",
+      "S1": "assets/dcc/NEA1S1.dcc",
+      "LG": "assets/dcc/NEA1LG.dcc"
+     },
+     "missingLayers": [
+      "LH",
+      "S3"
+     ],
+     "frames": 19,
+     "dirs": 16,
+     "speed": 0
+    },
+    "DD": {
+     "cof": "assets/dcc/NEDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/NEDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 16,
+     "speed": 0
+    }
+   }
   }
  },
  "monsters": [

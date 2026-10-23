@@ -1,24 +1,92 @@
-/* Diablo II — écran-titre original (800x600 logique, mis à l'échelle) */
+/* Diablo II — menu 800×600 logique (mis à l'échelle) :
+   écran-titre + écran de sélection de héros, ambiance sombre dorée.
+   Chaque asset est optionnel : le CSS garde un repli 100 % style si
+   assets/menu/ est absent (dégradation BYO, ex : build Pages sans assets). */
 html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Georgia,'Times New Roman',serif}
-#stage{position:absolute;top:50%;left:50%;width:800px;height:600px;transform:translate(-50%,-50%) scale(var(--s,1));transform-origin:center}
+#stage{position:absolute;top:50%;left:50%;width:800px;height:600px;transform:translate(-50%,-50%) scale(var(--s,1));transform-origin:center;
+  background:radial-gradient(circle at 50% 42%, #2b1c0d 0%, #170f07 45%, #060402 100%)}
+.screen{position:absolute;inset:0;display:none}
+.screen.on{display:block}
+
+/* ---------- écran-titre ---------- */
 #bg{position:absolute;inset:0;width:800px;height:600px;image-rendering:pixelated}
-#logo{position:absolute;left:224px;top:8px;display:flex}
-#logo img{image-rendering:pixelated}
-#buttons{position:absolute;left:40px;top:340px;display:flex;flex-direction:column;gap:6px}
-.dbtn{position:relative;width:256px;height:60px;border:0;padding:0;background:transparent;cursor:pointer;
-  background-image:url('assets/menu/widebtn_00.png');background-size:256px 60px;image-rendering:pixelated}
-.dbtn:hover{background-image:url('assets/menu/widebtn_02.png')}
-.dbtn:active{background-image:url('assets/menu/widebtn_01.png')}
-.dbtn:disabled{filter:brightness(.55) saturate(.4);cursor:default}
-.dbtn span{font-size:20px;letter-spacing:2px;color:#e8d5a3;text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.9)}
-#classes{position:absolute;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
-#classes.hidden{display:none}
-.card{display:flex;align-items:center;gap:16px;width:420px;padding:10px 16px;border:1px solid #6b5a2e;background:rgba(12,8,4,.9);cursor:pointer}
-.card:hover{border-color:#e8d5a3;box-shadow:0 0 14px rgba(232,213,163,.35)}
-.card.selected{border-color:#ffd873;box-shadow:0 0 18px rgba(255,216,115,.55)}
-.card img{width:96px;height:96px;object-fit:contain;image-rendering:pixelated;background:#0a0a12;border:1px solid #3a3226}
-.card span{font-size:22px;color:#e8d5a3;letter-spacing:2px}
-#play{margin-top:8px}
+#logo{position:absolute;left:218px;top:8px;width:365px;height:171px}
+#logo img{position:absolute;top:0;image-rendering:pixelated}
+#logoL{left:0}
+#logoR{left:181px}
+#logoText{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  font-size:64px;letter-spacing:6px;color:#e8d5a3;text-shadow:0 0 18px rgba(255,140,20,.55),2px 2px 0 #000}
+#stage.no-logo #logoText{display:flex}
+#stage.no-logo #logo img{display:none}
+
+/* boutons : png par-dessus un dégradé de repli — si le png manque
+   (404) le dégradé prend le relais, le bouton reste utilisable */
+.dbtn{position:relative;width:256px;height:35px;border:1px solid #6b5a2e;padding:0;cursor:pointer;
+  background:url('assets/menu/widebtn_00.png') center/100% 100% no-repeat, linear-gradient(#3a2a12,#150d05)}
+.dbtn:hover{background:url('assets/menu/widebtn_02.png') center/100% 100% no-repeat, linear-gradient(#4a3517,#1c1206);
+  box-shadow:0 0 12px rgba(232,213,163,.25)}
+.dbtn:active{background:url('assets/menu/widebtn_01.png') center/100% 100% no-repeat, linear-gradient(#241806,#0e0903)}
+.dbtn:disabled{filter:brightness(.55) saturate(.4);cursor:default;box-shadow:none}
+.dbtn span{font-size:17px;letter-spacing:2px;color:#e8d5a3;text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.9)}
+#buttons{position:absolute;left:272px;top:336px;display:flex;flex-direction:column;gap:10px;align-items:center}
+
+/* ---------- écran sélection : structure ---------- */
+#selectHead{position:absolute;top:26px;left:0;right:0;text-align:center;font-size:30px;letter-spacing:4px;color:#ffd873;
+  text-shadow:0 0 14px rgba(255,150,30,.45),1px 1px 0 #000}
+#manifestErr{position:absolute;top:74px;left:120px;right:120px;text-align:center;color:#e0a060;font-size:14px}
+/* flex-wrap centré : rangées de 4 puis 3 cartes, les deux centrées */
+#heroGrid{position:absolute;top:84px;left:50%;transform:translateX(-50%);width:720px;
+  display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+
+/* carte héros */
+.card{position:relative;width:158px;padding:10px 8px 8px;border:1px solid #6b5a2e;background:rgba(14,9,4,.92);
+  cursor:pointer;text-align:center;box-shadow:inset 0 0 18px rgba(0,0,0,.85)}
+.card::before{content:'';position:absolute;inset:3px;border:1px solid #3a2f1a;pointer-events:none}
+.card:hover{border-color:#e8d5a3;box-shadow:0 0 12px rgba(232,213,163,.3),inset 0 0 18px rgba(0,0,0,.85)}
+.card.selected{border-color:#ffd873;box-shadow:0 0 20px rgba(255,216,115,.55),inset 0 0 18px rgba(0,0,0,.85)}
+.card.selected::before{border-color:#8a7a45}
+.card.disabled{cursor:default;filter:saturate(.35) brightness(.62)}
+.card .med{width:52px;height:52px;margin:0 auto 6px;border:1px solid #8a7a45;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:19px;letter-spacing:1px;color:#ffd873;
+  background:radial-gradient(circle at 50% 35%, #33240e, #150d05 78%);text-shadow:0 0 8px rgba(255,160,30,.5)}
+.card .cname{font-size:16px;color:#e8d5a3;letter-spacing:1px;margin-bottom:5px;text-shadow:1px 1px 0 #000}
+.card .stats{display:grid;grid-template-columns:1fr 1fr;gap:1px 8px;font-size:11px;color:#a89768;margin-bottom:5px}
+.card .stats b{color:#cbbd8d;font-weight:normal}
+.card .skill{font-size:10.5px;color:#8a7a55;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .soon{position:absolute;top:5px;right:5px;font-size:10px;letter-spacing:1px;color:#c88a4a;border:1px solid #7a5528;
+  padding:1px 5px;background:rgba(0,0,0,.7);transform:rotate(6deg)}
+
+/* feu de camp */
+#fireWrap{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);width:180px;height:140px;pointer-events:none}
+#fireCanvas{width:180px;height:140px;image-rendering:pixelated}
+#fireGlow{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);width:260px;height:80px;
+  background:radial-gradient(ellipse at center, rgba(255,140,30,.28), transparent 70%);animation:glow 1.1s ease-in-out infinite alternate}
+@keyframes glow{from{opacity:.55}to{opacity:1}}
+#cssFire{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:90px;height:110px}
+#cssFire i{position:absolute;bottom:12px;left:50%;border-radius:50% 50% 42% 42%;transform-origin:50% 100%;
+  background:radial-gradient(ellipse at 50% 78%, #ffe9a0 0%, #ffb32b 34%, #f2670f 62%, rgba(150,30,0,0) 78%)}
+#cssFire i:nth-child(1){width:44px;height:78px;margin-left:-22px;animation:flk .62s ease-in-out infinite alternate}
+#cssFire i:nth-child(2){width:30px;height:56px;margin-left:-15px;bottom:18px;animation:flk .47s .12s ease-in-out infinite alternate}
+#cssFire i:nth-child(3){width:20px;height:40px;margin-left:-10px;bottom:26px;animation:flk .81s .05s ease-in-out infinite alternate}
+#cssFire::before,#cssFire::after{content:'';position:absolute;bottom:4px;width:64px;height:10px;border-radius:5px;
+  background:linear-gradient(#5a3d1e,#2a1a0a);box-shadow:0 1px 3px rgba(0,0,0,.8)}
+#cssFire::before{left:-8px;transform:rotate(9deg)}
+#cssFire::after{right:-8px;transform:rotate(-8deg)}
+@keyframes flk{from{transform:scaleY(.9) scaleX(1.04)}to{transform:scaleY(1.12) scaleX(.94)}}
+/* dégradations : classes posées par menu.js après sondage des assets */
+#stage.no-fire #fireCanvas{display:none}
+#stage.no-fire #cssFire{display:block}
+
+/* barre de sélection */
+#selectBar{position:absolute;left:0;right:0;bottom:52px;display:flex;gap:12px;align-items:center;justify-content:center}
+#nameLabel{font-size:14px;color:#a89768;letter-spacing:1px}
+#heroName{width:190px;height:29px;background:rgba(0,0,0,.75);border:1px solid #6b5a2e;color:#e8d5a3;
+  font-family:inherit;font-size:15px;letter-spacing:1px;padding:0 8px;outline:none;text-align:center}
+#heroName:focus{border-color:#ffd873;box-shadow:0 0 8px rgba(255,216,115,.35)}
+#play,#back{width:150px}
+#selectHint{position:absolute;left:0;right:0;bottom:30px;text-align:center;font-size:11px;color:#6a5f45;letter-spacing:1px}
+
+/* ---------- pied commun ---------- */
 #version{position:absolute;left:8px;bottom:6px;color:#8a7a55;font-size:12px}
 #copyright{position:absolute;right:10px;bottom:6px;color:#6a5f45;font-size:11px}
 #errlog{position:absolute;left:0;bottom:-24px;color:#c33;font-size:11px;white-space:pre-wrap}
