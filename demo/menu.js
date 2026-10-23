@@ -330,7 +330,11 @@
       const step = () => {
         ff = (ff + 1) % e.frames;
         ctx.clearRect(0, 0, cv.width, cv.height);
+        // le DC6 du feu n'a pas d'alpha : blend additif (le noir disparaît),
+        // comme le rendu D2 original des flammes sur fond sombre.
+        ctx.globalCompositeOperation = 'lighter';
         ctx.drawImage(img, ff * e.w, 0, e.w, e.h, 0, 0, e.w, e.h);
+        ctx.globalCompositeOperation = 'source-over';
       };
       step();
       fireTimer = setInterval(step, 1000 / ((+e.fps > 0 && +e.fps) || 15));

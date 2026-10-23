@@ -98,7 +98,8 @@ def render_bg(frames, pal, path, out_w=800, out_h=600):
 def main():
     fechar = read_file('data/d2data.mpq', r'data\global\palette\fechar\pal.dat')
     fechar = (fechar + b'\0'*768)[:768]
-    pal = [tuple(fechar[i*3:i*3+3]) for i in range(256)]  # palette fechar = vraie palette des écrans FrontEnd (vérifiée vs référence)
+    # palette fechar = vraie palette des écrans FrontEnd ; le DAT D2 est stocké BGR
+    pal = [(fechar[i*3+2], fechar[i*3+1], fechar[i*3]) for i in range(256)]
     out = {}
 
     # --- fond ---
