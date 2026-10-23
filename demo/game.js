@@ -481,8 +481,20 @@ function handleEvents(events, manifest) {
     } else if (ev.HeroDied) {
       sfx(manifest.sfx.hit, 0.8, 0.6);
       flash('Vous êtes mort… résurrection au camp dans 2 s.');
+    } else if (ev.CorpseDropped) {
+      // J1 (corpse-ui.js) : le corps est posé au sol AVEC l'équipement ;
+      // l'or porté est tombé à côté (péage officiel déduit par le moteur).
+      if (window.D2CorpseUI) window.D2CorpseUI.onDeath(ev.CorpseDropped);
+      sfx(manifest.sfx.hit, 0.6, 0.5);
+      flash(`Corps posé à (${ev.CorpseDropped.x}, ${ev.CorpseDropped.y})${ev.CorpseDropped.gold ? ` — ${ev.CorpseDropped.gold} or au sol` : ''}.`);
+    } else if (ev.CorpseRecovered) {
+      // J1 : équipement ré-équipé depuis le corps (corps vide = disparu).
+      if (window.D2CorpseUI) window.D2CorpseUI.onRecovered();
+      sfx(manifest.sfx.uiClick, 0.5, 1.0);
+      flash('Équipement récupéré sur votre corps.');
     } else if (ev.HeroRespawned) {
       sfx(manifest.sfx.uiClick, 0.55, 0.7);
+      if (window.D2CorpseUI) window.D2CorpseUI.onRespawned(); // J1 : masque l'overlay de mort
       flash('Résurrection au Camp des Rousses.');
     }
   }
@@ -504,6 +516,13 @@ function canvasXY(e) {
 function clickToInput(game, px, py) {
   const [wx, wy] = game.screenToWorld(px, py);
   loop.lastClick = { sx: px, sy: py, t: performance.now() };
+  // J1 (corpse-ui.js) : clic sur SON CORPS au sol → {"type":"recoverCorpse"}.
+  // À portée le moteur ré-équipe tout, sinon le héros marche vers le corps
+  // et la récupération s'exécute automatiquement à l'arrivée (grab D2).
+  try {
+    const c = JSON.parse(game.corpseInfo() || 'null');
+    if (c && Math.hypot(c.x - wx, c.y - wy) < 2.5) return { type: 'recoverCorpse' };
+  } catch { /* pas de corps / pas finalisé */ }
   return game.monsterNear(wx, wy, 2.5) >= 0
     ? { type: 'attack', x: Math.round(wx), y: Math.round(wy) }
     : { type: 'move', x: Math.round(wx), y: Math.round(wy) };
@@ -839,6 +858,7 @@ async function main() {
         drawClickRing(loop.lastClick.sx, loop.lastClick.sy, 1 - (now - loop.lastClick.t) / 450);
       }
       if (window.D2HUD) window.D2HUD.frame(canvas, game); // EXP-H6/H8 : survol monstre + labels Alt
+      if (window.D2CorpseUI) window.D2CorpseUI.frame(canvas, game); // J1 : flare + hint du corps au sol
       if (window.D2Waypoints && (!loop.lastWp || now - loop.lastWp > 500)) {
         loop.lastWp = now; // W19 : état waypoints ~2×/s (découverte au contact)
         try { window.D2Waypoints.refresh(JSON.parse(game.waypoints())); } catch { /* cosmétique */ }

@@ -78,6 +78,11 @@ pub mod vendor;
 /// Pur (aucune dépendance World) ; câblage world/game + save EN INTÉGRATION.
 pub mod quests;
 
+// --- Corps au sol J1 (mort : corps + équipement, or, récup, 2026-10-23) ---
+/// État `Corpse` + règles officielles (péage d'or, respawn nu, un seul
+/// corps actif) — sources citées dans l'en-tête du fichier.
+pub mod corpse;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
@@ -85,6 +90,8 @@ mod parity_tests;
 
 pub use skills::HeroSkill;
 pub use world::World;
+/// Corps au sol (J1) — consommé par d2game (exposition UI) et la save.
+pub use corpse::Corpse;
 /// Rang de monstre + règle de spawn data-driven (impl-monstres-boss) —
 /// consommés par d2game (tables réelles → spawn_monster_rule).
 pub use world::{MonKind, SpawnRule};
@@ -142,6 +149,11 @@ pub enum PlayerInput {
     SetRun(bool),
     /// Utiliser l'objet du slot d'inventaire (grille 10×4, index rangée par rangée).
     UseItem(usize),
+    /// J1 : clic sur son corps au sol — à portée ([`PICKUP_RANGE`]) la
+    /// récupération est immédiate (ré-équipe tout) ; sinon le héros marche
+    /// vers le corps et la récupération s'exécute à l'arrivée (comportement
+    /// D2 « grab your body » : un clic suffit).
+    RecoverCorpse,
 }
 
 /// Événements produits par [`World::tick`]. Les 6 premières variantes sont le
@@ -187,6 +199,14 @@ pub enum GameEvent {
     /// (colonne `Waypoint` de `patch_levels.txt` ; 39 = extension MVP Blood
     /// Moor, cf. `waypoints.rs`). Émis une seule fois par slot.
     WaypointActivated { slot: u8 },
+    /// J1 : le corps du héros est posé au sol à sa mort — tuile `(x, y)` et
+    /// `gold` = or porté tombé au sol à côté (péage officiel déjà déduit,
+    /// cf. `corpse.rs` pour les sources). Le corps porte l'inventaire ; le
+    /// héros respawn nu au camp.
+    CorpseDropped { x: i32, y: i32, gold: u32 },
+    /// J1 : au moins un objet du corps a été repris (ré-équipé) ; le corps
+    /// disparaît si TOUT son contenu a été repris, sinon le surplus y reste.
+    CorpseRecovered,
 }
 
 /// État d'animation (code mode COF D2 : NU=neutral, WL=walk, RN=run, A1=attack1, DD=death).

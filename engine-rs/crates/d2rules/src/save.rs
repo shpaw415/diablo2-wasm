@@ -64,6 +64,11 @@ struct Save {
     /// chantier fait évoluer save.rs en parallèle — l'intégrateur fusionne.
     #[serde(default)]
     difficulty: Option<Difficulty>,
+    /// Corps au sol (J1, `corpse.rs`) : position + inventaire du héros
+    /// mort. ABSENT des sauvegardes antérieures au corps (rétro-compat :
+    /// aucun corps) — champ OPTIONNEL additif, pas de bump de version.
+    #[serde(default)]
+    corpse: Option<crate::corpse::Corpse>,
 }
 
 /// État complet du héros.
@@ -205,6 +210,7 @@ pub(crate) fn save_json(w: &World) -> String {
             })
             .collect(),
         items: w.items.clone(),
+        corpse: w.corpse.clone(), // J1 : champ additif (rétro-compat v3 sans corps)
         missiles: Some(serde_json::to_value(&w.missiles).expect("d2rules: sérialisation missiles")),
         waypoints: Some(w.wp.active.clone()),
     };
@@ -331,6 +337,10 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             here: None,
             active: s.waypoints.clone().unwrap_or_default(),
         },
+        // J1 : corps au sol (saves antérieures = aucun) ; `corpse_pending`
+        // est transitoire — jamais persisté.
+        corpse: s.corpse,
+        corpse_pending: false,
         rng: Rng::new(s.rng),
         now_ms: s.now_ms,
         difficulty: s.difficulty.unwrap_or_default(),
@@ -344,6 +354,12 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
     for e in world.mon_ent.iter().chain(std::iter::once(&world.hero_ent)) {
         if e.x < 0.0 || e.y < 0.0 || e.x >= w as f32 || e.y >= h as f32 {
             return Err(());
+        }
+    }
+    // J1 : le corps, s'il en existe un, doit être dans les bornes de la carte.
+    if let Some(c) = &world.corpse {
+        if c.x < 0.0 || c.y < 0.0 || c.x >= w as f32 || c.y >= h as f32 {
+            return Err(()); // corps hors carte : état incohérent
         }
     }
     if world.missiles.missiles().iter().any(|m| {

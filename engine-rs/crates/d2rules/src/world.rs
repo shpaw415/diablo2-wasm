@@ -307,6 +307,13 @@ pub struct World {
     /// Waypoints W05/W19 (waypoint du niveau + slots activés, sauvegardé) —
     /// état et logique dans `waypoints.rs` (blocs additifs).
     pub(crate) wp: crate::waypoints::WaypointState,
+    /// Corps au sol (J1, `corpse.rs`) : `Some` après une mort non encore
+    /// récupérée — porte position + inventaire. Additif, sauvegardé.
+    pub(crate) corpse: Option<crate::corpse::Corpse>,
+    /// Intention de récupération du corps en cours (clic sur un corps hors
+    /// de portée : le héros marche, grab auto à l'arrivée). TRANSITOIRE,
+    /// jamais sauvegardé (après un load il suffit de recliquer).
+    pub(crate) corpse_pending: bool,
     pub(crate) rng: Rng,
     pub(crate) now_ms: u64,
     /// Difficulté courante (W08/K — Normal par défaut ; `set_difficulty`
@@ -322,7 +329,7 @@ fn hit_chance(th: u32, ac: u32) -> u32 {
 }
 
 /// Distance euclidienne.
-fn dist(dx: f32, dy: f32) -> f32 {
+pub(crate) fn dist(dx: f32, dy: f32) -> f32 {
     (dx * dx + dy * dy).sqrt()
 }
 
@@ -474,6 +481,8 @@ impl World {
             items: Vec::new(),
             missiles: MissileSystem::with_seed(seed ^ 0x4D49_5353_1A4E_0001),
             wp: crate::waypoints::WaypointState::default(),
+            corpse: None,      // J1 : aucun corps à la construction
+            corpse_pending: false, // J1 : transitoire
             rng: Rng::new(seed),
             now_ms: 0,
             difficulty: Difficulty::default(),
@@ -992,11 +1001,14 @@ impl World {
                     ev.push(GameEvent::PotionUsed { heal });
                 }
             }
+            // J1 (corpse.rs) : clic sur son corps — récup immédiate à
+            // portée, sinon marche vers lui + grab auto à l'arrivée.
+            PlayerInput::RecoverCorpse => crate::corpse::handle_recover_corpse(self, ev),
         }
     }
 
     /// A* depuis la tuile du héros vers `to` (snap tuile marchable ≤ 4 si bloquée).
-    fn find_path_from_hero(&self, to: (i32, i32)) -> Option<Vec<(f32, f32)>> {
+    pub(crate) fn find_path_from_hero(&self, to: (i32, i32)) -> Option<Vec<(f32, f32)>> {
         let start = (self.hero_ent.x.floor() as i32, self.hero_ent.y.floor() as i32);
         self.path_between(start, to)
     }
@@ -1055,6 +1067,15 @@ impl World {
             self.hero.run = false;
         }
 
+        // J1 (corpse.rs) : grab auto du corps à l'arrivée — le clic sur un
+        // corps hors de portée a posé `corpse_pending` + le chemin ; quand le
+        // chemin est épuisé, on tente la récupération (la garde de distance
+        // PICKUP_RANGE est dans `recover_corpse`).
+        if self.corpse_pending && self.hero.path.is_empty() {
+            self.corpse_pending = false;
+            self.recover_corpse(ev);
+        }
+
         // sélection anim
         let st = if !self.hero.path.is_empty() {
             if self.hero.run {
@@ -1105,6 +1126,8 @@ impl World {
                 dat.atk_cd_ms = MONSTER_ATK_GRACE_MS;
             }
         }
+        // J1 : plus de course vers un corps en cours (transitoire)
+        self.corpse_pending = false;
         ev.push(GameEvent::HeroRespawned { x: sx.floor() as i32, y: sy.floor() as i32 });
     }
 
@@ -1472,6 +1495,10 @@ impl World {
                     self.hero.stats.xp = self.hero.stats.xp.saturating_sub(lost).max(floor);
                     self.refresh_xp_to_next();
                 }
+                // J1 (corpse.rs) : le corps reste au sol AVEC l'inventaire ;
+                // l'or porté subit le péage officiel et le reliquat tombe au
+                // sol à cet endroit (règles citées dans corpse.rs).
+                self.drop_corpse(ev);
                 ev.push(GameEvent::HeroDied);
             }
         }
