@@ -558,6 +558,9 @@ function wireCommon(manifest) {
       }
       return;
     }
+    // W16 villes vivantes : clic NPC (npc-ui.js) prioritaire — marqueur visé
+    // = dialogue/approche ; sinon routage historique attaque/déplacement.
+    if (window.D2Npc && window.D2Npc.clickAt(px, py)) return;
     loop.queue.push(clickToInput(window.__d2.game, px, py));
   });
   window.addEventListener('keydown', (e) => {
@@ -843,6 +846,7 @@ async function main() {
         loop.lastWp = now; // W19 : état waypoints ~2×/s (découverte au contact)
         try { window.D2Waypoints.refresh(JSON.parse(game.waypoints())); } catch { /* cosmétique */ }
       }
+      if (window.D2Npc) window.D2Npc.frame(canvas, game); // W16 : marqueurs NPC + bulles de dialogue
       fpsTick(loop.statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
       requestAnimationFrame(frame);
     } catch (err) {
@@ -862,6 +866,12 @@ async function main() {
       onTraveled: () => syncZoneAfterLoad(),
     });
     try { window.D2Waypoints.refresh(JSON.parse(game.waypoints())); } catch { /* panneau cosmétique */ }
+  }
+  // W16 villes vivantes : NPC du camp — marqueurs + bulles au clic
+  // (npc-ui.js ; no-op si le pkg wasm ne porte pas encore npcs()/talkNpc()).
+  if (window.D2Npc) {
+    window.D2Npc.init({ getGame: () => window.__d2.game, queue: loop.queue, note, flash, manifest, sfx });
+    window.D2Npc.frame(canvas, game); // premier rendu des marqueurs
   }
   requestAnimationFrame(frame);
 }

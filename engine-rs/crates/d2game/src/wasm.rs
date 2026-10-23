@@ -283,6 +283,25 @@ impl D2Game {
     pub fn ground_items(&self) -> String {
         self.core.ground_items_json()
     }
+
+    /// NPC de ville (W16, villes vivantes) — JSON array
+    /// `[{index,id,code,name,questCode,role,x,y,vendor,assumed,talked},…]`
+    /// (coordonnées cellules ; projection écran ancrée sur `heroScreen()`).
+    /// `[]` hors camp. Contrat UI : demo/npc-ui.js (`npc_bridge.rs`).
+    #[wasm_bindgen(js_name = npcs)]
+    pub fn npcs(&self) -> String {
+        self.core.npcs_json()
+    }
+
+    /// Clic NPC (W16) : interaction si le héros est à portée (2.5 cellules) —
+    /// JSON `NpcInteraction` `{name,role,dialogue,actions,healed,quest_rewards}`
+    /// ou `Err` descriptif (`"trop loin — approchez-vous du NPC"`). Émet
+    /// `NpcTalked` (flux de tick) et avance le journal de quêtes branché
+    /// (q3/q4).
+    #[wasm_bindgen(js_name = talkNpc)]
+    pub fn talk_npc(&mut self, index: usize) -> Result<String, JsValue> {
+        self.core.talk_npc(index).map_err(js_err)
+    }
 }
 
 fn parse_input(json: &str) -> Option<PlayerInput> {

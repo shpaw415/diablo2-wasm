@@ -4,7 +4,9 @@
 use crate::data::{self, HeroTpl, MonTpl};
 use crate::difficulty::{self, Difficulty};
 use crate::loot;
+use crate::npc::NpcState;
 use crate::path::{astar, snap_near, Grid};
+use crate::quests::QuestLog;
 use crate::rng::Rng;
 use crate::skills::{default_active, starting_skills, HeroSkill};
 use crate::{
@@ -313,6 +315,15 @@ pub struct World {
     /// avant les spawns pour des monstres scalés NM/Enfer). Persistée en
     /// save (champ optionnel, rétro-compat v1/v2).
     pub(crate) difficulty: Difficulty,
+    /// NPC de ville (W16, `npc.rs`) — roster persistant, non-attaquable.
+    /// Vide par défaut ; `spawn_town_npcs()` (idempotent) le pose.
+    pub(crate) npcs: Vec<NpcState>,
+    /// Journal de quêtes (W13) branché optionnellement (`set_quest_log`) —
+    /// les clics NPC y avancent q3/q4. `None` = aucun câblage forcé.
+    pub(crate) quests: Option<QuestLog>,
+    /// Événements produits HORS tick (`talk_to_npc`…) — flushés au début du
+    /// tick suivant (le contrat d2rules émet toujours via `tick`).
+    pub(crate) pending_events: Vec<GameEvent>,
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
@@ -477,6 +488,9 @@ impl World {
             rng: Rng::new(seed),
             now_ms: 0,
             difficulty: Difficulty::default(),
+            npcs: Vec::new(),
+            quests: None,
+            pending_events: Vec::new(),
         };
         let mut world = world;
         world.init_hero();
@@ -674,7 +688,8 @@ impl World {
     /// Un pas de simulation. `dt_ms` est tronqué à 100 ms. Renvoie les événements
     /// du tick dans l'ordre d'émission.
     pub fn tick(&mut self, dt_ms: u32, input: Option<PlayerInput>) -> Vec<GameEvent> {
-        let mut ev = Vec::new();
+        // Événements produits hors tick (clic NPC W16…) d'abord, ordre réel.
+        let mut ev = std::mem::take(&mut self.pending_events);
         let dt = dt_ms.min(MAX_DT_MS);
         self.now_ms += dt as u64;
         if let Some(input) = input {
@@ -686,6 +701,7 @@ impl World {
         self.update_monsters(dt, &mut ev);
         self.update_missiles(dt, &mut ev);
         self.update_waypoints(&mut ev); // W05 : activation au contact (waypoints.rs)
+        self.update_npcs(dt); // W16 : patrouilles NPC de ville (npc.rs)
         ev
     }
 
@@ -1002,7 +1018,7 @@ impl World {
     }
 
     /// A* générique en centres de tuiles.
-    fn path_between(&self, from: (i32, i32), to: (i32, i32)) -> Option<Vec<(f32, f32)>> {
+    pub(crate) fn path_between(&self, from: (i32, i32), to: (i32, i32)) -> Option<Vec<(f32, f32)>> {
         let g = Grid { w: self.w, h: self.h, blocked: &self.grid };
         let goal = snap_near(&g, to, 4)?;
         let tiles = astar(&g, from, goal)?;
@@ -1268,7 +1284,7 @@ impl World {
     }
 
     /// Applique l'XP gagnée + paliers de niveau (événement par palier).
-    fn apply_xp(&mut self, mut xp: u32, ev: &mut Vec<GameEvent>) {
+    pub(crate) fn apply_xp(&mut self, mut xp: u32, ev: &mut Vec<GameEvent>) {
         self.hero.stats.xp += xp;
         xp = self.hero.stats.xp;
         loop {

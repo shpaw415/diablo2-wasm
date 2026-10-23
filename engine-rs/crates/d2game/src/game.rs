@@ -580,6 +580,8 @@ impl GameCore {
         let mut world = self.build_level_world(blocked, spawn, def)?;
         // W05 : attache le waypoint du niveau (table réelle waypoints.rs).
         crate::waypoint_travel::attach_level_waypoint(&mut world, def);
+        // W16 : attache le roster NPC de ville (camp seulement, npc_bridge.rs).
+        crate::npc_bridge::attach_town_npcs(&mut world, def);
         self.level = Some(def.clone());
         self.map = Some(map);
         self.world = Some(world);
@@ -1420,6 +1422,9 @@ impl GameCore {
         if let Some(def) = self.level.clone() {
             if let Some(w) = self.world.as_mut() {
                 crate::waypoint_travel::attach_level_waypoint(w, &def);
+                // W16 : ré-attache le roster NPC (idempotent — le save le
+                // porte ; un save antérieur re-spawn le roster du camp).
+                crate::npc_bridge::attach_town_npcs(w, &def);
             }
         }
         self.follow_camera();
