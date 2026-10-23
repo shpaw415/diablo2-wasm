@@ -78,6 +78,11 @@ pub mod vendor;
 /// Pur (aucune dépendance World) ; câblage world/game + save EN INTÉGRATION.
 pub mod quests;
 
+// --- Mercenaires H (hireling.txt v1.12, 2026-10-23) ---
+/// Mercenaires : embauche/combat/KO/résurrection data-driven (tables réelles
+/// `assets/patch_hireling.txt`), état porté par `World`, save additive.
+pub mod mercenary;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
@@ -88,6 +93,13 @@ pub use world::World;
 /// Rang de monstre + règle de spawn data-driven (impl-monstres-boss) —
 /// consommés par d2game (tables réelles → spawn_monster_rule).
 pub use world::{MonKind, SpawnRule};
+/// Mercenaires H — types/records/erreurs consommés par d2game (fiche HUD
+/// wasm `mercInfo`) et par la save.
+pub use mercenary::{
+    default_subtype as merc_default_subtype, offer_record as merc_offer_record,
+    record_of as merc_record_of, records_for as merc_records_for, HireError, MercAttack, MercData,
+    MercKind, MercRec, MercSave, ResurrectError,
+};
 /// Difficulté (W08/K) — consommée par d2game (wasm `setDifficulty`, plan de
 /// spawn) et persistée dans la save.
 pub use difficulty::Difficulty;
@@ -187,6 +199,28 @@ pub enum GameEvent {
     /// (colonne `Waypoint` de `patch_levels.txt` ; 39 = extension MVP Blood
     /// Moor, cf. `waypoints.rs`). Émis une seule fois par slot.
     WaypointActivated { slot: u8 },
+    // --- Mercenaires (H, mercenary.rs) — extras additifs ---
+    /// Mercenaire embauché : libellés de table (`hireling.txt` cols
+    /// `Hireling`/`SubType`), niveau du palier offert et coût (col `Gold`).
+    /// Livré au tick suivant l'appel à `World::hire_merc`.
+    MercHired { kind: String, subtype: String, level: u32, cost: u32 },
+    /// Le mercenaire a touché le monstre `target` (mêlée ou missile résolu).
+    MercAttacked { target: usize, dmg: u32 },
+    /// Attaque du mercenaire ratée (jet de toucher).
+    MercMissed { target: usize },
+    /// Le mercenaire a décoché missile/sort (flèche rogue, bolt sorceror —
+    /// position via `World::merc_missiles()`).
+    MercMissileSpawned,
+    /// Le mercenaire a encaissé `dmg` dégâts.
+    MercHit { dmg: u32 },
+    /// Le mercenaire est KO (hp 0) — cadavre sur place, résurrectible chez
+    /// le NPC de son type (`World::resurrect_merc`).
+    MercDied,
+    /// Mercenaire ressuscité (coût MVP 0 — colonne de résurrection absente
+    /// de `hireling.txt` v1.12).
+    MercResurrected { cost: u32 },
+    /// Le mercenaire a gagné le niveau `level` (palier = col `Exp/Lvl`).
+    MercLeveled { level: u32 },
 }
 
 /// État d'animation (code mode COF D2 : NU=neutral, WL=walk, RN=run, A1=attack1, DD=death).

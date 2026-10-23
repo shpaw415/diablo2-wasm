@@ -1337,6 +1337,28 @@ impl GameCore {
         info.to_string()
     }
 
+    /// Fiche du mercenaire (H, d2rules::mercenary) — JSON
+    /// `{kind,subtype,level,hp,maxHp,alive,x,y,sx,sy}` ou `null` (aucun
+    /// mercenaire). Endpoint additif consommé par demo/merc-ui.js.
+    pub fn merc_info_json(&self) -> String {
+        let Some(w) = self.world.as_ref() else { return "null".into() };
+        let Some(m) = w.mercenary() else { return "null".into() };
+        let (sx, sy) = self.world_to_screen(m.ent.x, m.ent.y);
+        serde_json::json!({
+            "kind": m.kind.as_str(),
+            "subtype": m.subtype,
+            "level": m.level,
+            "hp": m.hp,
+            "maxHp": m.max_hp,
+            "alive": m.alive,
+            "x": m.ent.x,
+            "y": m.ent.y,
+            "sx": sx,
+            "sy": sy,
+        })
+        .to_string()
+    }
+
     /// Objets au sol avec projection écran (EXP-H8, labels Alt) — JSON
     /// `[{"index","code","name","kind","amount","x","y","sx","sy"},…]`.
     /// `[]` avant `finalize`. Pollé chaque frame quand Alt est maintenu.

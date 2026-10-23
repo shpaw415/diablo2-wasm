@@ -283,6 +283,19 @@ impl D2Game {
     pub fn ground_items(&self) -> String {
         self.core.ground_items_json()
     }
+
+    // ------------------------------------------------------------------
+    // Mercenaires (H, d2rules::mercenary) — endpoint additif consommé
+    // par demo/merc-ui.js. Append-only.
+    // ------------------------------------------------------------------
+
+    /// Fiche du mercenaire (H) — JSON
+    /// `{kind,subtype,level,hp,maxHp,alive,x,y,sx,sy}` ou `null` (aucun
+    /// mercenaire embauché). Pollé chaque frame par merc-ui.js.
+    #[wasm_bindgen(js_name = mercInfo)]
+    pub fn merc_info(&self) -> String {
+        self.core.merc_info_json()
+    }
 }
 
 fn parse_input(json: &str) -> Option<PlayerInput> {
