@@ -1,0 +1,1197 @@
+{
+ "file": "cliff1.dt1",
+ "size": 477434,
+ "md5": "28212e0f999cb82a98f93da1d7664527",
+ "version": "7.6",
+ "tile_count": 13,
+ "body_position": 276,
+ "tiles": [
+  {
+   "index": 0,
+   "direction": 1,
+   "type": 10,
+   "style": 3,
+   "sequence": 3,
+   "num_blocks": 42,
+   "flags_offset": 316,
+   "flags25": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 1,
+   "direction": 1,
+   "type": 10,
+   "style": 3,
+   "sequence": 2,
+   "num_blocks": 45,
+   "flags_offset": 412,
+   "flags25": [
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 2,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 8,
+   "num_blocks": 43,
+   "flags_offset": 508,
+   "flags25": [
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 3,
+   "direction": 1,
+   "type": 10,
+   "style": 3,
+   "sequence": 1,
+   "num_blocks": 42,
+   "flags_offset": 604,
+   "flags25": [
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 4,
+   "direction": 1,
+   "type": 10,
+   "style": 3,
+   "sequence": 0,
+   "num_blocks": 45,
+   "flags_offset": 700,
+   "flags25": [
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 5,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 7,
+   "num_blocks": 39,
+   "flags_offset": 796,
+   "flags25": [
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 6,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 6,
+   "num_blocks": 42,
+   "flags_offset": 892,
+   "flags25": [
+    7,
+    0,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 7,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 5,
+   "num_blocks": 41,
+   "flags_offset": 988,
+   "flags25": [
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 8,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 4,
+   "num_blocks": 37,
+   "flags_offset": 1084,
+   "flags25": [
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 9,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 3,
+   "num_blocks": 40,
+   "flags_offset": 1180,
+   "flags25": [
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 10,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 2,
+   "num_blocks": 42,
+   "flags_offset": 1276,
+   "flags25": [
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    0,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 11,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 1,
+   "num_blocks": 42,
+   "flags_offset": 1372,
+   "flags25": [
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    []
+   ]
+  },
+  {
+   "index": 12,
+   "direction": 1,
+   "type": 1,
+   "style": 3,
+   "sequence": 0,
+   "num_blocks": 38,
+   "flags_offset": 1468,
+   "flags25": [
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0,
+    7,
+    1,
+    1,
+    0,
+    0
+   ],
+   "flags_bits": [
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    [],
+    [
+     "block_walk",
+     "block_los",
+     "block_jump"
+    ],
+    [
+     "block_walk"
+    ],
+    [
+     "block_walk"
+    ],
+    [],
+    []
+   ]
+  }
+ ]
+}

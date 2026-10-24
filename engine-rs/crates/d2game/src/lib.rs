@@ -26,7 +26,13 @@ pub mod astar;
 pub mod compose;
 pub mod drlg;
 pub mod ds1;
+/// DS1 complet + section PATH (patrouilles NPC) — port `ds1_path`
+/// (`ds1_path.rs`), compagnon additif du décodeur de rendu `ds1`.
+pub mod ds1_path;
 pub mod dt1;
+/// Flags de sous-tuiles DT1 (25/tuile) + grille de collision fine 1/5 —
+/// port `dt1_flags` (`dt1_flags.rs`), compagnon additif du décodeur `dt1`.
+pub mod dt1_flags;
 pub mod game;
 pub mod levels;
 /// Contenu monstre data-driven (W06-W08 + super-uniques + MonLvl) —
@@ -36,8 +42,19 @@ pub mod monsters;
 /// blocs `impl GameCore` additifs (`npc_bridge.rs`).
 pub mod npc_bridge;
 pub mod pal;
+/// Palettes d'actes : conteneur runtime `pal.pl2` v1.12 (acts 1-5) et
+/// ponts vers les deux chemins de couleur du renderer (`palette/pl2.rs`).
+pub mod palette;
 pub mod png_mini;
+/// Spawn extérieur data-driven (socle W01/A3) — planches mon1-10 de
+/// levels.txt + packs MinGrp/MaxGrp de monstats.txt via `d2rules::tsv`
+/// (`spawn.rs`), consommé par `LevelDef::from_manifest`.
+pub mod spawn;
 pub mod sprite;
+/// Texte fr-FR in-engine (W18) — noms de niveaux/monstres servis depuis les
+/// TBL v1.12 réelles (embarquées), repli manifest ; blocs `impl GameCore`
+/// additifs (`tbl_names.rs`).
+pub mod tbl_names;
 /// Waypoints W05 côté moteur (attach, état JSON UI, voyage direct) —
 /// blocs `impl GameCore` additifs (`waypoint_travel.rs`).
 pub mod waypoint_travel;

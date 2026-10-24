@@ -1,0 +1,8 @@
+[package]
+name = "d2d2s"
+version = "0.1.0"
+edition = "2021"
+description = "Format de sauvegarde .d2s Diablo II v1.12 (lecture complète + écriture round-trip octet-à-octet) du port diablo-2-wasm — crate pure, zéro IO, zéro dépendance ; PAS branché dans le save v3"
+license = "MIT"
+
+[dependencies]

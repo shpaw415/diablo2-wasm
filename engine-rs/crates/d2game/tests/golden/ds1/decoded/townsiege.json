@@ -1,0 +1,33 @@
+{
+  "file": "evidence-formats/ds1-path/raw/townsiege.ds1",
+  "size": 113850,
+  "version": 18,
+  "act": 4,
+  "grid": {
+    "w": 81,
+    "h": 49
+  },
+  "layers": {
+    "walls": 2,
+    "floors": 2,
+    "shadow": 1,
+    "substitution": 0,
+    "streams": 7
+  },
+  "file_count": 10,
+  "object_count": 109,
+  "offsets": {
+    "file_list_end": 522,
+    "layers": 530,
+    "layers_end": 111662,
+    "objects": 111662,
+    "objects_end": 113846,
+    "path_section": 113846,
+    "path_section_end": 113850,
+    "trailing_bytes": 0
+  },
+  "has_actions": true,
+  "npc_count": 0,
+  "npcs": [],
+  "consumed_to_eof": true
+}

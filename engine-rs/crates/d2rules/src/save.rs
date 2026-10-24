@@ -88,6 +88,13 @@ struct Save {
     /// aucun corps) — champ OPTIONNEL additif, pas de bump de version.
     #[serde(default)]
     corpse: Option<crate::corpse::Corpse>,
+    /// Journal de quêtes Acte I SPEC (quests_actes.rs, JSON de
+    /// `ActQuests::to_json`) — absent des sauvegardes antérieures (rétro-compat
+    /// : pas de journal spec branché). Champ OPTIONNEL ADDITIF
+    /// `#[serde(default)]` : save v3 inchangée ; présent mais invalide ⇒ Err
+    /// (contrat quests_actes.rs : tout écart = pas d'état incohérent).
+    #[serde(default)]
+    quest_act1: Option<serde_json::Value>,
 }
 
 /// État complet du héros.
@@ -230,6 +237,9 @@ pub(crate) fn save_json(w: &World) -> String {
             .collect(),
         items: w.items.clone(),
         corpse: w.corpse.clone(), // J1 : champ additif (rétro-compat v3 sans corps)
+        quest_act1: w.quests_act1.as_ref().map(|log| {
+            serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation quêtes acte I")
+        }),
         missiles: Some(serde_json::to_value(&w.missiles).expect("d2rules: sérialisation missiles")),
         waypoints: Some(w.wp.active.clone()),
         npcs: Some(w.npcs.clone()),
@@ -399,7 +409,22 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         },
         merc_target: None, // transient — jamais persisté
         deferred: Vec::new(),
+        // IA P1 (ai_behaviors) : état DÉRIVÉ des gabarits (archétypes) — les
+        // cadavres et overlays (panique/incantation) sont transitoires et ne
+        // survivent pas au rechargement, comme `corpse_pending`.
+        ai: crate::ai_behaviors::AiState::default(),
+        // Journal de quêtes Acte I spec : JSON versionné strict
+        // (`ActQuests::from_json`) — présent mais invalide ⇒ Err.
+        quests_act1: match s.quest_act1 {
+            Some(v) => {
+                Some(crate::quests_actes::ActQuests::from_json(&v.to_string()).map_err(|_| ())?)
+            }
+            None => None,
+        },
     };
+    let mut world = world;
+    // IA P1 : reconstruit les archétypes depuis les codes gabarits chargés.
+    world.ai = crate::ai_behaviors::AiState::rebuild(&world);
     // sanité minimale : gabarits connus, entités dans les bornes
     for d in &world.mon_dat {
         if d.tpl >= world.mon_tpls.len() {

@@ -86,8 +86,14 @@ pub struct LevelDef {
     pub dt1: Vec<String>,
     pub palette: String,
     /// Codes monstres à spawn (`monsters` du bloc ; [] pour le town — zone
-    /// sûre —, palette FA/ZM/SI par défaut pour un niveau extérieur).
+    /// sûre —, planche mon1-10 réelle du record levels.txt pour un niveau
+    /// extérieur sans liste, socle W01/A3).
     pub monsters: Vec<String>,
+    /// Packs `MinGrp`/`MaxGrp` (patch_monstats.txt) PARALLÈLES à `monsters`
+    /// quand la palette vient des planches levels.txt (socle W01/A3) — vide
+    /// pour une liste `monsters` du manifest : comportement historique,
+    /// 1 monstre par entrée.
+    pub plate_packs: Vec<(u32, u32)>,
     /// Boss de quête du niveau (W11) — code `manifest.bosses` (ex. "AN"
     /// andariel), spawné SEUL hors des packs, loin du héros. `None` = aucun.
     pub boss: Option<String>,
@@ -421,7 +427,7 @@ impl GameCore {
     /// tables branchées (W01/W04), accepte aussi les clés par id de table —
     /// `"2"` ou `"level:2"` — résolues vers le bloc manifest portant ce
     /// `levelsId` (les transitions peuvent viser un id levels.txt).
-    fn resolve_level_def(&self, key: &str) -> Result<LevelDef, String> {
+    pub(crate) fn resolve_level_def(&self, key: &str) -> Result<LevelDef, String> {
         let norm = key.trim().to_ascii_lowercase();
         let key = if norm.is_empty() { "town".to_string() } else { norm };
         let legacy = self.manifest.get("level").filter(|_| key == "town");
@@ -635,14 +641,17 @@ impl GameCore {
         let def = self.resolve_level_def(name)?;
         if !self.finalized {
             self.level_name = def.key.clone();
-            return Ok(LevelSwitchInfo { key: def.key, name: def.name });
+            let display = self.level_display_name(&def);
+            return Ok(LevelSwitchInfo { key: def.key, name: display });
         }
         self.load_level(&def, Some((spawn_x, spawn_y)))?;
         // `level_name` suit le niveau réel (levelInfo()/save cohérents après
         // un switch — le HUD page reçoit déjà l'événement LevelSwitch).
         self.level_name = def.key.clone();
         self.warp_cd_ms = WARP_COOLDOWN_MS;
-        Ok(LevelSwitchInfo { key: def.key, name: def.name })
+        // W18 : nom fr résolu depuis les TBL réelles (repli manifest).
+        let display = self.level_display_name(&def);
+        Ok(LevelSwitchInfo { key: def.key, name: display })
     }
 
     /// Charge et parse les 4 tables monstre (`monsters.rs`) — `None` si un
@@ -863,21 +872,37 @@ impl GameCore {
                 .map(|l| l.monsters.clone())
                 .unwrap_or_default();
             if !list.is_empty() {
+                // Packs MinGrp/MaxGrp PARALLÈLES à la planche (socle W01/A3)
+                // — (1, 1) pour une liste `monsters` du manifest :
+                // comportement historique inchangé (1 monstre par entrée).
+                let packs: Vec<(u32, u32)> = self
+                    .level
+                    .as_ref()
+                    .map(|l| {
+                        (0..l.monsters.len())
+                            .map(|i| l.plate_packs.get(i).copied().unwrap_or((1, 1)))
+                            .collect()
+                    })
+                    .unwrap_or_default();
                 let world = self.world.as_mut().expect("world avant spawn");
                 world.clear_monsters();
                 let hero = *world.hero();
                 let (hx, hy) = (hero.x, hero.y);
                 let seed = fnv1a(&level_key);
                 let mut rng = LevelRng::new(seed);
-                for code in &list {
-                    if let Some((tx, ty)) = Self::find_spawn_spot(
-                        &mut rng, world, (hx, hy), warp_pt.as_ref(),
-                        MONSTER_SPAWN_CLEAR_OF_WARP, &spots, MONSTER_SPAWN_CLEAR_OF_HERO,
-                        MONSTER_SPAWN_SPACING,
-                    ) {
-                        if world.spawn_monster(code, tx, ty) {
-                            spots.push((tx as f32 + 0.5, ty as f32 + 0.5));
-                            codes.push(code.clone());
+                for (idx, code) in list.iter().enumerate() {
+                    let (lo, hi) = packs.get(idx).copied().unwrap_or((1, 1));
+                    let roll = rng.below((hi.saturating_sub(lo) + 1).max(1));
+                    for _ in 0..crate::spawn::pack_size(lo, hi, roll) {
+                        if let Some((tx, ty)) = Self::find_spawn_spot(
+                            &mut rng, world, (hx, hy), warp_pt.as_ref(),
+                            MONSTER_SPAWN_CLEAR_OF_WARP, &spots, MONSTER_SPAWN_CLEAR_OF_HERO,
+                            MONSTER_SPAWN_SPACING,
+                        ) {
+                            if world.spawn_monster(code, tx, ty) {
+                                spots.push((tx as f32 + 0.5, ty as f32 + 0.5));
+                                codes.push(code.clone());
+                            }
                         }
                     }
                 }
@@ -1184,11 +1209,15 @@ impl GameCore {
     /// compatibles).
     pub fn level_info_json(&self) -> String {
         let info = match self.level.as_ref() {
-            Some(l) => Some((l.key.clone(), l.name.clone(), l.levels_id)),
+            // W18 : nom fr (TBL) — même résolution que la bannière LevelSwitch.
+            Some(l) => Some((l.key.clone(), self.level_display_name(l), l.levels_id)),
             None => self
                 .resolve_level_def(&self.level_name)
                 .ok()
-                .map(|d| (d.key, d.name, d.levels_id)),
+                .map(|d| {
+                    let name = self.level_display_name(&d);
+                    (d.key, name, d.levels_id)
+                }),
         };
         match info {
             Some((key, name, levels_id)) => {
@@ -1200,8 +1229,11 @@ impl GameCore {
                             let n = t.get(e.to);
                             serde_json::json!({
                                 "id": e.to,
+                                // W18 : nom fr du voisin (clé LevelName → TBL,
+                                // repli nom technique puis "").
                                 "name": n.map(|r| {
-                                    if r.level_name.is_empty() { r.name.clone() } else { r.level_name.clone() }
+                                    let base = if r.level_name.is_empty() { r.name.as_str() } else { r.level_name.as_str() };
+                                    crate::tbl_names::translate(base, base)
                                 }).unwrap_or_default(),
                             })
                         })
@@ -1372,9 +1404,18 @@ impl GameCore {
         }
     }
 
+    /// Tables de niveaux branchées (W01) si l'asset `patch_levels.txt` a été
+    /// fourni — exposé à la couche noms fr (`tbl_names.rs`, W18) qui préfère
+    /// la clé `LevelName` réelle au repli embarqué.
+    pub(crate) fn level_tables(&self) -> Option<&levels::LevelTables> {
+        self.tables.as_ref()
+    }
+
     /// Nom affichable du monstre `index` : nom d2game (super-unique/boss W10),
     /// sinon `monsters`/`bosses` du manifest par code, sinon le code brut.
-    fn monster_display_name(&self, index: usize) -> String {
+    /// (`pub(crate)` W18 : la couche fr `tbl_names.rs` traduit ce résultat
+    /// via les TBL — `monster_display_name_tbl`.)
+    pub(crate) fn monster_display_name(&self, index: usize) -> String {
         if let Some(n) = self.mon_names.get(index) {
             if !n.is_empty() {
                 return n.clone();
@@ -1420,7 +1461,8 @@ impl GameCore {
         let (hp, max_hp) = w.monster_hp(index).unwrap_or((0, 0));
         let info = serde_json::json!({
             "code": self.mon_codes.get(index).cloned().unwrap_or_default(),
-            "name": self.monster_display_name(index),
+            // W18 : nom fr servi depuis les TBL réelles (repli historique).
+            "name": self.monster_display_name_tbl(index),
             "kind": w.monster_kind(index).map(|k| k.as_str()).unwrap_or("normal"),
             "alive": w.monster_alive(index),
             "hp": hp,
@@ -1818,8 +1860,10 @@ fn hero_def_for(manifest: &Value, code: &str) -> Option<Value> {
         .or_else(|| manifest.get("hero").cloned())
 }
 
-/// Palette monstres par défaut d'un niveau extérieur sans liste `monsters`
-/// (Blood Moor retail : fallen1, zombie1, quillrat1 — MAP-SPEC-BLOODMOOR §6.5).
+/// Palette monstres par défaut d'un niveau extérieur — repli ULTIME quand
+/// l'Id levels.txt est absent de la table (socle W01/A3 : la palette normale
+/// vient des planches mon1-10 réelles via `spawn.rs` ; Blood Moor retail :
+/// fallen1, zombie1, quillrat1 — MAP-SPEC-BLOODMOOR §6.5).
 pub const DEFAULT_OUTDOOR_MONSTERS: [&str; 6] = ["FA", "FA", "FA", "ZM", "ZM", "SI"];
 
 impl LevelDef {
@@ -1842,16 +1886,31 @@ impl LevelDef {
             .and_then(|n| n.as_str())
             .map(String::from)
             .unwrap_or_else(|| key.to_string());
+        let levels_id = block.get("levelsId").and_then(|v| v.as_u64()).map(|v| v as u32);
+        // Socle W01/A3 : sans liste `monsters`, un niveau extérieur reçoit
+        // la planche réelle mon1-10 du record levels.txt (Blood Moor Id=2 :
+        // zombie1/fallen1/quillrat1 → ZM/FA/SI, MonDen 520) + les packs
+        // MinGrp/MaxGrp de patch_monstats.txt (`spawn.rs`) ; repli
+        // historique si l'Id est inconnu de la table.
+        let outdoor = if key == "town" || block.get("monsters").is_some() {
+            None
+        } else {
+            crate::spawn::outdoor_spawn(levels_id.unwrap_or(u32::MAX))
+        };
         let monsters: Vec<String> = match block.get("monsters").and_then(|m| m.as_array()) {
             Some(a) => a.iter().filter_map(|v| v.as_str().map(|s| s.to_ascii_uppercase())).collect(),
             None => {
                 if key == "town" {
                     Vec::new() // zone sûre
                 } else {
-                    DEFAULT_OUTDOOR_MONSTERS.iter().map(|s| s.to_string()).collect()
+                    outdoor.as_ref().map(|s| s.plate_codes()).unwrap_or_else(|| {
+                        DEFAULT_OUTDOOR_MONSTERS.iter().map(|s| s.to_string()).collect()
+                    })
                 }
             }
         };
+        let plate_packs: Vec<(u32, u32)> =
+            outdoor.map(|s| s.plate_packs()).unwrap_or_default();
         let warp = block.get("warp").and_then(|w| {
             let to = w.get("to")?.as_str()?.to_string();
             let at = json_point2(w.get("at")?)?;
@@ -1862,13 +1921,23 @@ impl LevelDef {
             let r = w.get("r").and_then(|v| v.as_f64()).unwrap_or(3.0) as f32;
             Some(WarpDef { to, at, r, entry })
         });
-        let levels_id = block.get("levelsId").and_then(|v| v.as_u64()).map(|v| v as u32);
         let boss = block
             .get("boss")
             .and_then(|b| b.as_str())
             .filter(|s| !s.is_empty())
             .map(|s| s.to_ascii_uppercase());
-        Ok(LevelDef { key: key.to_string(), levels_id, name, ds1, dt1, palette, monsters, boss, warp })
+        Ok(LevelDef {
+            key: key.to_string(),
+            levels_id,
+            name,
+            ds1,
+            dt1,
+            palette,
+            monsters,
+            plate_packs,
+            boss,
+            warp,
+        })
     }
 }
 
@@ -2692,6 +2761,34 @@ mod tests {
     }
 
     #[test]
+    fn outdoor_fallback_spawn_is_data_driven() {
+        // Socle W01/A3 : un bloc niveau SANS `monsters` reçoit la planche
+        // mon1-10 réelle (patch_levels.txt Id=2 : zombie1/fallen1/quillrat1
+        // → codes ZM/FA/SI) + les packs MinGrp/MaxGrp de patch_monstats.txt
+        // (spawn.rs) — plus la constante 6 codes en dur.
+        let block: Value = serde_json::json!({
+            "levelsId": 2,
+            "ds1": "assets/map/bloodmoor.ds1",
+            "palette": "assets/map/pal_act1_pl2.dat"
+        });
+        let def = LevelDef::from_manifest("data-driven", &block).unwrap();
+        assert_eq!(def.monsters, ["ZM", "FA", "SI"], "planches réelles Id=2");
+        assert_eq!(def.plate_packs, vec![(1u32, 2u32), (2, 3), (1, 2)], "packs patch_monstats");
+        // Id inconnu de la table : repli historique (6 codes constants),
+        // sans packs (comportement 1-entrée = 1-monstre conservé).
+        let block: Value = serde_json::json!({ "levelsId": 9999, "ds1": "x.ds1", "palette": "p.dat" });
+        let def = LevelDef::from_manifest("unknown", &block).unwrap();
+        assert_eq!(def.monsters.len(), 6);
+        assert!(def.plate_packs.is_empty());
+        // Le manifest réel (bloodmoor AVEC liste `monsters`) reste tel quel :
+        // priorité manifest, pas de packs (comportement historique).
+        let g = GameCore::new(MANIFEST, "BA").unwrap();
+        let bm = g.resolve_level_def("bloodmoor").unwrap();
+        assert_eq!(bm.monsters.len(), 6);
+        assert!(bm.plate_packs.is_empty());
+    }
+
+    #[test]
     fn town_boot_is_safe_zone() {
         let Some(root) = ws_root() else { return };
         let g = full_game(MANIFEST, "town", &root);
@@ -2723,7 +2820,7 @@ mod tests {
         assert_eq!(g.grid_size(), (72 * 5, 72 * 5), "carte Blood Moor restaurée");
         let w = g.world.as_ref().unwrap();
         assert_eq!(w.level_key(), "bloodmoor");
-        assert!(g.level_info_json().contains("Blood Moor (Acte I)"));
+        assert!(g.level_info_json().contains("La Lande sanglante"));
         // héros rendu à sa position sauvegardée
         let hv: Value = serde_json::from_str(&save_bm).unwrap();
         let hx = hv.pointer("/hero/ent/x").unwrap().as_f64().unwrap() as f32;
@@ -2748,7 +2845,8 @@ mod tests {
         let info = g.switch_level("bloodmoor", 137.0, 162.0).unwrap();
         assert_eq!(info.key, "bloodmoor");
         assert_eq!(g.grid_size(), (72 * 5, 72 * 5));
-        assert_eq!(g.level_info_json().contains("Blood Moor (Acte I)"), true);
+        // W18 : la bannière vient des TBL fr (string.tbl 5054 « La Lande sanglante »).
+        assert_eq!(g.level_info_json().contains("La Lande sanglante"), true);
         let world = g.world.as_ref().unwrap();
         let h = world.hero();
         assert!((h.x - 137.5).abs() < 3.0 && (h.y - 162.5).abs() < 3.0, "héros à l'entrée: {:?}", (h.x, h.y));
@@ -2892,7 +2990,7 @@ mod tests {
         };
         // Town → Blood Moor GÉNÉRÉE (levelsId 2, DrlgType 3).
         assert!(walk_to(&mut g, 282, 107), "warp town→bloodmoor (générée) a échoué");
-        assert!(g.level_info_json().contains("Blood Moor"));
+        assert!(g.level_info_json().contains("La Lande sanglante"));
         let world = g.world.as_ref().unwrap();
         let h = *world.hero();
         assert!(world.is_walkable(h.x as i32, h.y as i32), "héros posé hors marchable");
@@ -2929,7 +3027,13 @@ mod tests {
         // Voisins Vis/Warp exposés dans level_info (W04, append-only).
         let info: Value = serde_json::from_str(&g2.level_info_json()).unwrap();
         let neighbors = info["neighbors"].as_array().expect("neighbors exposés");
-        assert!(neighbors.iter().any(|n| n["id"] == 8 && n["name"] == "Den of Evil"));
+        // W04 : voisins Vis/Warp exposés (append-only) ; W18 : noms fr des TBL
+        // (string.tbl 5048 « Le Repaire du Mal »).
+        assert!(
+            neighbors
+                .iter()
+                .any(|n| n["id"] == 8 && n["name"] == "Le Repaire du Mal")
+        );
     }
 
     // --- ARBRE DE COMPÉTENCES (C2/C3/C4/C5, mission arbre 2026-10-23) ------

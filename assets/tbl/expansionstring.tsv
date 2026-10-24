@@ -1,0 +1,2819 @@
+index	key	text
+0	A4Q2ExpansionSuccessTyrael	37\nLouée soit la Lumière ! Vous avez \naccompli l'impossible ! \n \nDiablo et Méphisto ont été renvoyés \ndans les Sombres Abysses qui leur ont \ndonné naissance et les pierres d'âme \ncorrompues ont été détruites.\n \nMalheureusement, tandis que vous \ncombattiez ici, Baal était toujours sur \nle plan des mortels, à bâtir une armée \ndémoniaque. Celle-ci est désormais à la \nrecherche de la Pierre-Monde, la \nsource originelle des pierres d'âme et \nde leur puissance, et ses troupes \nrépandent le chaos sur leur passage. \nEIles se sont profondément avancées \ndans les terres barbares, se dirigeant \ndroit sur le sommet du Mont Arréat !\n \nBaal sait, héros mortel ! C'est là qu'est \nconservée la Pierre-Monde sacrée !\n \nPassez maintenant le portail que j'ai \nouvert pour vous. Il vous mènera à la \ncité barbare d'Harrogath, le dernier \nbastion de l'Ordre qui subsiste sur les \npentes de l'Arréat.\n
+1	A4Q2ExpansionSuccessCain	40\nJe savais que vous aviez un grand \npotentiel, mon ami. Votre action a été \nfantastique.\n \nBien que mes ancêtres aient souvent \ncombattu les Trois et leurs légions, j'ai \nvécu une vie d'érudit et d'ermite. Je suis \nheureux de savoir que mon savoir vous \na été utile.\n \nIl est temps pour moi de partir. Les \nPortes des Cieux sont des merveilles à \nn'en pas douter, mais j'espère ne pas \nles contempler avant encore de \nnombreuses années.\n \nAllez parler à Tyrael pour quitter cet \nendroit, maintenant !\n
+2	AncientsAct5IntroGossip1	37\nNous sommes les esprits des \nNephalims, les Anciens. Nous avons été \nchoisis pour garder le Mont Arréat où \nest conservée la Pierre-Monde. Peu \nsont dignes de l'approcher, moins \nencore comprennent son véritable \npouvoir.\n \nAvant d'entrer, vous devrez nous \nvaincre.\n
+3	CainAct5IntroGossip1	38\nJe suis étonné que cet endroit n'ait pas \nété souillé. Tout ce que Baal, le \nSeigneur de la Destruction, a rencontré \nsur son passage n'est plus que ruines.\n \nCes barbares doivent réellement être les \nlégendaires gardiens du Mont Arréat. \nC'est un peuple fier et endurci. Ne vous \nattendez pas à être chaleureusement \nreçu, les étrangers sont rares dans \nleur contrée.\n \nPeut-être puis-je gagner leur confiance. \nJe vais passer un peu de temps avec \nleur peuple et essayer de les \ncomprendre. Je vous ferai savoir ce \nque j'apprendrai.\n
+4	CainAct5Gossip1	48\nAvec les engeances démoniaques, la \ntaille n'est pas la mesure du danger. \nDes démons qui ne font pas la moitié \nd'un homme peuvent tuer d'un geste, et \nune meute démoniaque peut écraser \ntout ce qui se dresse sur son passage.\n
+5	CainAct5Gossip2	52\nBien que ces Barbares soient réputés \ndans tous les royaumes pour leur \nférocité au combat, ils sont également \ncapables de faire montre de grande \ncompassion. \n \nIls s'entraînent depuis toujours pour \nune bataille annoncée par leurs \nlégendes, qui doit décider du destin du \nmonde.\n
+6	CainAct5Gossip3	45\nL'ange Tyrael surveille les gardiens \nd'Arreat depuis toujours. Je ne crois \npas que Baal et Tyrael soient venus \npour s'arracher quelques âmes. Ils \nsont ici pour mettre fin à un conflit \naussi ancien que l'univers lui-même.\n
+7	CainAct5Gossip4	44\nLorsque j'étais parmi les Horadrims, \nnous débattions souvent de la nature \ndu Mont Arreat.\n \nNous savions que les clans barbares, \ninvestis d'une mission sacrée, \ngardaient jalousement la montagne. \nMais beaucoup considèrent leur zèle \ncomme une simple superstition... alliée \nà une hostilité naturelle envers tous les \nétrangers.\n \nLes Horadrims qui vinrent escalader \nl'Arreat n'ont plus jamais fait parler \nd'eux... Et pourtant je ne pense pas que \nles Barbares les aient tués.\n
+8	CainAct5Gossip5	44\nTous les maîtres des arcanes \nconnaissent l'existence du Mont Arréat, \nmais peu comprennent sa vraie nature. \nC'est le nexus d'une puissance sans \nmesure.\n \nIl est de mauvais augure que le \nSeigneur de la Destruction se précipite \nvers son sommet avec une telle \nopiniâtreté. J'ai peur pour le monde \nentier que Baal ne parvienne à ses fins.\n
+9	CainAct5Gossip6	48\nJ'ai passé des décennies à essayer de \ncomprendre les forces qui régissent le \nmonde. Mais au vu de ce qui se passe, \nje réalise à quel point je sais peu de \nchoses. \n \nJe vous assisterai de mon mieux, mon \nami.\n
+10	CainAct5Gossip7	50\nBien que les Patriarches du conseil \nd'Harrogath ne soient plus, de \nnombreux jeunes chefs sont capables \nde les remplacer. Anya a le courage et \nl'intelligence nécessaires pour les \nguider, s'ils survivent à cette \ncatastrophe.\n
+11	CainAct5Gossip8	46\nHa, Anya. Un magnifique exemple de la \nforce et de la féminité... \n \nElle me rappelle les prêtresses de \nZakarum que j'ai connues dans ma \njeunesse. Saviez-vous qu'elles ne font \npas voeu de chasteté ?\n
+12	CainAct5Gossip9	53\nIl est heureux que cette ville dispose \nd'un forgeron aussi talentueux. \n \nLe travail de Larzuk sera l'allié de votre \nsavoir-faire. En fait, il aurait \nparfaitement eu sa place parmi les \nHoradrims.\n
+13	CainAct5Gossip10	52\nJe crois que les pierres d'âme sont au \ncoeur de ce conflit. Si seulement cet \nimbécile de Marius n'était pas \nintervenu, Baal serait toujours \nemprisonné dans Tal Rasha.\n
+14	AnyaAct5IntroGossip1	52\nVous avez prouvé que vous étiez un \nvéritable héros, tant à moi qu'à mon \npeuple.\n \nNous vivons des jours sombres, \nguerrier. J'espère que vous saurez \nmettre un terme au règne de Baal.\n \nLe Conseil des Patriarches n'est plus. \nMon père, Aust, a également disparu. \nLa seule chose qui nous empêche de \nsombrer dans le désespoir complet est \nla promesse d'une vengeance contre \nBaal.\n
+15	AnyaGossip1	56\nMaintenant que les Patriarches sont \ntous morts, je ne sais pas qui va guider \nmon peuple vers des jours moins \nsombres. Je devais prendre la suite de \nmon père, mais ce fardeau est trop \nlourd pour mes seules épaules.\n \nNous sommes un peuple au sang fort. \nJe ferai ce que je peux et le destin fera \nle reste.\n
+16	AnyaGossip2	76\nLes légions de Baal ne sont pas à \nsous-estimer. Dans leur soif de sang, \nelles sont prêtes à se sacrifier pour \nvous détruire.\n
+17	AnyaGossip3	62\nDe nombreux étrangers pensent que les \ncontes fantastiques à propos de nos \nancêtres, les Anciens, ne sont que des \nfables. Mais je pense que les Anciens \nétaient autrefois plus que des humains. \nQue l'humanité n'est plus que l'ombre \nde ce qu'elle était.\n
+18	AnyaGossip4	47\nLorsque j'étais enfant, les Patriarches \nnous racontaient des histoires sur la \nmontagne, sur sa puissance... et sur la \nmission du peuple barbare qui a juré de \nla protéger.\n \nBaal ne se contente pas de nous voler \nnotre terre. A chaque pas qu'il fait sur \nla montagne, il nous vole un peu de ce \nqui fait notre peuple.\n
+19	AnyaGossip5	60\nJe suis vraiment heureuse que vous \nsoyez là, guerrier. Peut-être les choses \nauraient-elles été différentes si nous \navions demandé de l'aide aux royaumes \nvoisins. Nous sommes parfois fiers \njusqu'à la stupidité...\n
+20	AnyaGossip6	45\nMon père, Aust, étaient l'un des rares \nPatriarches suffisamment sages pour \ncomprendre qu'il nous faudrait une \naide extérieure contre les légions de \nBaal. Il pensait que ce conflit \nconcernait le monde dans son \nensemble, et pas simplement notre \npatrie. Il disait que le Mont Arréat était \naussi nécessaire à la survie du monde \nentier que le pain et l'eau pour nous. Je \npense qu'il avait raison.\n
+21	AnyaGossip7	45\nQual-Kehk avait une telle confiance en \nses talents qu'il frisait l'arrogance, \nmais dès les premiers jours du siège, il \na été surpassé par Baal. Bien qu'il nous \nait évité une destruction totale et \nimmédiate, nous avons perdu plus du \ntiers de nos guerriers.\n \nPersonne ne se sent plus responsable \nde ces morts que lui. Il ne l'admet sans \ndoute pas, mais votre présence lui a \nredonné espoir, guerrier.\n
+22	AnyaGossip8	68\nSi Larzuk chantait et dansait ne \nserait-ce qu'à moitié aussi bien qu'il \nforge, il aurait déjà une épouse. \nRegardez-moi ces épaules !\n
+23	AnyaGossip9	56\nNihlathak était le dernier de nos \nPatriarches, et son rôle consistait à \nprotéger la montagne. Seul, il a essayé \nde nous guider à travers la période la \nplus sombre de notre histoire, mais il \nn'a pas mieux réussi que le reste \nd'entre nous.\n \nJe ne peux lui pardonner sa traîtrise, \nmais j'en tire mes leçons.\n
+24	AnyaGossip10	62\nNotre peuple pense que les Anciens qui \nprotègent le Mont Arréat sont assez \npuissants pour arrêter Baal. \nMalheureusement, le Seigneur de la \nDestruction a fait la démonstration \nd'un tel pouvoir qu'il a sapé notre \nconfiance.\n
+25	LarzukAct5IntroGossip1	66\nJe suis Larzuk, le forgeron. Mes \nancêtres furent parmi les artisans \nforgerons les plus habiles d'Harrogath.\n \nMalheureusement, mes réserves \ns'épuisent jour après jour, sans pour \nautant que les démons qui sont à nos \nportes s'affaiblissent.\n \nJe crains de devoir bientôt abandonner \nle marteau et l'enclume pour porter une \népée.\n
+26	LarzukAct5IntroAmaGossip1	56\nAinsi, vous êtes une Amazone. J'avais \nentendu des rumeurs à votre propos. \nVos armes inhabituelles sont un défi à \nmes compétences, mais je suis prêt à \nessayer.\n \nJe suis Larzuk, le forgeron. Mes \nancêtres comptent parmi les artisans \nforgerons les plus habiles d'Harrogath.\n \nMalheureusement, mes réserves \ns'épuisent jour après jour, sans pour \nautant que les démons qui sont à nos \nportes s'affaiblissent.\n \nJe crains de devoir bientôt abandonner \nle marteau et l'enclume pour porter une \népée.\n
+27	LarzukGossip1	63\nJ'ai entendu dire que les Amazones \nexcellaient à l'art de tuer à distance. De \nce que j'ai pu en voir, c'est le meilleur \nmoyen de combattre les légions \ninfernales.\n \nVous êtes toutes aussi... grandes ?\n
+28	LarzukGossip2	70\nPourquoi diantre avez-vous quitté vos \nîles paradisiaques pour venir \ncombattre dans nos contrées glacées ? \nPeut-être, si nous survivons à cette \naffaire, voyagerons-nous ensemble \npour rentrer chez vous.\n
+29	LarzukGossip3	76\nCes hurlements infernaux vous \nempêchent-ils de dormir la nuit, vous \naussi ? Certains pensent qu'il s'agit de \nhurlements d'animaux, mais je n'ai \njamais entendu de bêtes qui émettent \nde tels sons.\n
+30	LarzukGossip4	76\nLes forces démoniaques utilisent nos \npropres tours et nos propres \nbarricades contre nous. Je pense qu'il \nserait plus sage d'éliminer ces démons \nà découvert avant qu'ils ne prennent \nnos fortifications.\n
+31	LarzukGossip5	68\nLe désespoir de Nihlathak se répand tel \nun venin et son attitude n'est pas celle \nd'un Patriarche de sa stature. Je pense \nque nous nous en sortirons mieux sans \nlui.\n
+32	LarzukGossip6	68\nJ'ai proposé à Qual-Kehk quelques idées \npour briser le siège, mais il les a toutes \nrepoussées. Est-ce parce que je n'ai \npas de cicatrices ou parce qu'il croit \nque je ne sais pas me battre ?\n
+33	LarzukGossip7	59\nD'après la légende, le sommet du Mont \nArréat est gardé par les esprits de nos \nancêtres. Notre peuple n'a pas le droit \nd'escalader la montagne jusqu'au \nsommet, mais certains voyageurs \nétrangers s'y sont essayés. Aucun n'est \njamais revenu.\n
+34	LarzukGossip8	69\nLa ville est pleine d'animation lorsque \nnous célébrons une victoire. Nous \nautres Barbares, nous nous entraînons \ndepuis l'enfance à l'art de combattre et \nnous fêtons la victoire avec autant \nd'ardeur.\n \nVous n'auriez pas rapporté quelques \ntonneaux de bière ?\n
+35	LarzukGossip9	60\nTous les jours, je perds un de mes amis \nau combat, tandis que je m'acharne sur \nmon enclume sans prendre de risques. \nSi seulement nous n'avions pas tant \nbesoin d'armes, je pourrai aller \ncombattre et faire ma part.\n \nBonne chance à vous, guerrier.\n
+36	LarzukGossip10	55\nA simple titre d'information... L'or que \nvous me versez ne reste pas dans mes \npoches. La plus grande part sert à \npayer les métaux dont j'ai besoin pour \nfabriquer armes et armures. Le reste, \nce que je peux économiser, est reversé \nà Malah et Qual-Kehk pour les autres \nfournitures.\n
+37	MalahAct5IntroGossip1	37\nMoi, Malah, je vous souhaite la \nbienvenue à Harrogath, dernier bastion \nde l'Ordre sur le Mont Arréat. Si vous \navez l'intention de vaincre Baal, le \nSeigneur de la Destruction, vous avez \nfrappé à la bonne porte.\n \nBaal sème le chaos et la destruction sur \nla montagne. Ses légions assiègent \nnotre ville et Qual-Kehk et ses hommes \nne parviennent pas à les repousser. \nBaal est toujours dans la montagne, à \nchercher quelque chose qui m'est \ninconnu.\n \nTous nos Patriarches, à l'exception de \nNihlathak, se sont sacrifiés afin de \nmettre en place un ward de protection \nautour d'Harrogath.\n \nCertains parmi nous, dont Nihlathak, \nn'apprécient pas votre présence. Nous \nsommes un peuple fier et il n'est pas \nfacile d'accepter une aide étrangère. \nPour ma part, je me réjouis que vous \nsoyez là.\n \nSi vous avez besoin de soins ou de \npotions, venez me voir. Larzuk s'occupe \ndes armes, armures et autres \nréparations. Nihlathak, malgré ses \nmauvaises dispositions, pourrait vous \naider pour les autres fournitures. \nEnfin, Qual-Kehk, notre chef de guerre, \nmène les troupes qu'il nous reste dans \nnotre combat contre Baal.\n
+38	MalahAct5IntroSorGossip1	40\nUne ensorceleuse... Ici à Harrogath ?\n \nIl fut un temps, lorsque j'étais enfant, \noù je pensais être destinée à devenir \nl'une des vôtres. Mon savoir n'a \ncependant jamais été bien grand. Bien \nque je sois capable de soigner \npratiquement toute blessure, je ne peux \npas faire grand chose contre Baal. \nMais il suffit ! Je perds trop de temps à \nruminer et j'en oublie mes manières.\n \nMoi, Malah, je vous souhaite la \nbienvenue à Harrogath, dernier bastion \nde l'Ordre sur le Mont Arreat. Si vous \navez l'intention de vaincre Baal, le \nSeigneur de la Destruction, vous avez \nfrappé à la bonne porte.\n \nBaal sème le chaos et la destruction sur \nla montagne. Ses légions assiègent \nnotre ville et Qual-Kehk et ses hommes \nne parviennent pas à les repousser. \nBaal est toujours dans la montagne, à \nchercher quelque chose qui m'est \ninconnu.\n \nTous nos Patriarches, à l'exception de \nNihlathak, se sont sacrifiés afin de \nmettre en place un ward de protection \nautour d'Harrogath.\n \nCertains parmi nous, dont Nihlathak, \nn'apprécient pas votre présence. Nous \nsommes un peuple fier et il n'est pas \nfacile d'accepter une aide étrangère. \nPour ma part, je me réjouis que vous \nsoyez là.\n \nSi vous avez besoin de soins ou de \npotions, venez me voir. Larzuk s'occupe \ndes armes, armures et autres \nréparations. Nihlathak, malgré ses \nmauvaises dispositions, pourrait vous \naider pour les autres fournitures. \nEnfin, Qual-Kehk, notre chef de guerre, \nmène les troupes qu'il nous reste dans \nnotre combat contre Baal.\n
+39	MalahAct5IntroBarGossip1	39\nVous avez fait un long voyage pour \nnous revenir, Barbare. Harrogath a \nbeaucoup changé depuis votre départ. \nNotre patrie est difficile à reconnaître \ntant elle est souillée par le mal.\n \nJe suis parvenue à survivre jusqu'à \nprésent. Vous avez connu votre part de \nsouffrances également, j'en suis \ncertaine. Vous revoir en vie réjouit mon \ncoeur. Je prie que vous puissiez nous \naider à sortir de ce cauchemar.\n \nBaal sème le chaos et la destruction sur \nla montagne. Ses légions assiègent \nnotre ville et Qual-Kehk et ses hommes \nne parviennent pas à les repousser. \nBaal est toujours dans la montagne, à \nchercher quelque chose qui m'est \ninconnu.\n \nNihlathak est le dernier survivant du \nConseil des Patriarches, mais je crains \nqu'il n'ait changé dernièrement. Les \nautres Patriarches se sont sacrifiés \nafin de mettre en place un ward de \nprotection autour d'Harrogath. Si \nNihlathak se montre brusque avec \nvous, c'est certainement qu'il se sent \nresponsable de notre situation. Il \nn'apprécie guère d'envoyer toujours \nplus des nôtres vers une mort certaine.\n \nLes choses ont bien changé depuis votre \ndépart et j'ai peur qu'il nous reste bien \npeu d'espoir.\n \nSi vous avez besoin de soins ou de \npotions, venez à moi. Allez voir Larzuk \npour ce qui est des armes, armures et \nautres réparations. Nihlathak, malgré \nses mauvaises dispositions, pourrait \nvous aider pour les autres fournitures. \nEnfin, Qual-Kehk, notre chef de guerre, \nmène les troupes qu'il nous reste dans \nnotre combat contre Baal.\n
+40	MalahGossip1	50\nJe connais les pouvoirs dont dispose \nune ensorceleuse. Si nous survivons au \ncourroux de Baal, je serais honorée de \nvoir ce dont vous êtes capable et, \npeut-être, que vous m'appreniez \ncertains de vos tours.\n \nJe suis sans doute vieille, mais \ncertainement pas moribonde.\n
+41	MalahGossip2	42\nJe sais que vous n'avez pas quitté mon \nfils Bannuk en bons termes. Il ne \ncomprenait pas le besoin d'aventure et \nde découverte qui vous a poussé à \nnous quitter. Mais bien que Bannuk ne \nl'ait jamais avoué, avec l'âge il a \ndéveloppé les mêmes envies. Je l'ai vu \ndans ses yeux.\n \nQuel dommage que je ne l'ai pas poussé \nà partir avec vous. Il serait peut-être \nencore en vie aujourd'hui.\n
+42	MalahGossip3	55\nAutrefois considérées comme le refuge \nde notre peuple, les Grottes de Glace \nne nous protègent plus des hordes \ndamnées. Il s'y trouve des créatures \nqui peuvent geler votre coeur avant de \ns'en repaître.\n
+43	MalahGossip4	88\nIl est peu prudent de tourner le dos à \nl'ennemi sur le champ de bataille, même \ns'il est déjà mort.\n
+44	MalahGossip5	53\nCette bataille épuise nos guerriers. \nCeux qui parviennent à revenir des \ncombats sur la montagne affirment \navoir vu des anges qui volaient. Ces \nchoses volaient sans doute, mais ce ne \nsont assurément pas des anges.\n
+45	MalahGossip6	48\nPeut-être avez-vous entendu parler de \nla terrible mort de mon fils lors d'un \ncombat contre les légions de Baal. Il \nétait mon dernier enfant en vie...\n \nLe serment de compassion que j'ai fait \nne concerne que les humains. \nTaillez-les en pièces, guerrier, tous \nautant qu'ils sont.\n
+46	MalahGossip7	65\nLes catapultes sont des machines \ninfernales, faites de chair de démon \nfusionnée avec de l'acier. Prenez garde.\n
+47	MalahGossip8	48\nQual-Kehk est un bon chef, mais les \npertes subies sont une lourde charge \nsur ses épaules. Il est impatient parce \nqu'il juge la valeur d'un guerrier au \ncombat, pas sur des mots. \n \nVous devez vous montrer digne de sa \nconfiance.\n
+48	MalahGossip9	50\nLarzuk a une âme bonne, mais son \nesprit est parfois confus.\n \nUne fois, il m'a demandé de lui donner \nvingt de mes meilleures peaux de \nmouton. Il disait qu'il allait les remplir \navec de l'air chaud et qu'il flotterait \nainsi au-dessus du champ de bataille \npour espionner les légions de Baal !\n \nJ'ai peur que ce siège ne soit en train de \nle rendre fou.\n
+49	MalahGossip10	80\nPrenez garde, guerrier. J'ai de \nl'expérience, mais la résurrection \nexcède mes compétences.\n
+50	MalahGossip11	50\nJe prie pour qu'un jour la neige soit \nmaculée d'un autre sang que le nôtre. \nPeut-être ce jour viendra-t-il... \nPeut-être pas...\n \nMais je m'emporte... Que puis-je faire \npour vous aider ?\n
+51	MalahGossip12	60\nVotre or est fort utile. Les fournitures \ndont j'ai besoin sont rares et chères. \nLorsque nous trouvons un fournisseur, \nnous devons payer des fortunes...\n
+52	MalahGossip13	45\nA l'exception de Qual-Kehk, mon peuple \nne voit pas ce que je pressens... le \nmassacre qui nous attend. Nos héros \nles plus braves et les plus forts \nviennent en rampant me supplier de les \naider. Je fais ce que je peux, en \nsoignant ceux qui peuvent l'être et en \npréparant les autres à l'inévitable.\n
+53	NihlathakAct5IntroGossip1	42\nHé bien. Avec ce siège nous manquons \nde tout... sauf d'imbéciles.\n \nQue faites-vous ici, étranger ? \nEtes-vous un vautour venu se repaître \ndes restes de nos guerriers ?\n \nQuoi qu'il en soit, ce n'est pas un \nendroit où vous pouvez vous faire un \nnom. C'est à nous de protéger la \nmontagne. Ce n'est qu'une question de \ntemps avant que nous ne repoussions \nles légions infernales.\n
+54	NihlathakAct5IntroAssGossip1	35\nHé bien... Un assassin !\n \nQue faites-vous ici ? Hum ? Bien que \ntous vous soient reconnaissants de \nvotre présence dans notre ville, vous \nn'auriez pas dû faire ce voyage.\n \nJe peux personnellement affirmer que \nvos compétences ne sont pas requises \nici. Vous serviriez bien mieux votre clan \nailleurs.\n
+55	NihlathakAct5IntroNecGossip1	36\nHaaa, un nécromancien.\n \nSi j'admire le courage dont vous faites \npreuve lorsque vous cherchez le \npouvoir du côté sombre de l'Art, nous \nn'avons que faire de vos compétences \nici. La bataille tournera bien vite à \nnotre avantage sans qu'il soit \nnécessaire que vous vous en mêliez.\n \nPourtant, j'aurais dû me douter que l'un \nd'entre vous viendrait ici. Vous êtes \ncomme un papillon autour d'une \nflamme, attiré par sa propre mort. \nCela vous nourrit, à tous points de vue, \nnon ?\n
+56	NihlathakGossip1	44\nSi vous cherchez des traîtres, assassin, \nregardez du côté de Larzuk. C'est le \nseul dans cette ville qui ait échappé à \nla fièvre rouge au printemps dernier. Il \naffirme que sa 'bonne fortune' est liée \nau fait qu'il se lave les mains avant de \nmanger. Très suspect...\n
+57	NihlathakGossip2	56\nQue faites-vous ici, étranger ? \nEtes-vous un vautour venu se repaître \ndes restes de nos guerriers ?\n \nQuoi qu'il en soit, ce n'est pas un \nendroit où vous pouvez vous faire un \nnom. C'est à nous de protéger la \nmontagne. Ce n'est qu'une question de \ntemps avant que nous ne repoussions \nles légions infernales.\n
+58	NihlathakGossip3	65\nQual-Kehk ne sert à rien. Il a envoyé \nsans réfléchir nos guerriers à leur \nmort, pensant que les légions de Baal \nse battraient comme des hommes. Mais \ntout le monde sait que ce n'est pas le \ncas.\n
+59	NihlathakGossip4	60\nLes hordes démoniaques ont acquis une \npuissance sans égal, aidées en cela par \nnos erreurs. Mais j'ai peut-être trouvé \nun moyen de les corriger...\n
+60	NihlathakGossip5	42\nHo oui.... Je connais nos guerriers \ndepuis qu'ils sont enfants. Malah \nréparait leurs os brisés et leur donnait \ndes poudres pour la fièvre. Ils \nreviennent maintenant la voir avec des \nblessures qui ne guériront jamais.\n \nJe suis fatigué... Laissez-moi.\n
+61	NihlathakGossip6	108\nSi vous n'avez rien d'utile pour moi, \npassez votre chemin !\n
+62	NihlathakGossip7	80\nLe père d'Anya était un ami proche. Il y \nen a tant à pleurer... Je n'ai pas de \ntemps pour vous !\n
+63	NihlathakGossip8	54\nOn me critique depuis longtemps, et \nplus encore depuis la mort des autres \nPatriarches. Et j'ai appris une chose \navec le temps. Chacun doit faire ce qui \nest juste, peu importe ce que les autres \npensent.\n
+64	NihlathakGossip9	70\nLe Conseil des Patriarches a toujours \npensé qu'il était prêt à combattre les \nTrois. Il est évident que nous n'étions \npas suffisamment préparés.\n
+65	QualKehkAct5IntroGossip1	38\nJe suis Qual-Kehk, Chef de guerre \nd'Harrogath.\n \nVous semblez être un combattant... Un \nsoldat de plus sera utile. Mais \nn'espérez pas qu'on vous pleure, si \nvous tombez au combat.\n \nBaal mérite son titre. Il a ravagé nos \nterres et semé la destruction. Le ward \nde protection placé par les Patriarches \nle garde éloigné, mais le siège qu'il \nnous impose prend son dû au fil du \ntemps. J'ai perdu la plupart de mes \nhommes. D'autres encore sont piégés \ndans les cols.\n \nMais je jure que nous ne serons pas \nvaincus ! Nous combattrons jusqu'au \nbout pour protéger la montagne !\n
+66	QualKehkAct5IntroPalGossip1	40\nUn paladin ! J'ai souvent entendu parler \ndes vôtres.\n \nLorsque j'étais un jeune guerrier, j'ai \nmême envisagé de faire le pèlerinage \nde Kurast. Mais j'étais jeune et fou. Ma \nplace a toujours été ici pour protéger \nHarrogath et le Mont Arréat.\n \nJe suis Qual-Kehk, Chef de guerre \nd'Harrogath.\n \nVous semblez être un combattant... Un \nsoldat de plus sera utile. Mais \nn'espérez pas qu'on vous pleure, si \nvous tombez au combat.\n \nBaal mérite son titre. Il a ravagé nos \nterres et semé la destruction. Le ward \nde protection placé par les Patriarches \nle garde éloigné, mais le siège qu'il \nnous impose prend son dû au fil du \ntemps. J'ai perdu la plupart de mes \nhommes. D'autres encore sont piégés \ndans les cols.\n \nMais je jure que nous ne serons pas \nvaincus ! Nous combattrons jusqu'au \nbout pour protéger la montagne !\n
+67	QualKehkAct5IntroDruGossip1	40\nUn druide à Harrogath ! En \nsommes-nous donc réduits à cela ?\n \nAprès les guerres des mages, je pensais \nque nous ne reverrions jamais de \ndruides ici. Vous prenez un gros \nrisque.\n \nPour être franc, je n'ai jamais eu \nconfiance en ceux qui changent de \nforme, mais je respecte votre \nrecherche de l'équilibre et de la paix. \nAinsi, si vous nous faites suffisamment \nconfiance pour entrer dans nos murs, \nje vous ferai suffisamment confiance \npour vous laisser y rester.\n \nJe suis Qual-Kehk, Chef de guerre \nd'Harrogath.\n \nVous semblez être un combattant... Un \nsoldat de plus sera utile. Mais \nn'espérez pas qu'on vous pleure, si \nvous tombez au combat.\n \nBaal mérite son titre. Il a ravagé nos \nterres et semé la destruction. Le ward \nde protection placé par les Patriarches \nle garde éloigné, mais le siège qu'il \nnous impose prend son dû au fil du \ntemps. J'ai perdu la plupart de mes \nhommes. D'autres encore sont piégés \ndans les cols.\n \nMais je jure que nous ne serons pas \nvaincus ! Nous combattrons jusqu'au \nbout pour protéger la montagne !\n
+68	QualKehkGossip1	55\nCe sera un honneur d'avoir un guerrier \nde la Lumière pour combattre côte à \ncôte avec mes hommes. Je peux voir \nque votre foi vous donne une grande \nforce, paladin, mais n'espérez pas \nqu'elle vous mette à l'abri du danger.\n
+69	QualKehkGossip2	53\nHarrogath a grand besoin de vos \npouvoirs, noble druide. Cependant, \nêtes-vous certain que ceux-ci seront \nsuffisants pour faire face au \ndéferlement de puissance qui nous \nattend ?\n
+70	QualKehkGossip3	41\nLa mort du fils de Malah a été une \ngrande tragédie. C'était notre meilleur \narcher. Alors qu'il menait une \ncampagne héroïque contre les forces \nde Baal, il a été transpercé par la lance \nd'un démon. La blessure était telle \nque... à dire vrai, même Malah admet \nque sa mort rapide fut une bénédiction.\n
+71	QualKehkGossip4	55\nNous avons perdu beaucoup d'hommes \nbien entraînés à cause des machines de \nguerre de Baal. Elles ont une grande \nportée. Elles sont cependant \nvulnérables, si l'on parvient à les \napprocher.\n
+72	QualKehkGossip5	83\nLes légions de Baal sont innombrables, \nmais éliminez leurs chefs et elles \nperdent confiance.\n
+73	QualKehkGossip6	53\nAu début, des groupes de nos meilleurs \néclaireurs étaient pris en embuscade \npar des démons qui sortaient de nulle \npart. Les survivants ont souvent \névoqué une étrange créature qui \nflottait à distance.\n \nPeut-être que l'éliminer pourrait éviter \nquelques désagréments.\n
+74	QualKehkGossip7	65\nC'est une bataille comme je n'en ai \njamais connue. Alors que nous \nrationnons le pain et l'eau, les hordes \ndémoniaques festoient la nuit de notre \nsang et de notre chair.\n
+75	QualKehkGossip8	42\nLarzuk est un forgeron de talent, mais il \na la tête farcie d'idées étranges.\n \nL'autre jour, il est venu me présenter un \nplan pour briser le siège. Il voulait \nremplir des tuyaux avec de la poudre \nexplosive et des boulets d'acier et... \nComme je disais, des idées étranges.\n
+76	QualKehkGossip9	44\nLes Patriarches étaient de sages \ndirigeants en temps de paix, mais \nmaintenant, la survie de mon peuple \ndépend de moi. Mes hommes et moi \ncombattrons jusqu'à la mort, même si \nl'issue reste incertaine.\n \nJe pensais que rien ne pourrait \ntraverser nos lignes et attaquer la \nmontagne sacrée. Je sais maintenant \nque je me suis lourdement trompé.\n
+77	A5Q1InitLarzuk	47\nAinsi, vous êtes venu gagner cette \nguerre avec nous. Sachez que nous ne \nrespectons pas les oisifs ou les \nvaniteux, étranger.\n \nSi vous êtes là pour vaincre Baal... \nProuvez-le !\n \nAlors même que nous parlons, \nHarrogath subit le siège des légions de \nBaal. Des catapultes font pleuvoir la \nmort jusque devant nos murs.\n \nBaal lui-même gravit la montagne \nsacrée, laissant un de ses généraux les \nplus vicieux mener le combat, Shenk le \nSurveillant. Cette brute sanguinaire \nlance ses troupes au combat avec une \nfrénésie suicidaire.\n \nSi vous voulez vous montrer digne de \nnotre confiance, éliminez ce monstre, \nShenk, qui commande les catapultes \ndevant Harrogath. Si vous y parvenez, \nrevenez me voir et je vous donnerai \nune récompense à la hauteur de vos \nmérites.\n
+78	A5Q1AfterInitLarzuk	125\nVous ai-je dit qu'il y avait des \ncatapultes?\n
+79	A5Q1AfterInitCain	73\nJe pense que mettre fin au siège \nd'Harrogath est le seul moyen de \ngagner la confiance de ce peuple.\n
+80	A5Q1AfterInitAnya	73\nVous avez prouvé que vous pouviez \nsauver des damoiselles en détresse... \nMais savez-vous seulement vous battre \ncontre des créatures plus vicieuses ?\n
+81	A5Q1AfterInitMalah	75\nQual-Kehk et ses hommes combattent \npour briser le siège depuis fort \nlongtemps. Là où le nombre échoue, \nvous réussirez peut-être.\n
+82	A5Q1AfterInitNihlathak	80\nAprès la mort de tant d'hommes, qui \nêtes-vous pour penser accomplir ce \nque nos fiers guerriers n'ont pas su \nachever ?\n
+83	A5Q1AfterInitQualKehk	70\nVous allez combattre Shenk et mettre \nun terme au siège ? Demandez à Malah \nde vous donner les derniers \nsacrements avant d'y aller, étranger.\n
+84	A5Q1EarlyReturnLarzuk	90\nQue se passe-t-il, héros ? Vous doutez \nde votre courage ? Cela arrive à \nchacun de nous.\n
+85	A5Q1EarlyReturnCain	88\nJe comprends votre répugnance, mais il \nest temps de frapper.\n
+86	A5Q1EarlyReturnAnya	55\nCes démons sont ici depuis bien avant \nvotre venue. Ne pouvez-vous rien faire \npour les arrêter ? Votre tâche est \nsimple, guerrier. Trouvez Shenk et \ntuez-le.\n
+87	A5Q1EarlyReturnMalah	64\nCela n'est sans doute pas très \nencourageant, mais vous avez fait \nmieux que la plupart qui sont passés \npar ces portes.\n \nEn ce qui concerne Shenk, \nsouvenez-vous qu'un général n'est rien \nsans ses troupes.\n
+88	A5Q1EarlyReturnNihlathak	73\nQue faites-vous encore ici ? Je pensais \nque vous alliez combattre et mourir.\n \nAllez-y... Et faites vite..\n
+89	A5Q1EarlyReturnQualKehk	73\nAinsi vous avez survécu. Soit vous êtes \ntrès rapide, soit vous êtes un couard.\n
+90	A5Q1SuccessfulLarzuk	61\nVous êtes un guerrier plus puissant \nencore que je le pensais... Excusez-moi \nde vous avoir sous-estimé.\n \nAfin de prouver ma reconnaissance, je \nvais forger dans l'objet de votre choix \ndes emplacements à sertir. De plus, \nvous aurez désormais accès à mes \nmarchandises au meilleur prix.\n
+91	A5Q1SuccessfulCain	52\nCes catapultes n'avaient rien de \ncommun avec toutes celles que j'ai déjà \npu voir. Vous avez remporté la victoire \nsur Shenk, mon ami, mais Baal a \nencore beaucoup d'avance sur vous.\n
+92	A5Q1SuccessfulAnya	88\nJe commençais à me demander combien \nde temps il vous faudrait pour arrêter \nces monstres. Bon travail.\n
+93	A5Q1SuccessfulMalah	66\nEnfin le siège est terminé. Vous êtes un \nange tombé du ciel. Merci de tout mon \ncoeur.\n
+94	A5Q1SuccessfulNihlathak	51\nMettre fin au siège ne suffit pas à \ngagner mon respect, étranger. Seuls \nceux qui se sacrifient méritent le \nrespect. Et je ne crois pas que vous \nsoyez prêt à vous sacrifier...\n
+95	A5Q1SuccessfulQualKehk	60\nAinsi vous êtes parvenu à mettre fin au \nsiège. Vous êtes plus puissant que je \nne le pensais. Vous avez gagné mon \nrespect.\n
+96	A5Q2InitQualKehk	60\nJe m'inquiète désormais pour mes \nhommes. Certains sont prisonniers des \ndémons de Baal sur le champ de \nbataille. Je n'ose imaginer les \ntourments qu'ils endurent.\n \nLorsque vous irez dans la montagne, \nvoyez si vous les trouvez et pouvez les \nramener.\n
+97	A5Q2AfterInitQualKehk	100\nMes soldats qui sont parvenus à \ns'échapper m'ont dit que les \nprisonniers étaient gardés dans les \nplateaux du Mont Arréat.\n
+98	A5Q2AfterInitCain	76\nJe sais pour l'avoir vécue que la \ncaptivité est un triste sort pour un \nhomme. Retrouvez-les rapidement.\n
+99	A5Q2AfterInitAnya	83\nSi ces hommes ont été traités comme je \nle fus, vous devez les retrouver. Ils ne \nsurvivront pas longtemps.\n
+100	A5Q2AfterInitLarzuk	72\nJ'ai forgé les épées et les armures des \nhommes de Qual-Kehk. Ce sont comme \ndes frères pour moi. Je n'ose pas \nimaginer les souffrances qu'ils \nendurent. Sauvez-les, si vous le \npouvez.\n
+101	A5Q2AfterInitMalah	60\nLes hommes de Qual-Kehk sont \nemprisonnés depuis un certain temps \ndéjà. Je suis certaine qu'ils sont \nfatigués et épuisés. Vous devez les \nprotéger après les avoir libérés.\n
+102	A5Q2AfterInitNihlathak	80\nVous avez prouvé que vous saviez \nprendre des vies, guerrier, mais \nsaurez-vous en sauver ?\n
+103	A5Q2EarlyReturnQualKehk	80\nEtre prudent ne veut pas dire remettre \nles choses au lendemain, guerrier.\n
+104	A5Q2EarlyReturnQualKehkMan	80\nPlusieurs de mes hommes sont encore \nprisonniers, je le sens.\n \nRetrouvez-les. Libérez-les et \nramenez-les-moi.\n
+105	A5Q2EarlyReturnCain	58\nSi vous ne parvenez pas à trouver les \nhommes de Qual-Kehk, vous devriez \nparler à Malah. Elle a soigné ceux qui \nen sont revenus et pourra sans doute \nvous donner des conseils avisés.\n
+106	A5Q2EarlyReturnAnya	102\nVous m'avez bien trouvée dans la \nmontagne, je suis certaine que vous les \nretrouverez, eux aussi.\n
+107	A5Q2EarlyReturnLarzuk	84\nLorsque j'étais enfant, je jouais au \nsoldat dans les barricades de la \nmontagne. Il n'est pas facile de \nretrouver son chemin dans ce \nlabyrinthe de murs.\n
+108	A5Q2EarlyReturnMalah	63\nLes soldats qui sont revenus m'ont \nindiqué qu'un système de barricades \nsert à défendre les cols. Ils disent que \nc'est là que sont gardés les \nprisonniers.\n
+109	A5Q2EarlyReturnNihlathak	50\nAvez-vous la moindre idée des raisons \npour lesquelles les démons ont capturé \nles hommes de Qual-Kehk ? Pourquoi \nnous attaquent-ils ? Et que veut \ntrouver Baal dans cette montagne ?\n \nNon, non. Vous n'en avez aucune idée. \nVous ne savez pas qui vous affrontez.\n
+110	A5Q2SuccessfulQualKehk	45\nJe vous remercie d'avoir sauvé mes \nhommes. Ils m'ont vanté votre \nbravoure. Peut-être avons-nous encore \nune chance de remporter la victoire, \nfinalement.\n \nSi vous le souhaitez, vous pouvez \nengager certains des hommes que vous \navez sauvés. Et prenez cette série de \nrunes. Je les conservais pour créer un \nbouclier orné, mais je pense que vous \nen ferez meilleur usage que moi.\n \nIl faut les placer dans l'ordre adéquat \npour que les effets soient optimaux.\n
+111	A5Q2SuccessfulCain	62\nVous êtes devenu le héros de cette ville, \nmon ami. Les ténèbres se lèvent depuis \nque vous avez apporté la Lumière à \nHarrogath.\n
+112	A5Q2SuccessfulAnya	99\nJe suis certaine que ces hommes vous \nsont aussi reconnaissants de les avoir \nlibérés que je le suis.\n
+113	A5Q2SuccessfulLarzuk	55\nDepuis votre arrivée, Cain nous a \nraconté vos exploits dans les royaumes \ndu sud, où vous avez vaincu Méphisto \net Diablo. Au début, je pensais qu'il \nracontait des histoires, mais je \ncommence à croire qu'il s'agit de la \nstricte vérité.\n
+114	A5Q2SuccessfulMalah	67\nVous êtes une source d'inspiration pour \nmon peuple. Pour ceux que vous avez \nsauvés et pour ceux que vous avez \naidés d'une manière quelconque.\n
+115	A5Q2SuccessfulNihlathak	67\nAinsi vous avez ramené les brebis \négarées au berger. Bien.\n
+116	A5Q3InitMalah	43\nIl y a quelque chose qui m'inquiète et je \ncrois que vous êtes la seule personne \ncapable de m'aider.\n \nAnya, notre alchimiste, fille de l'un des \nPatriarches, a disparu depuis quelque \ntemps. C'est une jeune femme solide et \nforte. Un soir, juste avant votre \narrivée, je l'ai entendu débattre \nvigoureusement avec Nihlathak de la \nmort de son père. Le lendemain, elle \navait disparu.\n \nNihlathak a sa propre version des faits. \nNe le croyez pas. J'ai peur qu'il soit à \nl'origine de sa disparition.\n \nJe vous en prie, retrouvez Anya et \nramenez-la. Elle saura ce qu'il faut \nfaire à propos de Nihlathak.\n
+117	A5Q3AfterInitMalah	85\nPrenez garde lorsque vous parlez à \nNihlathak. Impossible de savoir ce qu'il \npeut dire ou faire.\n
+118	A5Q3AfterInitCain	48\nJ'ai confiance en Malah. Nihlathak \ndistille son venin. Il agit comme si la \nville entière reposait sur ses épaules. Il \nse passe sans doute des choses ici qu'il \npréfère nous cacher.\n
+119	A5Q3AfterInitLarzuk	64\nAnya est une excellente alchimiste, \nmalgré son jeune âge. Depuis que je la \nconnais, elle n'a jamais laissé quoi que \nce soit entraver sa route.\n \nJe n'ai aucun doute sur l'implication de \nNihlathak dans sa disparition. Depuis \nla mort de son père, ils ne s'entendent \nplus du tout.\n
+120	A5Q3AfterInitNihlathak	42\nAnya ? A qui avez-vous parlé ? Cette \nsatanée Malah, j'en suis sûr.\n \nBien, je vais vous dire ce qui s'est \nréellement passé. Anya est venu me \nvoir pour obtenir mes conseils, après \navoir eu une vision de sa mère et de \nson jeune frère piégés dans les grottes \nde glace. Elle était décidée à se porter \nà leur secours.\n \nJe lui ai dit que cette quête était \ninsensée et qu'elle ferait mieux de \nrester dans l'enceinte de nos murs. \nMalheureusement, c'est une jeune fille \ntêtue et elle a refusé de m'écouter.\n \nLe lendemain, elle était partie. Personne \nplus que moi ne regrette sa disparition.\n \nMais si vous voulez devenir le champion \nde Malah, je ne vous en empêcherai \npas.\n
+121	A5Q3AfterInitQualKehk	40\nLe père d'Anya, Aust, était le plus sage \ndes Patriarches. Il est mort avec les \nautres membres du Conseil lorsqu'ils \nérigèrent le ward qui protège la ville. \nC'est ce ward qui garde les démons \nhors d'Harrogath, mais le coût à payer \nfut élevé.\n \nNihlathak, pour sa part, est le seul \nPatriarche qui soit parvenu à échapper \naux démons. Il a réussi, je ne sais \ncomment, à trouver un sanctuaire où \nse cacher tandis que les autres \npérissaient autour de lui.\n \nDepuis ce jour, Nihlathak et Anya sont \nen froid.\n
+122	A5Q3EarlyReturnMalah	50\nS'il s'agissait de quelqu'un d'autre, je \npenserais qu'elle est morte. Mais Anya \na plus de force et de caractère que la \nplupart. Je sais qu'elle est encore en \nvie.\n
+123	A5Q3EarlyReturnCain	53\nL'histoire que raconte Nihlathak est \nvraisemblable, si l'on en croit ce que \nj'ai pu entendre dire d'Anya. Mais les \nmensonges les plus efficaces sont ceux \nqui se dissimulent sous le masque de la \nvérité.\n
+124	A5Q3EarlyReturnLarzuk	66\nFille du Patriarche Aust, Anya est la \nseule personne en dehors de Nihlathak \nqui sache précisément ce que recèle le \nMont Arréat. Je n'aimerais pas que \nnotre destin repose dans les mains de \nNihlathak seul.\n
+125	A5Q3EarlyReturnNihlathak	55\nEcoutez-moi ! Elle est morte ! Si vous \naviez un peu de bon sens, vous \nchercheriez à sauver Harrogath et pas \nune cause perdue comme celle d'Anya.\n
+126	A5Q3EarlyReturnQualKehk	78\nTout le monde a l'impression que \nNihlathak est impliqué dans la \ndisparition d'Anya. Mais pourquoi \naurait-il fait une chose pareille ?\n
+127	A5Q3FoundAnyaMalah	54\nAinsi ce serpent de Nihlathak était à \nl'origine de la disparition d'Anya... Il l'a \npiégé avec sa malédiction.\n \nTenez. Prenez cette potion et donnez-la \nà Anya. Cela devrait la libérer.\n
+128	A5Q3FoundAnyaCain	68\nMon dieu ! Anya a été emprisonnée \ndans la glace par ce félon de \nNihlathak... Peut-être Malah peut-elle \nvous aider.\n
+129	A5Q3FoundAnyaLarzuk	80\nPauvre Anya ! J'aurais du savoir que \nNihlathak était un traître...\n \nSi vous le retrouvez, tuez-le pour moi !\n
+130	A5Q3FoundAnyaQualKehk	70\nLe serpent s'est échappé. Tandis que \nvous étiez parti, Nihlathak a disparu.\n \nJe suis certain qu'Anya sait comment le \nretrouver.\n
+131	A5Q3FoundAnyaAnya	40\n...Ce froid... Héros ! C'est Nihlathak qui \nest responsable de mon sort.\n \nSi vous êtes venu pour m'aider, mon \nseul espoir réside dans les pouvoirs de \nMalah.\n \nVite... Dites-lui que vous m'avez \nretrouvée...\n
+132	A5Q3SuccessfulMalah	46\nMerci de nous avoir ramené Anya. J'ai \ncréé ce sort pour améliorer vos \nrésistances afin de vous récompenser. \nJe sais que ce n'est pas grand chose, \nmais j'espère qu'il vous sera utile.\n \nAllez parler à Anya. Elle a des choses à \nvous dire concernant Nihlathak.\n
+133	A5Q3SuccessfulCain	54\nPour quelqu'un d'aussi jeune, Anya \nmérite un grand respect. Maintenant \nqu'elle est revenue, je vais essayer de \nparler du Mont Arréat avec elle. Vous \ndevriez en faire autant.\n
+134	A5Q3SuccessfulLarzuk	78\nJe n'ai jamais aimé Nihlathak, mais je ne \nl'aurai pas cru capable de nous trahir ! \nJe n'arrive pas à comprendre qu'un \nPatriarche ait pu faire une chose \npareille.\n
+135	A5Q3SuccessfulQualKehk	126\nLibérer Anya est un exploit sans \ncomparaison.\n
+136	A5Q3SuccessfulAnya	66\nMerci, héros, de m'avoir sauvée.\n \nPour vous prouver ma gratitude, je \nvous offre ceci. J'ai demandé à Larzuk \nde forger cet objet sur mesure.\n
+137	A5Q4InitAnya	40\nNihlathak m'a dit qu'il avait conclu un \npacte avec Baal pour protéger \nHarrogath. En échange de la \nmiséricorde de Baal, l'imbécile félon \navait prévu de lui remettre la Relique \ndes Anciens, notre totem le plus sacré. \nCela aurait permis à Baal d'entrer dans \nle Mont Arréat sans que ses \nprotecteurs n'interviennent. J'ai tenté \nd'arrêter Nihlathak, mais il m'a \nemprisonnée dans ce tombeau de \nglace.\n \nNihlathak doit être arrêté avant que le \nmonde ne soit conduit à sa perte ! \nJ'aimerais lui faire rendre son dernier \nsouffle, mais j'ai peur de ne pas avoir \nla force nécessaire.\n \nCe portail que je viens d'ouvrir conduit \ndirectement au repaire de Nihlathak. \nTrouvez-le, tuez-le et ramenez la \nRelique des Anciens. Empêchez-le de \ndétruire ce que nous tentons de \nprotéger depuis des générations.\n
+138	A5Q4AfterInitAnya	100\nAussi nobles soient les intentions de \nNihlathak, rien ne peut excuser ses \nactes.\n
+139	A5Q4AfterInitCain	48\nMalheureusement, je ne sais pas grand \nchose de la Relique. Cependant, si ce \nque disent les autres est vrai, Baal ne \ndoit pas en prendre possession. \nArrêtez Nihlathak avant que tout soit \nperdu.\n
+140	A5Q4AfterInitMalah	62\nMes pires craintes se révèlent fondées. \nNihlathak est devenu fou.\n \nVous devez l'arrêter, avant qu'il ne \nremette la Relique au Seigneur de la \nDestruction !\n
+141	A5Q4AfterInitLarzuk	72\nSauver Anya était une bonne chose. \nMais me parler tandis que Nihlathak \ns'apprête à remettre la Relique à Baal, \nc'est stupide !\n
+142	A5Q4AfterInitQualKehk	50\nJ'ai vu Nihlathak quitter la ville juste \navant que vous retrouviez Anya. Il doit \nêtre puni pour ses actes criminels.\n \nTrouvez-le et ramenez-le, si vous le \npouvez. Il est probable qu'il refuse de \nse rendre et que vous deviez le tuer. \nQu'il en soit alors ainsi.\n
+143	A5Q4EarlyReturnAnya	54\nNihlathak est un traître ! Si Baal obtient \nla Relique, il pourra entrer dans la \nmontagne et semer la destruction !\n \nJe ne parviens pas à croire que \nNihlathak puisse remettre la Relique à \nBaal. C'est insensé qu'il puisse croire \nque Baal tiendra sa part du pacte.\n
+144	A5Q4EarlyReturnCain	48\nQuel terrible tournant dans les \névénements. Je sais que vous devez \navoir l'impression d'arriver toujours \ntrop tard. Mais considérez les choses \nsous un autre angle, mon ami... C'est \nvous qui pourchassez le mal \ndésormais.\n
+145	A5Q4EarlyReturnLarzuk	100\nPourquoi tant de foin ? Tuez Nihlathak, \nc'est tout !\n
+146	A5Q4EarlyReturnMalah	51\nNihlathak n'a jamais été un homme bon. \nMais de là à trahir le monde entier... \nOù donc va reposer son âme...\n
+147	A5Q4EarlyReturnQualKehk	74\nJe vous conseille d'agir rapidement et \navec force. Nihlathak ne peut être à \nmoitié aussi puissant que les monstres \nque vous avez déjà affrontés.\n
+148	A5Q4SuccessfulAnya	44\nVous avez détruit Nihlathak, mais il \nn'avait pas la Relique ! Il l'avait sans \ndoute déjà remise à Baal. Il peut \npénétrer dans le sommet du Mont \nArréat sans affronter les Anciens qui le \nprotègent. Maudit soit Nihlathak !\n \nJe vous remercie d'avoir essayé. \nPermettez-moi d'honorer votre courage \nen inscrivant magiquement votre nom \nsur un objet de votre convenance. C'est \nle moins que je puisse faire.\n
+149	A5Q4SuccessfulCain	85\nPrenez garde. Baal devient plus fort à \nchaque instant.\n
+150	A5Q4SuccessfulLarzuk	88\nQue veut faire Baal dans le Mont \nArréat?\n
+151	A5Q4SuccessfulMalah	65\nAinsi la Relique est perdue. Ne pensons \nplus aux erreurs passées. C'est l'avenir \nqui importe.\n
+152	A5Q4SuccessfulQualKehk	57\nNihlathak était un démon qui trouvera \nsa place parmi les légions damnées des \nEnfers ! Vous avez combattu les \nténèbres sans peur. Je loue votre \ncompétence et votre courage.\n
+153	A5Q5InitQualKehk	46\nA chaque fois que j'entends parler de \nvous, guerrier, vos exploits deviennent \nde plus en plus légendaires.\n \nMais prenez garde. Vous approchez du \nsommet du Mont Arréat. Je ne m'y suis \njamais aventuré. C'est un lieu sacré \npour nous. D'après les légendes, il est \nprotégé par les Anciens, qui empêchent \nquiconque est indigne d'y pénétrer.\n \nVotre réputation ne suffira pas... Les \nAnciens seuls décideront si vous êtes \ndigne.\n \nBonne chance.\n
+154	A5Q5AfterInitQualKehk	42\nLes Anciens ne sont pas nos ennemis. \nSouvenez-vous-en. Ce sont nos \nancêtres, nos dieux.\n
+155	A5Q5AfterInitCain	83\nUn test de combat est un rite de \npassage parfaitement adéquat pour un \nhéros barbare.\n
+156	A5Q5AfterInitAnya	65\nVous n'auriez pas à affronter le test \ndes Anciens si Nihlathak n'avait pas \ntrahi. C'était un imbécile et il mérite de \nsouffrir mille tourments pour l'éternité.\n
+157	A5Q5AfterInitLarzuk	68\nChaque nuit, j'ai prié les Anciens de \nnous apporter la paix... Et maintenant \nvous devez les combattre.\n \nQui dois-je prier désormais, guerrier ?\n
+158	A5Q5AfterInitMalah	61\nEn atteignant le sommet, vous ne serez \nplus un simple guerrier. Si vous \nrevenez, vous serez bien plus.\n
+159	A5Q5EarlyReturnQualKehk	85\nJe vous avais prévenu. Les Anciens ne \nsont pas comme les démons que vous \navez l'habitude de combattre.\n
+160	A5Q5EarlyReturnCain	48\nNous sommes passés par trop \nd'épreuves pour être défaits \nmaintenant, mon ami. Je vous ai vu \naccomplir des quêtes difficiles. Il s'agit \nde l'épreuve la plus ardue, mais vous \npouvez y parvenir.\n
+161	A5Q5EarlyReturnAnya	55\nEcoutez, je dois m'excuser. Je me sens \nresponsable de vos problèmes. Si \nj'étais parvenue à empêcher Nihlathak \nde donner la Relique à Baal, vous \nn'auriez pas à combattre ces fantômes.\n
+162	A5Q5EarlyReturnLarzuk	67\nVous avez marché sur les terres \nfunéraires de nos plus grands \nancêtres. Je ne sais pas si je dois \nm'agenouiller devant vous ou vous \nconspuer pour sacrilège.\n \nEssayez d'avoir le pied léger lorsque \nvous écrasez les orteils des dieux.\n
+163	A5Q5EarlyReturnMalah	68\nNe doutez pas de vous. Je crois que \nvous êtes digne de passer les portes \ndes Anciens, mais vous devez le croire \nvous aussi.\n
+164	A5Q5SuccessfulQualKehk	62\nRemporter la victoire sur les Anciens \nest un exploit incomparable. Cela \nsignifie que vous êtes prêt à affronter \nBaal. Du moins je l'espère...\n
+165	A5Q5SuccessfulCain	60\nVous avez fait vos preuves envers ce \npeuple. Ces gens vous considèrent \ncomme leur guerrier, leur champion.\n
+166	A5Q5SuccessfulAnya	78\nVous êtes un véritable héros. Et tous \nles espoirs de mon peuple repose entre \nvos mains.\n \nSoyez en digne, guerrier.\n
+167	A5Q5SuccessfulLarzuk	78\nLes Anciens vous estiment digne et nous \nde même. Je n'ai plus aucun doute à \nvotre propos.\n \nSalutation, héros !\n
+168	A5Q5SuccessfulMalah	78\nJe savais que les Anciens vous \ntrouveraient digne des secrets du Mont \nArréat. Arrêtez Baal avant qu'il ne \ndétruise tout ce qui est sacré.\n
+169	A5Q6InitAncients	27\nVous êtes digne d'un héros ! Nous \naméliorons vos aptitudes et vous \ndonnons accès au sanctuaire intérieur \ndu Mont Arréat... Où repose la \nPierre-Monde.\n \nPrenez garde. Vous ne serez pas seul. \nBaal, le Seigneur de la Destruction, s'y \ntrouve déjà.\n \nL'Archange Tyrael a toujours été notre \nprotecteur, mais lui non plus ne peut \npas nous aider. Baal empêche en effet \nl'essence spirituelle de Tyrael de \npénétrer dans la chambre de la \nPierre-Monde. Seul vous, un mortel, \npouvez vaincre Baal désormais.\n \nBaal menace la Pierre-Monde et à \ntravers elle, tout le plan d'existence des \nmortels. Vous devez l'arrêter avant \nqu'il ne prenne le contrôle de la Pierre. \nS'il y parvient, Baal pourra briser les \nfrontières qui séparent ce monde des \nEnfers et permettre aux hordes des \nTrois de se répandre sur ce plan tel un \nraz-de-marée.\n \nSi vous fléchissez, le monde que nous \nconnaissons sera perdu à jamais. Vous \nne DEVEZ pas échouer !\n
+170	A5Q6EarlyReturnCain	38\nSouvenez-vous que Baal est parvenu à \nprendre possession de Tal Rasha, l'un \ndes anciens Horadrims les plus \npuissants. Vos combats face à \nMéphisto et Diablo ont été faciles \ncomparé à ce qui vous attend. Le \nSeigneur de la Destruction possède les \nconnaissances de Tal Rasha... Votre \naffrontement risque de faire trembler \nla montagne elle-même.\n
+171	A5Q6EarlyReturnLarzuk	65\nJe ne suis peut-être qu'un forgeron, \nmais je sais ceci... Baal envisage de \ndétruire le monde grâce aux secrets \ndétenus dans la montagne. Il ne faut \npas être un génie pour savoir qu'il faut \nl'arrêter.\n
+172	A5Q6EarlyReturnMalah	66\nVous saviez que cela se terminerait \nainsi. Tuez Baal. Mettez un point final à \ncette lutte.\n
+173	A5Q6EarlyReturnAnya	53\nBaal empêche Tyrael de pénétrer dans \nla chambre de la Pierre-Monde ? Cette \nbataille est véritablement devenue un \ncombat contre les Enfers. Qu'il s'agisse \nou non d'une décision divine, c'est \nvotre combat désormais... Votre \ndestin.\n
+174	A5Q6EarlyReturnQualKehk	66\nVous vous êtes aventuré dans un \nendroit qui dépasse même la légende. \nVous allez affronter un mal que peu \nd'hommes sauraient imaginer.\n \nSoyez prudent, mon ami, et que la \nLumière vous garde.\n
+175	A5Q6SuccessfulTyrael	36\nJe suis très impressionné, mortel. Vous \navez sauvé le monde du péril le plus \ngrave qu'il ait jamais couru et vous \navez vaincu le dernier des Trois. \nMalheureusement, il est trop tard pour \nsauver la Pierre-Monde, elle a été \ndéfinitivement corrompue par les \npouvoirs de Baal.\n \nAu fil du temps, les énergies de la \nPierre-Monde vont se disperser et les \nfrontières des plans s'effriter. Les \narmées des Enfers vont s'engouffrer \ndans ce... sanctuaire... et éradiquer ce \nque vous et les vôtres avez contribué à \nconstruire.\n \nC'est pour cela que je dois détruire la \nPierre-Monde avant que la corruption \nsoit totale. Cet acte changera votre \nmonde à jamais, et moi-même suis \nincapables d'en concevoir toutes les \nconséquences. Mais c'est le seul moyen \nd'assurer la survie de l'humanité.\n \nPartez maintenant, Mortel. J'ai ouvert \nun portail qui vous ramènera en \nsécurité.\n \nPuisse la Lumière Eternelle vous baigner \nde ses rayons, vous et votre \ndescendance, pour ce que vous avez \nfait aujourd'hui. La survie de l'humanité \nest assurée grâce à vous. Par dessus \ntout, vous avez enfin le droit de vous \nreposer.\n
+176	A5Q6SuccessfulAnya	53\nVous avez réalisé l'impossible, héros. \nVous avez vaincu le dernier des Trois, \nc'est une grande victoire pour la \nLumière.\n \nEtrange que vous disiez que la \nPierre-Monde doive être détruite. Les \nprophéties ne parlaient pas de ça. \nPeut-être tout ce pour quoi nous avons \ncombattu sera perdu... Ou peut-être \nn'aurons-nous plus jamais à combattre!\n
+177	A5Q6SuccessfulCain	30\nJe savais que vous remporteriez la \nvictoire sur Baal. Vous avez fait tout ce \nque vous deviez faire, mon ami. Depuis \nque vous m'avez libéré à Tristram, j'ai \neu foi en vous. Ce fut un honneur \nsuprême que de vous assister.\n \nAinsi... La Pierre-Monde a été \ncorrompue par Baal. Et Tyrael doit la \ndétruire. Ne vous inquiétez pas. Quoi \nqui nous attende, j'ai foi en la Lumière.\n \nRetournez maintenant dans la chambre \nde la Pierre-Monde et prenez le portail \nqu'a ouvert Tyrael.\n
+178	A5Q6SuccessfulLarzuk	80\nLes Anciens eux-mêmes vous envieront \nles chansons que nous allons écrire \npour vous.\n \nNe nous oubliez pas ! Adieu, mon ami.\n
+179	A5Q6SuccessfulMalah	55\nSi Tyrael dit que la Pierre-Monde doit \nêtre détruite, c'est qu'elle le doit. Nous \nne pouvons laisser la corruption de \nBaal se répandre. Le monde va \nchanger... Certes. Mais peut-être est-ce \npour le mieux.\n
+180	A5Q6SuccessfulQualKehk	57\nLa destruction de la Pierre-Monde ne \nprésage rien de bon pour notre monde. \nMais j'essaierai de ne pas m'inquiéter... \nAprès tout, des guerriers comme vous \ncombattent pour nous et pour la \nLumière !\n \nAdieu !\n
+181	ktr	[ms]Katar
+182	wrb	[fs]Lame de poignet
+183	ces	[ms]Cestus
+184	clw	[fp]Griffes
+185	btl	[fp]Serres
+186	skr	[fs]Serpe Katar
+187	9ar	[ms]Quhab
+188	9wb	[fs]Pique de poignet
+189	9xf	[ms]Fascia
+190	9cs	[fs]Faux
+191	9lw	[fp]Grandes griffes
+192	9tw	[fp]Grandes serres
+193	9qr	[fs]Serpe Quhab
+194	7ar	[fs]Suwayyah
+195	7wb	[fs]Epée de poignet
+196	7xf	[ms]Poing de guerre
+197	7cs	[ms]Cestus de bataille
+198	7lw	[fp]Griffes sauvages
+199	7tw	[fp]Serres runiques
+200	7qr	[fs]Serpe Suwayyah
+201	7ha	[ms]Tomahawk
+202	7ax	[ms]Petit croissant
+203	72a	[fs]Hache d'Ettin
+204	7mp	[fs]Pique de guerre
+205	7wa	[fs]Hache de beserker
+206	7la	[fs]Hache sauvage
+207	7ba	[fs]Hache d'argent
+208	7bt	[ms]Décapiteur
+209	7ga	[fs]Hache de champion
+210	7gi	[fs]Hache glorieuse
+211	7wn	[fs]Baguette lisse
+212	7yw	[fs]Baguette spectrale
+213	7bw	[fs]Baguette de liche
+214	7gw	[fs]Baguette exhumée
+215	7cl	[ms]Casse-tête
+216	7sc	[ms]Sceptre de puissance
+217	7qs	[fs]Baguette séraphine
+218	7ws	[ms]Caducée
+219	7sp	[fs]Masse du Tyran
+220	7ma	[fs]Masse renforcée
+221	7mt	[fs]Etoile démoniaque
+222	7fl	[ms]Fléau
+223	7wh	[fs]Masse légendaire
+224	7m7	[fs]Masse de l'ogre
+225	7gm	[fs]Bombardone
+226	7ss	[ms]Falcata
+227	7sm	[ms]Ataghan
+228	7sb	[fs]Fine lame
+229	7fc	[ms]Tranchant de l'hydre
+230	7cr	[fs]Epée de phase
+231	7bs	[fs]Epée conquérante
+232	7ls	[fs]Epée mystérieuse
+233	7wd	[fs]Epée mythique
+234	72h	[fs]Epée légendaire
+235	7cm	[fs]Epée des Hautes-Terres
+236	7gs	[fs]Epée de Balrog
+237	7b7	[fs]Epée de champion
+238	7fb	[fs]Epée du colosse
+239	7gd	[fs]Lame du colosse
+240	7dg	[ms]Coutelas d'ossements
+241	7di	[ms]Poinçon de Mithril
+242	7kr	[ms]Coutelas cranté
+243	7bl	[fs]Pique légendaire
+244	7tk	[ms]Coutelas de lancer
+245	7ta	[fs]Hache de lancer
+246	7bk	[ms]Coutelas ailé
+247	7b8	[fs]Hache ailée
+248	7ja	[ms]Javelot d'Hypérion
+249	7pi	[ms]Pilum stygien
+250	7s7	[fs]Lance de Balrog
+251	7gl	[ms]Glaive fantôme
+252	7ts	[ms]Harpon ailé
+253	7sr	[fs]Lance d'Hypérion
+254	7tr	[fs]Pique stygienne
+255	7br	[ms]Prédateur
+256	7st	[fs]Lance fantôme
+257	7p7	[fs]Pique guerrière
+258	7o7	[fs]Hache ogre
+259	7vo	[fs]Vouge du colosse
+260	7s8	[fs]Batteuse
+261	7pa	[fs]Hache mystérieuse
+262	7h7	[fs]Hache de bourreau
+263	7wc	[fs]Batteuse géante
+264	6ss	[ms]Bâton de marche
+265	6ls	[ms]Stalagmite
+266	6cs	[ms]Bâton ancien
+267	6bs	[ms]Shillelagh
+268	6ws	[ms]Bâton de l'Archonte
+269	6sb	[ms]Arc araignée
+270	6hb	[ms]Arc lame
+271	6lb	[ms]Arc d'ombre
+272	6cb	[ms]Grand arc
+273	6s7	[ms]Arc de diamant
+274	6l7	[ms]Arc du croisé
+275	6sw	[ms]Arc de protection
+276	6lw	[ms]Arc de l'Hydre
+277	6lx	[ms]Arc hérissé
+278	6mx	[fs]Arbalète gorgone
+279	6hx	[fs]Arbalète du Colosse
+280	6rx	[fs]Arbalète démoniaque
+281	ob1	[ms]Orbe de l'aigle
+282	ob2	[fs]Sphère sacrée
+283	ob3	[fs]Sphère de brume
+284	ob4	[ms]Orbe enchâssée
+285	as1	[fp]Pélerines
+286	as2	[fp]Genouillères
+287	as3	[ms]Balafreur
+288	as4	[fs]Splaie
+289	as5	[ms]Crochet
+290	as6	[fs]Hampe
+291	as7	[fp]Griffes
+292	am1	[ms]Arc cervier
+293	am2	[ms]Arc adrénal
+294	am3	[fs]Lance de la vierge
+295	am4	[fs]Pique de la vierge
+296	am5	[fs]Javelot de la vierge
+297	ob6	[ms]Orbe rayonnant
+298	ob7	[ms]Globe cristallin
+299	ob8	[fs]Sphère nébuleuse
+300	ob9	[fs]Sphère étincelante
+301	oba	[ms]Tourbillon de cristal
+302	am6	[ms]Arc d'ébène
+303	am7	[ms]Arc de cérémonie
+304	am8	[fs]Lance de cérémonie
+305	am9	[fs]Pique de cérémonie
+306	ama	[ms]Javelot de cérémonie
+307	obb	[fs]Pierre Céleste
+308	obc	[ms]Orbe d'Eldritch
+309	obd	[ms]Coeur de démon
+310	obe	[ms]Orbe du Vortex
+311	obf	[fs]Epine dimensionnelle
+312	amb	[ms]Arc matriarcal
+313	amc	[ms]Arc de Gaïa
+314	amd	[fs]Lance matriarcale
+315	ame	[fs]Pique matriarcale
+316	amf	[ms]Javelot matriarcal
+317	dr4	[ms]Masque de Faucon
+318	dr2	[ms]Casque de Faucon
+319	dr3	[mp]Andouillers
+320	dr1	[fs]Tête de loup
+321	dr5	[ms]Masque de l'esprit
+322	ba1	[ms]Casque macabre
+323	ba2	[ms]Casque ailé
+324	ba3	[ms]Casque à cornes
+325	ba4	[ms]Casque de combat
+326	ba5	[ms]Casque Vengeur
+327	pa1	[fs]Targe
+328	pa2	[fs]Rondache
+329	pa3	[ms]Bouclier héraldique
+330	pa4	[ms]Bouclier d'Aerin
+331	pa5	[ms]Bouclier couronné
+332	ne1	[fs]Tête conservée
+333	ne2	[fs]Tête de zombi
+334	ne3	[fs]Tête décomposée
+335	ne4	[fs]Tête de gargouille
+336	ne5	[fs]Tête de démon
+337	ci0	[ms]Bandeau
+338	ci1	[fs]Couronne
+339	ci2	[fs]Tiare
+340	ci3	[ms]Diadème
+341	uap	[ms]Shako
+342	ukp	[ms]Casque hydre
+343	ulm	[ms]Armet
+344	uhl	[fs]Conque géante
+345	uhm	[ms]Morion
+346	urn	[fs]Couronne
+347	usk	[fs]Tête de démon
+348	uui	[ms]Linceul crépusculaire
+349	uea	[fs]Peau de wyrm
+350	ula	[fs]Carapace de scarabée
+351	utu	[fs]Toison métallique
+352	ung	[fs]Cotte de mailles diamantine
+353	ucl	[fs]Cotte de mailles oubliée
+354	uhn	[fs]Armure d'ossements
+355	urs	[ms]Grand haubert
+356	upl	[fs]Peau de Balrog
+357	ult	[fs]Plate des enfers
+358	uld	[fs]Plate Kraken
+359	uth	[fs]Plate vernie
+360	uul	[fs]Plate d'ombre
+361	uar	[fs]Armure sacrée
+362	utp	[fs]Plate d'Archonte
+363	uuc	[ms]Écu incandescent
+364	uml	[fs]Lune
+365	urg	[ms]Hypérion
+366	uit	[ms]Bouclier normand
+367	uow	[ms]Égide
+368	uts	[fs]Parade
+369	ulg	[mp]Gants de ronce
+370	uvg	[mp]Gants vampiriques
+371	umg	[mp]Gants vampiriques
+372	utg	[mp]Gantelets de croisade
+373	uhg	[mp]Gantelets ogres
+374	ulb	[fp]Bottes de wyrm
+375	uvb	[fp]Bottes caparaçonnées
+376	umb	[fp]Bottes d'ossements
+377	utb	[fp]Bottes resplendissantes
+378	uhb	[fp]Jambières du Myrmidon
+379	ulc	[fs]Ceinture en fils d'araignée
+380	uvc	[ms]Ceinturon vampirique
+381	umc	[fs]Ceinture de Mithril
+382	utc	[fs]Ceinture de troll
+383	uhc	[fs]Ceinture du Colosse
+384	uh9	[ms]Masque osseux
+385	ush	[ms]Repaire du troll
+386	upk	[fs]Barrière tranchante
+387	dr9	[fs]Coiffe sacrée
+388	dr7	[fs]Coiffe du griffon
+389	dr8	[fs]Masque de chasse
+390	dr6	[ms]Heaume alpha
+391	dra	[ms]Masque Totem
+392	ba6	[fs]Barbute 
+393	ba7	[ms]Heaume du  lion
+394	ba8	[ms]Masque rageur
+395	ba9	[ms]Heaume primitif
+396	baa	[ms]Broquel féroce
+397	pa6	[fs]Targe d'Akaran
+398	pa7	[fs]Rondache d'Akaran
+399	pa8	[ms]Bouclier gardien
+400	pa9	[ms]Bouclier armorié
+401	paa	[ms]Bouclier royal
+402	ne6	[ms]Trophée momifié
+403	ne7	[ms]Trophée fétiche
+404	ne8	[ms]Trophée du fossoyeur
+405	ne9	[ms]Trophée du cantor
+406	nea	[ms]Trophée du hiérophante
+407	dre	[ms]Esprit céleste
+408	drc	[ms]Esprit solaire
+409	drd	[ms]Esprit terrestre
+410	drb	[ms]Esprit sanglant
+411	drf	[ms]Esprit onirique
+412	bab	[ms]Heaume du carnage
+413	bac	[ms]Casque des furies
+414	bad	[ms]Heaume du destructeur
+415	bae	[fs]Couronne du conquérant
+416	baf	[fs]Couronne du gardien
+417	pab	[fs]Targe sacrée
+418	pac	[fs]Rondache sacrée
+419	pae	[ms]Bouclier de Zakarum
+420	paf	[ms]Bouclier du Vortex
+421	neb	[ms]Crâne du serviteur
+422	nec	pour geler vos ennemis sur pied\nprojette un jet de glace continu
+423	ned	[ms]Crâne du prophète
+424	nee	[ms]Crâne de la succube
+425	nef	[ms]Crâne du seigneur sanglant
+426	AmaOnly	(Amazone uniquement)
+427	SorOnly	(Ensorceleuse uniquement)
+428	NecOnly	(Nécromancien uniquement)
+429	PalOnly	(Paladin uniquement)
+430	BarOnly	(Barbare uniquement)
+431	DruOnly	(Druide uniquement)
+432	AssOnly	(Assassin uniquement)
+433	jew	[ms]Joyau
+434	hrb	[fs]Herbe
+435	cm1	[ms]Charme mineur
+436	cm2	[ms]Charme
+437	cm3	[ms]Charme majeur
+438	Charmdes	A garder dans l'inventaire pour bénéficier du bonus
+439	ice	Gardez-la pour libérer Anya\nPotion de Malah
+440	r33	[fs]Rune Zod
+441	r32	[fs]Rune Cham
+442	r31	[fs]Rune Jo
+443	r30	[fs]Rune Ber
+444	r29	[fs]Rune Sur
+445	r28	[fs]Rune Lo
+446	r27	[fs]Rune Ohm
+447	r26	[fs]Rune Vex
+448	r25	[fs]Rune Gul
+449	r24	[fs]Rune Ist
+450	r23	[fs]Rune Mal
+451	r22	[fs]Rune Um
+452	r21	[fs]Rune Pul
+453	r20	[fs]Rune Lem
+454	r19	[fs]Rune Fal
+455	r18	[fs]Rune Ko
+456	r17	[fs]Rune Lum
+457	r16	[fs]Rune Po
+458	r15	[fs]Rune Hel
+459	r14	[fs]Rune Dol
+460	r13	[fs]Rune Shae
+461	r12	[fs]Rune Sol
+462	r11	[fs]Rune Amn
+463	r10	[fs]Rune Thul
+464	r09	[fs]Rune Ort
+465	r08	[fs]Rune Ral
+466	r07	[fs]Rune Tal
+467	r06	[fs]Rune Ith
+468	r05	[fs]Rune Eth
+469	r04	[fs]Rune Nef
+470	r03	[fs]Rune Tir
+471	r02	[fs]Rune Eld
+472	r01	[fs]Rune El
+473	r33L	Zod
+474	r32L	Cham
+475	r31L	Jo
+476	r30L	Ber
+477	r29L	Sur
+478	r28L	Lo
+479	r27L	Ohm
+480	r26L	Vex
+481	r25L	Gul
+482	r24L	Ist
+483	r23L	Mal
+484	r22L	Um
+485	r21L	Pul
+486	r20L	Lem
+487	r19L	Fal
+488	r18L	Ko
+489	r17L	Lum
+490	r16L	[fs]Po
+491	r15L	Hel
+492	r14L	Dol
+493	r13L	[fs]Shae
+494	r12L	Sol
+495	r11L	Amn
+496	r10L	Thul
+497	r09L	Ort
+498	r08L	Ral
+499	r07L	Tal
+500	r06L	Ith
+501	r05L	Eth
+502	r04L	Nef
+503	r03L	Tir
+504	r02L	Eld
+505	r01L	El
+506	RuneQuote	'
+507	Runeword1	Pacte des Anciens
+508	Runeword2	Armageddon
+509	Runeword3	Autorité
+510	Runeword4	Bête
+511	Runeword5	Beauté
+512	Runeword6	Blanc
+513	Runeword7	Boucher
+514	Runeword8	Blessure
+515	Runeword9	Barbelé
+516	Runeword10	Barbe
+517	Runeword11	Bagne
+518	Runeword12	Baîllon
+519	Runeword13	Cicatrice
+520	Runeword14	Chaînes
+521	Runeword15	Chance
+522	Runeword16	Chaos
+523	Runeword17	Croissant de lune
+524	Runeword18	Donjon
+525	Runeword19	Diablotin
+526	Runeword20	Dévotion
+527	Runeword21	Déception
+528	Runeword22	Délire
+529	Runeword23	Désir
+530	Runeword24	Désespoir
+531	Runeword25	Destruction
+532	Runeword26	Dévastation
+533	Runeword27	Dragon
+534	Runeword28	Devoir
+535	Runeword29	Dyptique
+536	Runeword30	Duel
+537	Runeword31	Evocation
+538	Runeword32	Effusion
+539	Runeword33	Enigme
+540	Runeword34	Eclaircissement
+541	Runeword35	Envie
+542	Runeword36	Eternité
+543	Runeword37	Exil
+544	Runeword38	Foi
+545	Runeword39	Famine
+546	Runeword40	Flamme
+547	Runeword41	Fortitude
+548	Runeword42	Fortune
+549	Runeword43	Ferveur
+550	Runeword44	Furie
+551	Runeword45	Guerre
+552	Runeword46	Gloire
+553	Runeword47	Griserie
+554	Runeword48	Heaume
+555	Runeword49	Harmonie
+556	Runeword50	Haine
+557	Runeword51	Hérétique
+558	Runeword52	Hallebarde
+559	Runeword53	Hallucination
+560	Runeword54	Halo
+561	Runeword55	Honneur
+562	Runeword56	Revanche
+563	Runeword57	Humilité
+564	Runeword58	Faim
+565	Runeword59	Ire
+566	Runeword60	Infini
+567	Runeword61	Innocence
+568	Runeword62	Iris
+569	Runeword63	Jalousie
+570	Runeword64	Jugement
+571	Runeword65	Kana
+572	Runeword66	Kaolin
+573	Runeword67	Karma
+574	Runeword68	Kappa
+575	Runeword69	Lèpre
+576	Runeword70	Loi
+577	Runeword71	Longévité
+578	Runeword72	Langueur
+579	Runeword73	Larme
+580	Runeword74	Livre
+581	Runeword75	Lapsus
+582	Runeword76	Lambeaux
+583	Runeword77	Loyauté
+584	Runeword78	Luxure
+585	Runeword79	Malice
+586	Runeword81	Méchanceté 
+587	Runeword82	Melodie
+588	Runeword83	Mémoire
+589	Runeword84	Marée
+590	Runeword85	Matin
+591	Runeword86	Mystère
+592	Runeword87	Mythe
+593	Runeword88	Nadir
+594	Runeword89	Nature
+595	Runeword90	Nuit
+596	Runeword91	Orme
+597	Runeword92	Obéissance 
+598	Runeword93	Oubli
+599	Runeword94	Obsession
+600	Runeword95	Passion
+601	Runeword96	Patience
+602	Runeword97	Parchemin
+603	Runeword98	Paix
+604	Runeword99	Vérité
+605	Runeword100	Pleutre
+606	Runeword101	Péril
+607	Runeword102	Pestilence
+608	Runeword103	Phénix
+609	Runeword104	Piété
+610	Runeword105	Pilier
+611	Runeword106	Peste
+612	Runeword107	Pluie
+613	Runeword108	Prière
+614	Runeword109	Pierre
+615	Runeword110	Principe
+616	Runeword111	Prouesse
+617	Runeword112	Prudence
+618	Runeword113	Punition
+619	Runeword114	Pureté
+620	Runeword115	Question
+621	Runeword116	Rayon
+622	Runeword117	Rage
+623	Runeword118	Raison
+624	Runeword119	Rouge
+625	Runeword120	Rime
+626	Runeword121	Rigodon
+627	Runeword122	Sanctuaire
+628	Runeword123	Serpent
+629	Runeword124	Serment
+630	Runeword125	Sou
+631	Runeword126	Silence
+632	Runeword127	Sirène
+633	Runeword128	Soupe
+634	Runeword129	Sel
+635	Runeword130	Esprit
+636	Runeword131	Splendeur
+637	Runeword132	Soleil
+638	Runeword133	Sillon
+639	Runeword134	Style
+640	Runeword135	Sérénité
+641	Runeword136	Sabot
+642	Runeword137	Sacrifice
+643	Runeword138	Sagesse
+644	Runeword139	Safran
+645	Runeword140	Tempête
+646	Runeword141	Tentation
+647	Runeword142	Terreur
+648	Runeword143	Tabac
+649	Runeword144	Tyran
+650	Runeword145	Trouble
+651	Runeword146	Temps
+652	Runeword147	Tradition
+653	Runeword148	Traîtrise
+654	Runeword149	Trahison
+655	Runeword150	Tambourin
+656	Runeword151	Urne
+657	Runeword152	Valeur
+658	Runeword153	Vengeance
+659	Runeword154	Venin
+660	Runeword155	Victoire
+661	Runeword156	Voix
+662	Runeword157	[ms]nu[mp]nus[fs]nue[fp]nues
+663	Runeword158	Walhalla
+664	Runeword159	Walkyrie
+665	Runeword160	Wisigothe
+666	Runeword161	Wapiti
+667	Runeword162	Wali
+668	Runeword163	Wallaby
+669	Runeword164	Wax
+670	Runeword165	Wharf
+671	Runeword166	Wolfram
+672	Runeword167	Wigwam
+673	Runeword168	Wendigo
+674	Runeword169	Yoga
+675	Runeword170	Zéphyr
+676	spe	[ms]Spleen
+677	scz	[ms]Scalp
+678	sol	[fs]Ame
+679	qll	[fs]Plume
+680	fng	[ms]Croc
+681	flg	[ms]Etendard
+682	tal	[fs]Queue
+683	hrn	[fs]Corne
+684	eyz	[ms]Oeil
+685	jaw	[fs]Mâchoire
+686	brz	[ms]Cerveau
+687	hrt	[ms]Coeur
+688	Stout	[ms]vigoureux[mp]vigoureux[fs]vigoureuse[fp]vigoureuses
+689	Antimagic	[ms]contrecharme[mp]contrecharme[fs]contrecharme[fp]contrecharme
+690	Null	[ms]caduc[mp]caducs[fs]caduque[fp]caduques
+691	Godly	[ms]olympien[mp]olympiens[fs]olympienne[fp]olympiennes
+692	Ivory	[ms]ivoirin[mp]ivoirins[fs]ivoirine[fp]ivoirines
+693	Eburin	[ms]éburin[mp]éburins[fs]éburine[fp]éburines
+694	Blanched	[ms]blême[mp]blêmes[fs]blême[fp]blêmes
+695	Stalwart	[ms]résolu[mp]résolus[fs]résolue[fp]résolues
+696	Burly	[ms]solide[mp]solides[fs]solide[fp]solides
+697	Dense	[ms]épais[mp]épais[fs]épaisse[fp]épaisses
+698	Thin	[ms]fin[mp]fins[fs]fine[fp]fines
+699	Compact	[ms]compact[mp]compacts[fs]compacte[fp]compactes
+700	Witch-hunter's	[ms]pensorcière[mp]pensorcière[fs]pensorcière[fp]pensorcière
+701	Magekiller's	[ms]pourfenmage[mp]pourfenmage[fs]pourfenmage[fp]pourfenmage
+702	Hierophant's	[ms]sacral[mp]sacraux[fs]sacrale[fp]sacrales
+703	Shaman's	[ms]chamanique[mp]chamaniques[fs]chamanique[fp]chamaniques
+704	Pestilent	[ms]pestilentiel[mp]pestilentiels[fs]pestilentielle[fp]pestilentielles
+705	Toxic	[ms]toxique[mp]toxiques[fs]toxique[fp]toxiques
+706	Corosive	[ms]corrosif[mp]corrosifs[fs]corrosive[fp]corrosives
+707	Envenomed	[ms]infect[mp]infects[fs]infecte[fp]infectes
+708	Septic	[ms]infectieux[mp]infectieux[fs]infectieuse[fp]infectieuses
+709	Shocking	[ms]brutal[mp]brutaux[fs]brutale[fp]brutales
+710	Arcing	[ms]dynamique[mp]dynamiques[fs]dynamique[fp]dynamiques
+711	Buzzing	[ms]bourdonnant[mp]bourdonnants[fs]bourdonnante[fp]bourdonnantes
+712	Static	[ms]statique[mp]statiques[fs]statique[fp]statiques
+713	Scorching	[ms]condensé[mp]condensés[fs]condensée[fp]condensée
+714	Flaming	[ms]flamboyant[mp]flamboyants[fs]flamboyante[fp]flamboyantes
+715	Smoking	[ms]brûlant[mp]brûlants[fs]brûlante[fp]brûlantes
+716	Smoldering	[ms]incandescent[mp]incandescents[fs]incandescente[fp]incandescentes
+717	Ember	[ms]ardent[mp]ardents[fs]ardente[fp]ardentes
+718	Hibernal	[ms]hivernal[mp]hivernaux[fs]hivernale[fp]hivernales
+719	Boreal	[ms]boréal[mp]boréaux[fs]boréale[fp]boréales
+720	Shivering	[ms]vibrant[mp]vibrants[fs]vibrante[fp]vibrantes
+721	Snowflake	[ms]arctique[mp]arctiques[fs]arctique[fp]arctiques
+722	Mnemonic	[ms]mnémonique[mp]mnémoniques[fs]mnémonique[fp]mnémoniques
+723	Visionary	[ms]visionnaire[mp]visionnaires[fs]visionnaire[fp]visionnaires
+724	Eagleeye	[ms]oeil-d'aigle[mp]oeil-d'aigle[fs]oeil-d'aigle[fp]oeil-d'aigle
+725	Hawkeye	[ms]oeil-de-faucon[mp]oeil-de-faucon[fs]oeil-de-faucon[fp]oeil-de-faucon
+726	Falconeye	[ms]oeil-de-rapace[mp]oeil-de-rapace[fs]oeil-de-rapace[fp]oeil-de-rapace
+727	Sparroweye	[ms]oeil-de-fauvette[mp]oeil-de-fauvette[fs]oeil-de-fauvette[fp]oeil-de-fauvette
+728	Robineye	[ms]oeil-de-moineau[mp]oeil-de-moineau[fs]oeil-de-moineau[fp]oeil-de-moineau
+729	Paradox	[ms]paradoxal[mp]paradoxaux[fs]paradoxale[fp]paradoxales
+730	Shouting	[ms]rugissant[mp]rugissants[fs]rugissante[fp]rugissantes
+731	Yelling	[ms]tumultueux[mp]tumultueux[fs]tumultueuse[fp]tumultueuses
+732	Calling	[ms]implorant[mp]implorants[fs]implorante[fp]implorantes
+733	Loud	[ms]assourdissant[mp]assourdissants[fs]assourdissante[fp]assourdissantes
+734	Trump	[ms]fou[mp]fous[fs]folle[fp]folles
+735	Joker's	[ms]grotesque[mp]grotesques[fs]grotesque[fp]grotesques
+736	Jester's	[ms]comique[mp]comiques[fs]comique[fp]comiques
+737	Jack's	[ms]bouffon[mp]bouffons[fs]bouffonne[fp]bouffonnes
+738	Knave's	[ms]extravagant[mp]extravagants[fs]extravagante[fp]extravagantes
+739	Paleocene	[ms]fidèle[mp]fidèles[fs]fidèle[fp]fidèles
+740	Eocene	[ms]loyal[mp]loyaux[fs]loyale[fp]loyales
+741	Oligocene	[ms]honorable[mp]honorables[fs]honorable[fp]honorables
+742	Miocene	[ms]gothique[mp]gothiques[fs]gothique[fp]gothiques
+743	Kenshi's	[ms]oriental[mp]orientaux[fs]orientale[fp]orientales
+744	Sensei's	[ms]magistral[mp]magistraux[fs]magistrale[fp]magistrales
+745	Shogukusha's	[ms]exotique[mp]exotiques[fs]exotique[fp]exotiques
+746	Psychic	[ms]psychique[mp]psychiques[fs]psychique[fp]psychiques
+747	Mentalist's	[ms]mental[mp]mentaux[fs]mentale[fp]mentales
+748	Cunning	[ms]subtil[mp]subtils[fs]subtile[fp]subtiles
+749	Trickster's	[ms]chausse-trappe[mp]chausse-trappe[fs]chausse-trappe[fp]chausse-trappe
+750	Entrapping	[ms]guet-apens[mp]guet-apens[fs]guet-apens[fp]guet-apens
+751	Gaea's	[ms]gaien[mp]gaiens[fs]gaienne[fp]gaiennes
+752	Terra's	[ms]terrenien[mp]terreniens[fs]terrenienne[fp]terreniennes
+753	Nature's	[ms]tellurique[mp]telluriques[fs]tellurique[fp]telluriques
+754	Communal	[ms]glaiseux[mp]glaiseux[fs]glaiseuse[fp]glaiseuses
+755	Feral	[ms]sauvage[mp]sauvages[fs]sauvage[fp]sauvages
+756	Spiritual	[ms]spirituel[mp]spirituels[fs]spirituelle[fp]spirituelles
+757	Keeper's	[ms]gardien[mp]gardiens[fs]gardienne[fp]gardiennes
+758	Caretaker's	[ms]bienveillant[mp]bienveillants[fs]bienveillante[fp]bienveillantes
+759	Trainer's	[ms]élémentaire[mp]élémentaires[fs]élémentaire[fp]élémentaires
+760	Veteran's	[ms]supérieur[mp]supérieurs[fs]supérieure[fp]supérieures
+761	Expert's	[ms]exceptionnel[mp]exceptionnels[fs]exceptionnelle[fp]exceptionnelles
+762	Furious	[ms]furieux[mp]furieux[fs]furieuse[fp]furieuses
+763	Raging	[ms]rageur[mp]rageurs[fs]rageuse[fp]rageuses
+764	Echoing	[ms]retentissant[mp]retentissants[fs]retentissante[fp]retentissantes
+765	Resonant	[ms]résonant[mp]résonants[fs]résonante[fp]résonantes
+766	Sounding	[ms]sonore[mp]sonores[fs]sonore[fp]sonores
+767	Guardian's	[ms]protecteur[mp]protecteurs[fs]protectrice[fp]protectrices
+768	Warder's	[ms]défensif[mp]défensifs[fs]défensive[fp]défensives
+769	Preserver's	[ms]haute-muraille[mp]haute-muraille[fs]haute-muraille[fp]haute-muraille
+770	Marshal's	[ms]chef-de-guerre[mp]chef-de-guerre[fs]chef-de-guerre[fp]chef-de-guerre
+771	Commander's	[ms]adoubé[mp]adoubés[fs]adoubée[fp]adoubées
+772	Captain's	[ms]armorié[mp]armoriés[fs]armoriée[fp]armoriées
+773	Rose Branded	[ms]floral[mp]floraux[fs]florale[fp]florales
+774	Hawk Branded	[ms]fauconnier[mp]fauconniers[fs]fauconnière[fp]fauconnières
+775	Lion Branded	[ms]léonin[mp]léonins[fs]léonine[fp]léonines
+776	Golemlord's	[ms]golémique[mp]golémiques[fs]golémique[fp]golémiques
+777	Vodoun	[ms]vaudou[mp]vaudou[fs]vaudou[fp]vaudou
+778	Graverobber's	[ms]profanateur[mp]profanateurs[fs]profanatrice[fp]profanatrices
+779	Venomous	[ms]venimeux[mp]venimeux[fs]venimeuse[fp]venimeuses
+780	Noxious	[ms]nocif[mp]nocifs[fs]nocive[fp]nocives
+781	Fungal	[ms]fongueux[mp]fongueux[fs]fongueuse[fp]fongueuses
+782	Accursed	[ms]délétère[mp]délétères[fs]délétère[fp]délétères
+783	Blighting	[ms]flétrissant[mp]flétrissants[fs]flétrissante[fp]flétrissantes
+784	Hexing	[ms]ensorcelé[mp]ensorcelés[fs]ensorcelée[fp]ensorcelée
+785	Glacial	[ms]glacial[mp]glaciaux[fs]glaciale[fp]glaciales
+786	Freezing	[ms]gelé[mp]gelés[fs]gelée[fp]gelées
+787	Chilling	[ms]effroyable[mp]effroyables[fs]effroyable[fp]effroyables
+788	Powered	[ms]mécanique[mp]mécaniques[fs]mécanique[fp]mécaniques
+789	Charged	[ms]irradié[mp]irradiés[fs]irradiée[fp]irradiées
+790	Sparking	[ms]étincelant[mp]étincelants[fs]étincelante[fp]étincelantes
+791	Volcanic	[ms]volcanique[mp]volcaniques[fs]volcanique[fp]volcaniques
+792	Blazing	[ms]flambant[mp]flambants[fs]flambante[fp]flambantes
+793	Burning	[ms]embrasé[mp]embrasés[fs]embrasée[fp]embrasées
+794	Lancer's	[ms]élancé[mp]élancés[fs]élancée[fp]élancées
+795	Spearmaiden's	[ms]vierge-de-fer[mp]vierge-de-fer[fs]vierge-de-fer[fp]vierge-de-fer
+796	Harpoonist's	[ms]acéré[mp]acérés[fs]acérée[fp]acérées
+797	Athlete's	[ms]athlétique[mp]athlétiques[fs]athlétique[fp]athlétiques
+798	Gymnast's	[ms]gymnastique[mp]gymnastiques[fs]gymnastique[fp]gymnastiques
+799	Acrobat's	[ms]acrobatique[mp]acrobatiques[fs]acrobatique[fp]acrobatiques
+800	Bowyer's	[ms]arboricole[mp]arboricoles[fs]arboricole[fp]arboricoles
+801	Diamond	[ms]diamantifère[mp]diamantifères[fs]diamantifère[fp]diamantifères
+802	Celestial	[ms]céleste[mp]célestes[fs]céleste[fp]célestes
+803	Elysian	[ms]élyséen[mp]élyséens[fs]élyséenne[fp]élyséennes
+804	Astral	[ms]astral[mp]astraux[fs]astrale[fp]astrales
+805	Unearthly	[ms]outre-monde[mp]outre-monde[fs]outre-monde[fp]outre-monde
+806	Arcadian	[ms]arcadien[mp]arcadiens[fs]arcadienne[fp]arcadiennes
+807	Jeweler's	[ms]joaillier[mp]joailliers[fs]joaillière[fp]joaillières
+808	Artificer's	[ms]artisanal[mp]artisanaux[fs]artisanale[fp]artisanales
+809	Mechanist's	[ms]alchimique[mp]alchimiques[fs]alchimique[fp]alchimiques
+810	Aureolin	[ms]nimbé[mp]nimbés[fs]nimbée[fp]nimbées
+811	Victorious	[ms]victorieux[mp]victorieux[fs]victorieuse[fp]victorieuses
+812	Ambergris	[ms]ambré[mp]ambrés[fs]ambrée[fp]ambrées
+813	Camphor	[ms]camphré[mp]camphrés[fs]camphrée[fp]camphrées
+814	Lapis Lazuli	[ms]précieux[mp]précieux[fs]précieuse[fp]précieuses
+815	Chromatic	[ms]coloré[mp]colorés[fs]colorée[fp]colorées
+816	Scintillating	[ms]scintillant[mp]scintillants[fs]scintillante[fp]scintillantes
+817	Turquoise	[ms]turquoise[mp]turquoises[fs]turquoise[fp]turquoises
+818	Jacinth	[ms]minéral[mp]minéraux[fs]minérale[fp]minérales
+819	Zircon	[ms]granitique[mp]granitiques[fs]granitique[fp]granitiques
+820	Bahamut's	[ms]bahamut[mp]bahamut[fs]bahamut[fp]bahamut
+821	Great Wyrm's	[ms]wyrmique[mp]wyrmiques[fs]wyrmique[fp]wyrmiques
+822	Felicitous	[ms]surabondant[mp]surabondants[fs]surabondante[fp]surabondantes
+823	Lucky	[ms]porte-chance[mp]porte-chance[fs]porte-chance[fp]porte-chance
+824	Wailing	[ms]plaintif[mp]plaintifs[fs]plaintive[fp]plaintives
+825	Screaming	[ms]vociférant[mp]vociférants[fs]vociférante[fp]vociférantes
+826	Grandmaster's	[ms]suprême[mp]suprêmes[fs]suprême[fp]suprêmes
+827	Master's	[ms]initiatique[mp]initiatiques[fs]initiatique[fp]initiatiques
+828	Argent	[ms]argenté[mp]argentés[fs]argentée[fp]argentées
+829	Tin	[ms]étamé[mp]étamés[fs]étamée[fp]étamées
+830	Nickel	[ms]glauque[mp]glauques[fs]glauque[fp]glauques
+831	Maroon	[ms]pourpre[mp]pourpres[fs]pourpre[fp]pourpres
+832	Chestnut	[ms]alezan[mp]alezans[fs]alezane[fp]alezanes
+833	Vigorous	[ms]vigoureux[mp]vigoureux[fs]vigoureuse[fp]vigoureuses
+834	Brown	[ms]brun[mp]bruns[fs]brune[fp]brunes
+835	Dun	[ms]gris louvet[mp]gris louvet[fs]gris louvet[fp]gris louvet
+836	Realgar	[ms]régalien[mp]régaliens[fs]régalienne[fp]régaliennes
+837	Rusty	[ms]érodé[mp]érodés[fs]érodée[fp]érodées
+838	Cinnabar	[ms]rouge pâle[mp]rouge pâle[fs]rouge pâle[fp]rouge pâle
+839	Vermillion	Vermillon
+840	Carmine	[ms]rouge sang[mp]rouge sang[fs]rouge sang[fp]rouge sang
+841	Carbuncle	[ms]escarboucle[mp]escarboucle[fs]escarboucle[fp]escarboucle
+842	Serrated	[ms]crénelé[mp]crénelés[fs]crénelée[fp]crénelées
+843	Scarlet	[ms]écarlate[mp]écarlates[fs]écarlate[fp]écarlates
+844	Bloody	[ms]sanglant[mp]sanglants[fs]sanglante[fp]sanglantes
+845	Sanguinary	[ms]sanguinaire[mp]sanguinaires[fs]sanguinaire[fp]sanguinaires
+846	Pearl	[ms]nacré[mp]nacrés[fs]nacrée[fp]nacrées
+847	Divine	[ms]divin[mp]divins[fs]divine[fp]divines
+848	Hallowed	[ms]béni[mp]bénis[fs]bénie[fp]bénies
+849	Sacred	[ms]sacré[mp]sacrés[fs]sacrée[fp]sacrées
+850	Pure	[ms]pur[mp]purs[fs]pure[fp]pures
+851	Consecrated	[ms]consacré[mp]consacrés[fs]consacrée[fp]consacrées
+852	Assamic	[ms]assamique[mp]assamiques[fs]assamique[fp]assamiques
+853	Frantic	[ms]frénétique[mp]frénétiques[fs]frénétique[fp]frénétiques
+854	Hellatial	[ms]méphitique[mp]méphitiques[fs]méphitique[fp]méphitiques
+855	Quixotic	[ms]visionnaire[mp]visionnaires[fs]visionnaire[fp]visionnaires
+856	Smiting	[ms]ensorceleur[mp]ensorceleurs[fs]ensorceleuse[fp]ensorceleuses
+857	Steller	[ms]étoilé[mp]étoilés[fs]étoilée[fp]étoilées
+858	Stinging	[ms]cinglant[mp]cinglants[fs]cinglante[fp]cinglantes
+859	Singing	[ms]chantant[mp]chantants[fs]chantante[fp]chantantes
+860	Timeless	[ms]ancestral[mp]ancestraux[fs]ancestrale[fp]ancestrales
+861	Original	[ms]originel[mp]originels[fs]originelle[fp]originelles
+862	Corporal	[ms]corporel[mp]corporels[fs]corporelle[fp]corporelles
+863	Lawful	[ms]régulier[mp]réguliers[fs]régulière[fp]régulières
+864	Chaotic	[ms]chaotique[mp]chaotiques[fs]chaotique[fp]chaotiques
+865	Fierce	[ms]redoutable[mp]redoutables[fs]redoutable[fp]redoutables
+866	Ferocious	[ms]féroce[mp]féroces[fs]féroce[fp]féroces
+867	Perpetual	[ms]perpétuel[mp]perpétuels[fs]perpétuelle[fp]perpétuelles
+868	Continuous	[ms]sans fin[mp]sans fin[fs]sans fin[fp]sans fin
+869	Laden	[ms]lourd[mp]lourds[fs]lourde[fp]lourdes
+870	Pernicious	[ms]sournois[mp]sournois[fs]sournoise[fp]sournoises
+871	Harmful	[ms]destructeur[mp]destructeurs[fs]destructrice[fp]destructrices
+872	Evil	[ms]maléfique[mp]maléfiques[fs]maléfique[fp]maléfiques
+873	Insidious	[ms]captieux[mp]captieux[fs]captieuse[fp]captieuses
+874	Malicious	[ms]malicieux[mp]malicieux[fs]malicieuse[fp]malicieuses
+875	Spiteful	[ms]malveillant[mp]malveillants[fs]malveillante[fp]malveillantes
+876	Precocious	[ms]profane[mp]profanes[fs]profane[fp]profanes
+877	Majestic	[ms]majestueux[mp]majestueux[fs]majestueuse[fp]majestueuses
+878	Sanguine	[ms]sanguin[mp]sanguins[fs]sanguine[fp]sanguines
+879	Monumental	[ms]hiératique[mp]hiératiques[fs]hiératique[fp]hiératiques
+880	Irresistible	[ms]irrésistible[mp]irrésistibles[fs]irrésistible[fp]irrésistibles
+881	Festering	[ms]suintant[mp]suintants[fs]suintante[fp]suintantes
+882	Musty	[ms]décomposé[mp]décomposés[fs]décomposée[fp]décomposées
+883	Dusty	[ms]cendreux[mp]cendreux[fs]cendreuse[fp]cendreuses
+884	Decaying	[ms]pourrissant[mp]pourrissants[fs]pourrissante[fp]pourrissantes
+885	Rotting	[ms]putréfié[mp]putréfiés[fs]putréfiée[fp]putréfiées
+886	Infectious	[ms]contagieux[mp]contagieux[fs]contagieuse[fp]contagieuses
+887	Foggy	[ms]brumeux[mp]brumeux[fs]brumeuse[fp]brumeuses
+888	Cloudy	[ms]sombre[mp]sombres[fs]sombre[fp]sombres
+889	Hazy	[ms]vaporeux[mp]vaporeux[fs]vaporeuse[fp]vaporeuses
+890	Punishing	[ms]punitif[mp]punitifs[fs]punitive[fp]punitives
+891	Obsidian	[ms]obsidien[mp]obsidiens[fs]obsidienne[fp]obsidiennes
+892	Royal	[ms]royal[mp]royaux[fs]royale[fp]royales
+893	Frigid	[ms]froid[mp]froids[fs]froide[fp]froides
+894	Moldy	[ms]terreux[mp]terreux[fs]terreuse[fp]terreuses
+895	Gaudy	[ms]clinquant[mp]clinquants[fs]clinquante[fp]clinquantes
+896	Impecable	[ms]immaculé[mp]immaculés[fs]immaculée[fp]immaculées
+897	Soulless	[ms]désincarné[mp]désincarnés[fs]désincarnée[fp]désincarnées
+898	Heated	[ms]échauffé[mp]échauffés[fs]échauffée[fp]échauffées
+899	Lasting	[ms]immortel[mp]immortels[fs]immortelle[fp]immortelles
+900	Scorched	[ms]brûlé[mp]brûlés[fs]brûlée[fp]brûlées
+901	Marred	[ms]déparé[mp]déparés[fs]déparée[fp]déparées
+902	Lilac	[ms]parfumé[mp]parfumés[fs]parfumée[fp]parfumées
+903	Rose	[ms]printanier[mp]printaniers[fs]printanière[fp]printanières
+904	Shimmering	[ms]miroitant[mp]miroitants[fs]miroitante[fp]miroitantes
+905	Green	[ms]vert[mp]verts[fs]verte[fp]vertes
+906	Wicked	[ms]maudit[mp]maudits[fs]maudite[fp]maudites
+907	Strange	[ms]étrange[mp]étranges[fs]étrange[fp]étranges
+908	Repulsive	[ms]répulsif[mp]répulsifs[fs]répulsive[fp]répulsives
+909	Reclusive	[ms]solitaire[mp]solitaires[fs]solitaire[fp]solitaires
+910	Crude	[ms]primitif[mp]primitifs[fs]primitive[fp]primitives
+911	Rude	[ms]rudimentaire[mp]rudimentaires[fs]rudimentaire[fp]rudimentaires
+912	Hermetic	[ms]hermétique[mp]hermétiques[fs]hermétique[fp]hermétiques
+913	Rainbow	[ms]vitrail[mp]vitrail[fs]vitrail[fp]vitrail
+914	Colorful	[ms]irisé[mp]irisés[fs]irisée[fp]irisées
+915	Stinky	[ms]odoriférant[mp]odoriférants[fs]odoriférante[fp]odoriférantes
+916	Gritty	[ms]grinçant[mp]grinçants[fs]grinçante[fp]grinçantes
+917	of Warming	de réchauffement
+918	of Stoicism	de stoïcisme
+919	of the Dynamo	d'énergie
+920	of Grounding	de paratonnerre
+921	of Insulation	d'isolation
+922	of Resistance	de résistance
+923	of Faith	de foi
+924	of Fire Quenching	d'acier trempé
+925	of Amianthus	d'amiante
+926	of Incombustibility	de combustion
+927	of Coolness	de fraîcheur
+928	of Anima	d'anima
+929	of Life Everlasting	d'immortalité
+930	of Sunlight	de soleil
+931	of Frozen Orb	de l'orbe glacial
+932	of Hydra Shield	du bouclier d'Hydre
+933	of Chilling Armor	d'armure de gel
+934	of Blizzard	du blizzard
+935	of Energy Shield	de riposte énergétique
+936	of Thunder Storm	d'orage
+937	of Meteor	de météore
+938	of Glacial Spike	d'épieu de glace
+939	of Teleport Shield	de téléportation
+940	of Chain Lightning	d'éclairs en série
+941	of Enchant	d'enchantement
+942	of Fire Wall	du mur de feu
+943	of Shiver Armor	d'armure de la crainte
+944	of Nova Shield	de riposte de choc
+945	of Nova	de choc
+946	of Fire Ball	de boule de feu
+947	of Blaze	de flamboiement
+948	of Ice Blast	de souffle de glace
+949	of Frost Shield	de riposte glacée
+950	of Telekinesis	de télékinésie
+951	of Static Field	de champ statique
+952	of Frozen Armor	d'armure de glace
+953	of Icebolt	de boule de froid
+954	of Charged Shield	de trait de foudre
+955	of Firebolts	de trait de feu
+956	of the Elements	des éléments
+957	of the Cobra	du Cobra
+958	of the Efreeti	de l'Efreet
+959	of the Phoenix	du Phénix
+960	of the Yeti	du Yéti
+961	of Grace and Power	de grâce et de puissance
+962	of Grace	de grâce
+963	of Power	de puissance
+964	of the Elephant	de l'éléphant
+965	of Memory	de mémoire
+966	of the Kraken1	du Kraken
+967	of Propogation	de propagation
+968	of Replenishing	de régénération
+969	of Ages	des âges
+970	of Fast Repair	de réparation rapide
+971	of Self-Repair	d'auto-régénération
+972	of Acceleration	d'accélération
+973	of Traveling	de voyage
+974	of Virility	de virilité
+975	of Atlus	d'Atlas
+976	of Freedom	de liberté
+977	of the Lamprey	de la lamproie
+978	of Hope	d'espoir
+979	of Spirit	d'esprit
+980	of Vita	de vita
+981	of Substinence	de substinence
+982	of the Whale	de la baleine
+983	of the Squid	de la pieuvre
+984	of the Colossus1	du Colosse
+985	of Knowledge	de connaissance
+986	of Enlightenment	d'éclairement
+987	of Prosperity	de prospérité
+988	of Good Luck	de baracca
+989	of Luck	de chance
+990	of Avarice	d'avarice
+991	of Honor	d'honneur
+992	of Revivification	de résurrection
+993	of Truth	de vérité
+994	of Daring	de témérité
+995	of Nirvana	du nirvana
+996	of Envy	d'envie
+997	of Anthrax	d'Anthrax
+998	of Bliss	de béatitude
+999	of Joy	de joie
+1000	of Transcendence	de transcendance
+1001	of Wrath	de fureur
+1002	of Ire	de colère
+1003	of Evisceration	d'éviscération
+1004	of Butchery	de boucherie
+1005	of Ennui	d'ennui
+1006	of Storms	des tempêtes
+1007	of Passion	de passion
+1008	of Incineration	d'incinération
+1009	of Frigidity	de frigidité
+1010	of Winter	d'hiver
+1011	of the Icicle	de la stalactite
+1012	of Fervor	de ferveur
+1013	of Malice	de malice
+1014	of Swords	des épées
+1015	of Razors	des rasoirs
+1016	of Desire	du désir
+1017	of the Sirocco	du sirocco
+1018	of the Dunes	des dunes
+1019	of Thawing	de dégel
+1020	Of the Choir	du choeur
+1021	Of the Sniper	de précision absolue
+1022	Of the Stiletto	du stylet
+1023	Of Bile	de bile
+1024	Of Blitzen	d'assaut
+1025	Of Cremation	de crémation
+1026	Of Darkness	d'ombre
+1027	Of Disease	de maladie
+1028	Of Remorse	du remord
+1029	Of Terror	de terreur
+1030	Of the Sky	des cieux
+1031	Of Valhalla	du walhalla
+1032	Of Waste	de perdition
+1033	Of Nobility	de noblesse
+1034	Of Karma	de karma
+1035	Of Grounding	de paratonnerre
+1036	Of the River	du fleuve
+1037	Of the Lake	du lac
+1038	Of the Ocean	de l'océan
+1039	Of the Bayou	du bayou
+1040	Of the Stream	de la rivière
+1041	Of the Lady	de la dame
+1042	Of the Maiden	de la demoiselle
+1043	Of the Virgin	de la vierge
+1044	Of the Hag	de la harpie
+1045	Of the Witch	de la sorcière
+1046	Of Judgement	du jugement
+1047	Of Illusion	d'illusion
+1048	Of Elusion	d'élusion
+1049	Of Combat	de combat
+1050	Of Attrition	d'attrition
+1051	Of Abrasion	d'abrasion
+1052	Of Erosion	d'érosion
+1053	Of Searing	de douleur
+1054	Of Stone	de pierre
+1055	Of Stature	de stature
+1056	Of Fortication	de fortification
+1057	Of Quickening	de rapidité
+1058	Of Dispatch	de promptitude
+1059	Of Daring	de témérité
+1060	Of Dread	d'épouvante
+1061	Of Suffering	de souffrance
+1062	Of Doom	de malédiction
+1063	Of Vengence	de vengeance
+1064	Of Redemption	de rédemption
+1065	Of Luck	de chance
+1066	Of the Avenger	du vengeur
+1067	Of the Specter	du spectre
+1068	Of the Ghost	du fantôme
+1069	Of the Infantry	du fantassin
+1070	Of the Mosquito	du moustique
+1071	Of the Gnat	du moucheron
+1072	Of the Fly	de la mouche
+1073	Of the Plague	de la peste
+1074	Of Twilight	de la fin du jour
+1075	Of Dusk	du crépuscule
+1076	Of Dawn	d'aurore
+1077	Of the Imbecile	de l'imbécile
+1078	Of the Idiot	de l'idiot
+1079	Of the Retard	du demeuré
+1080	Of the Jujube	du jujube
+1081	Of the Obscenity	d'obscénité
+1082	Of Quota	du quota
+1083	Of the Maggot	de l'asticot
+1084	Of Horror	d'horreur
+1085	Of Baddass	des abysses
+1086	Of the Beast	de la bête
+1087	Of Cruelty	de cruauté
+1088	Of Badness	de méchanceté
+1089	Of the Horde	de la horde
+1090	Of the Forest	de la forêt
+1091	Of the Lilly	du lilas
+1092	Of the Grassy Gnoll	du gnoll
+1093	Of the Stars	des étoiles
+1094	Of the Moon	de la lune
+1095	Of Love	d'amour
+1096	Of the Unicorn	de la licorne
+1097	Of the Walrus	de Walrus
+1098	Of the Earth	de la terre
+1099	Of Vines	des sarments
+1100	Of Honor	d'honneur
+1101	Of Tribute	de tribut
+1102	Of Credit	de crédit
+1103	Of Admiration	d'admiration
+1104	Of Sweetness	de douceur
+1105	Of Beauty	de beauté
+1106	Of Pilfering	de maraude
+1107	of Damage Amplification	d'augmentation des dommages
+1108	of Hurricane	de l'ouragan
+1109	of Armageddon	d'armaggedon
+1110	of Tornado	de la tornade
+1111	of Volcano	du volcan
+1112	of Twister	du cyclone
+1113	of Cyclone Armor	de l'armure du cyclone
+1114	of Eruption	de fissure
+1115	of Molten Boulders	de la roche en fusion
+1116	of Firestorms	de Tempêtes de feu
+1117	of Battle Command	de commande de bataille
+1118	of War Cry	de cri de guerre
+1119	of Grim Ward	de gardien effrayant
+1120	of Battle Orders	d'ordres de bataille
+1121	of Battle Cry	de cri de bataille
+1122	of Concentration	de concentration
+1123	of Item Finding	de recherche d'objets
+1124	of Stunning	d'étourdissement
+1125	of Shouting	de cri
+1126	of Taunting	de persiflage
+1127	of Potion Finding	de recherche de potions
+1128	of Howling	de hurlement
+1129	of Fist of the Heavens	assommant
+1130	of Holy Shield	de riposte sacrée
+1131	of Conversion	de conversion
+1132	of Blessed Hammers	du marteau béni
+1133	of Vengeance	de vengeance
+1134	of Charging	de coup
+1135	of Zeal	de zèle
+1136	of Holy Bolts	de choc sacré
+1137	of Sacrifice	de sacrifice
+1138	of Fire Golem Summoning	de golem de feu
+1139	of Bone Spirits	d'esprit d'os
+1140	of Poison Novas	de choc empoisonné
+1141	of Lower Resistance	de résistance amoindrie
+1142	of Iron Golem Creation	de golem de fer
+1143	of Bone Imprisonment	de prison osseuse
+1144	of Decrepification	de décrépitude
+1145	of Attraction	d'attraction
+1146	of Blood Golem Summoning	de golem sanglant
+1147	of Bone Spears	de lance d'os
+1148	of Poison Explosion	d'explosion empoisonnée
+1149	of Life Tap	de balance de vie
+1150	of Confusion	de confusion
+1151	of Raise Skeletal Mages	des mages squelettes
+1152	of Bone Walls	de mur d'os
+1153	of Terror	de terreur
+1154	of Iron Maiden	de Dame de fer
+1155	of Clay Golem Summoning	de golem d'argile
+1156	of Corpse Explosions	d'explosion morbide
+1157	of Poison Dagger	de dague empoisonnée
+1158	of Weaken	d'affaiblissement
+1159	of Dim Vision	de vision diminuée
+1160	of Raise Skeletons	de résurrection de squelettes
+1161	of Bone Armor	d'armure d'os
+1162	of Teeth	de dents
+1163	of Amplify Damage	d'aggravation des blessures
+1164	of Frozen Orbs	des orbes de glace
+1165	of Hydras	des hydres
+1166	of Blizzards	des blizzards
+1167	of Meteors	des météores
+1168	of Glacial Spikes	d'épieu de glace
+1169	of Teleportation	de téléportation
+1170	of Enchantment	d'enchantement
+1171	of Fire Walls	de mur de feu
+1172	of Novas	de nova
+1173	of Fire Balls	de boule de feu
+1174	of Blazing	de flamboiement
+1175	of Ice Blasts	de Souffle de glace
+1176	of Frost Novas	de choc thermique
+1177	of Ice Bolts	de trait de glace
+1178	of Charged Bolts	de trait de foudre
+1179	of Fire Bolts	de trait de feu
+1180	of Lightning Fury	de fureur orageuse
+1181	of Lightning Spear	de coup foudroyant
+1182	of Freezing Arrows	de flèche paralysante
+1183	of Fending	d'autonomie
+1184	of Immolating Arrows	de trait d'immolation
+1185	of Plague Javelin	de javelot du fléau
+1186	of Charged Spear	de foudre
+1187	of Guided Arrows	de trait intelligent
+1188	of Ice Arrows	de flèche de glace
+1189	of Lightning Javelin	de javelot foudroyant
+1190	of Impaling Spear	d'empalement
+1191	of Slow Missiles	de ralentissements des missiles
+1192	of Exploding Arrows	de trait explosif
+1193	of Poison Javelin	de javelot empoisonné
+1194	of Power Spear	d'attaque foudroyante
+1195	of Multiple Shot	de tirs multiples
+1196	of Cold Arrows	de flèches de froid
+1197	of Jabbing	de mille coups
+1198	of Inner Sight	de vision intérieure
+1199	of Fire Arrows	de flèche enflammée
+1200	of Magic Arrows	de trait magique
+1201	Of self-repair	d'auto-régénération
+1202	of Dawn	d'aurore
+1203	of Inertia	d'inertie
+1204	of Joyfulness	d'extase
+1205	ModStre8a	aux aptitudes du Druide
+1206	ModStre8b	aux aptitudes de l'Assassin
+1207	ModStre8c	 Emplacements
+1208	ModStre8d	 en Attaque, contre les démons
+1209	ModStre8e	 en Attaque, contre les morts-vivants
+1210	ModStre8f	 de dommages sur les démons
+1211	ModStre8g	 pour cent en Attaque
+1212	ModStre8h	 aux aptitudes de Javelot et Lance
+1213	ModStre8i	 aux aptitudes Passives et Magie
+1214	ModStre8j	 aux aptitudes d'Arc et Arbalète
+1215	ModStre8k	 aux aptitudes d'Auras Défensives
+1216	ModStre8l	 aux aptitudes d'Auras Offensives
+1217	ModStre8m	 aux aptitudes de Combat
+1218	ModStre8n	 aux aptitudes de Sorts Invocation
+1219	ModStre8o	 aux aptitudes de Sorts Poison et Os
+1220	ModStre8p	 aux Malédictions
+1221	ModStre8q	 aux aptitudes de Cris de Guerre
+1222	ModStre8r	 aux aptitudes de Combat
+1223	ModStre8s	 aux aptitudes de Combat (Maîtrises)
+1224	ModStre8t	 aux aptitudes en Sorts de Froid
+1225	ModStre8u	 aux aptitudes en Sorts de Foudre
+1226	ModStre8v	 aux aptitudes en Sorts de Feu
+1227	ModStre8w	 aux aptitudes d'Invocation
+1228	ModStre8x	 aux aptitudes de Métamorphose
+1229	ModStre8y	 aux aptitudes d'Elémentaires
+1230	ModStre8z	 aux aptitudes de Pièges
+1231	ModStre9a	 aux aptitudes en Disciplines de l'Ombre
+1232	ModStre9b	 aux aptitudes en Arts Martiaux
+1233	ModStre9c	(Selon niv. perso.)
+1234	ModStre9d	(Augmente de nuit)
+1235	ModStre9e	(Augmente de jour)
+1236	ModStre9f	(Augmente à l'aurore)
+1237	ModStre9g	(Augmente au crépuscule)
+1238	ModStre9h	 Charges de
+1239	ModStre9i	Quantité maximale augmentée
+1240	ModStre9s	Indestructible
+1241	ModStre9t	Répare %d durabilité par seconde
+1242	ModStre9u	Répare %d durabilité en %d secondes
+1243	ModStre9v	Auto-approvisionnement
+1244	ModStre9w	Lance au niveau %d
+1245	ModStre9x	Quand vous frappez
+1246	ModStre9y	Quand vous êtes touché
+1247	ModStre9z	Quand vous touchez l'ennemi
+1248	ModStre10a	Charges
+1249	ModStre10b	Niveau
+1250	ModStre10c	par niveau
+1251	ModStre10d	(%d/%d charges)
+1252	ModStre10e	(
+1253	ModStre10f	)
+1254	ModStre10g	Sillon
+1255	ModStre10h	Immunité au poison
+1256	ModStre10i	[ms]maudit[fs]maudite[mp]maudits[fp]maudites
+1257	ModStre10j	par joueur dans le groupe
+1258	WeaponDescH2H	Classe Griffes
+1259	WeaponDescOrb	Classe Orbe
+1260	ItemexpED	Dommages élémentaires
+1261	StrGemX1	Heaumes :
+1262	StrGemX2	Boucliers :
+1263	StrGemX3	Armes :
+1264	StrGemX4	Armure :
+1265	GemeffectX11	augmente la force
+1266	GemeffectX12	augmente la défense
+1267	GemeffectX13	augmente la puissance d'attaque
+1268	GemeffectX21	augmente la mana max.
+1269	GemeffectX22	augmente la résistance au froid
+1270	GemeffectX23	ajoute des dommages de froid
+1271	GemeffectX31	augmente la dextérité
+1272	GemeffectX32	augmente la résistance au poison
+1273	GemeffectX33	ajoute des dommages de poison
+1274	GemeffectX41	augmente la vie max.
+1275	GemeffectX42	augmente la résistance au feu
+1276	GemeffectX43	ajoute des dommages de feu
+1277	GemeffectX51	augmente la puissance d'attaque
+1278	GemeffectX52	augmente tous types de résistance
+1279	GemeffectX53	augmente les dommages infligés aux morts-vivants
+1280	GemeffectX61	augmente la proba. de trouver des objets magiques
+1281	GemeffectX62	augmente la résistance à la foudre
+1282	GemeffectX63	ajoute des dommages de foudre
+1283	GemeffectX71	accroit la régénération de la mana et de la vie
+1284	GemeffectX72	ajoute des dommages subis par l'attaquant
+1285	GemeffectX73	ajoute vol de mana et de vie aux dommages
+1286	Coldkill	Mort froide
+1287	Butchers Cleaver	Lame du boucher
+1288	Butcher's Pupil	Disciple du boucher
+1289	Islestrike	Lagon noir
+1290	Pompe's Wrath	Colère de Pompéi
+1291	Guardian Naga	Naga gardienne
+1292	Warlord's Trust	Lame guerrière
+1293	Spellsteel	Merline
+1294	Stormrider	Monte-tempête
+1295	Boneslayer Blade	Tranche-tibia
+1296	The Minotaur	Le Minotaure
+1297	Suicide Branch	Terrifiante
+1298	Cairn Shard	Eclat de Cairn
+1299	Arm of King Leoric	Bras de Leoric
+1300	Blackhand Key	Clé de la main noire
+1301	Dark Clan Crusher	Ecraseur du clan noir
+1302	Drulan's Tongue	Langue de Drulan
+1303	Zakrum's Hand	Main de Zakarum
+1304	The Fetid Sprinkler	Etinceleur
+1305	Hand of Blessed Light	Main de la Lumière Divine
+1306	Fleshrender	Broyeuse
+1307	Sureshrill Frost	Glaçante
+1308	Moonfall	Lunaire
+1309	Baezils Vortex	Vortex de Baezil 
+1310	Earthshaker	Trembleur
+1311	Bloodtree Stump	Souche de l'arbre sanglant
+1312	The Gavel of Pain	Le marteau de douleur
+1313	Bloodletter	Lettre de sang
+1314	Coldsteal Eye	Eclat d'oeil
+1315	Hexfire	Hexflamme
+1316	Blade of Ali Baba	Lame d'Ali Baba
+1317	Riftslash	Démembreuse
+1318	Headstriker	Matraqueuse
+1319	Plague Bearer	Porte-peste
+1320	The Atlantien	L'Atlante
+1321	Crainte Vomir	Epouvantable
+1322	Bing Sz Wang	Bing Wang
+1323	The Vile Husk	La gousse de fiel
+1324	Cloudcrack	Perce-nuage
+1325	Todesfaelle Flamme	Flamme de Todesfaelle 
+1326	Swordguard	Gardienne
+1327	Spineripper	Décerveleuse
+1328	Heart Carver	Perce-coeur 
+1329	Blackbog's Sharp	Pointe de Blackbog
+1330	Stormspike	Pique-tempête
+1331	The Impaler	L'empaleur
+1332	Kelpie Snare	Piège de Kelpie
+1333	Soulfeast Tine	Dévoreuse
+1334	Hone Sundan	Hone Sundan
+1335	Spire of Honor	Aiguille d'honneur
+1336	The Meat Scraper	L'Ecorcheuse
+1337	Blackleach Blade	Lame de la liche noire
+1338	Athena's Wrath	Ire d'Athéna
+1339	Pierre Tombale Couant	Chouanne
+1340	Husoldal Evo	Husoldal Evo
+1341	Grim's Burning Dead	Faucheuse de Grim
+1342	Ribcracker	Ecrase-thorax
+1343	Chromatic Ire	Fureur colorée
+1344	Warpspear	Démolisseuse
+1345	Skullcollector	Crâneuse
+1346	Skystrike	Fureur des cieux
+1347	Kuko Shakaku	Kuko Shakaku
+1348	Endlessshail	Grêle sans fin
+1349	Whichwild String	Folle furieuse
+1350	Godstrike Arch	Arche de fureur divine
+1351	Langer Briser	Briseuse
+1352	Pus Spiter	Cracheuse
+1353	Buriza-Do Kyanon	Buriza-Do Kyanon
+1354	Vampiregaze	Oeil vampirique
+1355	String of Ears	Assourdissante
+1356	Gorerider	Sanglante
+1357	Lavagout	Coulée de lave
+1358	Venom Grip	Etreinte venimeuse
+1359	Visceratuant	Eviscératrice
+1360	Guardian Angle	Ange gardien
+1361	Shaftstop	Muraille
+1362	Skin of the Vipermagi	Peau de vipermage
+1363	Blackhorn	Corne noire
+1364	Valkiry Wing	Aile des walkyries
+1365	Peasent Crown	Couronne du serf
+1366	Demon Machine	Rouage démoniaque
+1367	Magewrath	Ire du mage
+1368	Cliffkiller	Ravageur des collines
+1369	Riphook	Désosseur
+1370	Razorswitch	Lame-sorcière
+1371	Meatscrape	Viandeuse
+1372	Coldsteel Eye	Regard de pierre
+1373	Pitblood Thirst	Assoiffée
+1374	Gaya Wand	Baguette de Gaya
+1375	Ondal's Wisdom	Sagesse d'Ondal
+1376	Geronimo's Fury	Fureur de Géronimo
+1377	Charsi's Favor	Faveur de Charsi
+1378	Doppleganger's Shadow	Ombre du Doppleganger
+1379	Deathbit	Ankou
+1380	Warshrike	Complainte guerrière
+1381	Gutsiphon	Eventreuse
+1382	Razoredge	Fil du rasoir
+1383	Stonerattle	Crisse-pierre
+1384	Marrowgrinder	Brise-vertèbres
+1385	Gore Ripper	Belfégor
+1386	Bush Wacker	Moissonneuse
+1387	Demonlimb	Patte de démon
+1388	Steelshade	Vif-acier
+1389	Tomb Reaver	Profanatrice
+1390	Death's Web	Filet de la Faucheuse
+1391	Gaia's Wrath	Fureur de Gaia
+1392	Khalim's Vengance	Vengeance de Khalim
+1393	Angel's Song	Chant de l'ange
+1394	The Reedeemer	Le Rédempteur
+1395	Fleshbone	Viand'os
+1396	Odium	Odium
+1397	Blood Comet	Comète de sang
+1398	Bonehew	Taill'os
+1399	Steelrend	Tranchacier
+1400	Stone Crusher	Mort de tes os
+1401	Bul-Kathos' Might	Bras de Bul-Kathos
+1402	Arioc's Needle	Aiguille d'Arioc
+1403	Shadowdancer	Derviche d'ombre
+1404	Indiego's Fancy	Passion d'Indiego
+1405	Aladdin's Eviserator	Eventreuse d'Aladin
+1406	Tyrael's Mercy	Pitié de Tyrael
+1407	Souldrain	Buveur d'âme
+1408	Runemaster	Maître des Runes
+1409	Deathcleaver	Fendoir fatal
+1410	Executioner's Justice	Justice du Bourreau
+1411	Wallace's Tear	Larme de Wallace
+1412	Leviathan	Léviathan
+1413	The Wanderer's Blade	Lame de l'Errant
+1414	Qual'Kek's Enforcer	Bras de Qual-Khek
+1415	Dawnbringer	Boréale
+1416	Dragontooth	Dent de dragon
+1417	Wisp	Feu-follet
+1418	Gargoyle's Bite	Croc de la Gargouille
+1419	Lacerator	Lacérateur
+1420	Mang Song's Lesson	Leçon de Mang Song
+1421	Viperfork	Fourche-vipère
+1422	Blood Chalice	Calice de sang
+1423	El Espiritu	El Espiritu
+1424	The Long Rod	L'Allongée
+1425	Demonhorn's Edge	Corne du Démon
+1426	The Ensanguinator	L'Ensanglanteur
+1427	The Reaper's Toll	Glas de la Faucheuse
+1428	Spiritkeeper	Caveau des âmes
+1429	Hellrack	Roue du destin
+1430	Alma Negra	Alma Negra
+1431	Darkforge Spawn	Rejeton des enfers
+1432	Rockhew	Durandal
+1433	Sankenkur's Resurrection	Résurrection de Sankekur
+1434	Erion's Bonehandle	Fémur d'Erion
+1435	The Archon Magus	L'Achron Magus
+1436	Widow maker	Faiseur de veuves
+1437	Catgut	Boyau de chat
+1438	Ghostflame	Flamme spectrale
+1439	Shadowkiller	Tueur d'ombres
+1440	Bling Bling	Colchoc
+1441	Nebucaneezer's Storm	Tempête de Nebuchadnezzar
+1442	Griffon's Eye	Oeil du Griffon
+1443	Eaglewind	Vol de l'aigle
+1444	Windhammer	Mjolnir
+1445	Thunderstroke	Foudroyant
+1446	Giantmaimer	Estropieur
+1447	Demon's Arch	Arche du Démon
+1448	The Scalper	Le Scalpeur
+1449	Bloodmoon	Lune sanglante
+1450	Djinnslayer	Tueur de Djinn
+1451	Cranebeak	Cracoucass
+1452	Iansang's Frenzy	Violence de Iansang
+1453	Warhound	Chien de guerre
+1454	Gulletwound	Tranche-gorge
+1455	Headhunter's Glory	Trophée du chasseur
+1456	Mordoc's marauder	Maraudeur de Mordoc
+1457	Talberd's Law	Sentence de Talberd
+1458	Amodeus's Manipulator	Mâne d'Amodeus
+1459	Darksoul	Eminence grise
+1460	The Black Adder	La Vipère noire
+1461	Earthshifter	Sagesse de la terre
+1462	Nature's Peace	Royaume de la paix
+1463	Horazon's Chalice	Calice d'Horazon
+1464	Seraph's Hymn	Hymne de Seraph
+1465	Zakarum's Salvation	Rédemption de Zakarum
+1466	Fleshripper	Ecorcheur
+1467	Stonerage	Fureur de pierre
+1468	Blood Rain	Pluie de sang
+1469	Horizon's Tornado	Tornade du Levant
+1470	Nord's Tenderizer	Tendron du Nord
+1471	Wrath of Cain	Colère de Caïn
+1472	Siren's call	Chant des sirènes
+1473	Jadetalon	Griffes de jade
+1474	Wraithfang	Croc du spectre
+1475	Blademaster	Maître d'épée
+1476	Cerebus	Morsure de Cérébus
+1477	Archangel's Deliverance	Rédemption de l'Archange
+1478	Sinblade	Lame du péché
+1479	Runeslayer	Brise-rune
+1480	Excalibur	Excalibur
+1481	Fuego Del Sol	Fuego Del Sol
+1482	Stoneraven	Corbeau de pierre
+1483	El Infierno	El Infierno
+1484	Moonrend	Quartier de lune
+1485	Larzuk's Champion	Champion de Larzuk 
+1486	Nightsummon	Sortilège nocturne
+1487	Bonescapel	Crête osseuse
+1488	Rabbit Slayer	Tueur de lapin
+1489	Pagan's Athame	Malédiction païenne
+1490	The Swashbuckler	La Bravache
+1491	Kang's Virtue	Vertu de Kang
+1492	Snaketongue	Langue fouchue
+1493	Lifechoke	Etouffeuse
+1494	Ethereal edge	Lame boréale
+1495	Palo Grande	Palo Grande
+1496	Carnageleaver	Cause-chaos
+1497	Ghostleach	Liche fantôme
+1498	Soulreaper	Ecorcheuse d'âmes
+1499	Samual's Caretaker	Don de Samuel
+1500	Hell's Whisper	Murmure de Satan
+1501	The Harvester	Le Moissonneur
+1502	Raiden's Crutch	Madrier de Raiden
+1503	The TreeEnt	La Cognée
+1504	Stormwillow	Bâton tempête
+1505	Moonshadow	Ombre lunaire
+1506	Strongoak	Chêne centenaire
+1507	Demonweb	Toile démoniaque
+1508	Bloodraven's Charge	Charge du corbeau sanglant
+1509	Shadefalcon	Condor des ombres
+1510	Robin's Yolk	Coquille du rouge-gorge
+1511	Glimmershred	Lambeau de lumière
+1512	Wraithflight	Envol du spectre
+1513	Lestron's Mark	Sceau de Lestron
+1514	Banshee's Wail	Plainte des Banshees
+1515	Windstrike	Hurlevent
+1516	Medusa's Gaze	Oeil de Méduse
+1517	Titanfist	Poing du Titan
+1518	Hadeshorn	Corne d'Hadès
+1519	Rockstopper	Bloc-roc
+1520	Stealskull	Chasseur de crâne
+1521	Darksight Helm	Casque des nuits
+1522	Crown of Thieves	Couronne des voleurs
+1523	Blackhorn's Face	Corneface
+1524	The Spirit Shroud	Le suaire de l'esprit
+1525	Skin of the Flayed One	Ecorché
+1526	Ironpelt	Peau de fer
+1527	Spiritforge	Forge de l'esprit
+1528	Crow Caw	Plainte du corbeau
+1529	Duriel's Shell	Carapace de Duriel
+1530	Skullder's Ire	Courroux de Skullder
+1531	Toothrow	Mâchoire
+1532	Atma's Wail	Lamentation d'Atma
+1533	Black Hades	Enfers noirs
+1534	Corpsemourn	Gémissement du mort
+1535	Que-hegan's Wisdom	Sagesse de Que-Hegan
+1536	Moser's Blessed Circle	Disque sacré de Moser
+1537	Stormchaser	Chasseur de vent
+1538	Tiamat's Rebuke	Punition de Tiamat
+1539	Gerke's Sanctuary	Sanctuaire de Gerke
+1540	Radimant's Sphere	Sphère de Radamant
+1541	Gravepalm	Sépulture
+1542	Ghoulhide	Tanière de la Goule
+1543	Hellmouth	Bouche de l'enfer
+1544	Infernostride	Marche de l'enfer
+1545	Waterwalk	Marche-flots
+1546	Silkweave	Armure de soie
+1547	Wartraveler	Embrouilleur
+1548	Razortail	Fil du rasoir
+1549	Gloomstrap	Piège sinistre
+1550	Snowclash	Briseneige
+1551	Thudergod's Vigor	Tonnerre des dieux
+1552	Lidless Wall	Mur sans toît
+1553	Lanceguard	Garde lance
+1554	Squire's Cover	Cotte du châtelain
+1555	Boneflame	Os de flamme
+1556	Steelpillar	Pillier d'acier
+1557	Nightwing's Veil	Voile de la nuit
+1558	Hightower's Watch	Garde de Haute Tour
+1559	Crown of Ages	Couronne des âges
+1560	Andariel's Visage	Visage d'Andariel 
+1561	Darkfear	Peur noire
+1562	Dragonscale	Ecaille de dragon
+1563	Steel Carapice	Carapaçon d'acier
+1564	Ashrera's Wired Frame	Broigne d'Asheara
+1565	Rainbow Facet	Bouche de l'enfer
+1566	Ravenlore	Sagesse du corbeau
+1567	Boneshade	Ossement de l'ombre
+1568	Nethercrow	Corbeau des enfers
+1569	Hellwarden's Husk	Disque sacré de Moser
+1570	Flamebellow	Cri des flammes
+1571	Fathom	Profondeurs de la mort
+1572	Wolfhowl	Hululeur
+1573	Spirit Ward	Disciple de l'esprit
+1574	Kira's Guardian	Gardien de Kira
+1575	Orumus' Robes	Robe d'Ormus
+1576	Gheed's Fortune	Fortune de Gheed
+1577	The Vicar	Le Vicaire
+1578	Stormlash	Fureur des embruns
+1579	Halaberd's Reign	Règne d'Halaberd
+1580	Parkersor's Calm	Sérénité de Parkersor
+1581	Warriv's Warder	Garde de Warriv
+1582	Spike Thorn	Echarde
+1583	Dracul's Grasp	Poigne de Drakul 
+1584	Frostwind	Vent de glace
+1585	Templar's Might	Puissance du templier
+1586	Eschuta's temper	Ire d'Eschuta
+1587	Firelizard's Talons	Serres du lézard de flammes
+1588	Sandstorm Trek	Chemin des sables
+1589	Marrowwalk	Moellerine
+1590	Heaven's Light	Lumière céleste
+1591	Merman's Speed	Dent du triton
+1592	Arachnid Mesh	Maillon de l'araignée
+1593	Nosferatu's Coil	Anneau de Nosferatu
+1594	Metalgird	Ceinturon de Métalite
+1595	Verdugo's Hearty Cord	Grand cordon de Verdungo
+1596	Sigurd's Staunch	Ruse de Siggard
+1597	Carrion Wind	Souffle de Carrion
+1598	Giantskull	Crâne géant
+1599	Ironward	Acier d'Astréon
+1600	Gillian's Brazier	Four de Gillian
+1601	Drakeflame	Flammèche
+1602	Dust Storm	Tempête de poussière
+1603	Skulltred	Crâniasse
+1604	Alma's Reflection	Reflet d'Alma
+1605	Drulan's Tounge	Langue de Drulan
+1606	Sacred Charge	Charge sacrée
+1607	Bul-Kathos	Bul-Kathos
+1608	Saracen's Chance	Chance de Saracen
+1609	Highlord's Wrath	Courroux du Seigneur
+1610	Raven Frost	Corbeau gelé
+1611	Dwarf Star	Etoile naine
+1612	Atma's Scarab	Scarabée d'Atma
+1613	Mara's Kaleidoscope	Kaléidoscope de Mara
+1614	Crescent Moon	Croissant de lune
+1615	The Rising Sun	Soleil levant
+1616	The Cat's Eye	Oeil du chat
+1617	Bul Katho's Wedding Band	Alliance de Bul-Kathos
+1618	Rings	Anneaux
+1619	Metalgrid	Grille
+1620	Eschuta's temper	Ire d'Eschuta
+1621	Stormshield	Bouclier tempête
+1622	Blackoak Shield	Bouclier du chêne noir
+1623	Ormus' Robes	Robes d'Ormus
+1624	Arkaine's Valor	Bravoure d'Arkaine
+1625	The Gladiator's Bane	Fléau du Gladiateur
+1626	Veil of Steel	Voile d'acier
+1627	Harlequin Crest	Cimier Arlequin
+1628	Lance Guard	Garde lance
+1629	Kerke's Sanctuary	Sanctuaire de Gerke
+1630	Mosers Blessed Circle	Disque sacré de Moser
+1631	Que-Hegan's Wisdon	Sagesse de Que-Hegan
+1632	Guardian Angel	Ange gardien
+1633	Skin of the Flayerd One	Peau de l'écorché
+1634	Armor	Armure
+1635	Windforce	Windforce
+1636	Eaglehorn	Corne d'aigle
+1637	Gimmershred	Lanière de Gimmer
+1638	Widowmaker	Faiseur de veuves
+1639	Stormspire	Flèche tempête
+1640	Naj's Puzzler	Enigme de Naj
+1641	Ethereal Edge	Lame boréale
+1642	Wizardspike	Dague-sorcière
+1643	The Grandfather	Grand-père
+1644	Doombringer	Condamneur
+1645	Tyrael's Might	Bras de Tyrael
+1646	Lightsabre	Sabre-lumière
+1647	The Cranium Basher	Le Brise-crâne
+1648	Schaefer's Hammer	Marteau de Schaefer
+1649	Baranar's Star	Etoile de Baranar
+1650	Deaths's Web	Filet de la Faucheuse
+1651	Messerschmidt's Reaver	Ecorcheur de Messerschmidt
+1652	Hellslayer	Tue-l'enfer
+1653	Endlesshail	Fugace
+1654	The Atlantian	L'Atlante
+1655	Riftlash	Emporte-lame
+1656	Baezil's Vortex	Vortex de Baezil
+1657	Zakarum's Hand	Main de Zakarum
+1658	Carin Shard	Pointe de Carin
+1659	The Minataur	Le Minotaure
+1660	Trang-Oul's Avatar	Avatar de Trang-Oul
+1661	Trang-Oul's Guise	Traveste de Trang-Oul
+1662	Trang-Oul's Wing	Aile de Trang-Oul
+1663	Trang-Oul's Mask	Masque de Trang-Oul
+1664	Trang-Oul's Scales	Ecailles de Trang-Oul
+1665	Trang-Oul's Claws	Griffes de Trang-Oul
+1666	Trang-Oul's Girth	Ceinture de Trang-Oul
+1667	Natalya's Odium	Anathème de Natalya
+1668	Natalya's Totem	Totem de Natalya
+1669	Natalya's Mark	Marque de Natalya
+1670	Natalya's Shadow	Ombre de Natalya
+1671	Natalya's Soul	Ame de Natalya
+1672	Griswold's Legacy	Héritage de Griswold
+1673	Griswolds's Redemption	Rédemption de Griswold
+1674	Griswold's Honor	Honneur de Griswold
+1675	Griswold's Heart	Coeur de Griswold
+1676	Griswold's Valor	Vaillance de Griswold
+1677	Tang's Imperial Robes	Robes impériales de Tang
+1678	Tang's Fore-Fathers	Ancêtres de Tang
+1679	Tang's Rule	Loi de Tang
+1680	Tang's Throne	Trône de Tang
+1681	Tang's Battle Standard	Art guerrier de Tang
+1682	Ogun's Fierce Visage	Face ardente d'Ogun
+1683	Ogun's Shadow	Ombre d'Ogun
+1684	Ogun's Lash	Lanière d'Ogun
+1685	Ogun's Vengeance	Vengeance d'Ogun 
+1686	Bul-Kathos' Warden	Garde de Bul-Kathos
+1687	Bul-Kathos' Children	Enfants de Bul-Kathos
+1688	Bul-Kathos' Sacred Charge	Charge sacrée de Bul-Kathos
+1689	Bul-Kathos' Tribal Guardian	Garde tribal de Bul-Kathos
+1690	Bul-Kathos' Custodian	Héraut de Bul-Kathos
+1691	Flowkrad's Howl	Hurlement de Flowkrad
+1692	Flowkrad's Grin	Sourire de Flowkrad
+1693	Flowkrad's Fur	Fourrure de Flowkrad
+1694	Flowkrad's Paws	Pattes de Flowkrad
+1695	Flowkrad's Sinew	Nerf de Flowkrad
+1696	Aldur's Watchtower	Tour de guet d'Aldur
+1697	Aldur's Stony Gaze	Regard glacial d'Aldur
+1698	Aldur's Deception	Fraude d'Aldur
+1699	Aldur's Guantlet	Gantelet d'Aldur
+1700	Aldur's Advance	Vigueur d'Aldur
+1701	M'avina's Battle Hymn	Hymne de Bataille de M'avina
+1702	M'avina's True Sight	Vision de M'avina
+1703	M'avina's Embrace	Entreinte de M'avina
+1704	M'avina's Icy Clutch	Empoignade de M'avina
+1705	M'avina's Tenet	Doctrine de M'avina
+1706	M'avina's Caster	Invocateur de M'avina
+1707	Sazabi's Grand Tribute	Grand Tribut de Sazabi
+1708	Sazabi's Cobalt Redeemer	Rédempteur de Cobalt de Sazabi
+1709	Sazabi's Ghost Liberator	Libérateur de Fantômes de Sazabi
+1710	Sazabi's Mental Sheath	Enveloppe de Sazabi
+1711	Hwanin's Majesty	Majesté de Hwanin
+1712	Hwanin's Justice	Justice de Hwanin 
+1713	Hwanin's Splendor	Splendeur de Hwanin
+1714	Hwanin's Refuge	Refuge de Hwanin
+1715	Hwanin's Cordon	Ceinture de Hwanin
+1716	The Disciple	Disciple
+1717	Telling of Beads	Récit des Perles
+1718	Laying of Hands	Imposition des Mains
+1719	Rite of Passage	Rite du Passage
+1720	Spiritual Custodian	Partisan Obscur
+1721	Credendum	Credendum
+1722	Cow King's Leathers	Cuir du roi Taureau
+1723	Cow King's Horns	Cornes du roi Taureau
+1724	Cow King's Hide	Peau du roi Taureau
+1725	Cow King's Hoofs	Sabots du roi Taureau
+1726	Aragon's Masterpiece	Chef-d'oeuvre d'Aragonte
+1727	Aragon's Sunfire	Soleil d'Aragonte
+1728	Aragon's Icy Stare	Regard glacial d'Aragonte
+1729	Aragon's Storm Cloud	Ouragan d'Aragonte
+1730	Orphan's Call	Appel de l'orphelin
+1731	Guillaume's Face	Visage de Guillaume
+1732	Willhelm's Pride	Fierté de Willhelm
+1733	Magnus' Skin	Peau de Magnus
+1734	Wihtstan's Guard	Garde de Whitstan
+1735	Titan's Revenge	Revanche du Titan
+1736	Shakabra's Crux	Croix de Shakabra
+1737	Lycander's Aim	Dessein de Lycander
+1738	Shadow's Touch	Baiser des ombres
+1739	The Prowler	Le Rôdeur
+1740	Mortal Crescent	Arc létal
+1741	Cutthroat	Coupe-gorge de Bartuc
+1742	Sarmichian Justice	Justice du Samouraï
+1743	Annihilus	Annihilus
+1744	Arreat's Face	Visage d'Arreat
+1745	The Harbinger	Le Prophète
+1746	Doomseer	Prophète de l'Apocalypse
+1747	Howling Visage	Hurle-terreur
+1748	Terra	Gardien de Terra
+1749	Syrian	Flore de la Triade
+1750	Jalal's Mane	Crinière de Jalal
+1751	Malignant	Crâne sardonique
+1752	Apothecary's Tote	Besace d'apothicaire
+1753	Apocrypha	Apocryphes
+1754	Foci of Visjerei	Foci de Vizjerei
+1755	Homunculus	Homoncule
+1756	Aurora's Guard	Gardien de l'aurore
+1757	Crest of Morn	Lueur de l'aube
+1758	Herald of Zakarum	Héraut de Zakarum
+1759	Akarat's Protector	Protecteur d'Akarat
+1760	Ancient Eye	Oeil ancien
+1761	Globe of Visjerei	Globe de Vizjerei
+1762	The Oculus	L'Oculus
+1763	Phoenix Egg	Oeuf du Phénix
+1764	Xenos	Xénos
+1765	Nagas	Nagas
+1766	Wyvern's Head	Tête de Wyverne
+1767	Sightless Veil	Voile aveugle
+1768	ChampionFormatX	a0n1:%1 %0
+1769	EskillKickSing	 Coup de pied
+1770	EskillKickPlur	 Coups de pied
+1771	EskillPetLife	Vie du familier : 
+1772	EskillWolfDef	Défense du loup : 
+1773	EskillPassiveFeral	Bonus passif pour les loups et les ours
+1774	Eskillperhit12	 par coup
+1775	Eskillincasehit	 touche
+1776	Eskillincasemastery	%d pour-cent de chance d'infliger un coup critique
+1777	Eskillincaseraven	Coût en mana par corbeau : 
+1778	ob5	Pierre de Jared
+1779	pad	Bouclier de Kurast
+1780	axf	Gants tranchants
+1781	Eskillkickdamage	Dommages du coup de pied : 
+1782	ModStre10k	Dommages du coup de pied : 
+1783	ModStre10L	Pourcentage de chance de lancer le sort
+1784	Class Specific	Objet de classe
+1785	fana	Anya prise dans la glace
+1786	qsta5q14	Larzuk vous permettra d'orner l'objet de votre choix.
+1787	qstsa5q42a	Trouvez Nihlathak dans les Corridors du Martyre.
+1788	qstsa5q31a	Sauvez Anya.
+1789	qstsa5q21a	Libérez les soldats de leur prison et guidez-les vers la ville.
+1790	qstsa5q43a	Anya personnalisera un objet pour vous.
+1791	qstsa5q62a	Tuez Baal dans la Chambre de la Pierre Monde avant qu'il ne la détruise.
+1792	qstsa5q61a	Trouvez la Salle du Trône de Baal.
+1793	x	Impossible de rejoindre la partie. Votre personnage doit avoir tué Baal au niveau Cauchemar pour participer à une partie au niveau Enfer.
+1794	x	Impossible de rejoindre la partie. Votre personnage doit avoir tué Baal pour participer à une partie au niveau Cauchemar.
+1795	x	CRÉER NOUVEAU
+1796	x	PERSONNAGE
+1797	act1X	LA PLAINTE DE LA SOEUR
+1798	act2X	VOYAGE DANS LE DESERT
+1799	act3X	LA JUNGLE DE MEPHISTO
+1800	act4X	L'ENTRÉE EN ENFER
+1801	strepilogueX	FIN DE LA TERREUR
+1802	act5X	A LA RECHERCHE DE BAAL
+1803	strlastcinematic	FIN DE LA DESTRUCTION
+1804	CfgSay7	Dire 'Retraite'
+1805	0sc	Parchemin de connaissance
+1806	tr2	Clic droit pour utiliser\nParchemin de résistance
+1807	of Lightning Strike	de boule d'éclair
+1808	of Plague Jab	de Pestemort
+1809	of Charged Strike	de boule de foudre
+1810	of Impaling Strike	d'empalement
+1811	of Poison Jab	de toxine
+1812	of Power Strike	d'attaque foudroyante
+1813	of the Colossus	de la démesure
+1814	of the Kraken	du centaure
+1815	Tal Rasha's Wrappings	Grand-cape de Tal Rasha
+1816	Tal Rasha's Fire-Spun Cloth	Soie de Tal Rasha
+1817	Tal Rasha's Adjudication	Jugement de Tal Rasha
+1818	Tal Rasha's Howling Wind	Garde de Tal Rasha
+1819	Tal Rasha's Lidless Eye	L'oeil de Tal Rasha
+1820	Tal Rasha's Horadric Crest	Cimier horadrique de Tal Rasha
+1821	Hwanin's Seal	Bénédiction de Hwanin
+1822	Heaven's Brethren	Frère Céleste
+1823	Dangoon's Teaching	Enseignement de Dangoon
+1824	Ondal's Almighty	Toute-puissance Ondal
+1825	Heaven's Taebaek	Gloire de Taebaek
+1826	Haemosu's Adament	Dureté d'Haemosu
+1827	Lycander's Flank	Flanc de Lycander
+1828	Constricting Ring	L'anneau constricteur
+1829	Ginther's Rift	Rift de Ginther
+1830	Naj's Ancient Set	Vestige antique de Naj
+1831	Naj's Light Plate	Armure légère de Naj
+1832	Naj's Circlet	Bandeau de Naj
+1833	Sander's Superstition	Superstition de McAuley
+1834	Sander's Taboo	Tabou de McAuley
+1835	Sander's Basis	Matrice de McAuley
+1836	Sander's Derby	Voeu de McAuley
+1837	Sander's Court Jester	Folie de McAuley
+1838	Ghost Liberator	Libérateur de fantôme
+1839	Wilhelm's Pride	Fierté de Wilhelm
+1840	Immortal King's Stone Crusher	Pierrefendre du Roi Immortel
+1841	Immortal King's Pillar	Pilier du Roi Immortel
+1842	Immortal King's Forge	Forge du Roi Immortel
+1843	Immortal King's Detail	Parade du Roi Immortel
+1844	Immortal King's Soul Cage 	Cage d'âme du Roi Immortel
+1845	Immortal King's Will	Volonté du Roi Immortel
+1846	Immortal King	Roi Immortel
+1847	Aldur's Gauntlet	Cadence d'Aldur
+1848	Ancient Statue 3	Kolric le Protecteur
+1849	Ancient Statue 2	Madawc le Gardien
+1850	Ancient Statue 1	Talic le Défenseur
+1851	Baal Subject 1	Colenzo l'Annihilateur
+1852	Baal Subject 2	Achmel le Maudit
+1853	Baal Subject 3	Bartuc le Sanglant
+1854	Baal Subject 4	Ventar l'Impie
+1855	Baal Subject 5	Lister le Tourmenteur
+1856	Baal Subject 6	Le Boucher
+1857	Baal Subject 6a	Le Boulanger
+1858	Baal Subject 6b	Le Porteur de Chandelier
+1859	Baal Crab Clone	Baal
+1860	Baal Crab to Stairs	Baal
+1861	BaalColdMage	Necromage
+1862	Baal Subject Mummy	Unraveler
+1863	Baal Tentacle	Appendices suppurants
+1864	Baals Minion	Serviteur de la destruction
+1865	Hell1	Abaddon
+1866	Hell2	Puits d'Acheron
+1867	Hell3	Puits infernal
+1868	To Hell1	Vers Abaddon
+1869	To Hell2	Vers le Puits d'Acheron
+1870	To Hell3	Vers le Puits infernal
+1871	Lord of Destruction	
+1872	x	Fichier inaccessible. Impossible de convertir le personnage
+1873	EskillPerBlade	 par épée
+1874	ExInsertSockets	Peut être enchâssé dans les objets ornés
+1875	McAuley's Superstition	Superstition de Sander
+1876	McAuley's Taboo	Tabou de Sander
+1877	McAuley's Riprap	Matrice de Sander
+1878	McAuley's Paragon	Voeu de Sander
+1879	McAuley's Folly	Folie de Sander
+1880	x	Disque Extension
+1881	qstsa5q62b	Tuer les serviteurs de Baal.
+1882	x	(c) Copyright 2001 Blizzard Entertainment
+1883	of the Plague	de la peste
+1884	Go South	retour vers l'enfer
+1885	ItemExpansiveChancX	%d%% chances de lancer niveau %d %s en attaquant
+1886	ItemExpansiveChanc1	%d%% chances de lancer niveau %d %s en touchant
+1887	ItemExpansiveChanc2	%d%% chances de lancer niveau %d %s quand touché
+1888	ItemExpcharmdesc	A garder dans l'inventaire pour bénéficier du bonus
+1889	StrMercEx12	Défensive
+1890	StrMercEx14	Offensive
+1891	StrMercEx15	Combat
+1892	Eskillelementaldmg	Dommages accumulés élémentaires : 
+1893	Playersubtitles29	Retreat!
+1894	Playersubtitles30	Run away!
+1895	LeaveCampDru	So, it begins.
+1896	LeaveCampAss	They'll never see me coming.
+1897	EnterDOEAss	So dark... perfect.
+1898	EnterDOEDru	So, this is where evil hides.
+1899	EnterBurialAss	Whose handiwork lies buried here?
+1900	EnterBurialDru	Planting the dead... How odd.
+1901	EnterMonasteryAss	Such corruption in this place...
+1902	EnterMonasteryDru	Evil flows from here.
+1903	EnterForgottenTAss	Who would want to remember this place?
+1904	EnterForgottenTDru	I can smell why this tower was abandoned.
+1905	EnterJailAss	Try and cage me, demons.
+1906	EnterJailDru	Bars can't hold a force of nature.
+1907	EnterCatacombsAss	I don't like it down here.
+1908	EnterCatacombsDru	The supernatural is strong here.
+1909	CompletingDOEAss	The Rogues' test is done.
+1910	CompletingDOEDru	Bah! Is that all of them?
+1911	CompletingBurialAss	What I kill stays dead.
+1912	CompletingBurialDru	Your time is past, Blood Raven.
+1913	FindingInifusAss	How has this tree escaped corruption?
+1914	FindingInifusDru	This dead tree teems with energy.
+1915	FindingCairnAss	These stones hold an ancient power.
+1916	FindingCairnDru	Such stones are common back home.
+1917	FindingTristramAss	Tristram... The first to fall to Diablo's wrath.
+1918	FindingTristramDru	Ruins... the fate of all cities.
+1919	RescueCainAss	Cain! Go to the Rogue camp.
+1920	RescueCainDru	Deckard Cain, leave this place!
+1921	HoradricMalusAss	A Malus! This should go to Charsi.
+1922	HoradricMalusDru	Charsi will be thankful to get this Malus.
+1923	CompletingForgottenTPal	So much treasure almost covers the stench.
+1924	CompletingForgottenTPal	This tower has its charms...
+1925	CompletingAndarielAss	Death becomes you, Andariel.
+1926	CompletingAndarielDru	Your reign is over, Andariel.
+1927	EnteringRadamentAss	Why must evil hide in such wretched places?
+1928	EnteringRadamentDru	Face the light or lurk in darkness.
+1929	CompletingRadamentAss	Vengeance... for Atma.
+1930	CompletingRadamentDru	Return to dust, Radament.
+1931	BeginTaintedSunAss	An eclipse... never a good omen.
+1932	BeginTaintedSunDru	Strange... an unexpected eclipse.
+1933	EnteringClawViperAss	Dark magic in a darker tomb...
+1934	EnteringClawViperDru	Snakes... I hate snakes.
+1935	CompletingTaintedSunAss	Serpents! I expected worse.
+1936	CompletingTaintedSunDru	The sun warms the world once more.
+1937	EnteringArcaneAss	The Sanctuary - Horazon's obsession.
+1938	EnteringArcaneDru	This was not designed by nature's Architect.
+1939	FindingSummonerAss	Summoner, the dark magics have corrupted you.
+1940	FindingSummonerDru	This place would drive anyone mad.
+1941	CompletingSummonerAss	Horazon. Your decoy is dead.
+1942	CompletingSummonerDru	Now I can leave this twisted nightmare.
+1943	FindingdecoyTombAss	The Horadrim have left their mark here.
+1944	FindingdecoyTombDru	These Horadric markings are mysterious.
+1945	FindingTrueTombAss	I can sense Tal Rasha's presence now.
+1946	FindingTrueTombDru	So, Tal Rasha... This is your resting place.
+1947	CompletingTombAss	I shall track the Prime Evils to the ends of the world.
+1948	CompletingTombDru	Diablo... I will find you yet.
+1949	FindingLamEsenAss	Black books make for dark thoughts.
+1950	FindingLamEsenDru	An ancient manuscript...  This could be useful.
+1951	CompletingLamEsenAss	One can't judge a book by its cover.
+1952	CompletingLamEsenAss	Ormus... You have strange taste in books.
+1953	CompletingLamEsenDru	Ormus... study the book well.
+1954	FindingBeneathCityAss	And I thought the Forgotten Tower stank.
+1955	FindingBeneathCityDru	This smells worse than the sewers of Lut Gohlein.
+1956	FindingDrainLeverAss	Levers are made to be pulled.
+1957	FindingDrainLeverDru	Finally... The drain lever.
+1958	CompletingBeneathCityAss	This is one drain I don't mind cleaning out.
+1959	CompletingBeneathCityDru	From trash to treasure...
+1960	CompletingBladeAss	What a delicious blade! I should consult Ormus.
+1961	CompletingBladeDru	Ormus may know something about this unusual blade.
+1962	FindingJadeFigAss	Hmm, a jade statue. What should I do with it?
+1963	FindingJadeFigDru	It looks like jade. Perhaps it's worth something.
+1964	FindingTempleAss	I dread this place of darkness.
+1965	FindingTempleDru	This temple is a nest of evil.
+1966	CompletingTempleAss	The dark magic here is dispelled.
+1967	CompletingTempleDru	There is hope once again.
+1968	FindingGuardianTowerAss	Mephisto... I'm coming for you.
+1969	FindingGuardianTowerDru	Hatred stirs within me.
+1970	CompletingGuardianTowerAss	Mephisto, you were no match for me.
+1971	CompletingGuardianTowerAss	Mephisto's hatred was a poisonous void.
+1972	FreezingIzualAma	Goodbye, Izual.
+1973	FreezingIzualAss	Corruption... take flight.
+1974	FreezingIzualDru	I have no pity for him. Oblivion is his reward.
+1975	KillingdDiabloSor	Terror stalks Hell no more.
+1976	KillingdDiabloBar	Eternal suffering would be too brief for you, Diablo.
+1977	KillingdDiabloNec	Lord Diablo I have bested you.
+1978	KillingdDiabloPal	Let Diablo's death end the reign of the Three!
+1979	KillingdDiabloAms	The reign of Terror has ended.
+1980	KillingdDiabloAss	A hero's mistake is finally corrected.
+1981	KillingdDiabloDru	Thus ends the plague of Terror.
+1982	LeavingTownAct5Sor	My magic will break the siege.
+1983	LeavingTownAct5Bar	The time has come to cleanse my homeland!
+1984	LeavingTownAct5Nec	It takes more than a siege to stop me.
+1985	LeavingTownAct5Pal	Baal. I'm coming for you.
+1986	LeavingTownAct5Ams	The siege must be stopped.
+1987	LeavingTownAct5Ass	You'll pay for your atrocities, Baal.
+1988	LeavingTownAct5Dru	Baal! Nothing will stand in my way.
+1989	CompletingStopSiegeSor	Harrogath can rest easier now.
+1990	CompletingStopSiegeBar	The siege is broken.
+1991	CompletingStopSiegeNec	My, my, what a messy little demon.
+1992	CompletingStopSiegePal	Harrogath is free of your kind, demon.
+1993	CompletingStopSiegeAms	Oops...Did I do that?
+1994	CompletingStopSiegeAss	Shenk, your command has ended.
+1995	CompletingStopSiegeDru	The catapults have been silenced.
+1996	RescueQual-KehkAct5Sor	Follow me.
+1997	RescueQual-KehkAct5Bar	Follow me.
+1998	RescueQual-KehkAct5Nec	Follow me.
+1999	RescueQual-KehkAct5Pal	Follow me.
+2000	RescueQual-KehkAct5Ams	Follow me.
+2001	RescueQual-KehkAct5Ass	Follow me.
+2002	RescueQual-KehkAct5Dru	Follow me.
+2003	EnteringNihlathakAct5Sor	Could this be a trap?
+2004	EnteringNihlathakAct5Bar	A coward's hiding place.
+2005	EnteringNihlathakAct5Nec	Ahh, the familiar scent of death.
+2006	EnteringNihlathakAct5Pal	By the Light! What is this place?
+2007	EnteringNihlathakAct5Ams	...Nihlathak's home away from home.
+2008	EnteringNihlathakAct5Ass	I should have known...
+2009	EnteringNihlathakAct5Dru	Nihlathak... you can't hide from me.
+2010	CompletingNihlathakAct5Sor	Your power was no match for mine.
+2011	CompletingNihlathakAct5Bar	A fitting death for a traitor.
+2012	CompletingNihlathakAct5Nec	You were a sad little man, Nihlathak.
+2013	CompletingNihlathakAct5Pal	Nihlathak. What led you to this end?
+2014	CompletingNihlathakAct5Ams	Conspiring with Baal... What a tragic mistake.
+2015	CompletingNihlathakAct5Ass	You Dark Mages are all alike - obsessed with power.
+2016	CompletingNihlathakAct5Dru	Betrayer, you've reaped your reward.
+2017	EnteringTopMountAct5Sor	The fabled home of the Ancients.
+2018	EnteringTopMountAct5Bar	The guardians of Mount Arreat await.
+2019	EnteringTopMountAct5Nec	The resting place of the Ancients...
+2020	EnteringTopMountAct5Pal	The summit - The Barbarian holy ground.
+2021	EnteringTopMountAct5Ams	The fabled home of the Ancients.
+2022	EnteringTopMountAct5Ass	I shall prove worthy.
+2023	EnteringTopMountAct5Dru	At last...The summit of Mount Arreat.
+2024	EnteringWorldstoneAct5Sor	The power of the Worldstone washes over me.
+2025	EnteringWorldstoneAct5Bar	The halls of the Ancients... Magnificent.
+2026	EnteringWorldstoneAct5Nec	So, this is what the Ancients guard.
+2027	EnteringWorldstoneAct5Pal	The Worldstone! Praise the Light.
+2028	EnteringWorldstoneAct5Ams	The Worldstone!
+2029	EnteringWorldstoneAct5Ass	I feel the power of the Worldstone.
+2030	EnteringWorldstoneAct5Dru	The legendary Worldstone - guardian of the Natural realm.
+2031	CompletingDefeatBaalAct5Sor	The last of the Three has fallen.
+2032	CompletingDefeatBaalAct5Bar	The Prime Evils are no more.
+2033	CompletingDefeatBaalAct5Nec	Baal, never doubt my skills.
+2034	CompletingDefeatBaalAct5Pal	Baal, you shall no longer taint this mortal realm.
+2035	CompletingDefeatBaalAct5Ams	My work here is truly done.
+2036	CompletingDefeatBaalAct5Ass	The Evil brotherhood is no more.
+2037	CompletingDefeatBaalAct5Dru	Baal! Join your brothers in oblivion.
+2038	Skillname222	Corbeau
+2039	Skillsd222	Invoquer corbeaux
+2040	Skillld222	les yeux de vos ennemis\ninvoque des corbeaux qui attaquent
+2041	Skillan222	Corbeau
+2042	Skillname223	Graine de peste
+2043	Skillsd223	invoque des plantes qui répandent la peste
+2044	Skillld223	peste sur les ennemis qu'elles touchent\nInvoque des plantes qui répandent la
+2045	Skillan223	G. de peste
+2046	Skillname223	Loup-garou
+2047	Skillsd223	transforme en loup
+2048	Skillld223	transforme en loup
+2049	Skillan223	Loup-garou
+2050	Skillname225	Lycanthropie
+2051	Skillsd225	passif - améliore votre aptitude de métamorphose
+2052	Skillld225	quand métamorphosé en loup ou en ours\npassif - augmente la durée d'effet et la vie
+2053	Skillan225	Lycanthropie
+2054	Skillname226	Tempête feu
+2055	Skillsd226	déclenche un chaos de feu
+2056	Skillld226	déclenche un chaos de feu pour brûler vos ennemis
+2057	Skillan226	Tempête feu
+2058	Skillname227	Chêne sage 
+2059	Skillsd227	Invoque l'esprit du chêne
+2060	Skillld227	vos points de vie et ceux de vos compagnons\nInvoque un familier qui augmente
+2061	Skillan227	Chêne sage 
+2062	Skillname228	Esprit gardien
+2063	Skillsd228	invoque un esprit gardien
+2064	Skillld228	pour combattre à vos côtés\ninvoque un loup avec des aptitudes de téléportation
+2065	Skillan228	Esp. gardien
+2066	Skillname229	Grizzly
+2067	Skillsd229	Métamorphose en grizzly
+2068	Skillld229	Métamorphose en grizzly
+2069	Skillan229	Grizzly
+2070	Skillname230	Roche fusion
+2071	Skillsd230	projette du magma en fusion
+2072	Skillld230	qui fait reculer l'ennemi\nprojette du magma en fusion
+2073	Skillan230	Roche fusion
+2074	Skillname231	Souffle glace
+2075	Skillsd231	projette un jet de glace
+2076	Skillld231	pout geler vos ennemis sur pied\nprojette un jet de glace continu
+2077	Skillan231	Souffle glace
+2078	Skillname232	Cycle de vie
+2079	Skillsd232	invoque une plante qui mange les cadavres
+2080	Skillld232	et vous rend de la vie\ninvoque une plante qui dévore les cadavres
+2081	Skillan232	Cycle de vie
+2082	Skillname233	Folie
+2083	Skillsd233	attaque vol de vie - forme de loup
+2084	Skillld233	aux ennemis\npour voler de plus en plus de vie\nentre dans une rage frénétique\nen forme de loup,
+2085	Skillan233	Folie
+2086	Skillname234	Masse
+2087	Skillsd234	matraque vos ennemis - forme d'ours
+2088	Skillld234	au fil des coups\npour accroître les dommages\nmatraque vos ennemis\nen forme d'ours,
+2089	Skillan234	Masse
+2090	Skillname235	Eruption
+2091	Skillsd235	Ouvre le sol pour brûler vos ennemis
+2092	Skillld235	pour les brûler\nouvre des cratères sous les pieds de vos ennemis
+2093	Skillan235	Eruption
+2094	Skillname236	Arm. ouragan
+2095	Skillsd236	protège contre les dommages des éléments
+2096	Skillld236	le feu, le froid et la foudre\nvous protège contre les dommages causés par
+2097	Skillan236	Arm. ouragan
+2098	Skillname237	Coeur de Wolverine
+2099	Skillsd237	Invoque le coeur de wolverine
+2100	Skillld237	de votre groupe\naux taux d'attaque et de dommages\ninvoque un familier qui ajoute
+2101	Skillan237	C. Wolverine
+2102	Skillname238	Invoquer loup
+2103	Skillsd238	Invoque un loup enragé
+2104	Skillld238	les dommages causés aux ennemis\net dévore les cadavres pour augmenter\nInvoque un loup qui devient enragé
+2105	Skillan238	Loup
+2106	Skillname239	Rage
+2107	Skillsd239	morsure rend malade - forme loup
+2108	Skillld239	pour leur infliger des maladies\nmord vos ennemis\nen forme de loup,
+2109	Skillan239	Rage
+2110	Skillname240	Griffes feu
+2111	Skillsd240	attaque de feu puissante
+2112	Skillld240	avec une attaque de griffe\nmatraque vos ennemis\nEn forme de loup ou d'ours,
+2113	Skillan240	Griffes feu
+2114	Skillname241	Cyclone
+2115	Skillsd241	libère plusieurs petits tourbillons
+2116	Skillld241	ouvrent un passage à travers les rangs ennemis\nlibère de petits tourbillons qui
+2117	Skillan241	Cyclone
+2118	Skillname242	Cycle de l'esprit
+2119	Skillsd242	invoque une plante qui mange les cadavres
+2120	Skillld242	et vous rend de la mana\nInvoque un sarment qui dévore les cadavres
+2121	Skillan242	C. esprit
+2122	Skillname243	Faim
+2123	Skillsd243	Vol de vie et de mana
+2124	Skillld243	pour gagner de la vie et de la mana\nmord vos ennemis\nen forme de loup ou d'ours,
+2125	Skillan243	Faim
+2126	Skillname244	Onde de choc
+2127	Skillsd244	Crée des ondes de choc - forme d'ours
+2128	Skillld244	qui étourdit les ennemis proches\nfrappe du pied pour créer une onde de choc\nEn forme d'ours,
+2129	Skillan244	Onde de choc
+2130	Skillname245	Volcan
+2131	Skillsd245	crée un volcan
+2132	Skillld245	et la destruction parmi vos ennemis\ninvoque un volcan pour semer la mort
+2133	Skillan245	Volcan
+2134	Skillname246	Tornade
+2135	Skillsd246	crée une tornade
+2136	Skillld246	pour écraser vos ennemis\ncrée un tourbillon de vent et de débris
+2137	Skillan246	Tornade
+2138	Skillname247	Esprit vengeur
+2139	Skillsd247	invoque un esprit vengeur
+2140	Skillld247	aux ennemis\nsubis par votre coterie\ninvoque un esprit vengeur qui renvoie les dommages
+2141	Skillan247	Esp. vengeur
+2142	Skillname248	Grizzly
+2143	Skillsd248	Invoque un grizzly
+2144	Skillld248	Invoque un grizzly furieux
+2145	Skillan248	Grizzly
+2146	Skillname249	Furie
+2147	Skillsd249	Attaque multiple - forme de loup
+2148	Skillld249	ou une cible plusieurs fois\nattaque plusieurs cibles adjacentes\n En forme de loup,
+2149	Skillan249	Furie
+2150	Skillname250	Armageddon
+2151	Skillsd250	pluie de feu sur vos ennemis
+2152	Skillld250	qui détruit les ennemis proches par le feu\ncrée une pluie de petits météores
+2153	Skillan250	Armageddon
+2154	Skillname251	Ouragan
+2155	Skillsd251	crée une gigantesque tempête de vent
+2156	Skillld251	pour disloquer vos ennemis\ncrée une tempête de pluie gelée et de vent
+2157	Skillan251	Ouragan
+2158	Skillname252	Boules de feu
+2159	Skillsd252	projette des projectiles de feu explosifs
+2160	Skillld252	pour détruire vos ennemis\nprojette des projectiles de feu explosifs
+2161	Skillan252	Boules de feu
+2162	Skillname253	Griffes
+2163	Skillsd253	passif - améliore la maîtrise des armes de classe griffes
+2164	Skillld253	avec les Griffes\nPassif - Améliore vos aptitudes
+2165	Skillan253	Griffes
+2166	Skillname254	Marteau psychique
+2167	Skillsd254	un choc mental pour écraser vos ennemis
+2168	Skillld254	qui blesse et repousse vos ennemis\npour créer une onde psychique\nutilisez la puissance de l'esprit
+2169	Skillan254	Marteau
+2170	Skillname255	Tigre
+2171	Skillsd255	augmente les dommages infligés à la libération de l'énergie\n\nConcentration
+2172	Skillld255	normale pour utiliser les charges\nterminez par une attaque dragon ou\nà la libération d'énergie\nles coups successifs ajoutent des bonus de dommages\n\nConcentration\n
+2173	Skillan255	Tigre
+2174	Skillname256	Serre dragon
+2175	Skillsd256	repousse vos ennemis\n\nLibération
+2176	Skillld256	ajoute les bonus accumulés au coup\nrepousse vos ennemis\n\nLibération\n
+2177	Skillan256	Serre dragon
+2178	Skillname257	Champ de choc
+2179	Skillsd257	projette des arcs électriques
+2180	Skillld257	électrocutent vos ennemis\nprojette des éclairs qui
+2181	Skillan257	Champ de choc
+2182	Skillname258	Lame
+2183	Skillsd258	crée une lame tournoyante
+2184	Skillld258	entre vous et votre cible\nune lame tournoyante va et vient
+2185	Skillan258	Lame
+2186	Skillname259	Rapidité
+2187	Skillsd259	améliore la vitesse d'attaque et de mouvement
+2188	Skillld259	pendant un temps donné\naméliore la vitesse d'attaque et de mouvement
+2189	Skillan259	Rapidité
+2190	Skillname260	Poings de feu
+2191	Skillsd260	ajoute des dommages de feu aux libérations d'énergie\n\nConcentration
+2192	Skillld260	normale pour utiliser les charges\nterminez par une attaque dragon ou\nne s'utilise qu'avec les griffes ou à mains nues\nà la libération d'énergie\nles coups successifs ajoutent des dommages de feu\n\nConcentration\n
+2193	Skillan260	Poings de feu
+2194	Skillname261	Griffe dragon
+2195	Skillsd261	double attaque de griffes\n\nLibération
+2196	Skillld261	ajoute les bonus accumulés aux attaques de griffes\npour achever vos ennemis\nutilise vos deux griffes\n\nLibération\n
+2197	Skillan261	Griffe dragon
+2198	Skillname262	Sentinelle électrique
+2199	Skillsd262	un piège qui projette des traits de foudre
+2200	Skillld262	aux ennemis assez fous pour passer à portée\nun piège qui projette des traits de foudre
+2201	Skillan262	Trait foudre
+2202	Skillname263	Esprit du feu
+2203	Skillsd263	un piège qui projette des traits de feu
+2204	Skillld263	un piège qui projette des traits de feu
+2205	Skillan263	Esprit du feu
+2206	Skillname264	Parade multiple
+2207	Skillsd264	passif - pare avec deux armes de classe griffes
+2208	Skillld264	deux armes de classe griffes\npassif - une chance de parer avec
+2209	Skillan264	Parade
+2210	Skillname265	Manteau des Ombres
+2211	Skillsd265	aveugle vos ennemis
+2212	Skillld265	et réduit leurs défenses temporairement\ndéploie une ombre qui aveugle vos ennemis proches
+2213	Skillan265	M. des ombres
+2214	Skillname266	Cobra
+2215	Skillsd266	de mana à la libération d'énergie\naméliore le vol de vie et\n\nConcentration
+2216	Skillld266	normale pour utiliser les charges\nterminez par une attaque dragon ou\nvol de vie et de mana à la libération d'énergie\nles coups successifs ajoutent des bonus de\n\nConcentration\n
+2217	Skillan266	Cobra
+2218	Skillname267	Danse sabre
+2219	Skillsd267	Lance des lames tournoyantes
+2220	Skillld267	qui découpent vos ennemis en tranches\nlance des lames tournoyantes
+2221	Skillan267	Danse sabre
+2222	Skillname268	Transparence
+2223	Skillsd268	résistance générale momentanée
+2224	Skillld268	un temps contre les malédictions\naugmente toutes les résistances et protège
+2225	Skillan268	Transparence
+2226	Skillname269	Guerrier d'ombre 
+2227	Skillsd269	invoque une ombre de vous-même
+2228	Skillld269	vos aptitudes et combat à vos côtés\ninvoque une ombre de vous qui a
+2229	Skillan269	Guer. ombre
+2230	Skillname270	Griffes du Tonnerre
+2231	Skillsd270	Ajoute des dommages de foudre à la libération de l'énergie\nConcentration
+2232	Skillld270	normale pour utiliser les charges\nterminez par une attaque dragon ou\nne s'utilise qu'avec les griffes ou à mains nues\nà la libération d'énergie\nles coups successifs ajoutent des dommages de foudre\n\nConcentration\n
+2233	Skillan270	Tonnerre
+2234	Skillname271	Queue dragon
+2235	Skillsd271	riposte explosive\n\nLibération
+2236	Skillld271	ajoute les bonus accumulés au coup\nrepousse vos ennemis avec un coup de pied explosif\n\nLibération\n
+2237	Skillan271	Queue dragon
+2238	Skillname272	Sent. éclair
+2239	Skillsd272	un piège qui libère des éclairs
+2240	Skillld272	les ennemis proches\nc'est un piège qui foudroie
+2241	Skillan272	Sent. éclair
+2242	Skillname273	Sent. inferno
+2243	Skillsd273	piège qui brûle les ennemis
+2244	Skillld273	piège qui brûle les ennemis proches
+2245	Skillan273	Sent. inferno
+2246	Skillname274	S. mental
+2247	Skillsd274	choc psionique
+2248	Skillld274	et convertit les esprits faibles\nétourdit un groupe d'ennemis\nen utilisant la puissance de votre esprit
+2249	Skillan274	S. mental
+2250	Skillname275	Lames glace
+2251	Skillsd275	ajoute des dommages de froid à la libération d'énergie\n\nConcentration
+2252	Skillld275	normale pour utiliser les charges\nterminez par une attaque dragon ou\ns'utilise avec les griffes ou à mains nues\nà la libération d'énergie\nles coups successifs ajoutent des dommages de froid\n\nConcentration\n
+2253	Skillan275	Lames glace
+2254	Skillname276	Vol du dragon
+2255	Skillsd276	téléportation pour dispenser un coup de pied explosif\n\nLibération
+2256	Skillld276	ajoute les bonus accumulés au coup\nvous lui assénez un coup mortel\ntéléporté jusqu'à l'ennemi\n\nLibération\n
+2257	Skillan276	Vol du dragon
+2258	Skillname277	Sent mortelle
+2259	Skillsd277	piège qui fait exploser les cadavres
+2260	Skillld277	ou fait exploser les cadavres semant le chaos chez l'ennemi\npiège qui lance des éclairs
+2261	Skillan277	Sent mortelle
+2262	Skillname278	Boucl. lames
+2263	Skillsd278	lames tournoyantes de défense
+2264	Skillld278	ceux qui s'approchent trop près de vous\ndes lames tournoyantes qui découpent en rondelles
+2265	Skillan278	Boucl. lames
+2266	Skillname279	Venin
+2267	Skillsd279	empoisonne votre arme
+2268	Skillld279	ajoute des dommages de poison à votre arme
+2269	Skillan279	Venin
+2270	Skillname280	Maître de l'Ombre
+2271	Skillsd280	invoque votre ombre
+2272	Skillld280	pour combattre à vos côtés\ninvoque une puissante ombre de vous-même
+2273	Skillan280	Maître ombre
+2274	Skillname281	Frappe du Phénix
+2275	Skillsd281	ajoute des Novas élémentaires à la libération d'énergie\n\nConcentration
+2276	Skillld281	normale pour utiliser les charges\nterminez par une attaque dragon ou\najoute des novas élémentaires à la libération d'énergie\n\nConcentration\n
+2277	Skillan281	Att. phénix
+2278	ESkillHawk	Corbeaux : 
+2279	ESkillSpikes	Piques : 
+2280	ESkillStars	Etoiles : 
+2281	ESkillWolf	Loup : 
+2282	ESkillWolves	Loups : 
+2283	ESkillShoots	Se déclenche 
+2284	ESkillTimes	 fois
+2285	ESkillSpikes2	 Piques
+2286	ESkillPerKick	 par coup de pied
+2287	EskillLifeSteal	Vol de vie : 
+2288	Eskillchancetostun	Chances d'assommer : 
+2289	Eskillchancetoafflict	Chances d'infecter la cible : 
+2290	Eskillpowerup1	Charge 1 - 
+2291	Eskillpowerup2	Charge 2 - 
+2292	Eskillpowerup3	Charge 3 - 
+2293	Eskillpowerupadd	Ajoute
+2294	Eskillsinishup	Bonus de libération
+2295	Eskillpudlife	 % vie volée
+2296	Eskillpudmana	 % vie et mana volés
+2297	Eskillpudburning	dommage par brûlure : 
+2298	Eskillpuddgmper	 % de dégats
+2299	Eskilllowerresis	Diminue la résistance
+2300	Eskilltomeleeattacks	 en corps à corps
+2301	EskillManaSteal	Vol de mana : 
+2302	Eskillferalpets	Animaux sauvages : 
+2303	Eskillpercentatt	 % d'attaque
+2304	Eskillpercentlif	 % de vie
+2305	Eskillpercentdmg	 % de dommages
+2306	Eskillfinishmove	Libération - 
+2307	Eskillmanarecov	Mana récuperée : 
+2308	Eskillphoenix1	dommages météore :
+2309	Eskillphoenix2	dommages éclairs en série :
+2310	Eskillphoenix3	dommages trait de glace :
+2311	Eskillthunder1	dommages foudre :
+2312	Eskillthunder2	dommages nova : 
+2313	Eskillthunder3	dommages trait de foudre : 
+2314	Eskillfistsoffire1	dommages de feu : 
+2315	Eskillfistsoffire2	rayon dommages de feu : 
+2316	Eskillfistsoffire3	durée d'effet de feu : 
+2317	Eskillbladesofice1	dommages de glace : 
+2318	Eskillbladesofice2	rayon dommages de glace : 
+2319	Eskillbladesofice3	durée d'effet de glace : 
+2320	strUI5	Corbeau
+2321	strUI6	Loup
+2322	strUI7	Ours
+2323	strUI8	Graine de peste
+2324	strUI9	Cycle de vie
+2325	strUI10	Cycle de l'esprit
+2326	strUI11	Esprit vengeur
+2327	strUI12	Coeur de Wolverine
+2328	strUI13	Sarments
+2329	strUI14	Esprit
+2330	UIFenirsui	Loup lugubre
+2331	UiRescuedBarUI	Guerrier
+2332	UiShadowUI	Ombre
+2333	StrUI18	Maître
+2334	Spike Generator	Générateur d'éclairs
+2335	Charged Bolt Sentry	Sentinelle électrique
+2336	Lightning Sentry	Sentinelle éclair
+2337	Blade Creeper	Sentinelle lame
+2338	Invis Pet	Familier
+2339	Druid Hawk	Faucon
+2340	Druid Wolf	Loup
+2341	Druid Totem	Esprit vengeur
+2342	Druid Fenris	Loup lugubre
+2343	Druid Spirit Wolf	Esprit gardien
+2344	Druid Bear	Grizzly
+2345	Druid Plague Poppy	Graine de peste
+2346	Druid Cycle of Life	Cycle de vie
+2347	Vine Creature	Créature des sarments
+2348	Eagleexp	Aigle
+2349	Wolf	Loup
+2350	Bear	Ours
+2351	Siege Door	Porte de siège
+2352	Seige Tower	Tour de siège
+2353	RotWalker	Marcheur putride
+2354	ReanimatedHorde	Réanimé
+2355	ProwlingDead	Chasseur maudit
+2356	UnholyCorpse	Cadavre impie
+2357	DefiledWarrior	Guerrier déchu
+2358	Siege Beast	Bête d'assaut
+2359	CrushBiest	Bête de choc
+2360	BloodBringer	Bête de sang
+2361	GoreBearer	Bête d'horreur
+2362	DeamonSteed	Destrier démon
+2363	WailingSpirit	Hurleur
+2364	LifeSeeker	Vampiqueur
+2365	LifeStealer	Voleur de vie
+2366	DeathlyVisage	Epouvanteur
+2367	BoundSpirit	Esprit hanté
+2368	BanishedSoul	Ame bannie
+2369	Deathexp	Camarde
+2370	Minionexp	Servant damné
+2371	Slayerexp	Flagelleur
+2372	IceBoar	Sanglier de glace
+2373	FireBoar	Sanglier de feu
+2374	HellSpawn	Engeance démoniaque
+2375	IceSpawn	Engeance de glace
+2376	GreaterHellSpawn	Engeance majeure
+2377	GreaterIceSpawn	Engeance majeure de glace
+2378	FanaticMinion	Servant fanatique
+2379	BerserkSlayer	Flagelleur berzerk
+2380	ConsumedFireBoar	Sanglier de feu damné
+2381	ConsumedIceBoar	Sanglier de glace damné
+2382	FrenziedHellSpawn	Engeance forcenée
+2383	FrenziedIceSpawn	Engeance de glace forcenée
+2384	InsaneHellSpawn	Engeance aliénée
+2385	InsaneIceSpawn	Engeance de glace aliénée
+2386	Succubusexp	Succube
+2387	VileTemptress	Tentatrice
+2388	StygianHarlot	Catin stygienne
+2389	Hell Temptress	Lévitant
+2390	Blood Temptress	Sorcière de sang
+2391	Dominus	Sirène
+2392	VileWitch	Sorcière avilie
+2393	StygianFury	Furie stygienne
+2394	Blood Witch	Lévitant mage
+2395	Hell Witch	Sorcière infernale
+2396	OverSeer	Garde chiourme
+2397	Lasher	Flagellant
+2398	OverLord	Duc infernal
+2399	BloodBoss	Duc de sang
+2400	HellWhip	Fouet infernal
+2401	MinionSpawner	Portail démon
+2402	MinionSlayerSpawner	Portail démon
+2403	MinionIce/fireBoarSpawner	Portail démon
+2404	Minionice/hellSpawnSpawner	Portail démon
+2405	MinionGreaterIce/hellSpawnSpawner	Portail démon
+2406	Imp1	Diablotin
+2407	Imp2	Rascal
+2408	Imp3	Gremlin
+2409	Imp4	Faquin
+2410	Imp5	Korrigan
+2411	CatapultN	Catapulte
+2412	CatapultS	Catapulte
+2413	CatapultE	Catapulte
+2414	CatapultW	Catapulte
+2415	Frozen Horror1	Rampant des glaces
+2416	Frozen Horror2	Terreur des glaces
+2417	Frozen Horror3	Agonie des glaces
+2418	Frozen Horror4	Horreur des glaces
+2419	Frozen Horror5	Duc des glaces
+2420	Blood Lord1	Seigneur lunaire
+2421	Blood Lord2	Seigneur nocturne
+2422	Blood Lord3	Seigneur sanglant
+2423	Blood Lord4	Seigneur infernal
+2424	Blood Lord5	Seigneur mortel
+2425	Catapult Spotter N	Catapulte
+2426	Catapult Spotter S	Catapulte
+2427	Catapult Spotter E	Catapulte
+2428	Catapult Spotter W	Catapulte
+2429	Catapult Spotter Siege	Catapulte
+2430	CatapultSiege	Catapulte
+2431	Barricade Wall Right	Barricade
+2432	Barricade Wall Left	Barricade
+2433	Barricade Door	Porte barricadée
+2434	Barricade Tower	Tour barricadée
+2435	Siege Boss	Shenk le surveillant
+2436	Evil hut	Hutte du démon maléfique
+2437	Death Mauler1	Malfaisant sombre
+2438	Death Mauler2	Malfaisant nocturne
+2439	Death Mauler3	Malfaisant ténébreux
+2440	Death Mauler4	Malfaisant obscur
+2441	Death Mauler5	Malfaisant crépusculaire
+2442	SnowYeti1	Yéti errant
+2443	SnowYeti2	Yéti abominable
+2444	SnowYeti3	Yéti glacial
+2445	SnowYeti4	Yéti abyssal
+2446	Baal Throne	Baal
+2447	Baal Crab	Baal
+2448	Baal Taunt	Baal
+2449	Putrid Defiler1	Profanateur putrescent
+2450	Putrid Defiler2	Profanateur maudit
+2451	Putrid Defiler3	Profanateur fétide
+2452	Putrid Defiler4	Profanateur rance
+2453	Putrid Defiler5	Profanateur servile
+2454	Pain Worm1	Ver de souffrance
+2455	Pain Worm2	Ver de tourment
+2456	Pain Worm3	Ver d'agonie
+2457	Pain Worm4	Ver de menace
+2458	Pain Worm5	Ver d'angoisse
+2459	WolfRider5	Monte-loup maudit
+2460	WolfRider4	Monte-loup noir
+2461	WolfRider3	Monte-loup démoniaque
+2462	WolfRider2	Monte-loup sombre
+2463	WolfRider1	Monte-loup déchu
+2464	Oak Sage	Chêne sage
+2465	Heart of Wolverine	Coeur de Wolverine
+2466	Spirit of Barbs	Esprit vengeur
+2467	Shadow Warrior	Guerrier d'ombre
+2468	Death Sentry	Sentinelle mortelle
+2469	Inferno Sentry	Sentinelle infernale
+2470	Shadow Master	Maître de l'Ombre
+2471	Wake of Destruction	Esprit du Feu
+2472	Ghostly	[ms]fantômatique[fs]fantômatique
+2473	Fanatic	[ms]fanatique[fs]fanatique
+2474	Possessed	[ms]possédé[fs]possédée
+2475	Berserk	[ms]berserker[fs]berserker
+2476	Larzuk	Larzuk
+2477	Drehya	Anya
+2478	Malah	Malah
+2479	Nihlathak Town	Nihlathak
+2480	Qual-Kehk	Qual-Kehk
+2481	Act 5 Townguard	Garde
+2482	Act 5 Combatant	Combattant
+2483	Nihlathak	Nihlathak
+2484	POW	Prisonnier barbare
+2485	Moe	Pim
+2486	Curly	Pam
+2487	Larry	Poum
+2488	Ancient Barbarian 3	Korlic
+2489	Ancient Barbarian 2	Madawc
+2490	Ancient Barbarian 1	Talic
+2491	Blaze Ripper	Etripe Braise
+2492	Magma Torquer	Tord-Magma
+2493	Sharp Tooth Sayer	Croc Tueur
+2494	Vinvear Molech	Vinvear Molech
+2495	Anodized Elite	Belle des Enfers
+2496	Snapchip Shatter	Brise Eclat
+2497	Pindleskin	Pindleskin
+2498	Threash Socket	Corne Chair
+2499	Eyeback Unleashed	Barthok le déchaîné
+2500	Megaflow Rectifier	Eldritch le Rectifieur
+2501	Dac Farren	Dac Farren
+2502	Bonesaw Breaker	L'équarisseur
+2503	Axe Dweller	Carnefer
+2504	Frozenstein	Frankenglace
+2505	strDruidOnly	(Druide uniquement)
+2506	strAssassinOnly	(Assassin uniquement)
+2507	strAmazonOnly	(Amazone uniquement)
+2508	strBarbarianOnly	(Barbare uniquement)
+2509	StrSklTree26	Invocation
+2510	StrSklTree27	Méta-
+2511	StrSklTree28	morphose
+2512	StrSklTree29	Eléments
+2513	StrSklTree30	Pièges
+2514	StrSklTree31	Disciplines
+2515	StrSklTree32	de l'Ombre
+2516	StrSklTree33	Arts
+2517	StrSklTree34	Martiaux
+2518	x	Maître de la Nature, il peut invoquer des animaux et commander la tempête.
+2519	x	Experte en arts martiaux, son corps est son arme.
+2520	chestr	Coffre
+2521	barrel wilderness	Tonneau
+2522	woodchestL	Coffre en bois
+2523	burialchestL	Coffre funéraire
+2524	burialchestR	Coffre funéraire
+2525	well	Puits
+2526	Waypoint	Portail
+2527	ChestL	Coffre
+2528	ChestSL	Coffre
+2529	ChestSR	Coffre
+2530	woodchestR	Coffre en bois
+2531	chestR	Coffre
+2532	burningbodies	Bûcher de chair
+2533	burningpit	Brasier
+2534	tribal flag	Etendard tribal
+2535	flag widlerness	Etendard
+2536	eflg	Etendard de la ville
+2537	chan	Chandelier
+2538	jar	Jarre
+2539	jar2	Jarre
+2540	jar3	Jarre
+2541	swingingheads	Têtes pendues
+2542	pole	Hampe
+2543	animatedskullsandrocks	Crânes et pierres
+2544	hellgate	Porte des Enfers
+2545	gate	Porte principale
+2546	banner1	Bannière
+2547	banner2	Bannière
+2548	mrpole	Hampe
+2549	pene	Coffre
+2550	debris	Débris
+2551	woodchest2R	Coffre en bois
+2552	woodchest2L	Coffre en bois
+2553	object1	Cachette
+2554	magic shrine2	Sanctuaire magique
+2555	torch2	Torche
+2556	torch1	Torche
+2557	tomb3	Tombe
+2558	tomb2	Tombe
+2559	tomb1	Tombe
+2560	ttor	Torche
+2561	icecave_torch2	Torche
+2562	icecave_torch1	Torche
+2563	clientsmoke	Fumée
+2564	deadbarbarian	Cadavre de barbare
+2565	deadbarbarian18	Cadavre de barbare
+2566	uncle f#%* comedy central(c)	Moe
+2567	cagedwussie1	Cage
+2568	icecaveshrine2	Reliquaire
+2569	icecavejar4	Jarre
+2570	icecavejar3	Jarre
+2571	icecavejar2	Jarre
+2572	icecavejar1	Jarre
+2573	evilurn	Urne maléfique
+2574	secret object	objet secret
+2575	Altar	Autel
+2576	Ldeathpole	Hampe de la mort
+2577	deathpole	Hampe de la mort
+2578	explodingchest	Coffre
+2579	banner 2	Bannière
+2580	banner 1	Bannière
+2581	pileofskullsandrocks	Crânes et pierres
+2582	animated skulland rockpile	Crânes et pierres
+2583	jar1	Jarre
+2584	etorch2	Torche
+2585	ettr	Torche
+2586	ecfra	Feu
+2587	etorch1	Torche
+2588	healthshrine	Sanctuaire de santé
+2589	explodingbarrel	Tonneau
+2590	flag wilderness	Etendard
+2591	object	Cachette
+2592	Shrine2wilderness	Sanctuaire
+2593	Shrine3wilderness	Sanctuaire
+2594	pyox	Puits de feu
+2595	ptox	Puits ardent
+2596	Siege Control	Contrôle de siège
+2597	mrjar	Cachette
+2598	object2	Cachette
+2599	mrbox	Caisse
+2600	tomb3L	Tombe
+2601	tomb2L	Tombe
+2602	tomb1L	Tombe
+2603	red light	Lumière rouge
+2604	groundtombL	Tombe
+2605	groundtomb	Tombe
+2606	deadperson	Cadavre
+2607	candles	Chandelles
+2608	sbub	Arbuste
+2609	ubub	Arbuste
+2610	deadperson2	Cadavre
+2611	Prison Door	Porte de prison
+2612	ancientsaltar	Autel des Cieux
+2613	hiddenstash	Cachette
+2614	eweaponrackL	Râtelier d'armes
+2615	eweaponrackR	Râtelier d'armes
+2616	earmorstandL	Râtelier d'armures
+2617	earmorstandR	Râtelier d'armures
+2618	qstsa5q1	Le siège d'Harrogath
+2619	qsta5q11	Mettez fin au siège en éliminant Shenk le surveillant dans les collines sanglantes.
+2620	qsta5q12	 Tuez Shenk le surveillant. 
+2621	qsta5q13	Allez parler à Larzuk pour obtenir votre récompense.
+2622	qstsa5q2	Sauvetage au Mont Arreat
+2623	qstsa5q21	Retrouvez les soldats prisonniers des Hautes-Glaces.
+2624	qstsa5q22	Vous avez encore %d soldats à libérer dans les Hautes-Glaces.
+2625	qstsa5q23	Allez voir Qual-Kehk pour obtenir votre récompense.
+2626	qstsa5q24	Utilisez les runes sur un objet à sertir dans l'ordre suivant...
+2627	qstsa5q3	Prison de glace
+2628	qstsa5q31	Trouvez Anya sous le Passage Cristallin près de la Rivière Glacée.
+2629	qstsa5q32	Parlez à Malah.
+2630	qstsa5q33	Utilisez la potion que Malah vous a donnée pour libérer Anya.
+2631	qstsa5q34	Parlez à Malah pour obtenir votre récompense.
+2632	qstsa5q35	Parlez à Anya.
+2633	qstsa5q4	Le traître d'Harrogath
+2634	qstsa5q41	Prenez le portail d'Anya pour rejoindre Temple de Nihlathak.
+2635	qstsa5q42	Tuez Nihlathak.
+2636	qstsa5q43	Parlez à Anya avant de continuer dans le Passage Cristallin, après la Piste des Glaces, pour escalader le Mont Arreat jusqu'au Sommet.
+2637	qstsa5q5	Le Rite de Passage
+2638	qstsa5q51	Empruntez le Chemin des Anciens pour rencontrer les Anciens au Sommet du Mont Arreat.
+2639	qstsa5q52	Consultez les Anciens en activant l'Autel des Cieux.
+2640	qstsa5q53	Affrontez les trois Anciens sans quitter le Mont Arreat.
+2641	qstsa5q6	Le Crépuscule de la Destruction
+2642	qstsa5q61	Consultez les Anciens.
+2643	qstsa5q62	Tuez Baal.
+2644	qstsa5q63	Parlez à Tyreal.
+2645	qstsa5q64	Prenez le Portail de Tyreal.
+2646	Harrogath	Harrogath
+2647	Bloody Foothills	Les Collines Sanglantes
+2648	Rigid Highlands	Les Hautes-Glaces
+2649	Arreat Plateau	Le Mont Arreat
+2650	Crystalized Cavern Level 1	Le Passage Cristallin
+2651	Cellar of Pity	La Rivière Glacée
+2652	Crystalized Cavern Level 2	La Piste des Glaces
+2653	Echo Chamber	La Caverne du Yéti
+2654	Tundra Wastelands	La Toundra Glacée
+2655	Glacial Caves Level 1	Le Chemin des Anciens
+2656	Glacial Caves Level 2	La Cave Glaciale
+2657	Rocky Summit	Le Sommet Arreat
+2658	Nihlathaks Temple	Le Temple de Nihlathak
+2659	Halls of Anguish	Les Corridors de l'Angoisse
+2660	Halls of Death's Calling	Corridors de la Souffrance
+2661	Halls of Tormented Insanity	Les Corridors de l'Expiation
+2662	Halls of Vaught	Les Corridors du Martyre
+2663	The Worldstone Keep Level 1	La Pierre-Monde Niveau 1
+2664	The Worldstone Keep Level 2	La Pierre-Monde Niveau 2
+2665	The Worldstone Keep Level 3	La Pierre-Monde Niveau 3
+2666	The Worldstone Chamber	La Chambre de la Pierre-Monde
+2667	Throne of Destruction	Le Trône de la Destruction
+2668	To Harrogath	Vers Harrogath
+2669	To The Bloody Foothills	Vers les Collines Sanglantes
+2670	To The Rigid Highlands	Vers les Hautes-Glaces
+2671	To The Arreat Plateau	Vers le Mont Arreat
+2672	To The Crystalized Cavern Level 1	Vers le Passage Cristallin
+2673	To The Cellar of Pity	Vers la Rivière Glacée
+2674	To The Crystalized Cavern Level 2	Vers la Piste des Glaces
+2675	To The Echo Chamber	Vers la Caverne du Yéti
+2676	To The Tundra Wastelands	Vers la Toundra Glacée
+2677	To The Glacier Caves Level 1	Vers le Chemin des Anciens
+2678	To The Glacier Caves Level 2	Vers la Cave Glaciale
+2679	To The Rocky Summit	Vers le Sommet Arreat
+2680	To Nihlathaks Temple	Vers le Temple de Nihlathak
+2681	To The Halls of Anguish	Vers les Corridors de l'Angoisse
+2682	To The Halls of Death's Calling	Vers les Corridors de la Souffrance
+2683	To The Halls of Tormented Insanity	Vers les Corridors de l'Expiation
+2684	To The Halls of Vaught	Vers les Corridors du Martyre
+2685	To The Worldstone Keep Level 1	Vers le Donjon de la Pierre-Monde Niv 1
+2686	To The Worldstone Keep Level 2	Vers le Donjon de la Pierre-Monde Niv 2
+2687	To The Worldstone Keep Level 3	Vers le Donjon de la Pierre-Monde Niv 3
+2688	To The Worldstone Chamber	Vers la Chambre de la Pierre Monde
+2689	To The Throne of Destruction	Vers le Trône de la Destruction
+2690	hireiconinfo1	Placez la potion sur le portrait pour l'utiliser
+2691	hireiconinfo2	Cliquez avec le bouton droit de la souris pour afficher l'inventaire (%s)
+2692	hiredismiss	Renvoyer
+2693	hiredismisshire	Renvoyer mercenaire
+2694	hirerehire	Réengager
+2695	hireresurrect	Ressusciter
+2696	hireresurrect2	Ressusciter %s : %d
+2697	hirechat1	Merci.
+2698	hirechat2	Je vous remercie.
+2699	hirechat3	J'en avais bien besoin.
+2700	hirepraise1	C'est agréable de travailler avec quelqu'un qui vous respecte.
+2701	hirepraise2	Bravo.
+2702	hiredanger1	Je sens un danger.
+2703	hiredanger2	Je déteste cette vermine,
+2704	hiredanger3	J'ai un mauvais pressentiment.
+2705	hiredanger4	Prenez garde !
+2706	hiredanger5	Je déteste les araignées.
+2707	hiredanger6	Oh non, des serpents !
+2708	hirefeelstronger2	Je me sens plus fort.
+2709	hirehelp1	Je suis blessé !
+2710	hirehelp2	Au secours !
+2711	hirehelp3	A l'aide !
+2712	hirehelp4	Aidez-moi !
+2713	hiregreets1	Bonjour
+2714	hiregreets2	Salutations
+2715	hiregreets3	Bonsoir
+2716	hiregreets4	Salut
+2717	CfgSkill9	Aptitude 9
+2718	CfgSkill10	Aptitude 10
+2719	CfgSkill11	Aptitude 11
+2720	CfgSkill12	Aptitude 12
+2721	CfgSkill13	Aptitude 13
+2722	CfgSkill14	Aptitude 14
+2723	CfgSkill15	Aptitude 15
+2724	CfgSkill16	Aptitude 16
+2725	CfgToggleminimap	Déplacer MiniCarte
+2726	Cfgswapweapons	Changer d'arme
+2727	Cfghireling	Ecran du mercenaire
+2728	MiniPanelHireinv	Inventaire du mercenaire
+2729	MiniPanelHire	Mercenaire
+2730	x	EXTENSION
+2731	x	PERSONNAGE EXTENSION
+2732	x	CONVERTIR EN
+2733	x	Cliquez sur OK pour convertir votre personnage Diablo II original pour qu'il participe à des parties Extension.
+2734	X	Attention : une fois le personnage converti, vous ne pourrez plus l'utiliser qu'avec l'Extension.
+2735	X	
+2736	X	Voulez-vous vraiment continuer ?
+2737	Go North	aller vers le nord
+2738	Travel To Harrogath	voyager vers harrogath
+2739	x	NOUVEAU PERSONNAGE EXTENSION
+2740	x	NOUVEAU PERSONNAGE OPEN POUR L'EXTENSION.
+2741	x	NOUVEAU PERSONNAGE ROYAUME POUR L'EXTENSION.
+2742	X	CONVERTIR POUR L'EXTENSION
+2743	X	CREER NOUVEAU PERSONNAGE
+2744	X	SUPPRIMER PERSONNAGE
+2745	X	Ethéré (ne peut être réparé)
+2746	X	Cet objet ne peut pas être réparé.
+2747	Rename Instruct	Choisissez un objet que vous souhaitez personnaliser de votre nom.
+2748	Addsocketsui	ajouter des emplacements
+2749	Personalizeui	personnaliser
+2750	Addsocketsui2	Choisissez un objet auquel ajouter des emplacements.
+2751	MercX101	Vardhaka
+2752	MercX102	Khan
+2753	MercX103	Klisk
+2754	MercX104	Bors
+2755	MercX105	Brom
+2756	MercX106	Wiglaf
+2757	MercX107	Hrothgar
+2758	MercX108	Scyld
+2759	MercX109	Healfdane
+2760	MercX110	Heorogar
+2761	MercX111	Halgaunt
+2762	MercX112	Hygelac
+2763	MercX113	Egtheow
+2764	MercX114	Bohdan
+2765	MercX115	Wulfgar
+2766	MercX116	Hild
+2767	MercX117	Heatholaf
+2768	MercX118	Weder
+2769	MercX119	Vikhyat
+2770	MercX120	Unferth
+2771	MercX121	Sigemund
+2772	MercX122	Heremod
+2773	MercX123	Hengest
+2774	MercX124	Folcwald
+2775	MercX125	Frisian
+2776	MercX126	Hnaef
+2777	MercX127	Guthlaf
+2778	MercX128	Oslaf
+2779	MercX129	Yrmenlaf
+2780	MercX130	Garmund
+2781	MercX131	Freawaru
+2782	MercX132	Eadgils
+2783	MercX133	Onela
+2784	MercX134	Damien
+2785	MercX135	Erfor
+2786	MercX136	Weohstan
+2787	MercX137	Wulf
+2788	MercX138	Bulwye
+2789	MercX139	Lief
+2790	MercX140	Magnus
+2791	MercX141	Klatu
+2792	MercX142	Drus
+2793	MercX143	Hoku
+2794	MercX144	Kord
+2795	MercX145	Uther
+2796	MercX146	Ip
+2797	MercX147	Ulf
+2798	MercX148	Tharr
+2799	MercX149	Kaelim
+2800	MercX150	Ulric
+2801	MercX151	Alaric
+2802	MercX152	Ethelred
+2803	MercX153	Caden
+2804	MercX154	Elgifu
+2805	MercX155	Tostig
+2806	MercX156	Alcuin
+2807	MercX157	Emund
+2808	MercX158	Sigurd
+2809	MercX159	Gorm
+2810	MercX160	Hollis
+2811	MercX161	Ragnar
+2812	MercX162	Torkel
+2813	MercX163	Wulfstan
+2814	MercX164	Alban
+2815	MercX165	Barloc
+2816	MercX166	Bill
+2817	MercX167	Theodoric

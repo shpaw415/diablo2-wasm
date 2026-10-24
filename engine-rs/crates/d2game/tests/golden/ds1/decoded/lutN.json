@@ -1,0 +1,1017 @@
+{
+  "file": "evidence-formats/ds1-path/raw/lutN.ds1",
+  "size": 146740,
+  "version": 18,
+  "act": 1,
+  "grid": {
+    "w": 57,
+    "h": 57
+  },
+  "layers": {
+    "walls": 4,
+    "floors": 2,
+    "shadow": 1,
+    "substitution": 0,
+    "streams": 11
+  },
+  "file_count": 14,
+  "object_count": 69,
+  "offsets": {
+    "file_list_end": 624,
+    "layers": 632,
+    "layers_end": 143588,
+    "objects": 143588,
+    "objects_end": 144972,
+    "path_section": 144972,
+    "path_section_end": 146740,
+    "trailing_bytes": 0
+  },
+  "has_actions": true,
+  "npc_count": 31,
+  "npcs": [
+    {
+      "index": 0,
+      "x": 130,
+      "y": 86,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 134,
+          "y": 85,
+          "action": 1
+        },
+        {
+          "x": 134,
+          "y": 88,
+          "action": 1
+        },
+        {
+          "x": 132,
+          "y": 90,
+          "action": 1
+        }
+      ],
+      "object_index": 1,
+      "object_type_id": [
+        1,
+        20
+      ]
+    },
+    {
+      "index": 1,
+      "x": 37,
+      "y": 82,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 36,
+          "y": 100,
+          "action": 1
+        },
+        {
+          "x": 39,
+          "y": 115,
+          "action": 1
+        },
+        {
+          "x": 41,
+          "y": 100,
+          "action": 1
+        },
+        {
+          "x": 42,
+          "y": 77,
+          "action": 1
+        }
+      ],
+      "object_index": 20,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 2,
+      "x": 125,
+      "y": 69,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 100,
+          "y": 63,
+          "action": 1
+        },
+        {
+          "x": 103,
+          "y": 32,
+          "action": 1
+        },
+        {
+          "x": 96,
+          "y": 32,
+          "action": 1
+        },
+        {
+          "x": 96,
+          "y": 60,
+          "action": 1
+        }
+      ],
+      "object_index": 2,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 3,
+      "x": 105,
+      "y": 60,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 125,
+          "y": 63,
+          "action": 1
+        },
+        {
+          "x": 137,
+          "y": 59,
+          "action": 1
+        },
+        {
+          "x": 154,
+          "y": 63,
+          "action": 1
+        },
+        {
+          "x": 172,
+          "y": 64,
+          "action": 1
+        }
+      ],
+      "object_index": 27,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 4,
+      "x": 139,
+      "y": 40,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 130,
+          "y": 38,
+          "action": 1
+        },
+        {
+          "x": 123,
+          "y": 38,
+          "action": 1
+        },
+        {
+          "x": 125,
+          "y": 48,
+          "action": 1
+        }
+      ],
+      "object_index": 3,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 5,
+      "x": 130,
+      "y": 125,
+      "path_count": 5,
+      "paths": [
+        {
+          "x": 100,
+          "y": 123,
+          "action": 1
+        },
+        {
+          "x": 60,
+          "y": 124,
+          "action": 1
+        },
+        {
+          "x": 76,
+          "y": 126,
+          "action": 1
+        },
+        {
+          "x": 100,
+          "y": 125,
+          "action": 1
+        },
+        {
+          "x": 130,
+          "y": 127,
+          "action": 1
+        }
+      ],
+      "object_index": 18,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 6,
+      "x": 185,
+      "y": 61,
+      "path_count": 5,
+      "paths": [
+        {
+          "x": 189,
+          "y": 84,
+          "action": 1
+        },
+        {
+          "x": 186,
+          "y": 104,
+          "action": 1
+        },
+        {
+          "x": 187,
+          "y": 126,
+          "action": 1
+        },
+        {
+          "x": 202,
+          "y": 126,
+          "action": 1
+        },
+        {
+          "x": 206,
+          "y": 111,
+          "action": 1
+        }
+      ],
+      "object_index": 24,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 7,
+      "x": 148,
+      "y": 28,
+      "path_count": 2,
+      "paths": [
+        {
+          "x": 148,
+          "y": 37,
+          "action": 1
+        },
+        {
+          "x": 144,
+          "y": 41,
+          "action": 1
+        }
+      ],
+      "object_index": 15,
+      "object_type_id": [
+        1,
+        12
+      ]
+    },
+    {
+      "index": 8,
+      "x": 88,
+      "y": 26,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 89,
+          "y": 32,
+          "action": 2
+        },
+        {
+          "x": 92,
+          "y": 32,
+          "action": 4
+        },
+        {
+          "x": 93,
+          "y": 29,
+          "action": 1
+        }
+      ],
+      "object_index": 31,
+      "object_type_id": [
+        1,
+        2
+      ]
+    },
+    {
+      "index": 9,
+      "x": 146,
+      "y": 200,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 147,
+          "y": 187,
+          "action": 1
+        },
+        {
+          "x": 161,
+          "y": 188,
+          "action": 2
+        },
+        {
+          "x": 162,
+          "y": 202,
+          "action": 4
+        }
+      ],
+      "object_index": 30,
+      "object_type_id": [
+        1,
+        0
+      ]
+    },
+    {
+      "index": 10,
+      "x": 113,
+      "y": 107,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 111,
+          "y": 102,
+          "action": 3
+        },
+        {
+          "x": 115,
+          "y": 103,
+          "action": 1
+        },
+        {
+          "x": 118,
+          "y": 109,
+          "action": 1
+        },
+        {
+          "x": 116,
+          "y": 111,
+          "action": 1
+        }
+      ],
+      "object_index": 33,
+      "object_type_id": [
+        1,
+        10
+      ]
+    },
+    {
+      "index": 11,
+      "x": 115,
+      "y": 80,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 118,
+          "y": 77,
+          "action": 1
+        },
+        {
+          "x": 120,
+          "y": 83,
+          "action": 4
+        },
+        {
+          "x": 113,
+          "y": 83,
+          "action": 1
+        }
+      ],
+      "object_index": 19,
+      "object_type_id": [
+        1,
+        3
+      ]
+    },
+    {
+      "index": 12,
+      "x": 213,
+      "y": 78,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 207,
+          "y": 72,
+          "action": 1
+        },
+        {
+          "x": 209,
+          "y": 62,
+          "action": 1
+        },
+        {
+          "x": 207,
+          "y": 45,
+          "action": 1
+        }
+      ],
+      "object_index": 32,
+      "object_type_id": [
+        1,
+        11
+      ]
+    },
+    {
+      "index": 13,
+      "x": 99,
+      "y": 137,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 99,
+          "y": 185,
+          "action": 2
+        },
+        {
+          "x": 126,
+          "y": 186,
+          "action": 3
+        },
+        {
+          "x": 125,
+          "y": 157,
+          "action": 1
+        }
+      ],
+      "object_index": 25,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 14,
+      "x": 97,
+      "y": 68,
+      "path_count": 2,
+      "paths": [
+        {
+          "x": 87,
+          "y": 108,
+          "action": 3
+        },
+        {
+          "x": 102,
+          "y": 93,
+          "action": 2
+        }
+      ],
+      "object_index": 26,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 15,
+      "x": 151,
+      "y": 126,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 137,
+          "y": 102,
+          "action": 2
+        },
+        {
+          "x": 127,
+          "y": 99,
+          "action": 3
+        },
+        {
+          "x": 123,
+          "y": 108,
+          "action": 1
+        }
+      ],
+      "object_index": 22,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 16,
+      "x": 149,
+      "y": 67,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 160,
+          "y": 87,
+          "action": 1
+        },
+        {
+          "x": 159,
+          "y": 108,
+          "action": 3
+        },
+        {
+          "x": 141,
+          "y": 97,
+          "action": 2
+        },
+        {
+          "x": 138,
+          "y": 82,
+          "action": 1
+        }
+      ],
+      "object_index": 21,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 17,
+      "x": 183,
+      "y": 148,
+      "path_count": 5,
+      "paths": [
+        {
+          "x": 176,
+          "y": 125,
+          "action": 2
+        },
+        {
+          "x": 153,
+          "y": 128,
+          "action": 1
+        },
+        {
+          "x": 152,
+          "y": 153,
+          "action": 1
+        },
+        {
+          "x": 193,
+          "y": 158,
+          "action": 3
+        },
+        {
+          "x": 208,
+          "y": 147,
+          "action": 1
+        }
+      ],
+      "object_index": 23,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 18,
+      "x": 49,
+      "y": 61,
+      "path_count": 2,
+      "paths": [
+        {
+          "x": 91,
+          "y": 61,
+          "action": 1
+        },
+        {
+          "x": 98,
+          "y": 112,
+          "action": 2
+        }
+      ],
+      "object_index": 34,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 19,
+      "x": 28,
+      "y": 48,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 33,
+          "y": 48,
+          "action": 1
+        },
+        {
+          "x": 35,
+          "y": 51,
+          "action": 1
+        },
+        {
+          "x": 34,
+          "y": 53,
+          "action": 2
+        },
+        {
+          "x": 31,
+          "y": 54,
+          "action": 1
+        }
+      ],
+      "object_index": 56,
+      "object_type_id": [
+        1,
+        8
+      ]
+    },
+    {
+      "index": 20,
+      "x": 30,
+      "y": 96,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 34,
+          "y": 97,
+          "action": 1
+        },
+        {
+          "x": 34,
+          "y": 100,
+          "action": 1
+        },
+        {
+          "x": 33,
+          "y": 103,
+          "action": 2
+        },
+        {
+          "x": 30,
+          "y": 105,
+          "action": 1
+        }
+      ],
+      "object_index": 57,
+      "object_type_id": [
+        1,
+        9
+      ]
+    },
+    {
+      "index": 21,
+      "x": 181,
+      "y": 206,
+      "path_count": 6,
+      "paths": [
+        {
+          "x": 190,
+          "y": 211,
+          "action": 1
+        },
+        {
+          "x": 197,
+          "y": 211,
+          "action": 1
+        },
+        {
+          "x": 203,
+          "y": 206,
+          "action": 1
+        },
+        {
+          "x": 205,
+          "y": 200,
+          "action": 1
+        },
+        {
+          "x": 207,
+          "y": 193,
+          "action": 1
+        },
+        {
+          "x": 208,
+          "y": 185,
+          "action": 1
+        }
+      ],
+      "object_index": 59,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 22,
+      "x": 208,
+      "y": 123,
+      "path_count": 5,
+      "paths": [
+        {
+          "x": 209,
+          "y": 138,
+          "action": 1
+        },
+        {
+          "x": 210,
+          "y": 150,
+          "action": 1
+        },
+        {
+          "x": 215,
+          "y": 154,
+          "action": 2
+        },
+        {
+          "x": 208,
+          "y": 157,
+          "action": 1
+        },
+        {
+          "x": 209,
+          "y": 172,
+          "action": 1
+        }
+      ],
+      "object_index": 60,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 23,
+      "x": 146,
+      "y": 156,
+      "path_count": 5,
+      "paths": [
+        {
+          "x": 127,
+          "y": 153,
+          "action": 1
+        },
+        {
+          "x": 124,
+          "y": 128,
+          "action": 1
+        },
+        {
+          "x": 100,
+          "y": 127,
+          "action": 1
+        },
+        {
+          "x": 103,
+          "y": 153,
+          "action": 1
+        },
+        {
+          "x": 126,
+          "y": 155,
+          "action": 1
+        }
+      ],
+      "object_index": 61,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 24,
+      "x": 96,
+      "y": 192,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 94,
+          "y": 155,
+          "action": 1
+        },
+        {
+          "x": 95,
+          "y": 128,
+          "action": 1
+        },
+        {
+          "x": 77,
+          "y": 128,
+          "action": 1
+        }
+      ],
+      "object_index": 62,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 25,
+      "x": 50,
+      "y": 68,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 61,
+          "y": 68,
+          "action": 1
+        },
+        {
+          "x": 63,
+          "y": 84,
+          "action": 1
+        },
+        {
+          "x": 67,
+          "y": 98,
+          "action": 1
+        },
+        {
+          "x": 68,
+          "y": 114,
+          "action": 2
+        }
+      ],
+      "object_index": 63,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 26,
+      "x": 118,
+      "y": 96,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 118,
+          "y": 86,
+          "action": 1
+        },
+        {
+          "x": 128,
+          "y": 82,
+          "action": 1
+        },
+        {
+          "x": 128,
+          "y": 66,
+          "action": 2
+        }
+      ],
+      "object_index": 64,
+      "object_type_id": [
+        1,
+        22
+      ]
+    },
+    {
+      "index": 27,
+      "x": 209,
+      "y": 28,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 198,
+          "y": 39,
+          "action": 1
+        },
+        {
+          "x": 177,
+          "y": 34,
+          "action": 1
+        },
+        {
+          "x": 161,
+          "y": 28,
+          "action": 2
+        }
+      ],
+      "object_index": 65,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 28,
+      "x": 123,
+      "y": 33,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 139,
+          "y": 34,
+          "action": 2
+        },
+        {
+          "x": 137,
+          "y": 29,
+          "action": 1
+        },
+        {
+          "x": 131,
+          "y": 25,
+          "action": 1
+        },
+        {
+          "x": 133,
+          "y": 19,
+          "action": 1
+        }
+      ],
+      "object_index": 66,
+      "object_type_id": [
+        1,
+        23
+      ]
+    },
+    {
+      "index": 29,
+      "x": 131,
+      "y": 44,
+      "path_count": 5,
+      "paths": [
+        {
+          "x": 135,
+          "y": 41,
+          "action": 1
+        },
+        {
+          "x": 140,
+          "y": 45,
+          "action": 1
+        },
+        {
+          "x": 137,
+          "y": 50,
+          "action": 1
+        },
+        {
+          "x": 142,
+          "y": 55,
+          "action": 4
+        },
+        {
+          "x": 135,
+          "y": 55,
+          "action": 1
+        }
+      ],
+      "object_index": 67,
+      "object_type_id": [
+        1,
+        1
+      ]
+    },
+    {
+      "index": 30,
+      "x": 160,
+      "y": 30,
+      "path_count": 5,
+      "paths": [
+        {
+          "x": 160,
+          "y": 50,
+          "action": 1
+        },
+        {
+          "x": 167,
+          "y": 60,
+          "action": 1
+        },
+        {
+          "x": 175,
+          "y": 63,
+          "action": 1
+        },
+        {
+          "x": 180,
+          "y": 70,
+          "action": 1
+        },
+        {
+          "x": 178,
+          "y": 75,
+          "action": 1
+        }
+      ],
+      "object_index": 68,
+      "object_type_id": [
+        1,
+        23
+      ]
+    }
+  ],
+  "consumed_to_eof": true
+}

@@ -1,0 +1,209 @@
+{
+  "file": "evidence-formats/ds1-path/raw/townW1.ds1",
+  "size": 57747,
+  "version": 18,
+  "act": 0,
+  "grid": {
+    "w": 57,
+    "h": 41
+  },
+  "layers": {
+    "walls": 2,
+    "floors": 1,
+    "shadow": 1,
+    "substitution": 0,
+    "streams": 6
+  },
+  "file_count": 9,
+  "object_count": 44,
+  "offsets": {
+    "file_list_end": 439,
+    "layers": 447,
+    "layers_end": 56535,
+    "objects": 56535,
+    "objects_end": 57419,
+    "path_section": 57419,
+    "path_section_end": 57747,
+    "trailing_bytes": 0
+  },
+  "has_actions": true,
+  "npc_count": 5,
+  "npcs": [
+    {
+      "index": 0,
+      "x": 56,
+      "y": 100,
+      "path_count": 4,
+      "paths": [
+        {
+          "x": 62,
+          "y": 98,
+          "action": 1
+        },
+        {
+          "x": 65,
+          "y": 100,
+          "action": 3
+        },
+        {
+          "x": 55,
+          "y": 105,
+          "action": 2
+        },
+        {
+          "x": 63,
+          "y": 108,
+          "action": 4
+        }
+      ],
+      "object_index": 1,
+      "object_type_id": [
+        1,
+        7
+      ]
+    },
+    {
+      "index": 1,
+      "x": 78,
+      "y": 93,
+      "path_count": 6,
+      "paths": [
+        {
+          "x": 85,
+          "y": 91,
+          "action": 2
+        },
+        {
+          "x": 89,
+          "y": 97,
+          "action": 2
+        },
+        {
+          "x": 88,
+          "y": 102,
+          "action": 1
+        },
+        {
+          "x": 83,
+          "y": 104,
+          "action": 2
+        },
+        {
+          "x": 77,
+          "y": 103,
+          "action": 2
+        },
+        {
+          "x": 74,
+          "y": 98,
+          "action": 3
+        }
+      ],
+      "object_index": 14,
+      "object_type_id": [
+        1,
+        5
+      ]
+    },
+    {
+      "index": 2,
+      "x": 122,
+      "y": 71,
+      "path_count": 6,
+      "paths": [
+        {
+          "x": 123,
+          "y": 65,
+          "action": 3
+        },
+        {
+          "x": 127,
+          "y": 69,
+          "action": 1
+        },
+        {
+          "x": 124,
+          "y": 73,
+          "action": 2
+        },
+        {
+          "x": 122,
+          "y": 77,
+          "action": 1
+        },
+        {
+          "x": 119,
+          "y": 74,
+          "action": 3
+        },
+        {
+          "x": 121,
+          "y": 71,
+          "action": 2
+        }
+      ],
+      "object_index": 28,
+      "object_type_id": [
+        1,
+        2
+      ]
+    },
+    {
+      "index": 3,
+      "x": 24,
+      "y": 82,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 25,
+          "y": 76,
+          "action": 4
+        },
+        {
+          "x": 28,
+          "y": 85,
+          "action": 2
+        },
+        {
+          "x": 24,
+          "y": 84,
+          "action": 2
+        }
+      ],
+      "object_index": 34,
+      "object_type_id": [
+        1,
+        8
+      ]
+    },
+    {
+      "index": 4,
+      "x": 25,
+      "y": 143,
+      "path_count": 3,
+      "paths": [
+        {
+          "x": 30,
+          "y": 140,
+          "action": 1
+        },
+        {
+          "x": 31,
+          "y": 145,
+          "action": 2
+        },
+        {
+          "x": 25,
+          "y": 146,
+          "action": 1
+        }
+      ],
+      "object_index": 42,
+      "object_type_id": [
+        1,
+        0
+      ]
+    }
+  ],
+  "consumed_to_eof": true
+}

@@ -1,0 +1,1164 @@
+index	key	text
+0	Cutthroat1	Coupe-gorge de Bartuc
+1	ModStr5d	Endurance maximale
+2	Mauler	Malfaisant
+3	StrSkill41	 dommages
+4	D2bnetHelp13	/whisper <*nomdecompte>, /w <*nomdecompte>
+5	D2bnetHelp13b	/msg <*nomdecompte>, /m <*nomdecompte>
+6	D2bnetHelp15	/squelch <*nomdecompte>
+7	D2bnetHelp15b	/ignore <*nomdecompte>
+8	D2bnetHelp16	/unsquelch <*nomdecompte>
+9	D2bnetHelp16b	/unignore <*nomdecompte>
+10	D2bnetHelp21	/ban <*nomdecompte>
+11	D2bnetHelp23	/designate <*nomdecompte>
+12	D2bnetHelp24	/kick <*nomdecompte>
+13	D2bnetHelp26	/whois <*nomdecompte>, /where <*nomdecompte>
+14	D2bnetHelp26b	/whereis <*nomdecompte>
+15	D2bnetHelp32	/stats <*nomdecompte> <IDprogramme>
+16	x	ENFER
+17	x	CAUCHEMAR
+18	x	NORMAL
+19	x	NIVEAU
+20	ModStr6e	Ralentit perte d'endurance
+21	xhm	Casque ailé
+22	Hsarus' Defense	Protection de Hsarus
+23	strModEnhancedDamage	Dommages supplémentaires\n
+24	strModAllResistances	+%d à toutes les résistances
+25	strModAllSkillLevels	+%d à toutes les aptitudes
+26	strModFireDamage	+%d dommages de feu
+27	strModFireDamageRange	Ajoute %d-%d dommages de feu
+28	strModColdDamage	+%d dommages de froid
+29	strModColdDamageRange	Ajoute %d-%d dommages de froid
+30	strModLightningDamage	+%d dommages de foudre
+31	strModLightningDamageRange	Ajoute %d-%d dommages de foudre
+32	strModMagicDamage	+%d dommages magiques
+33	strModMagicDamageRange	Ajoute %d-%d dommages magiques
+34	strModPoisonDamage	+%d dommages de poison en %d secondes
+35	strModPoisonDamageRange	Ajoute %d-%d dommages de poison en %d secondes
+36	strModMinDamage	+%d dommages
+37	strModMinDamageRange	Ajoute %d-%d dommages
+38	strModEnhancedDamage	Dommages supplémentaires
+39	ModStre9j	Dommages du feu réduits de
+40	ModStre9k	Dommages du froid réduits de
+41	ModStre9l	Dommages électriques réduits de
+42	ModStre9m	Dommages du poison réduits de
+43	ModStre9n	Absorbe les dégâts magiques
+44	ModStre9o	Absorbe les dégâts de feu
+45	ModStre9p	Absorbe les dégâts de froid
+46	ModStre9q	Absorbe les dégâts électriques
+47	ModStre9r	Absorbe les dégâts du poison
+48	of the Wraith	de l'apparition
+49	of Equilibrium	d'équilibre
+50	Valkyrie's	[ms]walkyrien[mp]walkyriens[fs]walkyrienne[fp]walkyriennes
+51	Maiden's	[ms]virginal[mp]virginaux[fs]virginale[fp]virginales
+52	Blank	[ms]nu[mp]nus[fs]nue[fp]nues
+53	strEskilllighttoattack	 à votre attaque
+54	StrSklTabItem1	+%d au javelot et à la lance
+55	StrSklTabItem2	+%d aux aptitudes passives et magiques
+56	StrSklTabItem3	+%d à l'arc et à l'arbalète
+57	StrSklTabItem4	+%d aux auras défensives
+58	StrSklTabItem5	+%d aux auras offensives
+59	StrSklTabItem6	+%d aux aptitudes de combat
+60	StrSklTabItem6	+%d en invocation
+61	StrSklTabItem7	+%d en poison et os
+62	StrSklTabItem8	+%d en malédictions
+63	StrSklTabItem10	+%d aux cris de guerre
+64	StrSklTabItem11	+%d aux aptitudes de combat
+65	StrSklTabItem12	+%d aux maîtrises
+66	StrSklTabItem13	+%d aux aptitudes de froid
+67	StrSklTabItem14	+%d aux aptitudes de foudre
+68	StrSklTabItem15	+%d aux aptitudes de feu
+69	StrSklTabItem16	+%d en invocation
+70	StrSklTabItem17	+%d en métamorphose
+71	StrSklTabItem18	+%d en élémentaires
+72	StrSklTabItem19	+%d en pièges
+73	StrSklTabItem20	+%d en disciplines de l'ombre
+74	StrSklTabItem21	+%d en arts martiaux
+75	x	Le personnage '%s' n'a pas été utilisé depuis plus de 3 mois et a été effacé.
+76	upgraderestrictEx	Aucun objet magique, unique, rare, défini ou orné. Aucun bijou.
+77	UndeadDescriptX	Mort-vivant
+78	DemonID	Démon
+79	strScaryMonDescA	
+80	strScaryMonDescB	
+81	strScaryMonDesc1	Insensible au feu
+82	strScaryMonDesc2	Insensible au froid
+83	strScaryMonDesc3	Insensible à la foudre
+84	strScaryMonDesc4	Insensible au poison
+85	strScaryMonDesc5	Insensible aux blessures
+86	strScaryMonDesc6	Insensible à la magie
+87	PlayerNameOnItemstring	de %s
+88	PlayerNameOnItemstringX	de %s
+89	SetItemFormatX	%0
+90	x	TOURNOI EXTENSION
+91	x	TOURNOI HARDCORE EXTENSION
+92	D2bnetHelp47a	Le TOURNOI EXTENSION présente les personnages les plus puissants, classés en fonction de leur expérience. Par défaut, vous pouvez voir le classement général, mais vous pouvez afficher un classement Par Classe.
+93	D2bnetHelp48a	Le TOURNOI EXTENSION HARDCORE présente les personnages hardcore les plus puissants, classés en fonction de leur expérience. Par défaut, vous pouvez voir le classement général, mais vous pouvez afficher un classement Par Classe.
+94	x	Tout réparer
+95	x	Réparer tout l'équipement : %d
+96	x	Aucun objet équipé n'a besoin d'être réparé
+97	Druid	Druide
+98	Assassin	Assassin
+99	partychardru	Druide
+100	partycharass	Assassin
+101	x	Impossible de rejoindre la partie. Un personnage Diablo II ne peut pas rejoindre une partie créée par un personnage Diablo II Extension.
+102	x	Impossible de rejoindre la partie. Un personnage Diablo II Extension ne peut pas rejoindre une partie créée par un personnage Diablo II.
+103	charmonsterX	%s : %d%%
+104	charmontohit1X	Probabilité d'être touché par %s : %d%%
+105	charmontohit2X	Probabilité de bloquer : %d%%\nProbabilité d'être touché par %s : %d%%
+106	Party1X	%s vous permet de fouiller son cadavre.
+107	Party2X	%s vous permet de fouiller son cadavre.
+108	Party10	%s ne vous autorise plus à fouiller son cadavre.
+109	Party11	%s ne vous autorise plus à fouiller son cadavre.
+110	Party12	Vous êtes hostiles l'un envers l'autre.
+111	Party13	%s vous est hostile, mais vous ne lui êtes pas hostile
+112	Party14	%s vous est hostile, mais vous ne lui êtes pas hostile
+113	Party 15	%s est amical envers vous, mais vous lui êtes hostile
+114	Party16	%s est amicale envers vous, mais vous lui êtes hostile
+115	Party17	Vous êtes amicaux l'un envers l'autre.
+116	Party18	Vous pouvez fouiller vos cadavres respectifs.
+117	Party19	%s peut fouiller votre cadavre, mais vous ne pouvez pas fouiller le sien.
+118	Party20	%s peut fouiller votre cadavre, mais vous ne pouvez pas fouiller le sien.
+119	Party21	%s ne peut pas fouiller votre cadavre, mais vous pouvez fouiller le sien.
+120	Party22	%s ne peut pas fouiller votre cadavre, mais vous pouvez fouiller le sien.
+121	Party23	Aucun de vous ne peut fouiller le cadavre de l'autre.
+122	Civerb's Ward	Ward de Civerb
+123	Civerb's Icon	Icône de Civerb
+124	Civerb's Cudgel	Gourdin de Civerb
+125	Hsarus' Iron Heel	Talon de fer de Hsarus
+126	Hsarus' Iron Fist	Poing de fer de Hsarus
+127	Hsarus' Iron Stay	Support en fer de Hsarus
+128	Cleglaw's Tooth	Dent de Cleglaw
+129	Cleglaw's Claw	Griffe de Cleglaw
+130	Cleglaw's Pincers	Pinces de Cleglaw
+131	Iratha's Cord	Cordon d'Iratha
+132	Iratha's Coil	Rouleau d'Iratha
+133	Iratha's Cuff	Poignet d'Iratha
+134	Iratha's Collar	Col d'Iratha
+135	Isenhart's Horns	Cornes d'Isenhart
+136	Isenhart's Case	Coffre d'Isenhart
+137	Isenhart's Parry	Parade d'Isenhart
+138	Isenhart's Lightbrand	Torche d'Isenhart
+139	Vidala's Snare	Traquenard de Vidala
+140	Vidala's Ambush	Embuscade de Vidala
+141	Vidala's Fetlock	Talon de Vidala
+142	Vidala's Barb	Barbe de Vidala
+143	Milabrega's Robe	Robe de Milabrega
+144	Milabrega's Diadem	Diadème de Milabrega
+145	Milabrega's Rod	Barre de Milabrega
+146	Milabrega's Orb	Orbe de Milabrega
+147	Cathan's Seal	Sceau de Cathan
+148	Cathan's Sigil	Cachet de Cathan
+149	Cathan's Visage	Visage de Cathan
+150	Cathan's Mesh	Etoffe de Cathan
+151	Cathan's Rule	Règle de Cathan
+152	Tancred's Crowbill	Bec-de-Corbeau de Tancred
+153	Tancred's Spine	Dos de Tancred
+154	Tancred's Hobnails	Clous de Tancred
+155	Tancred's Weird	Etrangeté de Tancred
+156	Tancred's Skull	Crâne de Tancred
+157	Sigon's Visor	Casque de Sigon
+158	Sigon's Shelter	Refuge de Sigon
+159	Sigon's Gage	Gant de Sigon
+160	Sigon's Sabot	Sabot de Sigon
+161	Sigon's Wrap	Châle de Sigon
+162	Sigon's Guard	Garde de Sigon
+163	Infernal Cranium	Crâne des Enfers
+164	Infernal Torch	Torche des Enfers
+165	Infernal Sign	Signe des Enfers
+166	Berserker's Headgear	Coiffure de Berserker
+167	Berserker's Hauberk	Haubert de Berserker
+168	Berserker's Hatchet	Hachette de Berserker
+169	Death's Hand	Main de la Mort
+170	Death's Guard	Garde de la Mort
+171	Death's Touch	Toucher de la Mort
+172	Angelic Sickle	Faucille Divine
+173	Angelic Mantle	Cape Divine
+174	Angelic Halo	Halo Divin
+175	Angelic Wings	Ailes Divines
+176	Arctic Horn	Corne Arctique
+177	Arctic Furs	Fourrures Arctiques
+178	Arctic Binding	Reliure Arctique
+179	Arctic Mitts	Gants Arctiques
+180	Arcanna's Sign	Signe d'Arcanna
+181	Arcanna's Deathwand	Baguette de la mort d'Arcanna
+182	Arcanna's Head	Tête d'Arcanna
+183	Arcanna's Flesh	Chair d'Arcanna
+184	skillxname0	 
+185	skillxsd0	 
+186	skillxld0	 
+187	skillxan0	 
+188	skillxname1	 
+189	skillxsd1	 
+190	skillxld1	 
+191	skillxan1	 
+192	skillxname2	 
+193	skillxsd2	 
+194	skillxld2	 
+195	skillxan2	 
+196	skillxname3	 
+197	skillxsd3	 
+198	skillxld3	 
+199	skillxan3	 
+200	skillxname4	 
+201	skillxsd4	 
+202	skillxld4	 
+203	skillxan4	 
+204	skillxname5	 
+205	skillxsd5	 
+206	skillxld5	 
+207	skillxan5	 
+208	skillxname6	 
+209	skillxsd6	 
+210	skillxld6	 
+211	skillxan6	 
+212	skillxname7	 
+213	skillxsd7	 
+214	skillxld7	 
+215	skillxan7	 
+216	skillxname8	 
+217	skillxsd8	 
+218	skillxld8	 
+219	skillxan8	 
+220	skillxname9	 
+221	skillxsd9	 
+222	skillxld9	 
+223	skillxan9	 
+224	skillxname10	 
+225	skillxsd10	 
+226	skillxld10	 
+227	skillxan10	 
+228	skillxname11	 
+229	skillxsd11	 
+230	skillxld11	 
+231	skillxan11	 
+232	skillxname12	 
+233	skillxsd12	 
+234	skillxld12	 
+235	skillxan12	 
+236	skillxname13	 
+237	skillxsd13	 
+238	skillxld13	 
+239	skillxan13	 
+240	skillxname14	 
+241	skillxsd14	 
+242	skillxld14	 
+243	skillxan14	 
+244	skillxname15	 
+245	skillxsd15	 
+246	skillxld15	 
+247	skillxan15	 
+248	skillxname16	 
+249	skillxsd16	 
+250	skillxld16	 
+251	skillxan16	 
+252	skillxname17	 
+253	skillxsd17	 
+254	skillxld17	 
+255	skillxan17	 
+256	skillxname18	 
+257	skillxsd18	 
+258	skillxld18	 
+259	skillxan18	 
+260	skillxname19	 
+261	skillxsd19	 
+262	skillxld19	 
+263	skillxan19	 
+264	skillxname20	 
+265	skillxsd20	 
+266	skillxld20	 
+267	skillxan20	 
+268	skillxname21	 
+269	skillxsd21	 
+270	skillxld21	 
+271	skillxan21	 
+272	skillxname22	 
+273	skillxsd22	 
+274	skillxld22	 
+275	skillxan22	 
+276	skillxname23	 
+277	skillxsd23	 
+278	skillxld23	 
+279	skillxan23	 
+280	skillxname24	 
+281	skillxsd24	 
+282	skillxld24	 
+283	skillxan24	 
+284	skillxname25	 
+285	skillxsd25	 
+286	skillxld25	 
+287	skillxan25	 
+288	skillxname26	 
+289	skillxsd26	 
+290	skillxld26	 
+291	skillxan26	 
+292	skillxname27	 
+293	skillxsd27	 
+294	skillxld27	 
+295	skillxan27	 
+296	skillxname28	 
+297	skillxsd28	 
+298	skillxld28	 
+299	skillxan28	 
+300	skillxname29	 
+301	skillxsd29	 
+302	skillxld29	 
+303	skillxan29	 
+304	skillxname30	 
+305	skillxsd30	 
+306	skillxld30	 
+307	skillxan30	 
+308	skillxname31	 
+309	skillxsd31	 
+310	skillxld31	 
+311	skillxan31	 
+312	skillxname32	 
+313	skillxsd32	 
+314	skillxld32	 
+315	skillxan32	 
+316	skillxname33	 
+317	skillxsd33	 
+318	skillxld33	 
+319	skillxan33	 
+320	skillxname34	 
+321	skillxsd34	 
+322	skillxld34	 
+323	skillxan34	 
+324	skillxname35	 
+325	skillxsd35	 
+326	skillxld35	 
+327	skillxan35	 
+328	skillxname36	 
+329	skillxsd36	 
+330	skillxld36	 
+331	skillxan36	 
+332	skillxname37	 
+333	skillxsd37	 
+334	skillxld37	 
+335	skillxan37	 
+336	skillxname38	 
+337	skillxsd38	 
+338	skillxld38	 
+339	skillxan38	 
+340	skillxname39	 
+341	skillxsd39	 
+342	skillxld39	 
+343	skillxan39	 
+344	skillxname40	 
+345	skillxsd40	 
+346	skillxld40	 
+347	skillxan40	 
+348	skillxname41	 
+349	skillxsd41	 
+350	skillxld41	 
+351	skillxan41	 
+352	skillxname42	 
+353	skillxsd42	 
+354	skillxld42	blesse tous les ennemis proches\ncrée un champ électrique qui
+355	skillxan42	 
+356	skillxname43	 
+357	skillxsd43	 
+358	skillxld43	 
+359	skillxan43	 
+360	skillxname44	 
+361	skillxsd44	 
+362	skillxld44	 
+363	skillxan44	 
+364	skillxname45	 
+365	skillxsd45	 
+366	skillxld45	 
+367	skillxan45	 
+368	skillxname46	 
+369	skillxsd46	 
+370	skillxld46	 
+371	skillxan46	 
+372	skillxname47	 
+373	skillxsd47	 
+374	skillxld47	 
+375	skillxan47	 
+376	skillxname48	 
+377	skillxsd48	 
+378	skillxld48	 
+379	skillxan48	 
+380	skillxname49	 
+381	skillxsd49	 
+382	skillxld49	 
+383	skillxan49	 
+384	skillxname50	 
+385	skillxsd50	 
+386	skillxld50	 
+387	skillxan50	 
+388	skillxname51	 
+389	skillxsd51	 
+390	skillxld51	 
+391	skillxan51	 
+392	skillxname52	 
+393	skillxsd52	 
+394	skillxld52	 
+395	skillxan52	 
+396	skillxname53	 
+397	skillxsd53	 
+398	skillxld53	 
+399	skillxan53	 
+400	skillxname54	 
+401	skillxsd54	 
+402	skillxld54	 
+403	skillxan54	 
+404	skillxname55	 
+405	skillxsd55	 
+406	skillxld55	 
+407	skillxan55	 
+408	skillxname56	 
+409	skillxsd56	 
+410	skillxld56	 
+411	skillxan56	 
+412	skillxname57	 
+413	skillxsd57	 
+414	skillxld57	 
+415	skillxan57	 
+416	skillxname58	 
+417	skillxsd58	 
+418	skillxld58	 
+419	skillxan58	 
+420	skillxname59	 
+421	skillxsd59	 
+422	skillxld59	 
+423	skillxan59	 
+424	skillxname60	 
+425	skillxsd60	 
+426	skillxld60	 
+427	skillxan60	 
+428	skillxsname61	 
+429	skillxsd61	 
+430	skillxld61	 
+431	skillxan61	 
+432	skillxname62	 
+433	skillxsd62	 
+434	skillxld62	 
+435	skillxan62	 
+436	skillxname63	 
+437	skillxsd63	passif - augmente les dommages de foudre
+438	skillxld63	passif - augmente tous les dommages infligés par vos sorts de foudre
+439	skillxan63	 
+440	skillxname64	 
+441	skillxsd64	 
+442	skillxld64	 
+443	skillxan64	 
+444	skillxname65	 
+445	skillxsd65	 
+446	skillxld65	 
+447	skillxan65	 
+448	skillxname66	 
+449	skillxsd66	 
+450	skillxld66	 
+451	skillxan66	 
+452	skillxname67	 
+453	skillxsd67	 
+454	skillxld67	 
+455	skillxan67	 
+456	skillxname68	 
+457	skillxsd68	 
+458	skillxld68	 
+459	skillxan68	 
+460	skillxname69	 
+461	skillxsd69	 
+462	skillxld69	 
+463	skillxan69	 
+464	skillxname70	 
+465	skillxsd70	 
+466	skillxld70	 
+467	skillxan70	 
+468	skillxname71	 
+469	skillxsd71	 
+470	skillxld71	 
+471	skillxan71	 
+472	skillxname72	 
+473	skillxsd72	 
+474	skillxld72	 
+475	skillxan72	 
+476	skillxname73	 
+477	skillxsd73	 
+478	skillxld73	 
+479	skillxan73	 
+480	skillxname74	 
+481	skillxsd74	 
+482	skillxld74	 
+483	skillxan74	 
+484	skillxname75	 
+485	skillxsd75	 
+486	skillxld75	 
+487	skillxan75	 
+488	skillxname76	 
+489	skillxsd76	 
+490	skillxld76	 
+491	skillxan76	 
+492	skillxname77	 
+493	skillxsd77	 
+494	skillxld77	 
+495	skillxan77	 
+496	skillxname78	 
+497	skillxsd78	 
+498	skillxld78	 
+499	skillxan78	 
+500	skillxname79	 
+501	skillxsd79	 
+502	skillxld79	 
+503	skillxan79	 
+504	skillxname80	 
+505	skillxsd80	 
+506	skillxld80	 
+507	skillxan80	 
+508	skillxname81	 
+509	skillxsd81	 
+510	skillxld81	 
+511	skillxan81	 
+512	skillxname82	 
+513	skillxsd82	 
+514	skillxld82	 
+515	skillxan82	 
+516	skillxname83	 
+517	skillxsd83	 
+518	skillxld83	 
+519	skillxan83	 
+520	skillxname84	 
+521	skillxsd84	 
+522	skillxld84	 
+523	skillxan84	 
+524	skillxname85	 
+525	skillxsd85	 
+526	skillxld85	 
+527	skillxan85	 
+528	skillxname86	 
+529	skillxsd86	 
+530	skillxld86	cette malédiction peut être annulée par une autre\ndevient la cible de tous les monstres proches\nmaudit un monstre qui
+531	skillxan86	 
+532	skillxname87	 
+533	skillxsd87	 
+534	skillxld87	 
+535	skillxan87	 
+536	skillxname88	 
+537	skillxsd88	 
+538	skillxld88	 
+539	skillxan88	 
+540	skillxname89	 
+541	skillxsd89	 
+542	skillxld89	 
+543	skillxan89	 
+544	skillxname90	 
+545	skillxsd90	 
+546	skillxld90	 
+547	skillxan90	 
+548	skillxname91	 
+549	skillxsd91	 
+550	skillxld91	 
+551	skillxan91	 
+552	skillxname92	 
+553	skillxsd92	 
+554	skillxld92	 
+555	skillxan92	 
+556	skillxname93	 
+557	skillxsd93	 
+558	skillxld93	 
+559	skillxan93	 
+560	skillxname94	 
+561	skillxsd94	 
+562	skillxld94	 
+563	skillxan94	 
+564	skillxname95	 
+565	skillxsd95	 
+566	skillxld95	 
+567	skillxan95	 
+568	skillxname96	 
+569	skillxsd96	 
+570	skillxld96	 
+571	skillxan96	 
+572	skillxname97	 
+573	skillxsd97	 
+574	skillxld97	 
+575	skillxan97	 
+576	skillxname98	 
+577	skillxsd98	 
+578	skillxld98	 
+579	skillxan98	 
+580	skillxname99	 
+581	skillxsd99	 
+582	skillxld99	 
+583	skillxan99	 
+584	skillxname100	 
+585	skillxsd100	 
+586	skillxld100	 
+587	skillxan100	 
+588	skillxname101	 
+589	skillxsd101	 
+590	skillxld101	 
+591	skillxan101	 
+592	skillxname102	 
+593	skillxsd102	 
+594	skillxld102	 
+595	skillxan102	 
+596	skillxname103	 
+597	skillxsd103	 
+598	skillxld103	 
+599	skillxan103	 
+600	skillxname104	 
+601	skillxsd104	 
+602	skillxld104	 
+603	skillxan104	 
+604	skillxname105	 
+605	skillxsd105	 
+606	skillxld105	 
+607	skillxan105	 
+608	skillxname106	 
+609	skillxsd106	 
+610	skillxld106	 
+611	skillxan106	 
+612	skillxname107	 
+613	skillxsd107	 
+614	skillxld107	 
+615	skillxan107	 
+616	skillxname108	 
+617	skillxsd108	 
+618	skillxld108	 
+619	skillxan108	 
+620	skillxname109	 
+621	skillxsd109	 
+622	skillxld109	 
+623	skillxan109	 
+624	skillxname110	 
+625	skillxsd110	 
+626	skillxld110	 
+627	skillxan110	 
+628	skillxname111	 
+629	skillxsd111	 
+630	skillxld111	 
+631	skillxan111	 
+632	skillxname112	 
+633	skillxsd112	 
+634	skillxld112	 
+635	skillxan112	 
+636	skillxname113	 
+637	skillxsd113	 
+638	skillxld113	 
+639	skillxan113	 
+640	skillxname114	 
+641	skillxsd114	 
+642	skillxld114	 
+643	skillxan114	 
+644	skillxname115	 
+645	skillxsd115	 
+646	skillxld115	 
+647	skillxan115	 
+648	skillxname116	 
+649	skillxsd116	 
+650	skillxld116	 
+651	skillxan116	 
+652	skillxname117	 
+653	skillxsd117	 
+654	skillxld117	 
+655	skillxan117	 
+656	skillxname118	 
+657	skillxsd118	 
+658	skillxld118	ajoute des dommages de foudre à votre attaque\nélectriques qui blessent les ennemis proches\nactive, cette aura crée des ondes
+659	skillxan118	 
+660	skillxname119	 
+661	skillxsd119	 
+662	skillxld119	 
+663	skillxan119	 
+664	skillxname120	 
+665	skillxsd120	 
+666	skillxld120	 
+667	skillxan120	 
+668	skillxname121	 
+669	skillxsd121	 
+670	skillxld121	 
+671	skillxan121	 
+672	skillxname122	 
+673	skillxsd122	aura - augmente vitesse d'attaque et dommages
+674	skillxld122	d'attaque de tout le groupe\naméliore la vitesse et la caractéristique\ninfligés par vous et vos compagnons\nactive, cette aura augmente les dommages
+675	skillxan122	 
+676	skillxname123	 
+677	skillxsd123	aura - affaiblit les ennemis
+678	skillxld123	 
+679	skillxan123	 
+680	skillxname124	 
+681	skillxsd124	 
+682	skillxld124	vie et mana à vous\nles âmes des ennemis tués pour accorder\nactivée, l'aura tente de racheter
+683	skillxan124	 
+684	skillxname125	 
+685	skillxsd125	 
+686	skillxld125	 
+687	skillxan125	 
+688	skillxname126	 
+689	skillxsd126	 
+690	skillxld126	 
+691	skillxan126	 
+692	skillxname127	 
+693	skillxsd127	 
+694	skillxld127	 
+695	skillxan127	 
+696	skillxname128	 
+697	skillxsd128	 
+698	skillxld128	 
+699	skillxan128	 
+700	skillxname129	 
+701	skillxsd129	 
+702	skillxld129	 
+703	skillxan129	 
+704	skillxname130	 
+705	skillxsd130	 
+706	skillxld130	 
+707	skillxan130	 
+708	skillxname131	 
+709	skillxsd131	 
+710	skillxld131	 
+711	skillxan131	 
+712	skillxname132	 
+713	skillxsd132	 
+714	skillxld132	 
+715	skillxan132	 
+716	skillxname133	 
+717	skillxsd133	 
+718	skillxld133	 
+719	skillxan133	 
+720	skillxname134	 
+721	skillxsd134	 
+722	skillxld134	 
+723	skillxan134	 
+724	skillxname135	 
+725	skillxsd135	 
+726	skillxld135	 
+727	skillxan135	 
+728	skillxname136	 
+729	skillxsd136	 
+730	skillxld136	 
+731	skillxan136	 
+732	skillxname137	 
+733	skillxsd137	 
+734	skillxld137	 
+735	skillxan137	 
+736	skillxname138	 
+737	skillxsd138	 
+738	skillxld138	 
+739	skillxan138	 
+740	skillxname139	 
+741	skillxsd139	 
+742	skillxld139	 
+743	skillxan139	 
+744	skillxname140	 
+745	skillxsd140	 
+746	skillxld140	 
+747	skillxan140	 
+748	skillxname141	 
+749	skillxsd141	 
+750	skillxld141	 
+751	skillxan141	 
+752	skillxname142	 
+753	skillxsd142	 
+754	skillxld142	 
+755	skillxan142	 
+756	skillxname143	 
+757	skillxsd143	 
+758	skillxld143	 
+759	skillxan143	 
+760	skillxname144	 
+761	skillxsd144	 
+762	skillxld144	 
+763	skillxan144	 
+764	skillxname145	 
+765	skillxsd145	 
+766	skillxld145	 
+767	skillxan145	 
+768	skillxname146	 
+769	skillxsd146	 
+770	skillxld146	 
+771	skillxan146	 
+772	skillxname147	 
+773	skillxsd147	 
+774	skillxld147	 
+775	skillxan147	 
+776	skillxname148	 
+777	skillxsd148	 
+778	skillxld148	 
+779	skillxan148	 
+780	skillxname149	 
+781	skillxsd149	 
+782	skillxld149	 
+783	skillxan149	 
+784	skillxname150	 
+785	skillxsd150	 
+786	skillxld150	 
+787	skillxan150	 
+788	skillxname151	 
+789	skillxsd151	 
+790	skillxld151	 
+791	skillxan151	 
+792	skillxname152	 
+793	skillxsd152	 
+794	skillxld152	 
+795	skillxan152	 
+796	skillxname153	 
+797	skillxsd153	 
+798	skillxld153	 
+799	skillxan153	 
+800	skillxname154	 
+801	skillxsd154	 
+802	skillxld154	 
+803	skillxan154	 
+804	skillxname155	 
+805	skillxsd155	 
+806	skillxld155	 
+807	skillxan155	 
+808	strHostileTimeout	Vous devez attendre un peu avant de vous déclarer hostile envers ce joueur.
+809	ShrId0	Sanctuaire vide
+810	ShrId1	Sanctuaire de recharge
+811	ShrId2	Sanctuaire de santé
+812	ShrId3	Sanctuaire de Mana
+813	ShrId4	Sanctuaire d'échange de Santé
+814	ShrId5	Sanctuaire d'échange de Mana
+815	ShrId6	Sanctuaire d'Armure
+816	ShrId7	Sanctuaire de Combat
+817	ShrId8	Sanctuaire de Résistance au Feu
+818	ShrId9	Sanctuaire de Résistance au Froid
+819	ShrId10	Sanctuaire de Résistance à la Foudre
+820	ShrId11	Sanctuaire de Résistance au Poison
+821	ShrId12	Sanctuaire d'Aptitude
+822	ShrId13	Sanctuaire de Recharge de Mana
+823	ShrId14	Sanctuaire d'endurance
+824	ShrId15	Sanctuaire d'Expérience
+825	ShrId16	Sanctuaire d'Enirhs
+826	ShrId17	Sanctuaire de Portail
+827	ShrId18	Sanctuaire de Gemme
+828	ShrId19	Sanctuaire de Feu
+829	ShrId20	Sanctuaire de Monstre
+830	ShrId21	Sanctuaire Explosif
+831	ShrId22	Sanctuaire de Poison
+832	x	CRÉER NOUVEAU
+833	CfgSkillPick	Barre de Vitesse
+834	x	Vérifier mot de passe
+835	MercX101	Varaya
+836	MercX102	Khan
+837	MercX103	Klisk
+838	MercX104	Bors
+839	MercX105	Brom
+840	MercX106	Wiglaf
+841	MercX107	Hrothgar
+842	MercX108	Scyld
+843	MercX109	Healfdane
+844	MercX110	Heorogar
+845	MercX111	Halgaunt
+846	MercX112	Hygelac
+847	MercX113	Egtheow
+848	MercX114	Bohdan
+849	MercX115	Wulfgar
+850	MercX116	Hild
+851	MercX117	Heatholaf
+852	MercX118	Weder
+853	MercX119	Vikhyat
+854	MercX120	Unferth
+855	MercX121	Sigemund
+856	MercX122	Heremod
+857	MercX123	Hengest
+858	MercX124	Folcwald
+859	MercX125	Frisian
+860	MercX126	Hnaef
+861	MercX127	Guthlaf
+862	MercX128	Oslaf
+863	MercX129	Yrmenlaf
+864	MercX130	Garmund
+865	MercX131	Freawaru
+866	MercX132	Eadgils
+867	MercX133	Onela
+868	MercX134	Damien
+869	MercX135	Erfor
+870	MercX136	Weohstan
+871	MercX137	Wulf
+872	MercX138	Bulwye
+873	MercX139	Lief
+874	MercX140	Magnus
+875	MercX141	Klatu
+876	MercX142	Drus
+877	MercX143	Hoku
+878	MercX144	Kord
+879	MercX145	Uther
+880	MercX146	Ip
+881	MercX147	Ulf
+882	MercX148	Tharr
+883	MercX149	Kaelim
+884	MercX150	Ulric
+885	MercX151	Alaric
+886	MercX152	Ethelred
+887	MercX153	Caden
+888	MercX154	Elgifu
+889	MercX155	Tostig
+890	MercX156	Alcuin
+891	MercX157	Emund
+892	MercX158	Sigurd
+893	MercX159	Gorm
+894	MercX160	Hollis
+895	MercX161	Ragnar
+896	MercX162	Torkel
+897	MercX163	Wulfstan
+898	MercX164	Alban
+899	MercX165	Barloc
+900	MercX166	Bill
+901	MercX167	Theodoric
+902	r16	[fs]Rune Io
+903	r16L	Io
+904	r13	[fs]Rune Shael
+905	r13L	Shael
+906	r31	[fs]Rune Jah
+907	r31L	Jah
+908	DarkStalker	Vagabond des ténèbres
+909	VileArcher	Archer inhumain
+910	Runeword22	Délire
+911	Whichwild String	Folle furieuse
+912	x	Cette application a été installée avec une clé CD Lord of Destruction qui n'est pas autorisée sur Battle.net.
+913	x	La clé CD Lord of Destruction que vous utilisez n'est plus active sur Battle.net. Veuillez contacter le Support Technique pour plus de renseignements.
+914	x	Votre clé CD Lord of Destruction est actuellement utilisée par :
+915	x	La clé CD Lord of Destruction utilisée pour installer cette application est prévue pour un autre produit. Veuillez réinstaller cette application en utilisant la clé CD adéquate.
+916	Playersubtitles29	Retraite !
+917	AmaOnly	(Amazone uniquement)
+918	SorOnly	(Ensorceleuse uniquement)
+919	NecOnly	(Nécromancien uniquement)
+920	PalOnly	(Paladin uniquement)
+921	BarOnly	(Barbare uniquement)
+922	DruOnly	(Druide uniquement)
+923	AssOnly	(Assassin uniquement)
+924	Chatcaps	CHAT
+925	Newscaps	ACTUS
+926	Laddercaps	TOURNOI
+927	LaddeCharacter	PERSONNAGE TOURNOI
+928	x	Vous ne pouvez jouer un personnage de tournoi qu'avec d'autres personnages de tournoi et durant la saison de tournoi dans laquelle il a été créé. Lorsque la saison de tournoi se termine, le personnage de tournoi devient un personnage standard. Continuer ?
+929	x	Impossible de rejoindre la partie. Un personnage standard ne peut pas rejoindre une partie créée par un personnage de tournoi.
+930	x	Impossible de rejoindre la partie. Un personnage de tournoi ne peut pas rejoindre une partie créée par un personnage standard.
+931	Sksyn	Bonus en %s
+932	Damplev	Dégâts par niveau
+933	ElemDampLev	Dégâts élémentaires par niveau
+934	Firedplev	Dégâts de feu par niveau
+935	Colddplev	Dégâts de froid par niveau
+936	Ltngdplev	Dégâts électriques par niveau
+937	Poisdplev	Dégâts de poison par niveau
+938	Magdplev	Dégâts magiques par niveau
+939	Rangplev	Portée par niveau
+940	RateFireplev	Cadence par niveau
+941	AttRateplev	Puissance d'attaque par niveau
+942	AttSpeedplev	Vitesse d'attaque par niveau
+943	Defplev	Défense par niveau
+944	Manacoredplev	Coût en mana par niveau
+945	Missplev1	Projectiles par niveau
+946	Missplev2	+1 missile par niveau
+947	Missplev3	+1 missile tous les %d niveaux
+948	Boltplev1	Carreaux par niveau
+949	Boltplev2	+1 carreau par niveau
+950	Boltplev3	+1 carreau tous les %d niveaux
+951	Shotplev1	Tirs par niveau
+952	Shotplev2	+1 tir par niveau
+953	Shotplev3	+1 tir tous les %d niveaux
+954	Hpplev	Vie par niveau
+955	WRSpeedplev	Vitesse de déplacement par niveau
+956	Durateplev	Durée par niveau
+957	CoLenplev	Durée de froid par niveau
+958	FrezLenplev	Durée de gel par niveau
+959	PoisLenplev	Durée de poison par niveau
+960	Convphy2magplev	Convertit %d%% dégâts physiques en dégâts magiques par niveau
+961	Convphy2elemplev	Convertit %d%% dégâts physiques en dégâts élémentaires par niveau
+962	Convphy2magalt	Convertit %d%% dégâts physiques en dégâts élémentaires
+963	Convphy2elemalt	Convertit %d%% dégâts physiques en dégâts magiques
+964	Secplev1	Seconde par niveau
+965	Secplev2	Secondes par niveau
+966	Damabsplev	Dégâts absorbés par niveau
+967	WeapDamsk	Dégâts
+968	Hbdplev	Dégâts de Choc sacré par niveau
+969	Healplev	Points de vie rendus par niveau
+970	Healplev2	Points de vie rendus toutes les 2 secondes
+971	FanYDam	Vos dégâts : 
+972	PartDam	Dégâts du groupe : 
+973	AFDImm	Dégâts de feu moyens par seconde par niveau
+974	Cgslow	Ralentit les ennemis : 
+975	Corexpdam	Dégâts d'explosion du corps :
+976	ModitemAura	Aura niveau %d %s quand équipé
+977	Moditem2allattrib	  toutes les caractéristiques
+978	Moditem2ExpG	  l'expérience gagnée
+979	ModitemHPaK	Points de vie après chaque victime
+980	ModitemRedVendP	Réduit les prix des marchands
+981	ModitemSMRIP	Monstres pourfendus reposent en paix
+982	ModitemAttratvsM	en attaque contre
+983	Moditemdamvsm	aux dégâts contre
+984	Moditemslayat	Pourfendeuse :
+985	Moditemreanimas	Ranime en :
+986	Moditemenrescoldsk	  la résistance au froid de l'ennemi
+987	Moditemenresfiresk	  la résistance au feu de l'ennemi
+988	Moditemenresltngsk	  la résistance électrique de l'ennemi
+989	Moditemenrespoissk	 la résistance au poison de l'ennemi
+990	ModitemdamFiresk	aux dégâts de feu
+991	ModitemdamColdsk	aux dégâts de froid
+992	ModitemdamLtngsk	aux dégâts électriques
+993	ModitemdamPoissk	aux dégâts de poison
+994	Moditemskondeath	%d%% chances de lancer niveau %d %s quand vous mourrez
+995	ModitemskonLevel	%d%% chances de lancer niveau %d %s quand vous montez de niveau
+996	ModitemskonKill	%d%% chances de lancer niveau %d %s quand vous tuez un ennemi
+997	Skillname224	Loup-garou
+998	Skillsd224	transforme en loup
+999	Skillld224	transforme en loup
+1000	Skillan224	Loup-garou
+1001	StrSkill43a	 mage de squelette
+1002	StrSkill44a	 mages de squelette
+1003	StrSklTabItem9	+%d en invocation
+1004	SOJSold	%d Pierres de Jordan vendues aux marchands
+1005	DiabloWalksEarth	Diablo marche sur le monde
+1006	neg	[ms]Crâne de l'engeance infernale
+1007	TrappDoor	Trappe
+1008	uhf	[fs]Masse légendaire
+1009	skillld124P	vie et mana à vous\nles âmes des ennemis tués pour accorder\nactivée, l'aura tente de racheter
+1010	7wa	[fs]Hache de beserker
+1011	skillld42	de tous les ennemis alentour\ncrée un champ électrique qui diminue les points de vie
+1012	xhg	Gantelets de guerre
+1013	Fiendra	du Diable
+1014	Wraithra	du Spectre
+1015	Fiend	Diable
+1016	Wraith	Spectre
+1017	D2bnetHelp10	ÿc3Le texte en bleuÿc4 représente les actions réalisées par les utilisateurs présents dans le Canal de chat.
+1018	ItemStats1r	Capacité à parer: 
+1019	x	Serveur complet
+1020	x	Aucune partie ne peut être créée pour l'instant. Rejoignez une partie existante ou essayez à nouveau d'en créer une plus tard.
+1021	merca239	Jarulf
+1022	StrSkill63Patch	sur un total de 
+1023	x	Vous êtes en file d'attente pour une création de partie. Si vous ne souhaitez pas attendre, essayez de rejoindre une partie existante.
+1024	x	File d'attente
+1025	x	Trop de parties créées. Rejoignez une partie en cours ou placez-vous en file d'attente.
+1026	x	Position dans la file d'attente : 
+1027	x	En file d'attente
+1028	9bf	[ms]Poignard
+1029	eats and spits corpses	Mange et crache des cadavres
+1030	qstsa2q63f	Explorer la Chambre de Tal Rasha.
+1031	Shocking Hit	Choc brutal
+1032	ModStr1w	d'or récupéré sur le monstre
+1033	ModStr1x	plus grandes chances d'obtenir un objet magique
+1034	ModStr3u	Le monstre, touché, s'enfuit
+1035	ModStr4c	bonus du niveau d'attaque
+1036	ModStr5r	Ralentit l'adversaire de
+1037	ModStr6f	proba. de réanimer la cible
+1038	ModStr6d	Chaque coup aveugle l'adversaire
+1039	x	Entrez l'Adresse IP d'un Ordinateur Hôte pour Participer
+1040	StrSkill61	Coups multiples
+1041	D2bnetHelp13c	/reply
+1042	D2bnethelp13d	Vous permet de répondre à un murmure sans avoir à saisir le nom du compte
+1043	D2bnetHelp52	/whisper, /msg, /reply
+1044	D2bnetHelp10a	ÿc9 Texte en jauneÿc4 messages de l'administrateur battle.net
+1045	BnetnewGameTime	Durée partie :
+1046	D2bnetHelp12c	Pour les commandes avancées, vous pouvez utilisez votre nom de personnage lorsque vous vous adressez à des joueurs du même Royaume. Utilisez votre nom de personnage suivi de @Royaume lorsque vous vous adresserez aux joueurs situés dans un autre Royaume.
+1047	D2bnetHelp12d	Utilisez *nom du compte pour tous les utilisateurs battle.net y compris ceux utilisant un autre jeu (par exemple Starcraft).
+1048	D2bnetHelp12b	Lorsque l'une des commandes ci-dessous nécessite l'utilisation de la variable <nom de compte>, veuillez utiliser les variables <nom de personnage>, < nom de personnage @Royaume>, ou <*nom de compte>.
+1049	x	PASSERELLE: %s
+1050	x	CHANGER MOT DE PASSE
+1051	x	Changer mot de passe
+1052	x	Mot de passe actuel
+1053	x	Nouveau mot de passe
+1054	x	Vérifier Nouveau mot de passe
+1055	x	SELECTIONNER PASSERELLE
+1056	x	Si la passerelle actuelle n'est pas la mieux adaptée à votre emplacement, sélectionnez-en une autre sur Battle.net.
+1057	x	CHANGER ROYAUME
+1058	x	Royaume actuel
+1059	x	Un personnage appelé '%s' existe déjà dans ce Royaume.
+1060	D2bnetHelp6a	 ÿc5Texte grisÿc4 signale également les actions réalisées par les personnes se trouvant dans le canal de conversation.
+1061	D2bnetHelp10aPatch	 ÿc3Texte bleuÿc4 signale les messages particuliers à Battle.net ou expédiés par un représentant Blizzard.
+1062	x	ENVOYER
+1063	x	AVERTISSEMENT MOT DE PASSE
+1064	x	Vous ne pouvez pas envoyer votre mot de passe un autre utilisateur de Battle.net. Blizzard ne vous demandera jamais votre mot de passe.
+1065	x	CONNEXION
+1066	x	Diablo II n'a pas pu se connecter au royaume. Le royaume sélectionné peut être indisponible ou vous avez peut-être un problème de connexion. Vérifiez que votre connexion Internet fonctionne correctement et/ou que votre pare-feu est configuré de telle sorte que le port 6112 est ouvert au trafic.
+1067	x	PLUS
+1068	x	Plus de 8 personnages sont disponibles dans ce Royaume Diablo II. Seuls 8 personnages peuvent être visualisés.
+1069	x	Pour visualiser d'autres personnages, vous devrez d'abord en supprimer un. Cette suppression est définitive. Vous ne pourrez pas récupérer un personnage détruit. De plus amples informations sont disponibles à l'adresse www.blizzard.com/support/diablo2.
+1070	x	TERMES DE SERVICE
+1071	x	En vous connectant à Battle.net, vous certifiez avoir lu et être en accord avec son actuel Termes de service.
+1072	x	a0n1:%1 %0
+1073	x	Heaumes :
+1074	x	Boucliers :
+1075	x	Armes :
+1076	x	Armure :
+1077	x	PERSONNAGE EXTENSION
+1078	x	Missing string
+1079	EskillLowersResistX	Diminue la résistance
+1080	ExInsertSocketsX	Peut être enchâssé dans les objets ornés
+1081	EskillToMeleeX	 en corps à corps
+1082	eskillincasemasteryX	%d pour-cent de chance d'infliger un coup critique
+1083	CfgSay7X	Dire 'Retraite'
+1084	champghostlyX	[ms]fantomatique[fs]fantomatique
+1085	champfanaticX	[ms]fanatique[fs]fanatique
+1086	champpossessedX	[ms]possédé[fs]possédée
+1087	champberserkX	[ms]berserker[fs]berserker
+1088	PalMercExST1X	Défensive
+1089	PalMercEXST3X	Offensive
+1090	PalMercEXST4X	Combat
+1091	increaseswithplaylevelX	(Selon niv. perso.)
+1092	RankX	Rang
+1093	x	Indiquez une adresse email valide.
+1094	x	Indiquer votre adresse email vous permet de bénéficier de fonctions supplémentaires, comme la possibilité de récupérer vos informations de compte si vous deviez oublier votre mot de passe. Allez sur www.battle.net/email-address pour plus plus de renseignements.
+1095	x	Adresse email :
+1096	x	Confirmer l'adresse email :
+1097	x	ENREGISTRER
+1098	x	NE PAS S'ENREGISTRER
+1099	x	Assurez-vous que les deux adresses email indiquées sont bien les mêmes.
+1100	x	Adresse email invalide
+1101	x	L'adresse email que vous avez indiquée ne semble pas valide. Indiquez une adresse email valide.
+1102	x	Si vous n'indiquez pas d'adresse email, vous ne pourrez pas récupérer vos informations de compte si vous deviez oublier votre mot de passe. Vous n'aurez pas d'autre occasion d'enregistrer une adresse email pour ce compte.
+1103	x	Si vous avez oublié votre mot de passe et que vous avez indiqué votre adresse email, vous pouvez demander qu'un nouveau mot de passe vous soit envoyé en cliquant sur Envoyer.
+1104	x	Votre demande pour un nouveau mot de passe a été reçue. Si vous avez indiqué une adresse email à utiliser pour ce compte, vous recevrez un message vous expliquant comment terminer la modification du mot de passe.
+1105	x	CONTINUER
+1106	x	Vous avez oublié votre mot de passe ? Cliquez sur 'Paramètres du compte'.
+1107	x	Le mot de passe que vous avez tapé est incorrect. Vous pouvez obtenir un nouveau mot de passe en cliquant sur 'Paramètres du compte'.
+1108	x	PARAMETRES DU COMPTE
+1109	x	Paramètres du compte
+1110	x	Si vous connaissez votre mot de passe et voulez en changer, cliquez ici.
+1111	x	Si vous avez oublié votre mot de passe ou que ce dernier ne fonctionne pas, cliquez ici.
+1112	x	Si vous avez besoin de modifier l'adresse email sous laquelle vous êtes enregistré, cliquez ici.
+1113	x	OBTENIR UN NOUVEAU MOT DE PASSE
+1114	x	Obtenir un nouveau mot de passe
+1115	x	CHANGER D'EMAIL
+1116	x	Changer d'email
+1117	x	Ancienne adresse email :
+1118	x	Nouvelle adresse email :
+1119	x	Vérifier la nouvelle adresse email :
+1120	x	Si vous avez enregistré une adresse email pour ce compte, vous pouvez la modifier ici. Notez que les deux adresses email doivent être actives pour que vous puissiez effectuer ce changement.
+1121	x	L'ancienne et la nouvelle adresse email que vous avez tapées sont identiques. Veuillez taper une adresse email différente.
+1122	x	Assurez-vous que les deux nouvelles adresses email concordent.
+1123	x	Actualités et mises à jour Battle.net
+1124	x	Dernier niveau de difficulté terminé :
+1125	x	Aucun
+1126	x	ENTRER CHAT
+1127	x	VEUILLEZ RETENIR VOTRE MOT DE PASSE.
+1128	x	Mot de passe dangereux
+1129	x	Le mot de passe que vous avez choisi n'est pas sûr. Veuillez en choisir un autre.
+1130	x	AVERTISSEMENT CLE CD
+1131	x	Vous ne pouvez envoyer votre clé CD à un autre utilisateur sur Battle.net. Blizzard ne vous demandera jamais votre clé CD, quelle qu'en soit la raison.
+1132	x	Expire aujourd'hui
+1133	x	Expire dans %d jours
+1134	x	Le personnage a expiré
+1135	StrSkill63	sur un total de 
+1136	StrSkill67	Combat rapproché : attaque ralentie à 
+1137	StrSkill72	Envoie 
+1138	StrSkill76	Proba sans interruption 
+1139	StrSkill78	Demeure une cible pendant 
+1140	StrSkill80	Transforme 
+1141	StrSkill85	Réduit la durée du sort de 
+1142	StrSkill86	Attaque jusqu'à 
+1143	x	Un personnage Diablo II doit régulièrement être joué ou il sera considéré inactif. Lorsque vous créez un personnage, il sera considéré inactif si vous ne l'utilisez pas pour jouer dans les 10 jours qui suivent sa dernière partie. Quand un personnage a été joué au moins deux heures, il ne sera considéré inactif que si vous ne l'utilisez pas pour jouer dans les trois mois qui suivent sa dernière partie.
+1144	x	Un personnage inactif est effacé du royaume.
+1145	x	Le personnage '%s' n'a pas été utilisé régulièrement et a été considéré inactif.
+1146	pk1	Clé de la Terreur
+1147	pk2	Clé de la Haine
+1148	pk3	Clé de la Destruction
+1149	dhn	Corne de Diablo
+1150	bey	Oeil de Baal
+1151	mbr	Cerveau de Méphisto
+1152	std	Etandard des Héros
+1153	Hellfire Torch	Torche des flammes infernales
+1154	Lilith	Lilith
+1155	Pandemonium Run 1	Repaire de la Matrone
+1156	Pandemonium Run 2	Sables oubliés
+1157	Pandemonium Run 3	Fournaise de la douleur
+1158	ModStre8b	aux aptitudes de l'Assassin
+1159	skillld146	le niveau de défense et les dommages de l'ennemi\nhurlement effroyable qui diminue
+1160	skillld65	en transperçant la résistance des ennemis\npassif - augmente les dégâts de vos attaques par le froid
+1161	x	La Clé CD que vous utilisez actuellement ne vous permet pas de jouer à des parties sur les royaumes. Vous pouvez jouer en mode monojoueur ou en mode Battle.net ouvert.
+1162	x	Votre connexion est temporairement limitée et ne vous permet pas de vous connecter à ce royaume. Essayez de vous reconnecter plus tard.

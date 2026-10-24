@@ -72,6 +72,10 @@ name = "d2animdata"
 version = "0.1.0"
 
 [[package]]
+name = "d2d2s"
+version = "0.1.0"
+
+[[package]]
 name = "d2dc6"
 version = "0.1.0"
 dependencies = [

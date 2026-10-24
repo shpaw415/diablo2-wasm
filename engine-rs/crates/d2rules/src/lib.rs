@@ -38,6 +38,9 @@ mod loot;
 mod path;
 mod rng;
 mod save;
+/// Tables de chaînes TBL v1.12 (W18, port `tbl_decode.py`) — texte fr-FR
+/// in-engine. Pur ; les 3 tables fr réelles sont embarquées (`bundled_fra`).
+pub mod tbl;
 mod skills;
 mod stamina;
 mod world;
@@ -94,6 +97,27 @@ pub mod mercenary;
 /// corps actif) — sources citées dans l'en-tête du fichier.
 pub mod corpse;
 
+// --- Socle data-driven W01/A3 (tables réelles, 2026-10-24) ---
+/// Parseur TSV générique runtime (CRLF, quotes Excel, tabs, en-têtes
+/// nommés) — consommé par les records typés et par d2game (`spawn.rs`).
+pub mod tsv;
+/// Records typés des tables réelles v1.12 (monstres/monde/items-ui/assets)
+/// + golden tests record-à-record contre les fichiers réels.
+pub mod tables;
+
+// --- IA P1 monstres (monai-behaviors.md, étape 4 RE d2w-re, 2026-10-24) ---
+/// FallenShaman résurrection + Fallen fuite de panique — overlay ADDITIF sur
+/// la FSM `MonState` (world.rs), registre de cadavres persistant, valeurs
+/// réelles `patch_monstats.txt` (aip1/aip4/aidel). État non persisté.
+pub mod ai_behaviors;
+
+// --- Quêtes Acte I spec (quests-actes.md, étape 4 RE d2w-re, 2026-10-24) ---
+/// Machine A1Q1→A1Q6 (phases, events typés, flags u16 façon .d2s, gating
+/// d'acte II) + branchement `World`/save additif (`quest_act1`). Coexiste
+/// avec le journal W13 ([`crate::quests`]) — l'intégrateur branche l'un ou
+/// l'autre.
+pub mod quests_actes;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
@@ -140,6 +164,10 @@ pub use npc::{
     MercenaryResurrect, NpcDef, NpcInteraction, NpcRepair, NpcRole, NpcState, NpcTalkError,
     NpcTravel, NPCS,
 };
+
+// -- IA P1 monstres + quêtes Acte I spec (étape 4 RE d2w-re) — consommés par d2game --
+pub use ai_behaviors::{AiArchetype, AiState, CorpseRec, MonAiExt};
+pub use quests_actes::{ActEvent, ActPhase, ActQuests, ActReward, ActRun};
 
 /// Projectiles (crate sœur pure) : système embarqué dans le `World`,
 /// re-exporté pour le rendu d2game (positions/sprites des missiles en vol).
@@ -260,6 +288,21 @@ pub enum GameEvent {
     /// J1 : au moins un objet du corps a été repris (ré-équipé) ; le corps
     /// disparaît si TOUT son contenu a été repris, sinon le surplus y reste.
     CorpseRecovered,
+    // --- IA P1 (ai_behaviors.rs, monai-behaviors étape 4) — extras additifs ---
+    /// Un cadavre est redevenu une unité vivante (shaman fallen, spec §3.4) :
+    /// `index` = position de la NOUVELLE unité dans `monsters()` à l'émission
+    /// (les indices ne bougent plus : le retrait est antérieur).
+    MonResurrected { index: usize },
+    /// Le fallen `index` entre en panique (cadavre du groupe < 15 unités) et
+    /// fuit à l'opposé — index au moment de l'émission (caveat REPORT.md §4).
+    MonFled { index: usize },
+    // --- Quêtes Acte I spec (quests_actes.rs) — extras additifs ---
+    /// Une quête de l'acte I a changé de phase (`id` = `a1q1`…`a1q6`,
+    /// `phase` = `inactive|active|reward_pending|done`).
+    ActQuestChanged { id: String, phase: String },
+    /// L'accès à l'acte `act` vient d'être débloqué (gating : remise Warriv
+    /// A1Q6 → acte II, spec quests-actes.md §1.4).
+    ActUnlocked { act: u8 },
 }
 
 /// État d'animation (code mode COF D2 : NU=neutral, WL=walk, RN=run, A1=attack1, DD=death).

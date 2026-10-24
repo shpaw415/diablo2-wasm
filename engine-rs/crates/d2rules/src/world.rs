@@ -341,6 +341,16 @@ pub struct World {
     /// Événements différés (embauche/résurrection — API directes hors tick)
     /// : livrés en tête du PROCHAIN `tick`.
     pub(crate) deferred: Vec<GameEvent>,
+    /// IA P1 monstres (ai_behaviors.rs, étape 4 RE d2w-re) — registre des
+    /// cadavres + overlays Fallen (panique) / FallenShaman (résurrection),
+    /// aligné aux indices `mon_ent`/`mon_dat`. Dérivé au chargement
+    /// ([`crate::ai_behaviors::AiState::rebuild`]) ; jamais persisté
+    /// (transitoire comme `corpse_pending`).
+    pub(crate) ai: crate::ai_behaviors::AiState,
+    /// Journal de quêtes Acte I SPEC (quests_actes.rs) — `None` par défaut ;
+    /// save additive `quest_act1` (champ `#[serde(default)]`, v3 inchangée).
+    /// Coexiste avec [`World::quests`] (journal W13) — l'intégrateur branche.
+    pub(crate) quests_act1: Option<crate::quests_actes::ActQuests>,
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
@@ -519,6 +529,8 @@ impl World {
             merc: None,
             merc_target: None,
             deferred: Vec::new(),
+            ai: crate::ai_behaviors::AiState::default(),
+            quests_act1: None,
         };
         let mut world = world;
         world.init_hero();
@@ -679,7 +691,9 @@ impl World {
 
     /// Comme [`Self::spawn_monster_at`] avec les facteurs explicites
     /// [`SpawnRule`] (MonLvl réel + boosts champion/unique + TC dédiée).
-    fn spawn_monster_at_rule(&mut self, tpl_index: usize, x: f32, y: f32, rule: SpawnRule) {
+    /// `pub(crate)` : aussi appelé par ai_behaviors (résurrection — relance
+    /// du même gabarit sur la tuile du cadavre).
+    pub(crate) fn spawn_monster_at_rule(&mut self, tpl_index: usize, x: f32, y: f32, rule: SpawnRule) {
         let t = &self.mon_tpls[tpl_index];
         // HP effectifs : rand(minHP..maxHP) × hp%/100, min 1
         let raw = self.rng.range_u32(t.hp_min, t.hp_max);
@@ -710,6 +724,9 @@ impl World {
         };
         self.mon_ent.push(ent);
         self.mon_dat.push(dat);
+        // IA P1 (ai_behaviors) : aligne l'extension AI (archétype dérivé du
+        // code gabarit — FA/FS = Fallen/FallenShaman, cf. family_of).
+        crate::ai_behaviors::on_spawned(self);
     }
 
     // ------------------------------------------------------------------
@@ -895,6 +912,7 @@ impl World {
     pub fn clear_monsters(&mut self) {
         self.mon_ent.clear();
         self.mon_dat.clear();
+        self.ai = crate::ai_behaviors::AiState::default(); // IA P1 : ext + cadavres
     }
 
     /// Déplace le point d'apparition du héros (tuile marchable requise).
@@ -1456,11 +1474,23 @@ impl World {
                     self.roll_drop(x, y, mlvl, &tc, ev);
                     xp_gain += xp;
                     ev.push(GameEvent::MonsterDied { index: i, xp });
+                    // IA P1 (ai_behaviors) : cadavre persistant + panique des
+                    // Fallen vivants proches — AVANT le retrait (indices).
+                    crate::ai_behaviors::register_corpse(self, i, ev);
                     self.mon_dat.remove(i);
                     self.mon_ent.remove(i);
+                    self.ai.ext.remove(i); // IA P1 : réaligne l'extension AI
                     self.merc_target = None; // H : indice périmé (décalage), on relâche
                     continue; // pas de i += 1 : l'élément suivant prend l'index i
                 }
+                i += 1;
+                continue;
+            }
+
+            // IA P1 (ai_behaviors) : overlays Fallen (panique) / FallenShaman
+            // (résurrection). `false` = comportement historique strictement
+            // inchangé (archétype None ou rien à faire ce frame).
+            if crate::ai_behaviors::tick(self, i, dt, ev) {
                 i += 1;
                 continue;
             }
