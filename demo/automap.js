@@ -17,8 +17,13 @@
 //   * demo/game.js : UNE ligne `import './automap.js';`
 //   * bouton « Carte » du minipanel HUD (hud.js) → window.D2Automap.toggle()
 //   * touche Tab = toggle (raccourci D2)
-// Modes du moteur : "automap" (cel réels — dessin par catégorie, cel passé
-// au title) / "fallback" (polygone marchable : seules les cellules walk).
+// Modes du moteur (13b : décidés par la COUVERTURE mesurée `coverage`,
+// seuil 0,60 côté Rust) : "automap" (cel réels — dessin par catégorie, cel
+// passé au title, badge « AutoMap résolu · NN % ») / "fallback" (polygone
+// marchable : seules les cellules walk — badge « repli » ; occurs quand le
+// groupe AutoMap du LvlType manque — « 5 Town » Harrogath — ou couvre mal
+// les tuiles DT1 composées : pandemonium 4 %, bloodyfoothills 42 %,
+// hallsvaught 34 % ; crystalline 95 % est le seul « automap » A4-A5).
 (function () {
   'use strict';
 
@@ -67,12 +72,20 @@
     const cv = document.createElement('canvas');
     cv.id = 'd2-automap-cv';
     Object.assign(cv.style, { display: 'block', imageRendering: 'pixelated' });
+    const mode = document.createElement('div');
+    mode.id = 'd2-automap-mode';
+    Object.assign(mode.style, {
+      font: '9px system-ui', color: '#8a7f6a', marginTop: '3px',
+      textShadow: '0 1px 2px #000',
+    });
     panel.appendChild(title);
     panel.appendChild(cv);
+    panel.appendChild(mode);
     stage.appendChild(panel);
     D2Automap.panel = panel;
     D2Automap.title = title;
     D2Automap.canvas = cv;
+    D2Automap.modeLine = mode;
   }
 
   // (Re)charge les données du niveau courant — une seule requête moteur par
@@ -161,6 +174,20 @@
     }
   }
 
+  // Ligne de mode (13b) : « AutoMap résolu · NN % » (rendu précis par
+  // catégorie, Cels réels du niveau) ou « polygone marchable · raison »
+  // (repli documenté automap.rs : groupe AutoMap absent ou couverture
+  // < 60 % — ex. Harrogath « 5 Town » inexistant v1.12, Pandemonium 4 %).
+  function showMode(d) {
+    const el = D2Automap.modeLine;
+    if (!el) return;
+    if (!d) { el.textContent = ''; return; }
+    const pct = Math.round((d.coverage || 0) * 100);
+    el.textContent = d.mode === 'automap'
+      ? `AutoMap résolu · ${pct} %`
+      : `repli : polygone marchable · ${pct} %`;
+  }
+
   function poll(now) {
     const game = window.__d2 && window.__d2.mode === 'wasm' && window.__d2.game;
     if (!game) return;
@@ -175,6 +202,7 @@
       loadLevelData(game);
       if (D2Automap.title) D2Automap.title.textContent =
         (D2Automap.data && (D2Automap.data.name || D2Automap.data.level)) || '';
+      showMode(D2Automap.data);
     }
     const d = D2Automap.data;
     if (!d || !d.cells) return;

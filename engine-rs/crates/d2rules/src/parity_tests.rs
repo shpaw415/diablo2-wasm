@@ -7,7 +7,8 @@
 //! Sources (patch_d2.mpq, extraites 2026-10-22) :
 //! * `golden_xp.txt` — 99 niveaux × 7 classes + MaxLvl + ExpRatio.
 //! * `golden_skills.txt` — 210 skills de classe × 82 colonnes modélisées.
-//! * `golden_calc.txt` — 23 formules réelles évaluées (évaluateur Python).
+//! * `golden_calc.txt` — 40 formules réelles évaluées (évaluateur Python ;
+//!   17 scénarios étape 12a : synergies citées ligne, edmn/edns, ln/dm).
 //! * `golden_dmg_curve.txt` — courbes de dégâts aux paliers 1/2/8/9/15/16/22/
 //!   23/28/29/30 (formule itérative Python indépendante).
 //! * `golden_isc.txt` — 359 records ItemStatCost (dictionnaire stats).
@@ -259,7 +260,7 @@ fn golden_calc_formules_reelles() {
         assert_eq!(got, expected, "{note} : {formula}");
         checked += 1;
     }
-    assert_eq!(checked, 23, "23 scénarios de formules réelles");
+    assert_eq!(checked, 40, "40 scénarios de formules réelles (23 + 17 étape 12a)");
 }
 
 // ---------------------------------------------------------------------------

@@ -22,3 +22,20 @@ Molten Boulder	2	skill('Volcano'.blvl)*par7	Volcano=5	50	molten par7
 Charge	9	ln34+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8	Might=3;Vigor=11	580	charge 2 synergies par8
 Summon Spirit Wolf	4	(par4 * lvl) + ln56		108	spiritwolf par4*lvl+ln56
 Sacrifice	16	ln12+skill('Redemption'.blvl)*par8+skill('Fanaticism'.blvl)*par7	Fanaticism=12;Redemption=5	540	sacrifice 2 synergies
+Fire Ball	20	(skill('Fire Bolt'.blvl)+skill('Meteor'.blvl))*par8	Fire Bolt=13;Meteor=7	280	etape 12a L49 fireball
+Meteor	12	(skill('Fire Bolt'.blvl)+skill('Fire Ball'.blvl))*par8	Fire Bolt=20;Fire Ball=7	135	etape 12a L58 meteor
+Blessed Hammer	1	(skill('Vigor'.blvl)+skill('Blessed Aim'.blvl))*par8	Vigor=20;Blessed Aim=20	560	etape 12a L114 hammer
+Holy Fire	1	skill('Resist Fire'.blvl)*par8+skill('Salvation'.blvl)*par7	Resist Fire=20;Salvation=10	420	etape 12a L104 holy fire
+Teeth	1	(skill('Bone Wall'.blvl)+skill('Bone Prison'.blvl)+skill('Bone Spear'.blvl)+skill('Bone Spirit'.blvl))*par8	Bone Wall=5;Bone Spear=10;Bone Spirit=3	270	etape 12a L69 teeth
+Lightning Fury	1	(skill('Charged Strike'.blvl)+skill('Lightning Bolt'.blvl)+skill('Power Strike'.blvl)+skill('Lightning Strike'.blvl)) * par8	Charged Strike=15;Lightning Bolt=10;Power Strike=5;Lightning Strike=12	42	etape 12a L35 fury
+Energy Shield	4	min(edmn,95)		35	etape 12a L60 edmn courbe
+Energy Shield	16	min(edmn,95)		70	etape 12a L60 courbe [5,2,1,1,1]
+Inner Sight	1	-edmn		-40	etape 12a L10 aura
+Inner Sight	3	-edmn		-90	etape 12a L10 niv3
+Prayer	5	edns		0	etape 12a L101 ELen vide
+Lower Resist	1	-dm56		-25	etape 12a L93 aura
+Lower Resist	3	-dm56		-165	etape 12a L93 niv3
+Summon Spirit Wolf	10	min(ln78,85)		45	etape 12a L229 wolf
+Summon Spirit Wolf	20	min(ln78,85)		85	etape 12a L229 plafond
+Raise Skeleton	3	(lvl < 4) ? 0 : (par2 * (lvl - 3))		0	etape 12a L72 ternaire
+Raise Skeleton	7	(lvl < 4) ? 0 : (par2 * (lvl - 3))		200	etape 12a L72 niv7

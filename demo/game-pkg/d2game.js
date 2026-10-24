@@ -36,6 +36,34 @@ export class D2Game {
         }
     }
     /**
+     * « Auto-ranger » : déplace les potions `autobelt=1` (hp1-5, mp1-5,
+     * rvs, rvl) de l'inventaire vers la ceinture 4×4 — nombre rangé
+     * (idempotent ; la page l'appelle après un ramassage).
+     * @returns {number}
+     */
+    beltAutoStore() {
+        const ret = wasm.d2game_beltAutoStore(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * État ceinture + buffs (lecture HUD) — JSON
+     * `{"belt":[[4×4 cellules null|{code,name,kind}]],"buffs":[{"state",
+     * "remainingMs","stats":[[id,val],…]},…]}` ; `{}` avant `finalize`.
+     * @returns {string}
+     */
+    beltInfo() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_beltInfo(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Collision grid as 0/1 bytes (row-major), for d2rules/debug overlays.
      * @returns {Uint8Array}
      */
@@ -604,6 +632,59 @@ export class D2Game {
         let deferred2_1;
         try {
             const ret = wasm.d2game_travelWaypoint(this.__wbg_ptr, slot);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * Touche de ceinture `key` (1..=4) — boit le premier objet de la
+     * colonne (rangée 0 d'abord), mêmes effets/JSON que `useConsumable`.
+     * @param {number} key
+     * @returns {string}
+     */
+    useBeltKey(key) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.d2game_useBeltKey(this.__wbg_ptr, key);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * Utilise le consommable du slot d'inventaire `slot` (effets réels par
+     * code — potions hp1-5/mp1-5/rejuv/buffs 30 s, parchemin de porte de
+     * ville, tomes à charges) — JSON
+     * `{"use":{code,name,family,heal,mana,buffMs,townPortal,identified,
+     * chargesLeft},"levelSwitch":{key,name}?}` ; un parchemin/tome de porte
+     * de ville BASCULE vers le camp (switch_level existant). `Err` lisible
+     * (`"slot vide"`, `"tome vide"`, `"rien à identifier"`…).
+     * @param {number} slot
+     * @returns {string}
+     */
+    useConsumable(slot) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.d2game_useConsumable(this.__wbg_ptr, slot);
             var ptr1 = ret[0];
             var len1 = ret[1];
             if (ret[3]) {

@@ -10,7 +10,7 @@ use crate::quests::QuestLog;
 use crate::rng::Rng;
 use crate::skills::{default_active, starting_skills, HeroSkill};
 use crate::skills_tree::SkillTreeError;
-use crate::{skills_hero, Entity, AnimState, GameEvent, HeroStats, ItemDef, ItemKind, ItemOnGround, PlayerInput};
+use crate::{combat_mods, skills_hero, xp, Entity, AnimState, GameEvent, HeroStats, ItemDef, ItemKind, ItemOnGround, PlayerInput};
 use d2missiles::MissileSystem;
 use serde::{Deserialize, Serialize};
 
@@ -57,13 +57,31 @@ pub(crate) const MISSILE_HIT_RADIUS: f32 = 0.7;
 /// missile (mêlée BA/PA) ou quand le héros n'a aucune compétence — le skill
 /// actif prime sinon (SOR : `firebolt`, cf. `skills.rs`).
 pub(crate) const HERO_MISSILE: &str = "arrow";
-/// Niveau max MVP (seuils XP livrés jusqu'à 10).
-pub(crate) const MAX_LEVEL: u32 = 10;
+// ---------------------------------------------------------------------------
+// XP héros — TABLE RÉELLE (13a-b, finition) : plus aucune constante locale,
+// la courbe 99 niveaux × 7 classes vient de `xp.rs` (`patch_experience.txt`
+// embarqué, colonne de la classe du héros). L'ancien plafond MVP
+// `MAX_LEVEL = 10` et `XP_TABLE: [u32; 10]` (colonne Barbarian copiée en
+// dur) sont supprimés : le plafond et les seuils SUIVENT LA DONNÉE.
+// ---------------------------------------------------------------------------
 
-/// Seuils XP CUMULÉS pour atteindre le niveau N+1 — colonne Barbarian,
-/// `assets/patch_experience.txt` lignes 1..=10 (GAME-DATA.md §4).
-pub(crate) const XP_TABLE: [u32; 10] =
-    [500, 1500, 3750, 7875, 14175, 22680, 32886, 44396, 57715, 72144];
+/// Courbe XP de la classe `code` (table réelle embarquée ; repli barbare —
+/// les 7 courbes v1.12 sont identiques, golden `progression_golden.rs`).
+fn xp_curve(code: &str) -> &'static xp::ClassXp {
+    let t = xp::XpTable::global();
+    t.class(code).or_else(|| t.class("bar")).expect("table XP embarquée")
+}
+
+/// Seuil XP CUMULÉS pour atteindre `level` (ligne `level - 1` de la table ;
+/// niveau 1 = 0). u32 sûr : dernière ligne 3 837 739 017 < u32::MAX.
+pub(crate) fn xp_threshold(code: &str, level: u32) -> u32 {
+    u32::try_from(xp_curve(code).threshold(level)).unwrap_or(u32::MAX)
+}
+
+/// Niveau max de la classe (`MaxLvl` de la table = 99 en v1.12).
+pub(crate) fn max_level_of(code: &str) -> u32 {
+    xp_curve(code).max_level
+}
 
 // Facteurs MonLvl.txt ligne niveau 1 Normal (GAME-DATA.md §2.1).
 /// AC effectif monstre niveau 1.
@@ -217,6 +235,9 @@ pub(crate) struct HeroData {
     pub anim_ms: u32,
     /// Course active (touche Maj côté navigateur) : vitesse RN + anim RN.
     pub run: bool,
+    /// 12c (additif, transitoire non persisté — comme `stamina_milli`) :
+    /// mods de coup du héros (deadly strike / CB / plaies / leech…).
+    pub mods: combat_mods::HitMods,
     /// Point d'apparition / respawn.
     pub spawn: (f32, f32),
     /// Inventaire 10×4, index rangée par rangée.
@@ -276,6 +297,12 @@ pub(crate) struct MonData {
     /// Résists effectifs de la difficulté de spawn (`SpawnRule::res`, W08/K)
     /// — indexés comme les colonnes ResDm/Ma/Fi/Li/Co/Po ; ≥100 = immunité.
     pub res: [i32; 6],
+    /// 12c (additif, transitoire non persisté) : plaies ouvertes en cours.
+    pub wounds: Option<combat_mods::Dot>,
+    /// 12c (idem) : poison en cours (ticks de 25 frames).
+    pub poison: Option<combat_mods::Dot>,
+    /// 12c (idem) : froid — ralenti restant en ms (vitesse ×1/2).
+    pub chill_ms: u32,
 }
 
 /// Monde de jeu complet (pur : aucune IO, aucune dépendance de rendu).
@@ -315,6 +342,9 @@ pub struct World {
     /// de portée : le héros marche, grab auto à l'arrivée). TRANSITOIRE,
     /// jamais sauvegardé (après un load il suffit de recliquer).
     pub(crate) corpse_pending: bool,
+    /// Stash (11c, `economy.rs`) : or déposé + grille 6×4 d'items. Save
+    /// additive `gold_stash` (champ `#[serde(default)]`, v3 inchangée).
+    pub(crate) gold_stash: crate::economy::Stash,
     pub(crate) rng: Rng,
     pub(crate) now_ms: u64,
     /// Difficulté courante (W08/K — Normal par défaut ; `set_difficulty`
@@ -355,6 +385,21 @@ pub struct World {
     /// défaut ; save additive `quest_actes2` (champ `#[serde(default)]`,
     /// v3 inchangée). Même contrat que `quests_act1`.
     pub(crate) quests_actes2: Option<crate::quests_actes2::Act2Quests>,
+    /// Consommables 11b (consumables.rs) — ceinture 4×4 (touches 1-4) +
+    /// buffs temporisés des potions. Additif, sauvegardé (`consumables`,
+    /// champ `#[serde(default)]`, v3 inchangée).
+    pub(crate) consum: crate::consumables::ConsumState,
+    /// Journal de quêtes Actes IV-V SPEC (quests_actes45.rs) — `None` par
+    /// défaut ; save additive `quest_actes45` (champ `#[serde(default)]`,
+    /// v3 inchangée). Même contrat que `quests_act1`/`quests_actes2`.
+    pub(crate) quests_actes45: Option<crate::quests_actes45::Act45Quests>,
+    /// Journal des BOSS FINAUX (quests_finale.rs, étape 10b — Diablo,
+    /// vagues du trône, Baal) — `None` par défaut ; save additive
+    /// `quest_finale` (champ `#[serde(default)]`, v3 inchangée). Même
+    /// contrat que `quests_actes45` (coéquipier 10c, qui consomme les kills
+    /// diablo/baalcrab sans les spawner) ; la mort de Baal émet
+    /// [`GameEvent::GameWon`].
+    pub(crate) quests_finale: Option<crate::quests_finale::QuestsFinale>,
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
@@ -487,7 +532,7 @@ impl World {
                 stats: HeroStats {
                     level: 1,
                     xp: 0,
-                    xp_to_next: XP_TABLE[0],
+                    xp_to_next: xp_threshold(&hero_code, 2),
                     life: 0,
                     max_life: 0,
                     mana: 0,
@@ -511,6 +556,9 @@ impl World {
                 dead_ms: 0,
                 anim_ms: 0,
                 run: false,
+                // 12c : aucun mod de coup au démarrage (branchement
+                // d'équipement futur) — chemin historique strictement identique.
+                mods: combat_mods::HitMods::default(),
                 spawn: (0.0, 0.0),
                 inv: vec![None; INV_SLOTS],
                 active_skill: default_active(&hero_code),
@@ -525,6 +573,7 @@ impl World {
             wp: crate::waypoints::WaypointState::default(),
             corpse: None,      // J1 : aucun corps à la construction
             corpse_pending: false, // J1 : transitoire
+            gold_stash: crate::economy::Stash::new(), // 11c : stash vide 6×4
             rng: Rng::new(seed),
             now_ms: 0,
             difficulty: Difficulty::default(),
@@ -537,6 +586,9 @@ impl World {
             ai: crate::ai_behaviors::AiState::default(),
             quests_act1: None,
             quests_actes2: None,
+            quests_actes45: None,
+            quests_finale: None,
+            consum: crate::consumables::ConsumState::default(),
         };
         let mut world = world;
         world.init_hero();
@@ -562,7 +614,7 @@ impl World {
         self.hero.stats = HeroStats {
             level: 1,
             xp: 0,
-            xp_to_next: XP_TABLE[0],
+            xp_to_next: xp_threshold(&self.hero_code, 2),
             life: t.life,
             max_life: t.life,
             mana: t.mana,
@@ -685,9 +737,19 @@ impl World {
             return Some(i);
         }
         let bosses = self.manifest.get("bosses")?.as_array()?;
+        // 13a : un bloc boss est repéré par son `code` sprite (« AN », « CR »)
+        // OU par son `id` monstats (« andariel », « bloodraven ») — les deux
+        // champs sont portés par le manifest (le sprite code n'est pas
+        // unique : Blood Raven et Corrupt Rogue 3 partagent « CR »). Le
+        // spawn par id monstats (journals/events) devient possible sans
+        // toucher aux spawns sprite existants.
         let block = bosses
             .iter()
-            .find(|b| b.get("code").and_then(|c| c.as_str()).map(|c| c.eq_ignore_ascii_case(code)).unwrap_or(false))?;
+            .find(|b| {
+                ["code", "id"].iter().any(|k| {
+                    b.get(k).and_then(|c| c.as_str()).map(|c| c.eq_ignore_ascii_case(code)).unwrap_or(false)
+                })
+            })?;
         let tpl = Self::mon_tpl_from_block(block);
         self.mon_tpls.push(tpl);
         Some(self.mon_tpls.len() - 1)
@@ -730,6 +792,10 @@ impl World {
             kind: rule.kind,
             tc: rule.treasure_class,
             res: rule.res,
+            // 12c : aucun DoT/refroidissement à l'apparition.
+            wounds: None,
+            poison: None,
+            chill_ms: 0,
         };
         self.mon_ent.push(ent);
         self.mon_dat.push(dat);
@@ -762,6 +828,7 @@ impl World {
         self.update_missiles(dt, &mut ev);
         self.update_waypoints(&mut ev); // W05 : activation au contact (waypoints.rs)
         self.update_npcs(dt); // W16 : patrouilles NPC de ville (npc.rs)
+        crate::consumables::tick_buffs(self, dt); // 11b : buffs potions temporisés
         crate::mercenary::tick_mercenary(self, dt, &mut ev); // H : FSM mercenaire
         crate::mercenary::tick_merc_missiles(self, dt, &mut ev); // H : missiles du merc
         ev
@@ -828,6 +895,15 @@ impl World {
 
     /// Points de skill non dépensés (C2 : +1/niveau via `apply_xp`,
     /// + récompenses de quêtes via [`World::grant_skill_points`]).
+    /// 12c (additif) : pose les mods de coup du héros (deadly strike,
+    /// crushing blow, open wounds, leech, durées poison/froid). TRANSITOIRE
+    /// (jamais persisté — le branchement d'équipement viendra plus tard) :
+    /// tests golden + futurs items. Sans appel, `HitMods::default()` — le
+    /// pipeline garde l'arithmétique historique à l'identique.
+    pub fn set_hero_combat_mods(&mut self, mods: combat_mods::HitMods) {
+        self.hero.mods = mods;
+    }
+
     pub fn unspent_skill_points(&self) -> u32 {
         self.hero.stats.skill_points
     }
@@ -838,6 +914,17 @@ impl World {
     /// L'intégration quêtes (W13) appelle ceci en consommant le flag.
     pub fn grant_skill_points(&mut self, n: u32) {
         self.hero.stats.skill_points = self.hero.stats.skill_points.saturating_add(n);
+    }
+
+    /// Injecte de l'XP au héros HORS tick (import d2s futurs, outils,
+    /// garde-fous de tests) — MÊME chemin [`Self::apply_xp`] que les kills
+    /// (paliers 1→`MaxLvl` de la table réelle, vie/mana/skill points par
+    /// niveau) ; les [`GameEvent::HeroLeveled`] arrivent au prochain `tick`
+    /// (contrat : tout événement passe par le tick).
+    pub fn grant_xp(&mut self, xp: u32) {
+        let mut ev = Vec::new();
+        self.apply_xp(xp, &mut ev);
+        self.pending_events.extend(ev);
     }
 
     /// Apprend (ou monte d'un niveau) le skill `code` en dépensant 1 point —
@@ -1087,10 +1174,20 @@ impl World {
                     }
                 }
                 if let Some(i) = best {
-                    let item = self.items.remove(i);
+                    let mut item = self.items.remove(i);
                     if item.def.kind == ItemKind::Gold {
-                        self.hero.stats.gold += item.def.amount;
-                        ev.push(GameEvent::GoldGained { amount: item.def.amount });
+                        // 11c : plafond porté 10 000 × niveau — la part qui
+                        // dépasse RESTE au sol (pile tronquée).
+                        let g =
+                            crate::economy::gain_carry(self.hero.stats.gold, self.hero.stats.level, item.def.amount);
+                        self.hero.stats.gold += g.gained;
+                        if g.gained > 0 {
+                            ev.push(GameEvent::GoldGained { amount: g.gained });
+                        }
+                        if g.refused > 0 {
+                            item.def.amount = g.refused;
+                            self.items.push(item); // bourse pleine : reliquat au sol
+                        }
                     } else if let Some(slot) = self.hero.inv.iter().position(|s| s.is_none()) {
                         self.hero.inv[slot] = Some(item.def);
                         ev.push(GameEvent::HeroPickedUp { slot });
@@ -1156,6 +1253,7 @@ impl World {
         }
 
         // déplacement (course = RunVelocity du manifest, sinon marche)
+        let pos_before = (self.hero_ent.x, self.hero_ent.y);
         let mut arrived = false;
         let moving = !self.hero.path.is_empty();
         if !self.hero.path.is_empty() {
@@ -1188,6 +1286,14 @@ impl World {
         if self.corpse_pending && self.hero.path.is_empty() {
             self.corpse_pending = false;
             self.recover_corpse(ev);
+        }
+
+        // 11c (`economy.rs`) : or au sol auto-ramassé EN ZONE
+        // ([`PICKUP_RANGE`]) pendant le déplacement, sous plafond porté
+        // 10 000 × niveau (immobile : rien — comportement D2 « marcher
+        // sur l'or »).
+        if (self.hero_ent.x, self.hero_ent.y) != pos_before {
+            crate::economy::world_auto_pickup(self, ev);
         }
 
         // sélection anim
@@ -1257,11 +1363,59 @@ impl World {
             // dégâts héros = floor(rand(mindam..maxdam) × (1 + force/100))
             let base = self.rng.range_u32(self.hero_tpl.weapon_min, self.hero_tpl.weapon_max) as f32;
             let dmg = (base * (1.0 + self.hero.stats.strength as f32 / 100.0)).floor() as u32;
+            // 12c (additif) : mods de coup via `combat_mods::apply_combat_mods`.
+            // SANS mods, l'arithmétique est STRICTEMENT l'ancienne
+            // (résist ResDm puis soustraction) ; les 3 jets de mod ne sont
+            // tirés QUE si des mods sont posés — zéro RNG ajouté sur le
+            // chemin historique (les suites de graines restent identiques).
+            let rolls = if self.hero.mods.any_offensive() {
+                (self.rng.below(100), self.rng.below(100), self.rng.below(100))
+            } else {
+                (0, 0, 0)
+            };
+            let hit = combat_mods::CombatHit {
+                physical: dmg,
+                elemental: 0,
+                element: d2missiles::DamageType::Physical,
+                mods: self.hero.mods,
+                clvl: self.hero.stats.level,
+                difficulty: self.difficulty,
+                victim: combat_mods::Victim {
+                    kind: combat_mods::VictimKind::from_mon_kind(&self.mon_dat[i].kind),
+                    cur_hp: self.mon_dat[i].hp,
+                    res: self.mon_dat[i].res,
+                },
+                wearer_life: self.hero.stats.life,
+                wearer_max_life: self.hero.stats.max_life,
+                wearer_mana: self.hero.stats.mana,
+                wearer_max_mana: self.hero.stats.max_mana,
+                melee: true,
+                roll_deadly: rolls.0,
+                roll_wounds: rolls.1,
+                roll_crushing: rolls.2,
+            };
+            let out = combat_mods::apply_combat_mods(&hit);
             // Résist physique du monstre (ResDm — patch_monstats col 130/136/142,
-            // ex. skeleton1 ResDm(H)=33, zombie1 ResDm(H)=50) — W08/K.
-            let dmg = difficulty::apply_resist(dmg, self.mon_dat[i].res[0]);
-            self.mon_dat[i].hp = self.mon_dat[i].hp.saturating_sub(dmg);
-            ev.push(GameEvent::HeroAttacked { target: i, dmg });
+            // ex. skeleton1 ResDm(H)=33, zombie1 ResDm(H)=50) — W08/K ; déjà
+            // appliquée DANS apply_combat_mods (après le deadly ×2, ordre D2).
+            let dmg = out.physical;
+            // Crushing blow : fraction des PV actuels, hors résist (12c).
+            let dealt = dmg.saturating_add(out.crushing);
+            self.mon_dat[i].hp = self.mon_dat[i].hp.saturating_sub(dealt);
+            // DoT plaies ouvertes (mêlée, 12c) : remplace l'ancienne plaie.
+            if let Some(w) = out.wounds {
+                self.mon_dat[i].wounds = Some(w);
+            }
+            ev.push(GameEvent::HeroAttacked { target: i, dmg: dealt });
+            // Leech vie/mana (12c) : plafonné au manque, divisors difficulté.
+            if out.life_leech > 0 {
+                self.hero.stats.life =
+                    (self.hero.stats.life + out.life_leech).min(self.hero.stats.max_life);
+            }
+            if out.mana_leech > 0 {
+                self.hero.stats.mana =
+                    (self.hero.stats.mana + out.mana_leech).min(self.hero.stats.max_mana);
+            }
             if self.mon_dat[i].hp == 0 {
                 let ent = &mut self.mon_ent[i];
                 let dat = &mut self.mon_dat[i];
@@ -1372,10 +1526,11 @@ impl World {
                     let ac = self.mon_dat[target].ac;
                     let chance = hit_chance(self.hero.stats.to_hit, ac);
                     if (self.rng.below(100)) < chance {
-                        // Résist du monstre pour l'élément du missile (W08/K) :
-                        // ResFi/ResCo/ResLi… colonnes (N)/(H) de
-                        // `patch_monstats.txt` — immunité (≥100) ⇒ 0 dégât,
-                        // négatif (Hell) ⇒ amplifié. Physique : ResDm.
+                        // 12c (additif) : résolution du coup missile via
+                        // `apply_combat_mods` — SANS mods, identique à
+                        // l'ancien `apply_resist` direct (W08/K) : ResFi/Co/Li…
+                        // colonnes (N)/(H) de `patch_monstats.txt`, immunité
+                        // (≥100) ⇒ 0 dégât, négatif (Hell) ⇒ amplifié.
                         let elem = self
                             .missiles
                             .missiles()
@@ -1383,17 +1538,62 @@ impl World {
                             .find(|m| m.id == id)
                             .map(|m| m.elem)
                             .unwrap_or_default();
-                        let dmg = difficulty::apply_resist(
-                            dmg,
-                            self.mon_dat[target].res[Difficulty::resist_index(elem)],
-                        );
-                        if dmg == 0 {
+                        // Deadly strike : arme PHYSIQUE seule (flèche) — jet
+                        // tiré seulement si un mod est posé (zéro RNG sinon).
+                        let roll_deadly = if elem == d2missiles::DamageType::Physical
+                            && self.hero.mods.deadly_strike_pct > 0
+                        {
+                            self.rng.below(100)
+                        } else {
+                            0
+                        };
+                        let roll_crushing = if self.hero.mods.crushing_blow_pct > 0 {
+                            self.rng.below(100)
+                        } else {
+                            0
+                        };
+                        let hit = combat_mods::CombatHit {
+                            physical: 0,
+                            elemental: dmg,
+                            element: elem,
+                            mods: self.hero.mods,
+                            clvl: self.hero.stats.level,
+                            difficulty: self.difficulty,
+                            victim: combat_mods::Victim {
+                                kind: combat_mods::VictimKind::from_mon_kind(&self.mon_dat[target].kind),
+                                cur_hp: self.mon_dat[target].hp,
+                                res: self.mon_dat[target].res,
+                            },
+                            wearer_life: self.hero.stats.life,
+                            wearer_max_life: self.hero.stats.max_life,
+                            wearer_mana: self.hero.stats.mana,
+                            wearer_max_mana: self.hero.stats.max_mana,
+                            melee: false, // plaies ouvertes : mêlée seule
+                            roll_deadly,
+                            roll_wounds: 0,
+                            roll_crushing,
+                        };
+                        let out = combat_mods::apply_combat_mods(&hit);
+                        let dmg = out.elemental;
+                        // Poison avec durée (ELen) : converti en DoT (12c) au
+                        // lieu d'instantané ; immunité ⇒ aucun des deux.
+                        if let Some(p) = out.poison {
+                            self.mon_dat[target].poison = Some(p);
+                        }
+                        // Froid : vitesse ×1/2 pendant coldlength ÷ divisor.
+                        if out.chill_frames > 0 {
+                            self.mon_dat[target].chill_ms =
+                                out.chill_frames.saturating_mul(combat_mods::FRAME_MS_D2);
+                        }
+                        // Crushing blow s'ajoute hors résist (fraction PV).
+                        let dealt = dmg.saturating_add(out.crushing);
+                        if dealt == 0 {
                             // Immunité : le missile est consumé, rien ne passe.
                             ev.push(GameEvent::MissileMissed { target });
                             continue;
                         }
-                        self.mon_dat[target].hp = self.mon_dat[target].hp.saturating_sub(dmg);
-                        ev.push(GameEvent::MissileHit { target, dmg });
+                        self.mon_dat[target].hp = self.mon_dat[target].hp.saturating_sub(dealt);
+                        ev.push(GameEvent::MissileHit { target, dmg: dealt });
                         if self.mon_dat[target].hp == 0 {
                             let ent = &mut self.mon_ent[target];
                             let dat = &mut self.mon_dat[target];
@@ -1418,25 +1618,26 @@ impl World {
     /// Recalcule `xp_to_next` après une perte d'XP (pénalité de mort K3).
     fn refresh_xp_to_next(&mut self) {
         let lvl = self.hero.stats.level;
-        if lvl >= MAX_LEVEL {
+        if lvl >= max_level_of(&self.hero_code) {
             self.hero.stats.xp_to_next = 0;
             return;
         }
-        let need = XP_TABLE[(lvl - 1) as usize];
+        let need = xp_threshold(&self.hero_code, lvl + 1);
         self.hero.stats.xp_to_next = need.saturating_sub(self.hero.stats.xp);
     }
 
     /// Applique l'XP gagnée + paliers de niveau (événement par palier).
     pub(crate) fn apply_xp(&mut self, mut xp: u32, ev: &mut Vec<GameEvent>) {
-        self.hero.stats.xp += xp;
+        self.hero.stats.xp = self.hero.stats.xp.saturating_add(xp);
         xp = self.hero.stats.xp;
+        let max = max_level_of(&self.hero_code);
         loop {
             let lvl = self.hero.stats.level;
-            if lvl >= MAX_LEVEL {
+            if lvl >= max {
                 self.hero.stats.xp_to_next = 0;
                 break;
             }
-            let need = XP_TABLE[(lvl - 1) as usize];
+            let need = xp_threshold(&self.hero_code, lvl + 1);
             if xp >= need {
                 self.hero.stats.level = lvl + 1;
                 self.hero.stats.max_life += self.hero_tpl.life_per_level;
@@ -1502,6 +1703,36 @@ impl World {
             if crate::ai_behaviors::tick(self, i, dt, ev) {
                 i += 1;
                 continue;
+            }
+
+            // 12c (additif) : DoT plaies/poison (ticks de 25 frames = 1 s) et
+            // refroidissement (décompte). Un DoT peut abattre le monstre —
+            // même bloc de mort que la mêlée, puis saut du reste du tour.
+            let mut dot_dmg = 0;
+            {
+                let dat = &mut self.mon_dat[i];
+                if let Some(d) = dat.wounds.as_mut() {
+                    dot_dmg += d.tick(dt);
+                }
+                if let Some(d) = dat.poison.as_mut() {
+                    dot_dmg += d.tick(dt);
+                }
+                dat.chill_ms = dat.chill_ms.saturating_sub(dt);
+            }
+            if dot_dmg > 0 && self.mon_dat[i].hp > 0 {
+                self.mon_dat[i].hp = self.mon_dat[i].hp.saturating_sub(dot_dmg);
+                if self.mon_dat[i].hp == 0 {
+                    let ent = &mut self.mon_ent[i];
+                    let dat = &mut self.mon_dat[i];
+                    dat.state = MonState::Dying;
+                    dat.dying_ms = 0;
+                    dat.anim_ms = 0;
+                    dat.path.clear();
+                    ent.anim = AnimState::DD;
+                    ent.anim_frame = 0;
+                    i += 1;
+                    continue;
+                }
             }
 
             // H (mercenaire, additif) : la cible effective de poursuite/frappe
@@ -1586,7 +1817,15 @@ impl World {
             // déplacement + anim (hors Attack, immobile)
             if self.mon_dat[i].state != MonState::Attack && self.mon_dat[i].state != MonState::Dying {
                 if !self.mon_dat[i].path.is_empty() {
-                    let speed = self.mon_dat[i].speed;
+                    // 12c (additif) : froid — vitesse ×1/2 tant que le
+                    // refroidissement reste actif (`chill_ms` > 0).
+                    let speed = if self.mon_dat[i].chill_ms > 0 {
+                        self.mon_dat[i].speed
+                            * combat_mods::CHILL_SPEED_NUM as f32
+                            / combat_mods::CHILL_SPEED_DEN as f32
+                    } else {
+                        self.mon_dat[i].speed
+                    };
                     advance_along_path(&mut self.mon_ent[i], &mut self.mon_dat[i].path, speed, dt);
                 }
                 let st = if !self.mon_dat[i].path.is_empty() { AnimState::WL } else { AnimState::NU };
@@ -1667,7 +1906,7 @@ impl World {
                 if pct > 0 {
                     let lost = self.hero.stats.xp.saturating_mul(pct) / 100;
                     let floor = if self.hero.stats.level > 1 {
-                        XP_TABLE[(self.hero.stats.level as usize - 2).min(XP_TABLE.len() - 1)]
+                        xp_threshold(&self.hero_code, self.hero.stats.level)
                     } else {
                         0
                     };
@@ -1685,12 +1924,33 @@ impl World {
     }
 
     /// Drop réel : TreasureClassEx v1.12 (`loot.rs`, feature #34 / D1) — la TC
-    /// du monstre vient du manifest (`stats.treasureClass`, ex. "Act 1 H2H A").
-    /// Chaîne : TC → picks/NoDrop → sous-TC → code d'item final ; or quantifié
-    /// par mlvl. Repli (table absente, TC vide/inconnue) : 60 % rien / 25 % or
+    /// du monstre vient du manifest (`stats.treasureClass`, ex. "Act 1 H2H A")
+    /// ou de la surcharge de spawn (champion/unique/boss). En NM/Enfer, la
+    /// VARIANTE retail de la TC est appliquée au drop
+    /// ([`difficulty::Difficulty::tc_variant`] : « Act 1 H2H A » →
+    /// « Act 1 (N) H2H A », « Duriel » → « Duriel (N) ») UNIQUEMENT si la
+    /// table la connaît — jamais pire que la base (repli MVP sinon). Les TC
+    /// déjà suffixées par le plan de spawn d2game (monstres normaux) portent
+    /// le marqueur `(N)`/`(H)` et restent inchangées. Chaîne : TC →
+    /// picks/NoDrop → sous-TC → code d'item final ; or quantifié par mlvl.
+    /// Repli (table absente, TC vide/inconnue) : 60 % rien / 25 % or
     /// (~niveau×10) / 15 % potion hp1 — déterministe au seed dans tous les cas.
     fn roll_drop(&mut self, x: f32, y: f32, monster_level: u32, tc_name: &str, ev: &mut Vec<GameEvent>) {
         let mlvl = monster_level.max(1);
+        // 13a : variante difficulté de la TC (boss/superuniques/champions
+        // spawnés avec leur TC de base — le retail dropne « Duriel (N) » en
+        // NM, « Baal (H) » en Enfer ; données TreasureClassEx vérifiées par
+        // golden). Garde : marqueur déjà présent ⇒ inchangé ; variante
+        // absente de la table ⇒ base (comportement 13a-1 conservé).
+        let tc_name = match self.difficulty.tc_suffix() {
+            Some(_) if !tc_name.is_empty() && !tc_name.contains("(N)") && !tc_name.contains("(H)") => {
+                let variant = Difficulty::tc_variant(tc_name, self.difficulty);
+                let known = self.loot.as_ref().is_some_and(|l| l.has_tc(&variant));
+                if known { variant } else { tc_name.to_string() }
+            }
+            _ => tc_name.to_string(),
+        };
+        let tc_name = tc_name.as_str();
         let loot = self.loot.as_ref();
         let drops = match loot {
             Some(l) if l.has_tc(tc_name) => l.roll(&mut self.rng, tc_name, mlvl),

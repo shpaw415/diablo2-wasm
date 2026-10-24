@@ -2132,6 +2132,175 @@
     "step": "8a",
     "note": "LvlMaze 61 rooms 12x12, LvlType 19 (Arcane)"
    }
+  },
+  "harrogath": {
+   "name": "Harrogath",
+   "nameDisplay": "Harrogath (Acte V)",
+   "levelsId": 109,
+   "ds1": "assets/map/townsiege.ds1",
+   "dt1": [
+    "assets/map/a5s_rocks.dt1",
+    "assets/map/a5s_camp.dt1",
+    "assets/map/a5s_fence.dt1",
+    "assets/map/a5s_rockclifffloor.dt1",
+    "assets/map/a5s_rockcliff.dt1",
+    "assets/map/a5s_trench.dt1",
+    "assets/map/a5s_ascendors.dt1",
+    "assets/map/a5s_ground.dt1",
+    "assets/map/a5s_spike.dt1",
+    "assets/map/a5s_shrub.dt1"
+   ],
+   "palette": "assets/map/pal_act5_pl2.dat",
+   "sizeTiles": [
+    81,
+    49
+   ],
+   "monsters": [],
+   "generated": {
+    "drlg": "preset (DrlgType 2)",
+    "step": "10a",
+    "note": "townsiege.ds1 réel v1.12 (81×49, extrait d2w-re §1) remonté par drlg_a45.rs — LvlPrest Def 863 nomme townWest.ds1 (moitié ouest retail 40×40) ; échec DRLG fatal ; warps sortants vers Bloody Foothills"
+   },
+   "warp": {
+    "to": "bloodyfoothills",
+    "at": [
+     375,
+     110
+    ],
+    "r": 4,
+    "entry": [
+     360,
+     110
+    ],
+    "note": "sortie Est de la ville (cellule 75,22 marchable) ; arrivée rue marchable"
+   }
+  },
+  "pandemonium": {
+   "name": "Bastion Pandémonium",
+   "nameDisplay": "Bastion du Pandémonium (Acte IV)",
+   "levelsId": 103,
+   "ds1": "assets/map/presets_a45/fortress.ds1",
+   "dt1": [
+    "assets/map/a4mesa_floor.dt1",
+    "assets/map/a4mesa_invwall.dt1",
+    "assets/map/a4mesa_stairs.dt1",
+    "assets/map/a4fort_forgate.dt1",
+    "assets/map/a4fort_plaza.dt1",
+    "assets/map/a4fort_interior.dt1",
+    "assets/map/a4fort_exterior.dt1",
+    "assets/map/warp.dt1",
+    "assets/map/inviswal.dt1"
+   ],
+   "palette": "assets/map/pal_act4_pl2.dat",
+   "sizeTiles": [
+    33,
+    25
+   ],
+   "monsters": [],
+   "generated": {
+    "drlg": "preset (DrlgType 2)",
+    "step": "10a",
+    "note": "Fortress.ds1 réel (LvlPrest Def 797, Dt1Mask 127) via drlg_a45.rs — fichiers embarqués act1 (warp, inviswal) inclus ; sans warp (Vis0-7=0 dans levels.txt : la sortie vers Outer Steppes n'est pas câblée en 10a) ; échec DRLG fatal"
+   }
+  },
+  "bloodyfoothills": {
+   "name": "Contreforts sanglants",
+   "nameDisplay": "Contreforts sanglants (Acte V)",
+   "levelsId": 110,
+   "ds1": "assets/map/maze_fallback.ds1",
+   "dt1": [
+    "assets/map/a5s_ground.dt1",
+    "assets/map/a5s_rockclifffloor.dt1",
+    "assets/map/a5s_rocks.dt1"
+   ],
+   "palette": "assets/map/pal_act5_pl2.dat",
+   "sizeTiles": [
+    240,
+    48
+   ],
+   "generated": {
+    "drlg": "wilderness (DrlgType 3)",
+    "step": "10a",
+    "note": "DS1 synthétique seedé (drlg_a45.rs) — canevas SizeX/Y 240×48, banque siège 248 tuiles (sous-ensemble LvlType 30, espace u8) ; galeries d'entrée E/O garanties ; le ds1 listé n'est qu'un repli manifest, jamais chargé (échec DRLG fatal)"
+   },
+   "warp": {
+    "to": "harrogath",
+    "at": [
+     15,
+     120
+    ],
+    "r": 4,
+    "entry": [
+     40,
+     120
+    ],
+    "note": "retour Ouest vers Harrogath ; arrivée dans la galerie d'entrée"
+   }
+  },
+  "crystalline": {
+   "name": "Cavernes de cristal",
+   "nameDisplay": "Cavernes de cristal (Acte V)",
+   "levelsId": 113,
+   "ds1": "assets/map/maze_fallback.ds1",
+   "dt1": [
+    "assets/map/a5ice_interior.dt1"
+   ],
+   "palette": "assets/map/pal_act5_pl2.dat",
+   "sizeTiles": [
+    80,
+    80
+   ],
+   "generated": {
+    "drlg": "maze (DrlgType 1)",
+    "step": "10a",
+    "note": "DS1 synthétique seedé (drlg_a45.rs) — LvlMaze 10 rooms 16×16 (grille 5×5 = 80×80, emprise retail SizeX/Y 200×200), LvlType 33 ; « Crystalized Cavern Level 1 » = Crystalline Passage ; échec DRLG fatal"
+   },
+   "warp": {
+    "to": "hallsvaught",
+    "at": [
+     388,
+     200
+    ],
+    "r": 4,
+    "entry": [
+     15,
+     200
+    ],
+    "note": "sortie Est du maze ; arrivée dans la galerie ouest"
+   }
+  },
+  "hallsvaught": {
+   "name": "Salles de Vaught",
+   "nameDisplay": "Salles de Vaught (Acte V)",
+   "levelsId": 124,
+   "ds1": "assets/map/presets_a45/nihl_e.ds1",
+   "dt1": [
+    "assets/map/a5wt_interior.dt1",
+    "assets/map/a5wt_entrance.dt1"
+   ],
+   "palette": "assets/map/pal_act5_pl2.dat",
+   "sizeTiles": [
+    85,
+    85
+   ],
+   "generated": {
+    "drlg": "preset (DrlgType 2)",
+    "step": "10a",
+    "note": "NihlE/N/S/W.ds1 réels (LvlPrest Def 864, Dt1Mask 1) via drlg_a45.rs — variante tirée par la graine de partie ; banque interior+entrance (les presets adressent des indices jusqu'à 209 > 173, quirk LvlTypes 32 v1.12) ; salle de boss Nihlathak ; échec DRLG fatal"
+   },
+   "warp": {
+    "to": "crystalline",
+    "at": [
+     390,
+     210
+    ],
+    "r": 4,
+    "entry": [
+     190,
+     190
+    ],
+    "note": "retour vers les Cavernes de cristal ; arrivée au sol central (cellule 38,38 marchable dans les 4 variantes)"
+   }
   }
  },
  "levelsNote": "levels = contrat multi-niveaux ; 'level' conservé (pointe sur town) pour compat d2game (pointers /level/*).",

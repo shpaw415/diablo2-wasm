@@ -356,6 +356,47 @@ impl D2Game {
     pub fn automap(&self) -> String {
         self.core.automap_json()
     }
+
+    // ------------------------------------------------------------------
+    // Consommables 11b (potions/tomes/parchemins/ceinture) — endpoints
+    // additifs consommés par demo/game.js (touches 1-4, clic inventaire).
+    // Append-only.
+    // ------------------------------------------------------------------
+
+    /// Utilise le consommable du slot d'inventaire `slot` (effets réels par
+    /// code — potions hp1-5/mp1-5/rejuv/buffs 30 s, parchemin de porte de
+    /// ville, tomes à charges) — JSON
+    /// `{"use":{code,name,family,heal,mana,buffMs,townPortal,identified,
+    /// chargesLeft},"levelSwitch":{key,name}?}` ; un parchemin/tome de porte
+    /// de ville BASCULE vers le camp (switch_level existant). `Err` lisible
+    /// (`"slot vide"`, `"tome vide"`, `"rien à identifier"`…).
+    #[wasm_bindgen(js_name = useConsumable)]
+    pub fn use_consumable(&mut self, slot: usize) -> Result<String, JsValue> {
+        self.core.use_consumable_slot(slot).map_err(js_err)
+    }
+
+    /// Touche de ceinture `key` (1..=4) — boit le premier objet de la
+    /// colonne (rangée 0 d'abord), mêmes effets/JSON que `useConsumable`.
+    #[wasm_bindgen(js_name = useBeltKey)]
+    pub fn use_belt_key(&mut self, key: usize) -> Result<String, JsValue> {
+        self.core.use_belt_key(key).map_err(js_err)
+    }
+
+    /// « Auto-ranger » : déplace les potions `autobelt=1` (hp1-5, mp1-5,
+    /// rvs, rvl) de l'inventaire vers la ceinture 4×4 — nombre rangé
+    /// (idempotent ; la page l'appelle après un ramassage).
+    #[wasm_bindgen(js_name = beltAutoStore)]
+    pub fn belt_auto_store(&mut self) -> usize {
+        self.core.belt_auto_store()
+    }
+
+    /// État ceinture + buffs (lecture HUD) — JSON
+    /// `{"belt":[[4×4 cellules null|{code,name,kind}]],"buffs":[{"state",
+    /// "remainingMs","stats":[[id,val],…]},…]}` ; `{}` avant `finalize`.
+    #[wasm_bindgen(js_name = beltInfo)]
+    pub fn belt_info(&self) -> String {
+        self.core.belt_json()
+    }
 }
 
 fn parse_input(json: &str) -> Option<PlayerInput> {

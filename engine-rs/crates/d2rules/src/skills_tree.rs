@@ -17,6 +17,18 @@
 //! * `ln12/ln34/ln56/ln78`/`dmXX` des formules = **paires Param** :
 //!   `lnAB` ⇒ `ParamA + (niveau-1) × ParamB` (ancrage : Conviction
 //!   `min(ln34,150)` = `min(30+5·(n-1),150)` = −30 %→−150 % résists D2).
+//! * Raccourcis d'aura/formule `edmn`/`edmx`/`edns` = courbes réelles du
+//!   record (EMin/EMax/ELen au niveau courant) — occurrences v1.12 :
+//!   Energy Shield `min(edmn,95)` (calc1), Inner Sight `-edmn`
+//!   (aurastatcalc1), Prayer `edns` (aurastatcalc1), et la forme étrangère
+//!   `skill('Prayer'.edns)` (Cleansing/Meditation). Étape 12a.
+//! * Bindings `stat('id'.q)`/`stat('nom'.q)` (charge/quantité v1.12 :
+//!   `item_charged_skill`, `quantity`) : [`SkillEvalCtx::stats_ids`] porte la
+//!   [`crate::statlist::StatList`] par ids ; résolution id → dictionnaire →
+//!   repli noms (voir [`crate::calc::StatListCtx`]). Étape 12a.
+//! * Synergies : `DmgSymPerCalc`/`EDmgSymPerCalc` **et** `ELenSymPerCalc`
+//!   (durée — 4 lignes réelles v1.12 : Ice Arrow/Freezing Arrow/Ice Blast/
+//!   Stun) via [`SynergyKind::Length`]. Étape 12a.
 //! * 4 skills par classe marqués jouables MVP ([`SkillTreeData::is_mvp`]) ;
 //!   les 3 skills de départ de `skills.rs` restent valides.
 
@@ -222,6 +234,9 @@ pub struct SkillEvalCtx<'a> {
     pub levels: &'a dyn SkillLevels,
     /// Stats du héros (résout `stat('x')` ; défaut vide).
     pub stats: Option<&'a crate::stats::StatList>,
+    /// Stats par ids `ItemStatCost` (résout `stat('id')` et `stat('nom')` via
+    /// le dictionnaire — charge/quantité v1.12) ; consultée AVANT `stats`.
+    pub stats_ids: Option<&'a crate::statlist::StatList>,
     /// Missile associé au calcul (résout `miss('x')` — défaut 1).
     pub missile_l: i64,
 }
@@ -229,7 +244,14 @@ pub struct SkillEvalCtx<'a> {
 impl<'a> SkillEvalCtx<'a> {
     /// Contexte minimal : record + niveau + niveaux héros.
     pub fn new(rec: &'a SkillRecord, own_lvl: u32, levels: &'a dyn SkillLevels) -> Self {
-        SkillEvalCtx { rec, own_lvl, levels, stats: None, missile_l: 1 }
+        SkillEvalCtx {
+            rec,
+            own_lvl,
+            levels,
+            stats: None,
+            stats_ids: None,
+            missile_l: 1,
+        }
     }
 
     /// Paire Param d'une autre record (`skill('X'.ln12)`).
@@ -237,6 +259,46 @@ impl<'a> SkillEvalCtx<'a> {
         let base = rec.params[a.saturating_sub(1)];
         let incr = rec.params[b.saturating_sub(1)];
         base + (lvl.max(1) as i64 - 1) * incr
+    }
+
+    /// Raccourcis `edmn`/`edmx`/`edns` : courbes EMin/EMax/ELen du record au
+    /// niveau donné (réels v1.12 : Energy Shield `min(edmn,95)` calc1,
+    /// Inner Sight `-edmn`, Prayer `edns` — voir doc module).
+    fn shorthand(rec: &SkillRecord, name: &str, lvl: u32) -> Option<i64> {
+        let lvl = lvl.max(1);
+        Some(match name {
+            "edmn" => SkillTreeData::curve(rec.e_min, &rec.e_min_lev, lvl),
+            "edmx" => SkillTreeData::curve(rec.e_max, &rec.e_max_lev, lvl),
+            "edns" => {
+                let mut v = rec.e_len;
+                for l in 2..=lvl {
+                    v += match l {
+                        2..=8 => rec.e_lev_len[0],
+                        9..=15 => rec.e_lev_len[1],
+                        _ => rec.e_lev_len[2],
+                    };
+                }
+                v
+            }
+            // enma/enms/exma/exms : absents des colonnes de formules v1.12
+            // (uniquement des colonnes desc) ⇒ pas de mapping inventé.
+            _ => return None,
+        })
+    }
+
+    /// Résolution `stat(...)` : id numérique → dictionnaire → repli noms.
+    /// (Chaîne documentée dans [`crate::calc::StatListCtx`] ; `stats_ids`
+    /// porté par le contexte, défaut None ⇒ comportement historique noms.)
+    fn lookup_stat(&self, stat: &str) -> i64 {
+        if let Some(ids) = self.stats_ids {
+            if let Ok(id) = stat.trim().parse::<i32>() {
+                return ids.get(id);
+            }
+            if let Some(id) = crate::stats::StatCostTable::global().get(stat).map(|r| r.id) {
+                return ids.get(id);
+            }
+        }
+        self.stats.map(|s| s.get(stat)).unwrap_or(0)
     }
 }
 
@@ -279,7 +341,7 @@ impl EvalContext for SkillEvalCtx<'_> {
     }
 
     fn stat_value(&mut self, stat: &str, _qualifier: &str) -> i64 {
-        self.stats.map(|s| s.get(stat)).unwrap_or(0)
+        self.lookup_stat(stat)
     }
 
     fn missile_prop(&mut self, _missile: &str, _qualifier: &str) -> i64 {
@@ -314,7 +376,9 @@ impl EvalContext for SkillEvalCtx<'_> {
                         return 1;
                     }
                 }
-                1
+                // Raccourcis edmn/edmx/edns (courbes du record, doc module) —
+                // inconnu hors liste ⇒ 1 (placeholder Go).
+                Self::shorthand(self.rec, name, self.own_lvl).unwrap_or(1)
             }
         }
     }
@@ -648,8 +712,9 @@ impl SkillTreeData {
         raw.max(rec.min_mana)
     }
 
-    /// % de synergie brut (`DmgSymPerCalc`/`EDmgSymPerCalc`) — formule réelle
-    /// évaluée dans le contexte (niveaux héros + Params du skill).
+    /// % de synergie brut (`DmgSymPerCalc`/`EDmgSymPerCalc`/`ELenSymPerCalc`)
+    /// — formule réelle évaluée dans le contexte (niveaux héros + Params du
+    /// skill).
     pub fn synergy_percent(
         &self,
         rec: &SkillRecord,
@@ -659,6 +724,7 @@ impl SkillTreeData {
         let calc = match kind {
             SynergyKind::Physical => rec.dmg_sym_per_calc.as_ref(),
             SynergyKind::Elemental => rec.edmg_sym_per_calc.as_ref(),
+            SynergyKind::Length => rec.e_len_sym_per_calc.as_ref(),
         };
         let Some(calc) = calc else { return 0 };
         let own_lvl = levels.blvl(&rec.code);
@@ -667,13 +733,17 @@ impl SkillTreeData {
     }
 }
 
-/// Type de synergie : dégâts physiques ou élémentaires.
+/// Type de synergie : dégâts physiques, élémentaires ou durée.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SynergyKind {
-    /// `DmgSymPerCalc`
+    /// `DmgSymPerCalc` (5 lignes réelles v1.12 : War Cry, Molten Boulder,
+    /// Twister, Volcano, Tornado).
     Physical,
-    /// `EDmgSymPerCalc`
+    /// `EDmgSymPerCalc` (62 lignes réelles v1.12).
     Elemental,
+    /// `ELenSymPerCalc` — durée d'effet (4 lignes réelles v1.12 : Ice Arrow
+    /// L23, Freezing Arrow L33, Ice Blast L47, Stun L141). Étape 12a.
+    Length,
 }
 
 /// Contexte complet : comme [`SkillEvalCtx`] mais `skill('Autre'.…)` résout
@@ -692,6 +762,12 @@ impl EvalContext for FullEvalCtx<'_, '_> {
         let Some(rec) = self.data.get(skill) else { return 0 };
         match qualifier {
             "blvl" | "lvl" | "" => lvl as i64,
+            // Raccourcis du référencé : SES courbes EMin/EMax/ELen à SON
+            // niveau (réel : `skill('Prayer'.edns)` — Cleansing L111 /
+            // Meditation L122 de patch_skills.txt).
+            q @ ("edmn" | "edmx" | "edns") => {
+                SkillEvalCtx::shorthand(rec, q, lvl).unwrap_or(0)
+            }
             q if q.starts_with("par") => {
                 let n: usize = q[3..].parse().unwrap_or(0);
                 if (1..=8).contains(&n) {
@@ -1145,5 +1221,228 @@ mod tests {
         assert!(matches!(t.current_damage("N'importe Quoi"), ((0, 0), (0, 0), ElemType::None, 0)));
         assert_eq!(t.mana_cost("N'importe Quoi"), 0);
         assert!((t.synergy_factor("N'importe Quoi", SynergyKind::Elemental) - 1.0).abs() < 1e-9);
+    }
+
+    // -----------------------------------------------------------------------
+    // Étape 12a — formules D2 : synergies réelles citées ligne, raccourcis
+    // edmn/edmx/edns, bindings stat par ids (golden données v1.12).
+    // -----------------------------------------------------------------------
+
+    /// Numéro de ligne (1-based) du record `code` dans patch_skills.txt —
+    /// la citation « L<n> » des golden tests est VÉRIFIÉE par ce helper.
+    fn line_of(code: &str) -> usize {
+        SKILLS_TXT
+            .lines()
+            .enumerate()
+            .find(|(_, l)| split_tsv(l).first().map(|c| c == code).unwrap_or(false))
+            .map(|(i, _)| i + 1)
+            .unwrap_or(0)
+    }
+
+    /// Héros avec les niveaux donnés (insensible à la casse, comme la table).
+    fn hero_levels(pairs: &[(&str, u32)]) -> HashMap<String, u32> {
+        pairs.iter().map(|(c, l)| (c.to_ascii_lowercase(), *l)).collect()
+    }
+
+    /// GOLDEN synergies v1.12 — chaque % attendu est (Σ blvl synergistes) ×
+    /// parN du record PROPRIÉTAIRE, ligne patch_skills.txt citée et vérifiée.
+    #[test]
+    fn golden_synergies_reelles_citees_ligne() {
+        let d = data();
+        // Citations de ligne épinglées (la ligne bouge ⇒ échec ici).
+        for (code, line) in [
+            ("Lightning Fury", 37),
+            ("Fire Bolt", 38),
+            ("Fire Ball", 49),
+            ("Meteor", 58),
+            ("Holy Fire", 104),
+            ("Blessed Hammer", 114),
+            ("Teeth", 69),
+            ("Fire Wall", 53),
+            ("Ice Arrow", 23),
+            ("Stun", 141),
+            ("Hydra", 64),
+        ] {
+            assert_eq!(line_of(code), line, "{code} : ligne citée {line} invalide");
+        }
+        // L38 : Fire Bolt = (Fire Ball + Meteor) × par8, par8=16.
+        assert_eq!(d.get("Fire Bolt").unwrap().params[7], 16);
+        let lv = hero_levels(&[("Fire Ball", 20), ("Meteor", 20)]);
+        assert_eq!(
+            d.synergy_percent(d.get("Fire Bolt").unwrap(), SynergyKind::Elemental, &lv),
+            640,
+            "L38 : (20+20)×16"
+        );
+        // L49 : Fire Ball = (Fire Bolt + Meteor) × par8, par8=14.
+        let lv = hero_levels(&[("Fire Bolt", 13), ("Meteor", 7)]);
+        assert_eq!(
+            d.synergy_percent(d.get("Fire Ball").unwrap(), SynergyKind::Elemental, &lv),
+            280,
+            "L49 : (13+7)×14"
+        );
+        // L58 : Meteor = (Fire Bolt + Fire Ball) × par8, par8=5.
+        let lv = hero_levels(&[("Fire Bolt", 20), ("Fire Ball", 7)]);
+        assert_eq!(
+            d.synergy_percent(d.get("Meteor").unwrap(), SynergyKind::Elemental, &lv),
+            135,
+            "L58 : (20+7)×5"
+        );
+        // L114 : Blessed Hammer = (Vigor + Blessed Aim) × par8, par8=14.
+        let lv = hero_levels(&[("Vigor", 20), ("Blessed Aim", 20)]);
+        assert_eq!(
+            d.synergy_percent(d.get("Blessed Hammer").unwrap(), SynergyKind::Elemental, &lv),
+            560,
+            "L114 : (20+20)×14"
+        );
+        // L104 : Holy Fire = Resist Fire × par8 + Salvation × par7 (18/6).
+        let rec = d.get("Holy Fire").unwrap();
+        assert_eq!((rec.params[7], rec.params[6]), (18, 6));
+        let lv = hero_levels(&[("Resist Fire", 20), ("Salvation", 10)]);
+        assert_eq!(
+            d.synergy_percent(rec, SynergyKind::Elemental, &lv),
+            420,
+            "L104 : 20×18 + 10×6"
+        );
+        // L69 : Teeth = (Bone Wall + Bone Prison + Bone Spear + Bone Spirit)
+        // × par8, par8=15 — les niveaux 0 ne comptent pas.
+        let lv = hero_levels(&[("Bone Wall", 5), ("Bone Spear", 10), ("Bone Spirit", 3)]);
+        assert_eq!(
+            d.synergy_percent(d.get("Teeth").unwrap(), SynergyKind::Elemental, &lv),
+            270,
+            "L69 : (5+0+10+3)×15"
+        );
+        // L35 : Lightning Fury = 4 synergistes foudre × par8, par8=1.
+        let lv = hero_levels(&[
+            ("Charged Strike", 15),
+            ("Lightning Bolt", 10),
+            ("Power Strike", 5),
+            ("Lightning Strike", 12),
+        ]);
+        assert_eq!(
+            d.synergy_percent(d.get("Lightning Fury").unwrap(), SynergyKind::Elemental, &lv),
+            42,
+            "L35 : (15+10+5+12)×1"
+        );
+    }
+
+    /// VÉRIFICATION DE LA LIGNE RÉELLE (brief étape 12a) : « Fire Bolt +13 %/
+    /// lvl Fire Wall » n'existe PAS en v1.12 — la ligne 53 (Fire Wall) ne
+    /// porte AUCUNE colonne synergie ⇒ % 0, facteur ×1. Garde-fou anti-
+    /// folklore : une colonne ajoutée par erreur fera échouer ce test.
+    #[test]
+    fn fire_wall_sans_synergie_en_v112() {
+        let d = data();
+        assert_eq!(line_of("Fire Wall"), 53);
+        let rec = d.get("Fire Wall").unwrap();
+        assert!(rec.dmg_sym_per_calc.is_none(), "DmgSymPerCalc doit rester vide (L53)");
+        assert!(rec.edmg_sym_per_calc.is_none(), "EDmgSymPerCalc vide en v1.12 (L53)");
+        assert!(rec.e_len_sym_per_calc.is_none(), "ELenSymPerCalc vide en v1.12 (L53)");
+        let lv = hero_levels(&[("Fire Bolt", 20), ("Fire Ball", 20), ("Inferno", 20)]);
+        let mut t = SkillTree::for_class("sor");
+        for (c, l) in [("Fire Bolt", 20), ("Fire Ball", 20), ("Inferno", 20)] {
+            t.set_level(c, l);
+        }
+        assert_eq!(t.synergy_percent("Fire Wall", SynergyKind::Elemental), 0);
+        assert!((t.synergy_factor("Fire Wall", SynergyKind::Elemental) - 1.0).abs() < 1e-9);
+        let _ = lv;
+    }
+
+    /// GOLDEN évaluateur contre les formules réelles : raccourcis
+    /// edmn/edmx/edns (courbes du record), paires ln/dm linéaires, ternaires —
+    /// chaque cas cite sa ligne patch_skills.txt.
+    #[test]
+    fn golden_raccourcis_et_lineaires_reels() {
+        let d = data();
+        let eval = |code: &str, lvl: u32, formula: &str, lv: &HashMap<String, u32>| {
+            let rec = d.get(code).unwrap();
+            let mut ctx = SkillEvalCtx::new(rec, lvl, lv);
+            let calc = CalcString::parse(formula);
+            assert!(calc.error().is_none(), "{code} : {formula} : {:?}", calc.error());
+            calc.eval(&mut ctx)
+        };
+        // L60 Energy Shield : calc1 `min(edmn,95)` — courbe EMinLev réelle
+        // [5,2,1,1,1] : 20 + 5×(2-8) + 2×(9-15) + 1×(16+).
+        assert_eq!(line_of("Energy Shield"), 60);
+        let empty = HashMap::new();
+        assert_eq!(eval("Energy Shield", 4, "min(edmn,95)", &empty), 35);
+        assert_eq!(eval("Energy Shield", 16, "min(edmn,95)", &empty), 70, "35+14+1");
+        assert_eq!(eval("Energy Shield", 20, "min(edmn,95)", &empty), 74);
+        // L10 Inner Sight : aurastatcalc1 `-edmn` — EMin 40 + 25×(n-1).
+        assert_eq!(line_of("Inner Sight"), 10);
+        assert_eq!(eval("Inner Sight", 1, "-edmn", &empty), -40);
+        assert_eq!(eval("Inner Sight", 3, "-edmn", &empty), -90);
+        // L101 Prayer : aurastatcalc1 `edns` — ELen vide ⇒ 0 (donnée réelle).
+        assert_eq!(line_of("Prayer"), 101);
+        assert_eq!(eval("Prayer", 5, "edns", &empty), 0);
+        // edns avec ELen réel : Ice Arrow (L23) ELen 50 + 5×(n-1) ⇒ 60 à niv 3.
+        assert_eq!(eval("Ice Arrow", 3, "edns", &empty), 60);
+        // L93 Lower Resist : aurastatcalc1 `-dm56` — dm56 = P5 + (n-1)×P6
+        // = 25 + 70×(n-1).
+        assert_eq!(line_of("Lower Resist"), 93);
+        assert_eq!(eval("Lower Resist", 1, "-dm56", &empty), -25);
+        assert_eq!(eval("Lower Resist", 3, "-dm56", &empty), -165);
+        // L229 Summon Spirit Wolf : `min(ln78,85)` — ln78 = 0 + 5×(n-1).
+        assert_eq!(line_of("Summon Spirit Wolf"), 229);
+        assert_eq!(eval("Summon Spirit Wolf", 10, "min(ln78,85)", &empty), 45);
+        assert_eq!(eval("Summon Spirit Wolf", 20, "min(ln78,85)", &empty), 85);
+        // L72 Raise Skeleton : ternaire réel `(lvl < 4) ? 0 : (par2 * (lvl-3))`.
+        assert_eq!(line_of("Raise Skeleton"), 72);
+        assert_eq!(eval("Raise Skeleton", 3, "(lvl < 4) ? 0 : (par2 * (lvl - 3))", &empty), 0);
+        assert_eq!(eval("Raise Skeleton", 7, "(lvl < 4) ? 0 : (par2 * (lvl - 3))", &empty), 200);
+        // L225 Wearwolf : forme ÉTRANGÈRE `skill('Shape Shifting'.ln12)`
+        // (FullEvalCtx : paires du référencé à SON niveau) — SS P1=1000/P2=500.
+        assert_eq!(line_of("Wearwolf"), 225);
+        let mut t = SkillTree::for_class("dru");
+        t.set_level("Shape Shifting", 4);
+        let mut ctx = t.eval_ctx(d.get("Wearwolf").unwrap());
+        let calc = CalcString::parse("1000+skill('Shape Shifting'.ln12)");
+        assert!(calc.error().is_none());
+        assert_eq!(calc.eval(&mut ctx), 3500, "1000 + (1000+3×500)");
+        // Forme étrangère edns : `skill('Prayer'.edns)` (Cleansing L111 /
+        // Meditation L122) — courbe ELen du référencé à SON niveau (=0 ici).
+        let mut t2 = SkillTree::for_class("pal");
+        t2.set_level("Prayer", 5);
+        let mut ctx2 = t2.eval_ctx(d.get("Cleansing").unwrap());
+        let calc = CalcString::parse("skill('Prayer'.edns)");
+        assert_eq!(calc.eval(&mut ctx2), 0, "ELen de Prayer vide en v1.12");
+    }
+
+    /// Bindings `stat(...)` par ids `ItemStatCost` dans le contexte skill :
+    /// Hydra L64 (`stat('passive_fire_mastery'.accr)` / passive_fire_pierce),
+    /// forme numérique, charge/quantité v1.12 — via [`SkillEvalCtx::stats_ids`].
+    #[test]
+    fn bindings_stat_hydra_et_ids() {
+        let d = data();
+        let dict = crate::stats::StatCostTable::global();
+        let fm = dict.get("passive_fire_mastery").unwrap().id; // 329
+        let fp = dict.get("passive_fire_pierce").unwrap().id; // 333
+        let mut ids = crate::statlist::StatList::new();
+        ids.add(fm, 55);
+        ids.add(fp, -30);
+        ids.add(dict.get("quantity").unwrap().id, 12); // 70
+        let hydra = d.get("Hydra").unwrap();
+        assert_eq!(line_of("Hydra"), 64);
+
+        // passivecalc1 réel : stat('passive_fire_mastery'.accr).
+        let c1 = hydra.passive_calcs[0].clone().expect("Hydra passivecalc1");
+        let mut ctx = SkillEvalCtx::new(hydra, 1, &NoLevels);
+        ctx.stats_ids = Some(&ids);
+        assert_eq!(c1.eval(&mut ctx), 55);
+        // passivecalc2 réel : stat('passive_fire_pierce'.accr).
+        let c2 = hydra.passive_calcs[1].clone().expect("Hydra passivecalc2");
+        assert_eq!(c2.eval(&mut ctx), -30);
+        // Forme numérique (langage stat.id des saves) : même valeur.
+        let calc = CalcString::parse("stat('329'.accr)");
+        assert_eq!(calc.eval(&mut ctx), 55);
+        // Charge/quantité via ids.
+        let calc = CalcString::parse("stat('item_charged_skill'.val)+stat('quantity'.val)");
+        assert_eq!(calc.eval(&mut ctx), 12, "charge absente (0) + quantité 12");
+        // Sans stats_ids : repli historique par noms (héros v2) — Hydra lit
+        // alors la liste par noms, comportement inchangé (zéro régression).
+        let mut names = crate::stats::StatList::new();
+        names.add("passive_fire_mastery", 55);
+        let mut ctx_names = SkillEvalCtx::new(hydra, 1, &NoLevels);
+        ctx_names.stats = Some(&names);
+        assert_eq!(c1.eval(&mut ctx_names), 55);
     }
 }

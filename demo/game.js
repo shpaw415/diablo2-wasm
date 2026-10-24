@@ -475,6 +475,11 @@ function handleEvents(events, manifest) {
     } else if (ev.HeroPickedUp) {
       sfx(manifest.sfx.uiClick, 0.5, 1.1);
       flash('Objet ramassé.');
+      // 11b : auto-ranger les potions autobelt (hp/mp/rejuv) en ceinture 4×4
+      try {
+        const moved = window.__d2.game.beltAutoStore();
+        if (moved > 0) note(`${moved} potion(s) rangée(s) en ceinture (touches 1-4).`);
+      } catch { /* cosmétique : ne bloque jamais le ramassage */ }
     } else if (ev.PotionUsed) {
       sfx(manifest.sfx.uiClick, 0.5, 0.8);
       flash(`Potion bue (+${ev.PotionUsed.heal} pv)`);
@@ -554,6 +559,20 @@ function syncZoneAfterLoad() {
     if (window.D2Music) window.D2Music.setLevel(li.key, li.name); // EXP-A1 : musique par zone (waypoints/Charger)
   } catch { /* HUD : ne bloque jamais le chargement */ }
 }
+// 11b consommables : toast d'un usage à effets réels (potions par code,
+// buffs 30 s, tomes à charges) + retour au camp éventuel (parchemin TP :
+// le moteur a déjà basculé via switch_level, le HUD/zone/musique suivent).
+function handleConsumed(r, manifest) {
+  const u = r.use || {};
+  if (u.heal > 0 && u.mana > 0) flash(`${u.name} : +${u.heal} pv, +${u.mana} mana`);
+  else if (u.heal > 0) flash(`${u.name} : +${u.heal} pv`);
+  else if (u.mana > 0) flash(`${u.name} : +${u.mana} mana`);
+  else if (u.buffMs > 0) flash(`${u.name} : effet ${Math.round(u.buffMs / 1000)} s`);
+  else if (u.townPortal) flash(`${u.name} — retour au camp`);
+  else if (u.chargesLeft != null) flash(`${u.name} : ${u.chargesLeft} charge(s) restante(s)`);
+  sfx(manifest.sfx.uiClick, 0.5, 0.8);
+  if (r.levelSwitch) syncZoneAfterLoad();
+}
 function wireCommon(manifest) {
   canvas.addEventListener('mousemove', (e) => {
     [mouse.x, mouse.y] = canvasXY(e);
@@ -572,8 +591,17 @@ function wireCommon(manifest) {
       const slot = invSlotAt(px, py);
       const it = slot >= 0 ? (window.__d2.invCache || [])[slot] : null;
       if (it) {
-        if (it.kind === 'Potion') {
-          loop.queue.push({ type: 'useItem', slot });
+        // 11b consommables : effets réels par code (potions, parchemins de
+        // porte de ville, tomes à charges) — retombe sur le soin MVP 60
+        // (useItem historique) si l'endpoint refuse.
+        const scrolls = ['tsc', 'tbk', 'isc', 'ibk'];
+        if (it.kind === 'Potion' || scrolls.includes(it.code)) {
+          try {
+            handleConsumed(JSON.parse(window.__d2.game.useConsumable(slot)), manifest);
+          } catch (err) {
+            if (it.kind === 'Potion') loop.queue.push({ type: 'useItem', slot });
+            else note(String(err && err.message ? err.message : err));
+          }
         } else {
           note(`${it.name} — équipement à venir (phase 3).`);
         }
@@ -602,6 +630,15 @@ function wireCommon(manifest) {
       canvas.style.cursor = 'crosshair';
     }
     if (e.key === 'e' || e.key === 'E') { acx(); loop.queue.push({ type: 'pickup' }); }
+    // 11b : ceinture 4×4 — touches 1-4 = colonnes (potion au sommet bue)
+    if (['1', '2', '3', '4'].includes(e.key)) {
+      acx();
+      try {
+        handleConsumed(JSON.parse(window.__d2.game.useBeltKey(Number(e.key))), manifest);
+      } catch (err) {
+        note(String(err && err.message ? err.message : err));
+      }
+    }
     if (e.key === 'p' || e.key === 'P') {
       acx();
       const slots = JSON.parse(window.__d2.game.inventory());
@@ -825,7 +862,7 @@ async function main() {
     const [drawn, hidden, , oob] = game.composeStats();
     return `Héros : ${HERO_NAME} · Zone : ${hud.zone.textContent} · Carte ${mw}×${mh}px · grille ${gw}×${gh}` +
       ` · tuiles dessinées ${drawn} (cachées ${hidden}, hors bornes ${oob})` +
-      ' · clic = déplacer · Maj = courir · clic monstre = attaquer · E = ramasser · P = potion · I = inventaire';
+      ' · clic = déplacer · Maj = courir · clic monstre = attaquer · E = ramasser · P = potion · 1-4 = ceinture · I = inventaire';
   }
   loop.statusBase = buildStatusBase();
   window.__d2.refreshStatus = () => { loop.statusBase = buildStatusBase(); };
@@ -966,3 +1003,5 @@ function fallback(reason) {
 }
 
 main().catch((e) => fallback(e && e.message ? e.message : String(e)));
+
+import("./stash-ui.js").catch(() => {}); // 11c : panneau Stash 6×4 + or (window.D2Stash, miroir economy.rs)

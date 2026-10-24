@@ -536,7 +536,7 @@ mod tests {
         // (`patch_difficultylevels.txt` col DeathExpPenalty — 0/5/10).
         w.set_difficulty(Difficulty::Nightmare);
         w.hero.stats.level = 2;
-        w.hero.stats.xp = 1_600; // > XP_TABLE[0]=500 : plancher non contraignant
+        w.hero.stats.xp = 1_600; // > seuil niveau 2 (500, table xp.rs) : plancher non contraignant
 
         // Colle le monstre au héros : FSM Idle→Chase→Attack→frappe.
         w.mon_ent[0].x = w.hero_ent.x + 1.0;

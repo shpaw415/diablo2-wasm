@@ -261,4 +261,25 @@ mod tests {
             "attach refait après load_world"
         );
     }
+
+    // --- 13b (finitions) : le panneau liste les 38 slots retail — vérif A4-A5
+
+    #[test]
+    fn waypoint_table_exposes_retail_slots_27_to_38() {
+        // Slots 27-38 = actes IV-V : ids levels.txt v1.12, vérifiés contre la
+        // colonne `Waypoint` de patch_levels.txt (sonde python 13b, CONCORDE).
+        // C'est LA source du panneau démo (waypoints.js liste tout `list`).
+        let want: &[(u8, u32)] = &[
+            (27, 103), (28, 106), (29, 107),             // A4 : Pandémonium, Ville des damnés, Rivière de feu
+            (30, 109), (31, 111), (32, 112), (33, 113),  // A5 : Harrogath, Rigid Highlands, Arreat, Passage Cristallin
+            (34, 115), (35, 123), (36, 117), (37, 118), (38, 129), // Cavern 2, Death's Calling, Tundra, Glacial, Worldstone 2
+        ];
+        for (slot, level_id) in want {
+            let wp = crate::world_impl::waypoint_by_slot(*slot)
+                .unwrap_or_else(|| panic!("slot {slot} : absent de la table retail"));
+            assert_eq!(wp.level_id, *level_id, "slot {slot} : levelId retail");
+            assert!(!wp.name.is_empty(), "slot {slot} : nom affiché");
+            assert_eq!(wp.act, if *slot <= 29 { 4 } else { 5 }, "slot {slot} : acte A4-A5");
+        }
+    }
 }

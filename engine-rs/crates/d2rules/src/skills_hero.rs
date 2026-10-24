@@ -12,7 +12,7 @@
 //! * Prérequis d'arbre : ≥ 1 point dans chaque `reqskill1-3` (cols 159-161 ;
 //!   ex. Fire Ball `reqskill1=Fire Bolt`, ligne Fire Ball).
 //! * `reqlevel` (col 153 ; Fire Ball = 12, Meteor = 24) : niveau de PERSO
-//!   requis — plafonné au MVP par `MAX_LEVEL` (world.rs, 10).
+//!   requis — plafond = `MaxLvl` de la table XP réelle (world.rs, 99).
 //! * Plafond d'investissement `maxlvl` (col 154) = 20 pour les 210 skills de
 //!   classe ([`SkillTreeData::parse`] : défaut 20 si colonne vide/≤ 0).
 //! * Synergies (`EDmgSymPerCalc` col `EDmgSymPerCalc` / `DmgSymPerCalc`) :
@@ -23,9 +23,12 @@
 //!   firebolt 3-8 feu = dégâts officiels niveau 1) — ancre inchangée du
 //!   moteur ; la synergie MULTIPLIE cette base (×(1+%/100)). Sans synergie le
 //!   comportement est bit-identique à l'existant (zéro régression).
-//! * `ELen`/`ELenSymPerCalc` (durées froid/poison), `aurastate`/passives :
-//!   EXPOSÉS par [`SkillRecord`] mais NON câblés au MVP (aucun moteur
-//!   d'états/buffs — C6/P3) ; aucune durée d'effet à scaler côté missiles.
+//! * `ELen`/`ELenSymPerCalc` (durées froid/poison/étourdissement) : `ELen`
+//!   est la courbe d'effet du skill ; `ELenSymPerCalc` est évaluée par
+//!   [`synergy_scaled_duration`] (étape 12a — 4 lignes réelles v1.12 :
+//!   Ice Arrow L23, Freezing Arrow L33, Ice Blast L47, Stun L141).
+//!   `aurastate`/passives : EXPOSÉS par [`SkillRecord`] mais NON câblés au
+//!   MVP (aucun moteur d'états/buffs — C6/P3).
 
 use std::collections::HashMap;
 
@@ -151,6 +154,28 @@ pub fn synergy_scaled_damage(
     (mn, mx)
 }
 
+/// Durée d'effet d'un skill APRÈS synergie de durée (`ELenSymPerCalc` —
+/// [`SynergyKind::Length`], 4 lignes réelles v1.12 : Ice Arrow L23,
+/// Freezing Arrow L33, Ice Blast L47, Stun L141) : base (courbe `ELen` +
+/// `ELevLen1-3` à la niveau du skill, cf. [`SkillTreeData::elem_len_at`]) ×
+/// (1 + %/100), plancher. `base_len` = durée déjà courbée en frames ;
+/// skill inconnu ou sans colonne ⇒ base INCHANGÉE (jamais de panic).
+pub fn synergy_scaled_duration(
+    skill_code: &str,
+    base_len: i64,
+    levels: &dyn SkillLevels,
+) -> i64 {
+    let data = SkillTreeData::global();
+    let Some(rec) = data.get(skill_code) else {
+        return base_len;
+    };
+    let pct = data.synergy_percent(rec, SynergyKind::Length, levels);
+    if base_len <= 0 {
+        return base_len;
+    }
+    ((base_len as f64 * (1.0 + pct as f64 / 100.0)).floor()) as i64
+}
+
 // ---------------------------------------------------------------------------
 // Tests (les golden données réelles : parity_tests.rs / skills_tree.rs)
 // ---------------------------------------------------------------------------
@@ -260,6 +285,35 @@ mod tests {
         let d = SkillTreeData::global();
         assert_eq!(synergy_kind(d.get("Fire Bolt").unwrap()), SynergyKind::Elemental);
         assert_eq!(synergy_kind(d.get("Bash").unwrap()), SynergyKind::Physical);
+    }
+
+    /// Étape 12a — synergie de durée réelle : `ELenSymPerCalc` cité ligne
+    /// (Ice Arrow L23, Stun L141), consommée par [`synergy_scaled_duration`].
+    #[test]
+    fn elen_synergies_reelles_citees_ligne() {
+        let d = SkillTreeData::global();
+        // L23 Ice Arrow : `(skill('Freezing Arrow'.blvl)) * par7`, par7=5 ;
+        // ELen 50 + ELevLen 5 par niveau (2-8) ⇒ 60 frames au niv 3.
+        let ice = d.get("Ice Arrow").unwrap();
+        assert_eq!((ice.e_len, ice.e_lev_len), (50, [5, 5, 5]));
+        assert_eq!(ice.e_len_sym_per_calc.as_ref().unwrap().source(), "(skill('Freezing Arrow'.blvl)) * par7");
+        let fa10 = vec![HeroSkill { code: "Freezing Arrow".into(), level: 10, missile: None }];
+        let lv = HeroLevels::new(&fa10, 30);
+        assert_eq!(d.synergy_percent(ice, SynergyKind::Length, &lv), 50, "10×5 %");
+        assert_eq!(synergy_scaled_duration("Ice Arrow", 60, &lv), 90, "60 × 1.5");
+        // Sans synergie : base inchangée (zéro régression).
+        assert_eq!(synergy_scaled_duration("Ice Arrow", 60, &NoLevels), 60);
+        // L141 Stun : `skill('War Cry'.blvl)*par6`, par6=5 ; ELen 30 (niv 1).
+        let stun = d.get("Stun").unwrap();
+        assert_eq!(stun.e_len_sym_per_calc.as_ref().unwrap().source(), "skill('War Cry'.blvl)*par6");
+        assert_eq!(stun.params[5], 5, "par6=5 (L141)");
+        let wc10 = vec![HeroSkill { code: "War Cry".into(), level: 10, missile: None }];
+        let lv = HeroLevels::new(&wc10, 30);
+        assert_eq!(d.synergy_percent(stun, SynergyKind::Length, &lv), 50);
+        assert_eq!(synergy_scaled_duration("Stun", 30, &lv), 45);
+        // Skill inconnu / base nulle : jamais de panic, base telle quelle.
+        assert_eq!(synergy_scaled_duration("N'importe Quoi", 42, &lv), 42);
+        assert_eq!(synergy_scaled_duration("Ice Arrow", 0, &lv), 0);
     }
 
     #[test]

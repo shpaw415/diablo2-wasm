@@ -14,9 +14,23 @@
 //! * Propriétés : `skill('X'.qual)`, `stat('X'.qual)`, `miss('X'.qual)` — la
 //!   forme réelle v1.12 met le `.qual` DANS les parenthèses (`skill('Fire
 //!   Ball'.blvl)`), la forme OD2 hors parenthèses est aussi acceptée.
+//!   Qualificateurs réels v1.12 (patch_skills.txt) : `blvl` (269×), `lvl`,
+//!   `parN`/`lnXX`/`dmXX` (paires Param du record référencé, ex.
+//!   `skill('Golem Mastery'.dm34)` ligne Clay Golem) et les raccourcis d'aura
+//!   `edmn`/`edmx`/`edns` (courbes EMin/EMax/ELen du référencé, ex.
+//!   `skill('Prayer'.edns)` ligne Cleansing) — résolus côté
+//!   [`crate::skills_tree`].
 //! * Noms nus : `lvl` (niveau du skill), `ulvl`, `par1`..`par8`, `lnXX`/`dmXX`
-//!   (paires Param — voir [`skills_tree`]) résolus par [`EvalContext::bare`] ;
+//!   (paires Param linéaires : `lnAB` = `ParamA + (niveau-1) × ParamB`) et les
+//!   raccourcis `edmn`/`edmx`/`edns` (courbes élémentaires du record
+//!   propriétaire — réels : `min(edmn,95)` ligne Energy Shield, `-edmn` ligne
+//!   Inner Sight, `edns` ligne Prayer) résolus par [`EvalContext::bare`] ;
 //!   nom inconnu ⇒ 1 (comportement placeholder du Go).
+//! * Bindings `stat(...)` : [`StatListCtx`] résout `stat('id'.q)` par id
+//!   numérique **et** `stat('nom'.q)` via le dictionnaire
+//!   [`crate::stats::StatCostTable`] sur une [`crate::statlist::StatList`] par
+//!   ids — y compris les stats « charge/quantité » d'items v1.12
+//!   (`item_charged_skill` id 204, `quantity` id 70).
 //! * Chaîne vide ⇒ constante 0 ; erreur de parse ⇒ évaluation 0, jamais de
 //!   panic (écart : Go `panic!`+log).
 
@@ -215,6 +229,54 @@ pub trait EvalContext {
 pub struct NullCtx;
 
 impl EvalContext for NullCtx {}
+
+/// Contexte branché sur une [`crate::statlist::StatList`] par ids
+/// `ItemStatCost` — le binding `stat(...)` complet :
+///
+/// * `stat('123'.val)` — id numérique direct (langage `stat.id` des saves
+///   binaires) ;
+/// * `stat('strength'.val)` — nom du dictionnaire [`crate::stats::StatCostTable`]
+///   → id → valeur ;
+/// * stats « charge/quantité » d'items v1.12 : `item_charged_skill` (id 204),
+///   `quantity` (id 70) — mêmes chemins ;
+/// * repli [`crate::stats::StatList`] par noms (héros v2) pour un nom absent
+///   du dictionnaire.
+///
+/// Chaîne de résolution (documentée, déterministe) : id numérique →
+/// dictionnaire → repli noms ; inconnu partout ⇒ 0 (jamais de panic). Les
+/// qualifications (`.val`, `.accr` — les deux seules de v1.12 : Hydra
+/// `stat('passive_fire_mastery'.accr)`) lisent la même valeur.
+pub struct StatListCtx<'a> {
+    /// Stats agrégées par id `ItemStatCost`.
+    pub ids: &'a crate::statlist::StatList,
+    /// Repli : liste par noms (héros v2), consultée si nom absent du
+    /// dictionnaire.
+    pub names: Option<&'a crate::stats::StatList>,
+}
+
+impl EvalContext for StatListCtx<'_> {
+    fn stat_value(&mut self, stat: &str, _qualifier: &str) -> i64 {
+        // 1) Id numérique direct (saves binaires : `stat('0'.val)` = strength).
+        if let Ok(id) = stat.trim().parse::<i32>() {
+            return self.ids.get(id);
+        }
+        // 2) Nom → dictionnaire → id.
+        if let Some(id) = crate::stats::StatCostTable::global().get(stat).map(|r| r.id) {
+            return self.ids.get(id);
+        }
+        // 3) Repli liste par noms (héros v2).
+        self.names.map(|s| s.get(stat)).unwrap_or(0)
+    }
+    fn skill_level(&mut self, _skill: &str, _qualifier: &str) -> i64 {
+        0
+    }
+    fn missile_prop(&mut self, _missile: &str, _qualifier: &str) -> i64 {
+        1
+    }
+    fn bare(&mut self, _name: &str) -> i64 {
+        1
+    }
+}
 
 /// AST évaluable — port de `d2calculation` Go (Binary/Unary/Ternary/Property/
 /// Constant ; les noms nus deviennent [`Node::Bare`]).
@@ -844,5 +906,106 @@ mod tests {
     fn pow_saturation_no_panic() {
         assert_eq!(eval_str("2^10"), 1024);
         assert_eq!(eval_str("999999999^99"), i64::MAX);
+    }
+
+    /// Parité opérateur par opérateur avec le Go : chaque opérateur D2 et sa
+    /// priorité sont ceux de `opendiablo2/d2common/d2calculation/d2parser/
+    /// operations.go:65-174` (binaire 1..=6, `^` droite op.go:165-172),
+    /// unaire `+ -` prio 4 (operations.go:29-46), ternaire `?:` prio 0
+    /// (operations.go:48-63), fonctions min/max/rand (operations.go:176-197) ;
+    /// classes de caractères du lexer identiques (`d2lexer/lexer.go:160`).
+    #[test]
+    fn parite_operateurs_go() {
+        // Comparaisons prio 1 (operations.go:67-132).
+        assert_eq!(eval_str("2==2"), 1);
+        assert_eq!(eval_str("2!=3"), 1);
+        // Relationnels prio 2.
+        assert_eq!(eval_str("1<2"), 1);
+        assert_eq!(eval_str("2>1"), 1);
+        assert_eq!(eval_str("2<=2"), 1);
+        assert_eq!(eval_str("2>=3"), 0);
+        // Additifs prio 3, multiplicatifs prio 5 (division entière Go).
+        assert_eq!(eval_str("10-4+1"), 7);
+        assert_eq!(eval_str("7/2*4"), 12, "7/2=3 (tronqué Go) puis ×4");
+        // Puissance prio 6, droite : math.Pow Go (operations.go:170).
+        assert_eq!(eval_str("2^3^2"), 512);
+        assert_eq!(eval_str("3^2"), 9);
+        // Unaires prio 4 : le Go parse `-x` en appelant parseLevel(4)
+        // (parser.go:176) — l'exposant `^` (prio 6 ≥ 4) est avalé par
+        // l'opérande, donc `-2^2` = -(2^2) = -4, comme le Go.
+        assert_eq!(eval_str("-2^2"), -4);
+        assert_eq!(eval_str("+5"), 5);
+        // Ternaire prio 0, droite (parser.go:104-141) : évaluation paresseuse
+        // (écart documenté) — même résultat que l'op Go.
+        assert_eq!(eval_str("5<4?10:20"), 20);
+        assert_eq!(eval_str("1?2:3?4:5"), 2);
+        // min/max/rand (operations.go:176-197) ; rand déterministe via ctx.
+        assert_eq!(eval_str("min(-3,2)"), -3);
+        assert_eq!(eval_str("max(-3,2)"), 2);
+        assert_eq!(eval_str("rand(7,9)"), 7);
+    }
+
+    /// Formes du lexer Go (`d2lexer/lexer.go:74-99`) : `=`/`!` isolés sont
+    /// invalides (le Go panique lexer.go:79 — ici erreur propre, jamais de
+    /// panic), `<`/`>` simples restent des symboles unaires valides.
+    #[test]
+    fn erreurs_lexer_non_paniquantes() {
+        assert!(CalcString::parse("1=2").error().is_some(), "`=` isolé : erreur propre");
+        assert!(CalcString::parse("1!2").error().is_some(), "`!` isolé : erreur propre");
+        assert!(CalcString::parse("skill('X'.blvl").error().is_some());
+        assert!(CalcString::parse("min(1,)").error().is_some());
+        assert!(CalcString::parse(")").error().is_some());
+        assert!(CalcString::parse("?1:2").error().is_some());
+        // Évaluation après erreur ⇒ 0 (jamais de panic).
+        assert_eq!(eval_str("1=2"), 0);
+    }
+
+    /// Binding `stat(...)` complet via [`StatListCtx`] : id numérique, nom du
+    /// dictionnaire, charge/quantité v1.12 (`item_charged_skill` id 204,
+    /// `quantity` id 70 — patch_itemstatcost.txt), repli noms, inconnu ⇒ 0.
+    #[test]
+    fn binding_stat_par_statlist_ids() {
+        use crate::statlist::{StatLine, StatList as IdList};
+        // Le dictionnaire confirme les ids avant tout (données réelles).
+        let dict = crate::stats::StatCostTable::global();
+        assert_eq!(dict.get("quantity").unwrap().id, 70);
+        assert_eq!(dict.get("item_charged_skill").unwrap().id, 204);
+        assert_eq!(dict.get("passive_fire_mastery").unwrap().id, 329);
+
+        let mut ids = IdList::new();
+        ids.add(70, 42); // quantité
+        ids.add(204, 7); // skill chargé (index de skill)
+        ids.add(329, 55); // passive_fire_mastery (Hydra)
+        let mut names = crate::stats::StatList::new();
+        names.add("item_lifesteal", 9); // hors dictionnaire v1.12? repli noms
+
+        let mut ctx = StatListCtx { ids: &ids, names: Some(&names) };
+        // Id numérique direct (langage stat.id des saves).
+        assert_eq!(CalcString::parse("stat('70'.val)").eval(&mut ctx), 42);
+        assert_eq!(CalcString::parse("stat('204'.val)*10").eval(&mut ctx), 70);
+        // Nom du dictionnaire → id (quantité d'item jetable).
+        assert_eq!(CalcString::parse("stat('quantity'.val)").eval(&mut ctx), 42);
+        // Charge de skill : skill('X'.blvl) + stat('item_charged_skill'.val).
+        assert_eq!(
+            CalcString::parse("stat('item_charged_skill'.val)").eval(&mut ctx),
+            7
+        );
+        // Forme réelle Hydra (patch_skills.txt L64) : qualifier .accr.
+        assert_eq!(
+            CalcString::parse("stat('passive_fire_mastery'.accr)").eval(&mut ctx),
+            55
+        );
+        // Repli noms (nom absent du dictionnaire), puis inconnu ⇒ 0.
+        assert_eq!(CalcString::parse("stat('item_lifesteal'.val)").eval(&mut ctx), 9);
+        assert_eq!(CalcString::parse("stat('inconnue'.val)").eval(&mut ctx), 0);
+        // Sans repli : inconnu ⇒ 0, jamais de panic.
+        let mut ctx2 = StatListCtx { ids: &ids, names: None };
+        assert_eq!(CalcString::parse("stat('item_lifesteal'.val)").eval(&mut ctx2), 0);
+        // Arithmétique composite : +25 % par point de quantité.
+        assert_eq!(
+            CalcString::parse("100*(100+stat('quantity'.val))/100").eval(&mut ctx),
+            142
+        );
+        let _ = StatLine::new(0, 0); // réexport silencieux (interface affixes)
     }
 }

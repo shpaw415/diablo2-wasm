@@ -102,6 +102,31 @@ struct Save {
     /// Err (contrat quests_actes2.rs : tout écart = pas d'état incohérent).
     #[serde(default)]
     quest_actes2: Option<serde_json::Value>,
+    /// Stash (11c, `economy.rs`) : or déposé + grille 6×4 d'items — absent
+    /// des sauvegardes antérieures (rétro-compat : stash vide 6×4). Champ
+    /// OPTIONNEL ADDITIF `#[serde(default)]` : save v3 inchangée.
+    #[serde(default)]
+    gold_stash: Option<crate::economy::Stash>,
+    /// Consommables 11b (`consumables.rs`) : ceinture 4×4 + buffs temporisés
+    /// des potions — absent des sauvegardes antérieures (rétro-compat :
+    /// ceinture vide, aucun buff). Champ OPTIONNEL ADDITIF
+    /// `#[serde(default)]` : save v3 inchangée.
+    #[serde(default)]
+    consumables: Option<crate::consumables::ConsumState>,
+    /// Journal de quêtes Actes IV-V SPEC (quests_actes45.rs, JSON de
+    /// `Act45Quests::to_json`) — absent des sauvegardes antérieures
+    /// (rétro-compat : pas de journal branché). Champ OPTIONNEL ADDITIF
+    /// `#[serde(default)]` : save v3 inchangée ; présent mais invalide ⇒
+    /// Err (contrat quests_actes45.rs : tout écart = pas d'état incohérent).
+    #[serde(default)]
+    quest_actes45: Option<serde_json::Value>,
+    /// Journal des BOSS FINAUX (quests_finale.rs, JSON de
+    /// `QuestsFinale::to_json`) — absent des sauvegardes antérieures
+    /// (rétro-compat : pas de journal branché). Champ OPTIONNEL ADDITIF
+    /// `#[serde(default)]` : save v3 inchangée ; présent mais invalide ⇒
+    /// Err (contrat quests_finale.rs : tout écart = pas d'état incohérent).
+    #[serde(default)]
+    quest_finale: Option<serde_json::Value>,
 }
 
 /// État complet du héros.
@@ -244,6 +269,14 @@ pub(crate) fn save_json(w: &World) -> String {
             .collect(),
         items: w.items.clone(),
         corpse: w.corpse.clone(), // J1 : champ additif (rétro-compat v3 sans corps)
+        gold_stash: Some(w.gold_stash.clone()), // 11c : champ additif (rétro-compat v3)
+        consumables: Some(w.consum.clone()), // 11b : ceinture + buffs (additif)
+        quest_actes45: w.quests_actes45.as_ref().map(|log| {
+            serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation quêtes actes IV-V")
+        }),
+        quest_finale: w.quests_finale.as_ref().map(|log| {
+            serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation boss finaux")
+        }),
         quest_act1: w.quests_act1.as_ref().map(|log| {
             serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation quêtes acte I")
         }),
@@ -341,6 +374,8 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 skills,
                 active_skill,
                 stamina_milli, // EXP-H2 : transitoire, recalé à la valeur chargée
+                // 12c : mods de coup transitoires (jamais persistés) — vides.
+                mods: super::combat_mods::HitMods::default(),
             }
         },
         mon_ent: s.monsters.iter().map(|m| m.ent).collect(),
@@ -368,6 +403,10 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 kind: m.kind.unwrap_or_default(),
                 tc: m.tc.clone().unwrap_or(None),
                 res: m.res.unwrap_or([0; 6]),
+                // 12c : DoT/froid transitoires (jamais persistés) — vides.
+                wounds: None,
+                poison: None,
+                chill_ms: 0,
             })
             .collect(),
         items: s.items,
@@ -385,6 +424,9 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         // est transitoire — jamais persisté.
         corpse: s.corpse,
         corpse_pending: false,
+        // 11c : stash (saves antérieures = vide 6×4, Stash::default).
+        gold_stash: s.gold_stash.unwrap_or_default(),
+        consum: s.consumables.unwrap_or_default(), // 11b : additif (ceinture vide)
         rng: Rng::new(s.rng),
         now_ms: s.now_ms,
         difficulty: s.difficulty.unwrap_or_default(),
@@ -436,6 +478,22 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         quests_actes2: match s.quest_actes2 {
             Some(v) => {
                 Some(crate::quests_actes2::Act2Quests::from_json(&v.to_string()).map_err(|_| ())?)
+            }
+            None => None,
+        },
+        // Journal de quêtes Actes IV-V spec : JSON versionné strict
+        // (`Act45Quests::from_json`) — présent mais invalide ⇒ Err.
+        quests_actes45: match s.quest_actes45 {
+            Some(v) => {
+                Some(crate::quests_actes45::Act45Quests::from_json(&v.to_string()).map_err(|_| ())?)
+            }
+            None => None,
+        },
+        // Journal des BOSS FINAUX spec : JSON versionné strict
+        // (`QuestsFinale::from_json`) — présent mais invalide ⇒ Err.
+        quests_finale: match s.quest_finale {
+            Some(v) => {
+                Some(crate::quests_finale::QuestsFinale::from_json(&v.to_string()).map_err(|_| ())?)
             }
             None => None,
         },

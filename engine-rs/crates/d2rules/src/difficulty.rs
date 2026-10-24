@@ -91,16 +91,45 @@ impl Difficulty {
         }
     }
 
-    /// Suffixe des TreasureClass de drop v1.12 : les TC de monstre normal
-    /// ont des variantes par difficulté dans TreasureClassEx (ex.
-    /// `Act 1 H2H A` → `Act 1 (N) H2H A` ligne 285 / `Act 1 (H) H2H A`
-    /// ligne 299) ; les TC champion/unique/super n'en ont PAS (une seule
-    /// occurrence chacune) — d'où l'option.
+    /// Suffixe brut des TreasureClass v1.12 (`None` en Normal — les records
+    /// Normal de TreasureClassEx ne portent PAS de marqueur ; ` (N)`/` (H)`
+    /// sinon). Préférer [`Self::tc_variant`] qui compose le nom COMPLET
+    /// selon la règle retail de positionnement du marqueur.
     pub fn tc_suffix(&self) -> Option<&'static str> {
         match self {
             Difficulty::Normal => None,
             Difficulty::Nightmare => Some(" (N)"),
             Difficulty::Hell => Some(" (H)"),
+        }
+    }
+
+    /// Nom de TreasureClass EFFECTIF pour la difficulté — règle retail
+    /// v1.12 (`TreasureClassEx.txt`, vérifiée entrée par entrée par le
+    /// golden `progression_golden.rs`) :
+    ///
+    /// * Normal ⇒ nom inchangé (les records de base n'ont pas de marqueur) ;
+    /// * TC « Act N … » ⇒ marqueur INSÉRÉ après le préfixe d'acte
+    ///   (« Act 1 H2H A » → « Act 1 (N) H2H A », « Act 5 Champ C » →
+    ///   « Act 5 (H) Champ C ») ;
+    /// * toute autre TC (boss, superunique, « Quill 1 », « Griswold »…)
+    ///   ⇒ marqueur SUFFIXÉ en fin de nom (« Andariel » → « Andariel (N) »,
+    ///   « Duriel » → « Duriel (H) »).
+    ///
+    /// Attention : l'existence de la variante n'est PAS garantie par la
+    /// table pour toutes les TC (« Fangskin (H) » manque dans
+    /// TreasureClassEx v1.12) — l'appelant qui dropne doit garder la base
+    /// si la variante est inconnue (cf. `World::roll_drop`).
+    pub fn tc_variant(base: &str, diff: Difficulty) -> String {
+        match diff.tc_suffix() {
+            None => base.to_string(),
+            Some(sfx) => {
+                if let Some(rest) = base.strip_prefix("Act ") {
+                    if let Some(sp) = rest.find(' ') {
+                        return format!("Act {}{}{}", &rest[..sp], sfx, &rest[sp..]);
+                    }
+                }
+                format!("{base}{sfx}")
+            }
         }
     }
 
@@ -311,6 +340,29 @@ mod tests {
         assert_eq!(Difficulty::Normal.tc_suffix(), None);
         assert_eq!(Difficulty::Hell.tc_suffix(), Some(" (H)"));
         assert_eq!(Difficulty::default(), Difficulty::Normal);
+    }
+
+    /// Règle retail de nommage des variantes TC (13a) — insérée après le
+    /// préfixe d'acte pour les TC « Act N … », suffixée sinon ; Normal =
+    /// nom inchangé. Vérifiée contre 100 % des TC monstats dans
+    /// `progression_golden.rs`.
+    #[test]
+    fn tc_variant_composes_retail_names() {
+        use Difficulty::{Hell, Nightmare, Normal};
+        // Normal : inchangé.
+        assert_eq!(Difficulty::tc_variant("Act 1 H2H A", Normal), "Act 1 H2H A");
+        assert_eq!(Difficulty::tc_variant("Duriel", Normal), "Duriel");
+        // TC d'acte : insertion APRÈS « Act N » (jamais en fin de nom).
+        assert_eq!(Difficulty::tc_variant("Act 1 H2H A", Nightmare), "Act 1 (N) H2H A");
+        assert_eq!(Difficulty::tc_variant("Act 1 H2H A", Hell), "Act 1 (H) H2H A");
+        assert_eq!(Difficulty::tc_variant("Act 5 Champ C", Hell), "Act 5 (H) Champ C");
+        // TC nommées : suffixe final.
+        assert_eq!(Difficulty::tc_variant("Andariel", Nightmare), "Andariel (N)");
+        assert_eq!(Difficulty::tc_variant("Duriel", Hell), "Duriel (H)");
+        assert_eq!(Difficulty::tc_variant("Quill 1", Nightmare), "Quill 1 (N)");
+        // Cas limites : vide, « Act » sans suite (non producteur de TC).
+        assert_eq!(Difficulty::tc_variant("", Hell), " (H)");
+        assert_eq!(Difficulty::tc_variant("Act", Hell), "Act (H)");
     }
 
     /// Règle v1.12 : ×(100−res)/100, négatif = amplifié, ≥100 = immunité.

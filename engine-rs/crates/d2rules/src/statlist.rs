@@ -379,6 +379,113 @@ pub fn props_stat_lines(props: &[crate::item_props::RolledProp]) -> Vec<StatLine
 }
 
 // ---------------------------------------------------------------------------
+// Étape 12b — branchement affixes + uniques/sets → agrégation (mission ②)
+// ---------------------------------------------------------------------------
+
+/// Statistiques ÉVALUÉES d'un item (mission 12b ②) : la [`StatList`]
+/// agrégée des stats pures + les émissions paramétrées (classes/onglets/
+/// aura — une agrégation par id seul les confondrait) + les accroches
+/// skill (charges/procs — structures minimales pour l'intégrateur).
+/// Construit depuis des props roulées ([`crate::item_props::roll_descs`])
+/// ou directement depuis un record d'unique/set (roll interne, un tirage
+/// [`crate::rng::Rng`] par prop — déterministe au seed).
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ItemStats {
+    /// Stats pures agrégées par id ItemStatCost (`sum` multi-sources).
+    pub stats: StatList,
+    /// Émissions paramétrées (item_addclassskills, item_addskill_tab,
+    /// item_aura, state, fade, item_reanimate).
+    pub param_stats: Vec<crate::item_props::StatEmit>,
+    /// Accroches skill (charged / procs / +skills) — structures minimales,
+    /// aucun comportement runtime (mission 12b ③).
+    pub skills: Vec<crate::item_props::SkillProp>,
+}
+
+impl ItemStats {
+    /// Évalue des props déjà roulées (affixes d'un drop : `RolledProp`, ou
+    /// tuples `affix_ids` dépliés par `affixes::stat_ids_of` côté coéquipier)
+    /// et agrège. Les émissions à id `-1` (stat absente de l'ISC — n'arrive
+    /// pas sur les données v1.12, golden exhaustif chez `item_props`) sont
+    /// ignorées dans la map, jamais dans `param_stats`/`skills`.
+    pub fn from_props(props: &[crate::item_props::RolledProp]) -> ItemStats {
+        let mut out = ItemStats::default();
+        for p in props {
+            let ev = crate::item_props::evaluate(&p.desc, p.value);
+            for e in ev.emits {
+                if e.stat_id >= 0 {
+                    out.stats.add(e.stat_id, e.value);
+                }
+            }
+            out.param_stats.extend(ev.param_stats);
+            out.skills.extend(ev.skills);
+        }
+        out
+    }
+
+    /// Descripteurs + valeurs déjà tirées (chemin uniques/sets sans rng).
+    pub fn from_descs(descs: &[crate::item_props::PropDescriptor], values: &[i32]) -> ItemStats {
+        let mut out = ItemStats::default();
+        for (d, v) in descs.iter().zip(values.iter()) {
+            let ev = crate::item_props::evaluate(d, *v);
+            for e in ev.emits {
+                if e.stat_id >= 0 {
+                    out.stats.add(e.stat_id, e.value);
+                }
+            }
+            out.param_stats.extend(ev.param_stats);
+            out.skills.extend(ev.skills);
+        }
+        out
+    }
+
+    /// Stats d'un UNIQUE : props `prop1-12` roulées (un tirage par prop)
+    /// puis évaluées/agrégées. Déterministe au seed du [`crate::rng::Rng`].
+    #[allow(private_interfaces)]
+    pub fn from_unique(
+        u: &crate::uniques_sets::UniqueRec,
+        rng: &mut crate::rng::Rng,
+    ) -> ItemStats {
+        Self::from_props(&crate::item_props::roll_descs(&u.props, rng))
+    }
+
+    /// Stats PROPRES d'une pièce de set (`prop1-9` — les blocs additionnels
+    /// `apropNa/b` dépendent du nombre de pièces portées : intégrateur, via
+    /// [`ItemStats::from_descs`]).
+    #[allow(private_interfaces)]
+    pub fn from_set_item(
+        s: &crate::uniques_sets::SetItemRec,
+        rng: &mut crate::rng::Rng,
+    ) -> ItemStats {
+        Self::from_props(&crate::item_props::roll_descs(&s.props, rng))
+    }
+
+    /// Bonus set COMPLET (`FCode1-8` de `sets.txt`).
+    #[allow(private_interfaces)]
+    pub fn from_set_full(s: &crate::uniques_sets::SetRec, rng: &mut crate::rng::Rng) -> ItemStats {
+        Self::from_props(&crate::item_props::roll_descs(&s.full, rng))
+    }
+
+    /// Bonus PARTIELS d'un set (`PCode2-5a` ou `PCode2-5b`, selon la
+    /// variante activée par `add func` — intégrateur).
+    #[allow(private_interfaces)]
+    pub fn from_set_partial(
+        s: &crate::uniques_sets::SetRec,
+        variant_a: bool,
+        rng: &mut crate::rng::Rng,
+    ) -> ItemStats {
+        let descs = if variant_a { &s.partial_a } else { &s.partial_b };
+        Self::from_props(&crate::item_props::roll_descs(descs, rng))
+    }
+
+    /// Agrège une autre source (multi-équipement : item + item + …).
+    pub fn merge(&mut self, other: &ItemStats) {
+        self.stats.merge(&other.stats);
+        self.param_stats.extend_from_slice(&other.param_stats);
+        self.skills.extend_from_slice(&other.skills);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests — ids revérifiés contre la table réelle v1.12 + agrégation pures.
 // ---------------------------------------------------------------------------
 #[cfg(test)]
@@ -496,5 +603,131 @@ mod tests {
         assert_eq!(l.res_cold(), 10);
         assert_eq!(l.res_poison(), 10);
         assert_eq!(l.len(), 5, "nofreeze ignoré (non mappé)");
+    }
+
+    // -------------------------------------------------------------------
+    // Étape 12b — branchement affixes + uniques/sets → agrégation
+    // -------------------------------------------------------------------
+
+    const UNIQUES: &str = include_str!("../../../../assets/patch_uniqueitems.txt");
+    const SETITEMS: &str = include_str!("../../../../assets/patch_setitems.txt");
+    const SETS: &str = include_str!("../../../../assets/patch_sets.txt");
+
+    fn uniques_sets() -> crate::uniques_sets::UniquesSets {
+        crate::uniques_sets::parse(UNIQUES, SETITEMS, SETS).expect("tables uniques/sets")
+    }
+
+    fn rec<'a>(t: &'a crate::uniques_sets::UniquesSets, index: &str) -> &'a crate::uniques_sets::UniqueRec {
+        t.uniques.iter().find(|u| u.index == index).unwrap_or_else(|| panic!("{index}"))
+    }
+
+    /// BRANCHEMENT — Gull + Nagelring + un anneau magique affixé
+    /// (`str` 5, prop roulée affixe) : l'agrégation multi-sources somme
+    /// tout dans UNE StatList (mission ② : MF 100 + roll(15..30) + 0,
+    /// str 5).
+    #[test]
+    fn itemstats_aggregates_unique_plus_affix_sources() {
+        let t = uniques_sets();
+        let mut rng = crate::rng::Rng::new(0x12B);
+        let gull = ItemStats::from_unique(rec(&t, "Gull"), &mut rng);
+        let nagel = ItemStats::from_unique(rec(&t, "Nagelring"), &mut rng);
+        let mut ring = ItemStats::default();
+        ring.stats.add(STRENGTH, 5);
+        let mut total = ItemStats::default();
+        total.merge(&gull);
+        total.merge(&nagel);
+        total.merge(&ring);
+        assert!(
+            (115..=130).contains(&total.stats.magic_find()),
+            "MF agrégé = 100 (Gull L41 fixe) + roll(15..30) Nagelring : {}",
+            total.stats.magic_find()
+        );
+        assert_eq!(total.stats.strength(), 5);
+        assert_eq!(total.stats.get(MINDAMAGE), 1, "Gull dmg-min 1");
+        assert_eq!(total.stats.get(MAXDAMAGE), 15);
+        assert_eq!(total.stats.get(35), 3, "red-mag Nagelring");
+        // détail : Gull seul porte bien son mana -5.
+        let g = ItemStats::from_unique(rec(&t, "Gull"), &mut crate::rng::Rng::new(1));
+        assert_eq!(g.stats.get(MAXMANA), -5);
+    }
+
+    /// DÉTERMINISME (mission ④) : même seed ⇒ ItemStats identiques champ
+    /// par champ (Annihilus : all-stats 10-20 ROULÉ) ; seeds différents ⇒
+    /// tirages différents (probabilité ~1).
+    #[test]
+    fn itemstats_roll_is_deterministic_per_seed() {
+        let t = uniques_sets();
+        let a = ItemStats::from_unique(rec(&t, "Annihilus"), &mut crate::rng::Rng::new(777));
+        let b = ItemStats::from_unique(rec(&t, "Annihilus"), &mut crate::rng::Rng::new(777));
+        assert_eq!(a, b);
+        let mut diff = 0;
+        for seed in 0..20u64 {
+            let c = ItemStats::from_unique(rec(&t, "Annihilus"), &mut crate::rng::Rng::new(seed));
+            if c != a {
+                diff += 1;
+            }
+        }
+        assert!(diff > 0, "all-stats 10-20 : au moins un seed tire autre chose");
+    }
+
+    /// SETS — Civerb's Vestments (sets.txt L2) : bonus complet str 15 /
+    /// dmg-undead 200 / res-ltng 25 agrégé ; pièce Civerb's Icon (amu).
+    /// Déterminisme des bonus partiels (variantes a/b séparées).
+    #[test]
+    fn itemstats_sets_full_and_piece() {
+        let t = uniques_sets();
+        let parent = t.set_by_index("Civerb's Vestments").expect("set Civerb");
+        let full = ItemStats::from_set_full(parent, &mut crate::rng::Rng::new(3));
+        assert_eq!(full.stats.strength(), 15);
+        assert_eq!(full.stats.get(122), 200, "item_undeaddamage_percent 200");
+        assert_eq!(full.stats.res_lightning(), 25, "res-ltng → lightresist id 41");
+        let icon = t
+            .set_items
+            .iter()
+            .find(|s| s.set == "Civerb's Vestments" && s.item_code == "amu")
+            .expect("Civerb's Icon");
+        let piece = ItemStats::from_set_item(icon, &mut crate::rng::Rng::new(4));
+        assert!(!piece.stats.is_empty(), "la pièce porte ses props propres");
+        // Variante partielle a/b : structures séparées, déterministes.
+        let pa = ItemStats::from_set_partial(parent, true, &mut crate::rng::Rng::new(5));
+        let pa2 = ItemStats::from_set_partial(parent, true, &mut crate::rng::Rng::new(5));
+        assert_eq!(pa, pa2);
+    }
+
+    /// Champs du contrat : les accroches skill d'un unique passent la
+    /// branchement (Marrowwalk : 2 charged + 1 skill dans `skills`), les
+    /// stats pures dans `stats`, les paramétrées dans `param_stats`.
+    #[test]
+    fn itemstats_carries_skills_and_param_stats() {
+        let t = uniques_sets();
+        let m = ItemStats::from_unique(rec(&t, "Marrowwalk"), &mut crate::rng::Rng::new(9));
+        assert_eq!(m.skills.len(), 3, "Bone Prison + Life Tap + Skeleton Mastery");
+        assert_eq!(m.stats.get(26), 10, "regen-mana agrégé dans la map");
+        let fetid = ItemStats::from_unique(rec(&t, "The Fetid Sprinkler"), &mut crate::rng::Rng::new(10));
+        assert_eq!(fetid.param_stats.len(), 1, "pal → item_addclassskills");
+        assert_eq!(fetid.param_stats[0].param, 3);
+        assert_eq!(fetid.skills.len(), 2, "2 hit-skill");
+        assert!(fetid.stats.get(111) > 0, "dmg-norm agrégé");
+    }
+
+    /// Pont `StatEmit` → `StatList` : les stats pures s'agrègent par id,
+    /// une émission à id -1 est ignorée (jamais de panique).
+    #[test]
+    fn itemstats_ignores_missing_stat_ids() {
+        let mut out = ItemStats::default();
+        out.stats.add(-1, 5);
+        assert_eq!(out.stats.get(-1), 5, "usage direct possible mais le pont ne l'émet pas");
+        let props = [crate::item_props::RolledProp {
+            desc: crate::item_props::PropDescriptor {
+                code: "dmg-elem".into(), // skip documenté : aucune émission
+                param: String::new(),
+                min: 33,
+                max: 324,
+            },
+            value: 100,
+            typed: None,
+        }];
+        let s = ItemStats::from_props(&props);
+        assert!(s.stats.is_empty() && s.param_stats.is_empty() && s.skills.is_empty());
     }
 }

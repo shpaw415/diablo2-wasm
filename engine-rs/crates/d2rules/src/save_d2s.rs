@@ -48,7 +48,7 @@
 //! Aucune IO : octets en entrée/sortie, l'écriture/lecture fichier vit
 //! dans la page (bouton téléchargement / input file).
 
-use super::world::{INV_COLS, MAX_LEVEL, World, XP_TABLE};
+use super::world::{INV_COLS, World, max_level_of, xp_threshold};
 use crate::skills_hero::class_code;
 use d2d2s::{
     Class, Container, DifficultyEntry, Item, ItemExtended, ItemHeader, Location, Quality,
@@ -372,13 +372,18 @@ impl World {
         let dexterity = st.value(2).unwrap_or(0);
         let gold = st.value(14).unwrap_or(0);
         let skill_points = st.value(5).unwrap_or(0);
-        // Niveau plafonné au MVP (seuils XP 1..=10) ; XP réalignée au seuil
-        // du niveau appliqué (cohérence HUD/arbre) — l'XP brut du fichier
-        // n'est pas conservable au-delà du plafond.
-        let level = (save.header.level.max(1) as u32).clamp(1, MAX_LEVEL);
-        let xp = XP_TABLE[(level - 1) as usize];
-        let xp_to_next =
-            if level >= MAX_LEVEL { 0 } else { XP_TABLE[level as usize] - xp };
+        // Niveau plafonné au `MaxLvl` de la table XP réelle (99 en v1.12,
+        // `world::max_level_of`) ; XP réalignée au seuil du niveau appliqué
+        // (cohérence HUD/arbre) — l'XP brut du fichier n'est pas conservable
+        // au-delà du plafond.
+        let max_level = max_level_of(&self.hero_code);
+        let level = (save.header.level.max(1) as u32).clamp(1, max_level);
+        let xp = xp_threshold(&self.hero_code, level);
+        let xp_to_next = if level >= max_level {
+            0
+        } else {
+            xp_threshold(&self.hero_code, level + 1) - xp
+        };
         // Stats dérivées au gabarit de la classe importée (formules
         // `init_hero`) ; vitesse/potion du gabarit.
         let tpl = &self.hero_tpl;
@@ -581,8 +586,8 @@ mod tests {
 
     fn tweak(w: &mut World) {
         w.hero.stats.level = 3;
-        w.hero.stats.xp = XP_TABLE[2];
-        w.hero.stats.xp_to_next = XP_TABLE[3] - XP_TABLE[2];
+        w.hero.stats.xp = xp_threshold("SOR", 3);
+        w.hero.stats.xp_to_next = xp_threshold("SOR", 4) - xp_threshold("SOR", 3);
         w.hero.stats.strength = 40;
         w.hero.stats.dexterity = 25;
         w.hero.stats.life = 44;
@@ -668,11 +673,12 @@ mod tests {
         let mut w = world("SOR");
         let report = w.import_d2s(VECTOR_MINIMAL).expect("vecteur minimal importé");
         // Le vecteur : str 20, level 12, gold 1000, 0 item. Nom informatif
-        // (non mappé), niveau plafonné au MVP.
+        // (non mappé), niveau plafonné au `MaxLvl` de la table (99 — le
+        // vecteur 12 passe tel quel).
         assert_eq!(report.name, "Testchar");
         assert_eq!(w.hero.stats.strength, 20);
         assert_eq!(w.hero.stats.gold, 1000);
-        assert_eq!(w.hero.stats.level, MAX_LEVEL.min(12), "plafonné au MVP");
+        assert_eq!(w.hero.stats.level, max_level_of("SOR").min(12), "plafonné au MaxLvl");
         assert_eq!(report.items_loaded, 0);
         // Le rapport reflète la classe appliquée (cohérence header).
         let class = SaveFile::parse(VECTOR_MINIMAL).unwrap().header.class;
@@ -719,7 +725,7 @@ mod tests {
         assert_eq!((s.max_mana, s.mana), (17, 9));
         assert_eq!(s.gold, 123);
         assert_eq!(s.skill_points, 2);
-        assert_eq!(s.xp, XP_TABLE[2]);
+        assert_eq!(s.xp, xp_threshold("SOR", 3));
         assert_eq!(b.active_waypoints(), &[0], "le slot 39 n'est pas exportable");
         assert_eq!(
             b.hero_skills(),
@@ -749,7 +755,7 @@ mod tests {
         let mut src = world("BA");
         src.hero.skills = vec![crate::HeroSkill { code: "Bash".into(), level: 4, missile: None }];
         src.hero.stats.level = 5;
-        src.hero.stats.xp = XP_TABLE[4];
+        src.hero.stats.xp = xp_threshold("BA", 5);
         let bytes = src.export_d2s("Barbu").unwrap();
 
         let mut dst = world("SOR"); // sorcière à l'origine

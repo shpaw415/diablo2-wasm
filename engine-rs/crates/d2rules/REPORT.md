@@ -116,3 +116,61 @@ crates/d2rules/
 
 Contrat vérifié : `cargo test` workspace complet vert (d2mpq/d2tool/d2dc6/d2dcc/d2wasm/**d2game**
 intactes — seuls `members` du workspace et ma crate ont été touchés).
+
+---
+
+## Étape 11c — Économie & inventaire (2026-10-24, arbre d2w-cube)
+
+Nouveau module PUR `src/economy.rs` (+ 1 ligne `pub mod economy;` dans `lib.rs`,
+branchement additif `world.rs`/`save.rs`, panneau démo `demo/stash-ui.js`).
+
+### Or (Basin Wiki « Gold », wiki fan officieux — règles v1.10+)
+* Plafond porté = **10 000 × niveau** (`carry_cap`) ; tout gain au-delà est
+  refusé, le reliquat RESTE au sol (Pickup tronqué + auto-pickup).
+* Or du stash séparé : `Stash::deposit_gold`/`withdraw_gold` ; plafond stash
+  par difficulté 300 000 / 500 000 / 800 000 (Normal/NM/Enfer, source fan
+  citée, constante documentée).
+* Achat = débit RÉEL + réserve vendeur créditée (`purchase`, miroir pur de
+  `TradeSession::buy`).
+
+### Stash 6×4
+* Géométrie `inventory.txt` « Bank Page » (brief 11c) : grille partagée
+  `InventoryGrid` (canFit/find_first_fit de `inventory.rs`), items riches
+  `EquipItem` (tailles réelles), indices stables.
+* État `World::gold_stash` + accesseurs `stash`/`stash_mut`/
+  `stash_deposit_gold`/`stash_withdraw_gold` ; **save additive `gold_stash`**
+  (`#[serde(default)]` — saves v3 antérieures chargent un stash vide 6×4,
+  test de rétro-compat inclus).
+* Démo : `demo/stash-ui.js` (window.D2Stash, miroir des plafonds/canFit,
+  persistence localStorage `d2w.stash.v1`) + **1 ligne** `game.js`
+  (`import("./stash-ui.js")`). Aucun endpoint wasm changé ⇒ pas de rebuild
+  game-pkg.
+
+### Durabilité (colonnes réelles `durability`/`nodurability`)
+* Valeurs réelles : `durability_of` (hax 28, cap 12, stu 32, misc 0).
+* Usure : arme −1/coup porté (`WEAR_PER_HIT`), pièce −1/coup reçu
+  (`WEAR_PER_BLOW`) — simplification documentée (le retail use une pièce
+  aléatoire : Basin « Durability »).
+* Brisée (= 0) ⇒ non utilisable, plus de dégâts (`weapon_damage` /
+  `item_effective_damage` renvoient (0,0), mode 2 mains respecté).
+* Réparation : `floor(cost × (max − cur) / max)` — formule linéaire ASSUMÉE
+  et documentée (wikis non fiables ; le brief 11c le permet), garde sur
+  l'or (`repair`).
+* Branchement World (usure au coup) : contrat documenté — attend
+  l'intégration de l'équipement 7c (`equipment.rs` non branché sur le
+  World, cf. choix J1 `corpse.rs`).
+
+### Vente & auto-pickup
+* Vente officielle D2 = **cost/4 plancher** (`sell_price` ; Basin « Shops » :
+  marchands payent 25 %) — goldens sur objets réels : hp1 30⇒7, cap 64⇒16,
+  stu 2385⇒596.
+* Auto-pickup de l'or en zone (`PICKUP_RANGE` 2 tuiles) pendant le
+  déplacement (`world_auto_pickup`, fin d'`update_hero`, MOUVEMENT requis —
+  immobile : rien), sous plafond porté ; reliquat au sol.
+
+### Tests (+9 → workspace 681 passed / 0 failed / 1 ignored)
+Cap or 10 000×niveau · auto-pickup sous cap · stash or plafonds/dépôt/retrait ·
+vente+achat objets réels · durabilité tables réelles (usure/bris/réparation) ·
+stash canFit 6×4 (dépôt/retrait/plein/trop grand) · roundtrip save `gold_stash`
++ rétro-compat · pickup monde capé · auto-pickup en mouvement. JS : `node --check`
+stash-ui.js/game.js OK.

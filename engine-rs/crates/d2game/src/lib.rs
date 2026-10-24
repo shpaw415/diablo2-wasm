@@ -24,6 +24,11 @@
 
 pub mod astar;
 pub mod automap; // 9d monde vivant : résolution AutoMap.txt + JSON mini-carte (demo/automap.js)
+
+/// DRLG fin de jeu A4-A5 (étape 10a) — Pandemonium Fortress, Harrogath
+/// (townsiege.ds1 réel), Bloody Foothills, Crystalized Cavern (maze),
+/// Halls of Vaught (preset ×4 seedé) — `drlg_a45.rs`.
+pub mod drlg_a45;
 pub mod compose;
 pub mod drlg;
 pub mod ds1;
@@ -69,6 +74,10 @@ pub mod sprite;
 /// TBL v1.12 réelles (embarquées), repli manifest ; blocs `impl GameCore`
 /// additifs (`tbl_names.rs`).
 pub mod tbl_names;
+/// Consommables 11b côté moteur (wire minimal d2rules::consumables :
+/// useConsumable/useBeltKey/beltAutoStore + retour camp via switch_level
+/// existant) — blocs `impl GameCore` additifs (`consumables_ui.rs`).
+pub mod consumables_ui;
 /// Graphe Vis/Warp générique 8c (neighbors tout le jeu, WarpDef depuis la
 /// table, entry_points contrat DRLG) — `warp_graph.rs`.
 pub mod warp_graph;

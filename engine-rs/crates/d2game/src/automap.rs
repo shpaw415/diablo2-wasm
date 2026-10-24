@@ -34,27 +34,47 @@
 //!   (`demo/automap.js`) : par cellule visible `[x, y, flags, cel]`, plus
 //!   les dimensions ; zéro calcul lourd côté JS.
 //!
-//! # Fallback documenté (mission 9d)
+//! # Fallback documenté (missions 9d puis 13b)
 //! Les `Cel` indexent les frames de `MaxiMap.dc6`, sprite ABSENT du port —
 //! le JSON n'expose donc que les INDICES (`cel`), pas de pixels. Mode :
-//! * `"automap"` — groupe AutoMap résolu pour le LvlType du niveau ; chaque
-//!   cellule porte son `cel` réel (≥ 0) ou `-1` si aucun record ne couvre
-//!   sa tuile ;
+//! * `"automap"` — groupe AutoMap résolu pour le LvlType du niveau ET
+//!   mapping PROPRE aux tuiles DT1 composées : chaque cellule porte son
+//!   `cel` réel (≥ 0) ou `-1` si aucun record ne couvre sa tuile ;
 //! * `"fallback"` — pas de tables levels branchées, pas de bloc manifest
-//!   `levelsId`, LvlType sans groupe AutoMap : `cel` reste `-1` et la démo
-//!   dessine le POLYGONE MARCHABLE (diamants des cellules `walk`, ignorés :
-//!   murs) — repli marchable assumé, documenté ici et dans REPORT.md.
+//!   `levelsId`, LvlType sans groupe AutoMap, ou COUVERTURE INSUFFISANTE
+//!   (cf. [`AUTOMAP_MIN_COVERAGE`]) : la démo dessine le POLYGONE
+//!   MARCHABLE (diamants des cellules `walk`, ignorés : murs) — repli
+//!   marchable assumé, documenté ici et dans REPORT.md.
+//!
+//! # Couverture mesurée par niveau (mission 13b — niveaux finaux A4-A5)
+//! « Propre » = ≥ [`AUTOMAP_MIN_COVERAGE`] (60 %) des cellules visibles
+//! portent un `cel` résolu (mesuré sur la carte COMPOSÉE, pas la banque).
+//! Sonde sur les banques DT1 réelles du port (base 276, Style@+24,
+//! Sequence@+28, jokers AutoMap inclus — cf. tests `a45_bank_coverage_*`) :
+//!
+//! | niveau (clé manifest) | LvlType → groupe AutoMap | couverture | mode |
+//! |---|---|---|---|
+//! | `pandemonium` (103) | 26 « Act 4 - Town » → `4 Town` | 4 % — le groupe v1.12 ne couvre que le style 12 ; les tuiles mesa/fort du port portent les styles 0-18 | `fallback` |
+//! | `harrogath` (109) | 29 « Act 5 - Town » → `5 Town` | groupe ABSENT d'AutoMap.txt v1.12 (35 groupes, aucun « 5 Town ») | `fallback` |
+//! | `bloodyfoothills` (110) | 30 « Act 5 - Siege » → `5 Siege` | 42 % — les sols ground/rockclifffloor (styles 0-1) n'ont pas de records | `fallback` |
+//! | `crystalline` (113) | 33 « Act 5 - Ice Caves » → `5 Ice` (ALIAS, cf. [`group_alias`]) | 95 % — les Cel1-4 mappent proprement | `automap` |
+//! | `hallsvaught` (124) | 32 « Act 5 - Temple » → `5 Temple` | 34 % — interior.dt1 porte les styles 0-24, la table n'en couvre que 7 | `fallback` |
+//! (Références LECTURE SEULE : `d2w-re/tables/monde/AutoMap.txt` 3 287
+//! records, DT1 `assets/map` — même chaîne d'extraction que le port.)
 //!
 //! # Format JSON livré (`automap()`)
 //! ```json
-//! {"level":"town","name":"Camp des Rousses","mode":"automap",
-//!  "lvlType":"Town","cellW":57,"cellH":41,"sub":5,
+//! {"level":"town","name":"Camp des Rousses","mode":"automap","act":1,
+//!  "lvlType":"Town","coverage":0.73,"cellW":57,"cellH":41,"sub":5,
 //!  "cells":[[0,0,1,0],[3,1,3,-1],…]}
 //! ```
 //! `cells` : `[x, y, flags, cel]` par cellule VISIBLE ; `flags` bit0=walk,
 //! bit1=wall, bit2=special (cellule rare L2/L5 — pierres, warp) ; `cel` =
 //! première valeur active `Cel1..4` du record AutoMap (frame `MaxiMap`),
 //! `-1` sans match (→ diamant générique / polygone marchable côté démo).
+//! `act` = acte résolu (préfixe du nom LvlTypes, repli colonne `Act`) ;
+//! `coverage` = fraction des cellules visibles portant un `cel` ≥ 0
+//! (arrondie au centième — le juge du mode, cf. [`AUTOMAP_MIN_COVERAGE`]).
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -267,10 +287,15 @@ pub struct AutomapCell {
 pub struct LevelAutomap {
     pub level_key: String,
     pub act: u32,
-    /// Nom court du LvlTypes (`"Town"`, `"Wilderness"`…) — `""` si non résolu.
+    /// Nom court du LvlTypes (`"Town"`, `"Ice"`…) — `""` si non résolu
+    /// (après alias [`group_alias`], même espace que les groupes AutoMap).
     pub lvl_type: String,
-    /// `"automap"` (groupe résolu) ou `"fallback"` (voir en-tête de module).
+    /// `"automap"` (groupe résolu ET couverture ≥ [`AUTOMAP_MIN_COVERAGE`])
+    /// ou `"fallback"` (voir en-tête de module).
     pub mode: &'static str,
+    /// Fraction des cellules visibles portant un `cel` ≥ 0 (le juge du
+    /// mode, mission 13b — exposée dans le JSON `automap_json`).
+    pub coverage: f32,
     pub cell_w: u32,
     pub cell_h: u32,
     pub cells: Vec<AutomapCell>,
@@ -292,6 +317,28 @@ fn split_act_prefix(name: &str) -> (Option<u32>, String) {
     (None, name.trim().to_string())
 }
 
+/// Seuil « mapping propre » (mission 13b) : fraction minimale de cellules
+/// visibles portant un `cel` résolu pour activer le mode `"automap"`. Sous
+/// le seuil — OU sans groupe AutoMap — le niveau reste en `"fallback"`
+/// (polygone marchable). 0,60 sépare proprement les données réelles v1.12 :
+/// crystalline 95 % / town 73 % / bloodmoor ~76 % d'un côté, hallsvaught
+/// 34 % / bloodyfoothills 42 % / pandemonium 4 % de l'autre (sondes dans
+/// les tests `a45_*` ci-dessous et en-tête de module).
+pub const AUTOMAP_MIN_COVERAGE: f32 = 0.60;
+
+/// Alias noms LvlTypes → groupes AutoMap.txt v1.12 (mission 13b) : la
+/// table AutoMap regroupe les glaces sous « 5 Ice » quand LvlTypes.txt
+/// nomme le type 33 « Act 5 - Ice Caves » — seule divergence de nommage
+/// des 32 LvlTypes (l'autre écart, « 5 Town » ABSENT pour Harrogath, est
+/// une vraie absence de records v1.12, pas un alias). Raccourci ⇒ nom de
+/// groupe réel ; défaut = nom tel quel.
+fn group_alias(short: &str) -> &str {
+    match short {
+        "Ice Caves" => "Ice",
+        other => other,
+    }
+}
+
 /// `(acte, nom court)` du LvlType du niveau depuis les tables levels.txt —
 /// `None` sans tables / sans record / sans LvlType correspondant.
 fn resolve_group(tables: Option<&LevelTables>, levels_id: Option<u32>) -> Option<(u32, String)> {
@@ -299,7 +346,7 @@ fn resolve_group(tables: Option<&LevelTables>, levels_id: Option<u32>) -> Option
     let types = parse_lvl_types(LVL_TYPES).ok()?;
     let lt = types.iter().find(|t| t.id == rec.level_type)?;
     let (act_from_name, short) = split_act_prefix(&lt.name);
-    Some((act_from_name.unwrap_or(rec.act), short))
+    Some((act_from_name.unwrap_or(rec.act), group_alias(&short).to_string()))
 }
 
 /// Index de tuile résolu d'une cellule DS1 — MÊMES gardes ET même repli que
@@ -336,13 +383,17 @@ impl LevelAutomap {
         meta: &[TileMeta],
         map: &ComposedMap,
     ) -> LevelAutomap {
-        let group = resolve_group(tables, levels_id)
-            .and_then(|(act, short)| table().group(act, &short).map(|g| (act, short, g)));
-        let (act, lvl_type, group) = match group {
-            Some((act, short, g)) => (act, short, Some(g)),
+        // Identité (acte, LvlType) résolue INDÉPENDAMMENT du groupe : un
+        // LvlType sans groupe AutoMap (« 5 Town » pour Harrogath, mission
+        // 13b) garde son acte et son nom dans le JSON — seul le mode passe
+        // en « fallback ».
+        let (act, lvl_type, group) = match resolve_group(tables, levels_id) {
+            Some((act, short)) => {
+                let g = table().group(act, &short);
+                (act, short, g)
+            }
             None => (0, String::new(), None),
         };
-        let mode = if group.is_some() { "automap" } else { "fallback" };
 
         let mut cells = Vec::new();
         for cy in 0..ds1.h {
@@ -396,11 +447,26 @@ impl LevelAutomap {
                 });
             }
         }
+        // Mode 13b : le groupe seul ne suffit plus — la couverture MESURÉE
+        // sur la carte composée décide (mission : « si les Cel1-4 mappent
+        // proprement aux tuiles DT1 composées, rendu précis ; sinon
+        // fallback »). Les `cel` restent portés dans les deux modes.
+        let coverage = if cells.is_empty() {
+            0.0
+        } else {
+            cells.iter().filter(|c| c.cel >= 0).count() as f32 / cells.len() as f32
+        };
+        let mode = if group.is_some() && coverage >= AUTOMAP_MIN_COVERAGE {
+            "automap"
+        } else {
+            "fallback"
+        };
         LevelAutomap {
             level_key: level_key.to_string(),
             act,
             lvl_type,
             mode,
+            coverage,
             cell_w: ds1.w as u32,
             cell_h: ds1.h as u32,
             cells,
@@ -434,7 +500,9 @@ impl crate::game::GameCore {
             "level": a.level_key,
             "name": name,
             "mode": a.mode,
+            "act": a.act,
             "lvlType": a.lvl_type,
+            "coverage": (a.coverage * 100.0).round() / 100.0,
             "cellW": a.cell_w,
             "cellH": a.cell_h,
             "sub": SUB as u32,
@@ -584,5 +652,67 @@ mod tests {
         assert_eq!(split_act_prefix("Act 1 - Wilderness"), (Some(1), "Wilderness".into()));
         assert_eq!(split_act_prefix("Act 3 - Jungle"), (Some(3), "Jungle".into()));
         assert_eq!(split_act_prefix("Town"), (None, "Town".into()));
+    }
+
+    // --- 13b : alias LvlTypes → groupes AutoMap + sonde des niveaux finaux --
+
+    #[test]
+    fn group_alias_covers_the_only_naming_divergence() {
+        // Sonde v1.12 (cf. REPORT.md §13b) : sur les 32 LvlTypes, un SEUL
+        // écart de nommage (« Ice Caves » vs groupe « 5 Ice ») ; « 5 Town »
+        // est lui une vraie ABSENCE de records (Harrogath → fallback).
+        assert_eq!(group_alias("Ice Caves"), "Ice");
+        assert_eq!(group_alias("Town"), "Town");
+        assert_eq!(group_alias("Siege"), "Siege");
+        let t = table();
+        assert!(t.group(5, "Ice").is_some(), "groupe « 5 Ice » : 64 records");
+        assert!(t.group(5, "Ice Caves").is_none(), "pas de groupe « Ice Caves » brut");
+        assert!(t.group(5, "Town").is_none(), "AutoMap.txt v1.12 n'a PAS de « 5 Town »");
+        assert!(t.group(4, "Town").is_some(), "« 4 Town » existe (mais ne couvre que le style 12)");
+    }
+
+    /// Sonde banque réelle : couverture AutoMap des tuiles DT1 d'un niveau
+    /// final A4-A5 (mêmes gardes que [`dt1_meta_aligned`], mêmes jokers que
+    /// [`match_record`]). `None` = pas de groupe AutoMap pour ce LvlType
+    /// (Harrogath — « 5 Town » absent de la table v1.12). Retourne
+    /// (tuiles, matchées).
+    fn a45_bank_coverage(level_id: u32) -> Option<(usize, usize)> {
+        let bank = crate::drlg_a45::bank_for_level(level_id)?;
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3).unwrap().to_path_buf();
+        let (act, short) = split_act_prefix(bank.name);
+        let group = table().group(act?, group_alias(&short))?;
+        let (mut tot, mut matched) = (0usize, 0usize);
+        for f in bank.files {
+            let bytes = std::fs::read(root.join("assets/map").join(f.local))
+                .unwrap_or_else(|e| panic!("{}: {e}", f.local));
+            for m in dt1_meta_aligned(&bytes).unwrap().iter().filter(|m| m.valid) {
+                tot += 1;
+                matched += match_record(group, m.style, m.sequence).is_some() as usize;
+            }
+        }
+        Some((tot, matched))
+    }
+
+    #[test]
+    fn a45_bank_coverages_match_documented_modes() {
+        // Mission 13b : les modes par niveau dérivent des couvertures réelles
+        // (sondes python identiques sur les mêmes DT1 — cf. en-tête module).
+        // Seuil de DÉCISION côté cellules = 0,60 ([`AUTOMAP_MIN_COVERAGE`]) ;
+        // ici on valide la SOURCE (banques) : crystalline seul au-dessus.
+        let cov = |id: u32| {
+            let (tot, m) = a45_bank_coverage(id).expect("groupe AutoMap présent");
+            assert!(tot > 0, "banque {id} non vide");
+            m as f32 / tot as f32
+        };
+        let pandemonium = cov(crate::drlg_a45::PANDEMONIUM);
+        assert!(pandemonium < 0.10, "« 4 Town » ne couvre que le style 12 : {pandemonium:.2}");
+        assert!(a45_bank_coverage(crate::drlg_a45::HARROGATH).is_none(),
+            "pas de groupe « 5 Town » : Harrogath fallback garanti");
+        let foothills = cov(crate::drlg_a45::BLOODY_FOOTHS);
+        assert!(foothills < 0.60, "sols styles 0-1 sans records : {foothills:.2}");
+        let crystalline = cov(crate::drlg_a45::CRYSTALLINE);
+        assert!(crystalline >= 0.90, "glaces propres : {crystalline:.2} ≥ 0,90");
+        let vaught = cov(crate::drlg_a45::HALLS_VAUGHT);
+        assert!(vaught < 0.60, "interior styles 0-24 mal couverts : {vaught:.2}");
     }
 }

@@ -17,6 +17,7 @@ use serde_json::Value;
 
 use crate::compose::{self, ComposedMap};
 use crate::drlg;
+use crate::drlg_a45;
 use crate::drlg_maze;
 use crate::ds1::{self, Ds1};
 use crate::dt1::{self, Dt1Tile};
@@ -478,30 +479,40 @@ impl GameCore {
 
     /// Ce niveau doit-il passer par le DRLG seedé ? Oui si les tables sont
     /// branchées, que le record levels.txt existe (`levelsId`) et déclare
-    /// un niveau généré supporté : wilderness (DrlgType 3, phase 1 Blood
-    /// Moor — banque de presets extraite) ou maze (DrlgType 1, étape 8a —
-    /// [`drlg_maze::supports`] : record LvlMaze + banque LvlTypes).
+    /// un niveau généré supporté : fin de jeu A4-A5 (étape 10a —
+    /// [`drlg_a45::supports`] : presets réels + wilderness/maze seedés),
+    /// wilderness (DrlgType 3, phase 1 Blood Moor — banque de presets
+    /// extraite) ou maze (DrlgType 1, étape 8a — [`drlg_maze::supports`] :
+    /// record LvlMaze + banque LvlTypes).
     fn drlg_applies(&self, def: &LevelDef) -> bool {
         let Some(tables) = &self.tables else { return false };
         let Some(id) = def.levels_id else { return false };
         let Some(rec) = tables.get(id) else { return false };
         match rec.drlg_type {
+            _ if drlg_a45::supports(id) => true,
             3 => drlg::supports(&def.key),
             1 => drlg_maze::supports(id),
             _ => false,
         }
     }
 
-    /// Niveau maze (DrlgType 1) : ni DS1 figé dans les données release ni
-    /// repli possible — utilisé par la branche DRLG de [`GameCore::load_level`]
-    /// pour rendre l'échec DRLG fatal (jamais de carte noire silencieuse).
+    /// Niveau maze (DrlgType 1) ou fin de jeu généré sans DS1 figé
+    /// (étape 10a : Bloody Foothills, Crystalized Cavern) — ni DS1 figé
+    /// dans les données release ni repli possible — utilisé par la branche
+    /// DRLG de [`GameCore::load_level`] pour rendre l'échec DRLG fatal
+    /// (jamais de carte noire silencieuse).
     fn maze_applies(&self, def: &LevelDef) -> bool {
-        self.drlg_applies(def)
-            && self
-                .tables
-                .as_ref()
-                .and_then(|t| def.levels_id.and_then(|id| t.get(id)))
-                .is_some_and(|rec| rec.drlg_type == 1)
+        if !self.drlg_applies(def) {
+            return false;
+        }
+        let Some(id) = def.levels_id else { return false };
+        if drlg_a45::generated_only(id) {
+            return true;
+        }
+        self.tables
+            .as_ref()
+            .and_then(|t| t.get(id))
+            .is_some_and(|rec| rec.drlg_type == 1)
     }
 
     /// Chemin historique : DS1 figé du manifest + DT1 résolus par .tg1.
@@ -534,6 +545,11 @@ impl GameCore {
             .levels_id
             .and_then(|id| self.tables.as_ref()?.get(id).map(|_| id))
             .ok_or_else(|| format!("drlg : niveau {} sans record levels.txt", def.key))?;
+        // Fin de jeu A4-A5 (étape 10a) : presets réels + wilderness/maze
+        // seedés — la branche passe AVANT le dispatch historique.
+        if drlg_a45::supports(id) {
+            return self.build_a45_tiles(def, id);
+        }
         if self.tables.as_ref().is_some_and(|t| t.get(id).is_some_and(|r| r.drlg_type == 1)) {
             return self.build_maze_tiles(def, id);
         }
@@ -574,6 +590,35 @@ impl GameCore {
         }
         let seed = drlg::level_seed(self.game_seed, &def.key);
         let (ds1, _stats) = drlg_maze::generate(id, seed, &tilesets)?;
+        Ok((ds1, tilesets, meta))
+    }
+
+    /// DRLG fin de jeu A4-A5 (étape 10a, [`crate::drlg_a45`]) : les DT1 de
+    /// la banque du niveau ([`drlg_a45::bank_for_level`], résolus par la
+    /// liste `dt1` du bloc manifest), concaténés dans l'ordre
+    /// [`drlg_a45::A45Bank::files`] — puis
+    /// `drlg_a45::generate(level_id, graine de partie)` : presets réels
+    /// (Fortress/townsiege/Nihl) ou niveaux seedés (Bloody Foothills,
+    /// Crystalized Cavern), sortie [`Ds1`] consommée par le composeur.
+    fn build_a45_tiles(&self, def: &LevelDef, id: u32) -> Result<(Ds1, Vec<Dt1Tile>, Vec<crate::automap::TileMeta>), String> {
+        let bank = drlg_a45::bank_for_level(id)
+            .ok_or_else(|| format!("drlg a45 : niveau {id} sans banque supportée"))?;
+        let mut tilesets: Vec<Dt1Tile> = Vec::new();
+        let mut meta: Vec<crate::automap::TileMeta> = Vec::new();
+        for file in bank.files {
+            // 13b : le conteneur local est porté par la banque elle-même
+            // (extraction 10a) — PAS de résolution .tg1 : les noms embarqués
+            // du DS1 réel divergent des fichiers extraits (foregate →
+            // forgate, inv_wall → invwall) et tombaient sur « \0missing »,
+            // rendant les 5 niveaux A4-A5 inchargeables via GameCore.
+            let bytes = self.asset(file.local)?.clone();
+            let container = file.local;
+            let tiles = dt1::decode_dt1(&bytes).map_err(|e| format!("{container}: {e:?}"))?;
+            meta.append(&mut crate::automap::dt1_meta_aligned(&bytes).map_err(|e| format!("{container}: {e:?}"))?);
+            tilesets.extend(tiles);
+        }
+        let seed = drlg::level_seed(self.game_seed, &def.key);
+        let (ds1, _stats) = drlg_a45::generate(id, seed, &tilesets)?;
         Ok((ds1, tilesets, meta))
     }
 
@@ -3372,5 +3417,80 @@ mod tests {
         assert!(cells.iter().all(|c| c[3].as_i64().unwrap() == -1), "fallback : aucun Cel");
         let walk = cells.iter().filter(|c| c[2].as_i64().unwrap() & 1 == 1).count();
         assert!(walk > 0, "le polygone marchable a de la matière");
+    }
+
+    // --- 13b (finitions) : AutoMap des 5 niveaux finaux A4-A5 ---------------
+    // Mode par niveau, résolu par la COUVERTURE mesurée (automap.rs, seuil
+    // AUTOMAP_MIN_COVERAGE) et validé contre les banques DT1 réelles (sondes
+    // `a45_bank_coverages_match_documented_modes`). Le `name` vient des TBL
+    // fr réelles (clés LevelName de patch_levels.txt — bannière de zone).
+
+    /// automap_json() du niveau chargé + déterminisme (même graine ⇒ même JSON).
+    fn automap_a45(level: &str, root: &str, seed: u64) -> (Value, GameCore) {
+        let g = full_game_with_tables(MANIFEST, level, root, seed);
+        let j1 = g.automap_json();
+        let v: Value = serde_json::from_str(&j1).unwrap();
+        let g2 = full_game_with_tables(MANIFEST, level, root, seed);
+        assert_eq!(j1, g2.automap_json(), "{level} : même graine ⇒ même automap");
+        (v, g)
+    }
+
+    #[test]
+    fn automap_a45_modes_coverage_and_fr_names() {
+        let Some(root) = ws_root() else { return };
+        // (clé, act, lvlType post-alias, mode, nom fr TBL, borne couverture)
+        let plan: &[(&str, u32, &str, &str, &str, fn(f32) -> bool)] = &[
+            ("pandemonium", 4, "Town", "fallback", "La Fort. de Pandémonium",
+                |c| c < 0.10),
+            // Harrogath : acte 5, même nom court « Town » — mais AUCUN groupe
+            // « 5 Town » dans AutoMap.txt v1.12 → fallback garanti.
+            ("harrogath", 5, "Town", "fallback", "Harrogath",
+                |c| c < 0.10),
+            ("bloodyfoothills", 5, "Siege", "fallback", "Les Collines Sanglantes",
+                |c| c < 0.60),
+            // Seul niveau au mapping propre (95 %, alias « Ice Caves »→« Ice »).
+            ("crystalline", 5, "Ice", "automap", "Le Passage Cristallin",
+                |c| c >= 0.90),
+            ("hallsvaught", 5, "Temple", "fallback", "Les Corridors du Martyre",
+                |c| c < 0.60),
+        ];
+        for (level, act, lvl_type, mode, name, cov_ok) in plan {
+            let (v, g) = automap_a45(level, &root, 7);
+            assert_eq!(v["level"], *level, "{level} : clé");
+            assert_eq!(v["act"], *act, "{level} : acte résolu du nom LvlTypes");
+            assert_eq!(v["lvlType"], *lvl_type, "{level} : LvlType (post-alias)");
+            assert_eq!(v["mode"], *mode, "{level} : mode attendu (couverture réelle)");
+            assert_eq!(v["name"], *name, "{level} : bannière de zone fr via TBL");
+            let coverage = v["coverage"].as_f64().unwrap_or(-1.0) as f32;
+            assert!(cov_ok(coverage), "{level} : couverture {coverage:.2} hors bande documentée");
+            let cells = v["cells"].as_array().expect("cells");
+            assert!(!cells.is_empty(), "{level} : cellules visibles");
+            // Cohérence grille : mêmes bornes que le composeur.
+            let (w, h) = (v["cellW"].as_u64().unwrap(), v["cellH"].as_u64().unwrap());
+            assert!(cells.iter().all(|c| c[0].as_u64().unwrap() < w && c[1].as_u64().unwrap() < h));
+            if *mode == "automap" {
+                let cels = cells.iter().filter(|c| c[3].as_i64().unwrap() >= 0).count();
+                assert!(cels > 0, "{level} : des Cel réels en mode automap");
+                assert!((cels as f32 / cells.len() as f32 * 100.0).round() / 100.0 >= 0.60,
+                    "{level} : le mode suit la couverture (seuil 0,60)");
+            } else {
+                // fallback : au moins le polygone marchable a de la matière.
+                assert!(cells.iter().any(|c| c[2].as_i64().unwrap() & 1 == 1),
+                    "{level} : marchable présent pour le repli");
+            }
+            drop(g);
+        }
+    }
+
+    #[test]
+    fn automap_town_and_bloodmoor_keep_automap_mode_at_threshold() {
+        // Non-régression 13b : le seuil de couverture ne rétrograde PAS les
+        // deux niveaux historiques (couvertures de banque 70 % / 76 %).
+        let Some(root) = ws_root() else { return };
+        for level in ["town", "bloodmoor"] {
+            let (v, _) = automap_a45(level, &root, 7);
+            assert_eq!(v["mode"], "automap", "{level} : reste en automap");
+            assert!(v["coverage"].as_f64().unwrap() >= 0.60, "{level} : couverture au-dessus du seuil");
+        }
     }
 }

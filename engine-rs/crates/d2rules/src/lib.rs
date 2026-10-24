@@ -60,6 +60,26 @@ pub mod waypoints;
 /// Enum difficulté + pénalités `patch_difficultylevels.txt` + résists v1.12.
 pub mod difficulty;
 
+// --- Formules D2 : mods de coup + éléments (étape 12c, 2026-10-24) ---
+/// Deadly strike / crushing blow / open wounds / leech / résists+immunités /
+/// poison DoT / froid — pur, déterministe, branché additif dans `world.rs`.
+pub mod combat_mods;
+
+// --- Quêtes FINALES A4-A5 spec (quests-actes.md §5/§6, étape 10b, 2026-10-24) ---
+/// Machines a4q1→a4q3 / a5q5-a5q6 (slots de sauvegarde .d2s 395-399 / 423-425,
+/// events [`ActEvent`] partagés, gating acte V + porte Worldstone, boss
+/// finaux Diablo/Anciens/vagues du trône/Baal stats réelles, vagues
+/// séquentielles) + branchement `World`/save additif (`quest_finale`).
+/// La mort de Baal émet [`GameEvent::GameWon`] (fin du jeu).
+pub mod quests_finale;
+
+// --- Quêtes Actes IV-V + fin de jeu (quests-actes.md §5/§6, étape 10c, 2026-10-24) ---
+/// Machines a4q1→a4q3 / a5q1→a5q6 (slots de sauvegarde, events [`ActEvent`]
+/// partagés, gating acte V, boss de quête Izual/Hephasto/3 Anciens stats
+/// réelles, fin de jeu `GameEvent::GameWon`) + branchement `World`/save
+/// additif (`quest_actes45`). Coexiste avec les journaux W13/A1/A2-A3.
+pub mod quests_actes45;
+
 // --- Socles règles data-driven v1.12 (impl-regles-skills, 2026-10-22) ---
 /// Parseur/évaluateur CalcString (socle A2 — synergies, ToHitCalc, passives).
 pub mod calc;
@@ -121,6 +141,7 @@ pub mod ai_behaviors;
 
 pub mod statlist; // 7c A1 : StatList par ids ItemStatCost (socle loot D2 réel)
 pub mod equipment; // 7c F6/F7 : 10 slots bodyloc d2s + canFit 10×4 + belts slots
+pub mod economy; // 11c économie & inventaire : or (cap 10k×niveau, stash), durabilité, vente, auto-pickup
 
 // --- Quêtes Acte I spec (quests-actes.md, étape 4 RE d2w-re, 2026-10-24) ---
 /// Machine A1Q1→A1Q6 (phases, events typés, flags u16 façon .d2s, gating
@@ -143,6 +164,18 @@ pub mod quests_actes2;
 /// `pending_events` (pattern `NpcTalked`). Table embarquée en l'état depuis
 /// `d2w-re/tables/monde/shrines.txt`.
 pub mod shrines;
+
+// --- Consommables 11b (patch_misc.txt v1.12 : potions/tomes/parchemins) ---
+/// Consommables complets v1.12 : effets réels par code (hp1-5/mp1-5/rvs/rvl,
+/// buffs antidote/dégel/endurance via le système d'états), porte de ville
+/// (tsc/tbk, wire `switch_level` côté d2game), identification (isc/ibk +
+/// règles pures, hook inventaire riche documenté), ceinture 4×4 auto-ranger
+/// + touches 1-4, noms fr depuis les TBL réelles. Tables parsées EN L'ÉTAT
+/// depuis `assets/patch_misc.txt` (zéro copie).
+pub mod consumables;
+
+// --- Cube horadrim 11a (cubemain.txt v1.12 + transmutation, 2026-10-24) ---
+pub mod cube;
 
 #[cfg(test)]
 mod tests;
@@ -191,6 +224,9 @@ pub use item_quality::{DropRatioInfo, Quality, QualityFactors, QualityTables, Ra
 pub use loot::GeneratedItem;
 pub use quests::{QuestDef, QuestEvent, QuestLog, QuestProgress, QuestReward, QuestState, QuestTrigger};
 pub use uniques_sets::{SetItemRec, SetRec, UniqueRec, UniquesSets};
+
+// -- Consommables 11b — consommés par d2game (wasm useConsumable/useBeltKey) --
+pub use consumables::{ConsumError, ConsumState, ConsumUse};
 
 // -- NPC de ville W16 (roster réel, rôles, interaction) — consommés par d2game --
 pub use npc::{
@@ -339,6 +375,9 @@ pub enum GameEvent {
     /// L'accès à l'acte `act` vient d'être débloqué (gating : remise Warriv
     /// A1Q6 → acte II, spec quests-actes.md §1.4).
     ActUnlocked { act: u8 },
+    /// Fin de jeu : Baal est tombé et le héros a pris le portail de Tyrael
+    /// (a5q6, spec quests-actes.md §6 « fin de jeu », étape 10c).
+    GameWon,
 }
 
 /// État d'animation (code mode COF D2 : NU=neutral, WL=walk, RN=run, A1=attack1, DD=death).

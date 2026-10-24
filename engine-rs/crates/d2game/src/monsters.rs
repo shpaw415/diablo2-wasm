@@ -703,10 +703,17 @@ pub fn plan_level_spawns_diff(
             };
             (MonKind::Champion, monumod.pick_champion_mod(rng).unwrap_or("").to_string(), rule)
         } else {
-            // TC du monstre normal : TC manifest en Normal (historique), TC
-            // suffixée ` (N)`/` (H)` en NM/Enfer (variantes TreasureClassEx).
+            // TC du monstre normal : TC manifest en Normal (historique),
+            // VARIANTE retail en NM/Enfer — composition `difficulty::
+            // tc_variant` (13a) : les TC « Act N … » insèrent le marqueur
+            // APRÈS le préfixe d'acte (« Act 1 H2H A » → « Act 1 (N) H2H A »,
+            // TreasureClassEx.txt:285), les autres le suffixent. L'ancien
+            // `format!("{} (N)")` produisait des TC absentes de la table
+            // (« Act 1 H2H A (N) ») ⇒ drops NM/Enfer en repli MVP.
             let treasure_class = match diff.tc_suffix() {
-                Some(sfx) if !r.tc[0].is_empty() => Some(format!("{}{}", r.tc[0], sfx)),
+                Some(_) if !r.tc[0].is_empty() => {
+                    Some(Difficulty::tc_variant(&r.tc[0], diff))
+                }
                 _ => None,
             };
             let rule = SpawnRule {
@@ -1077,10 +1084,15 @@ mod tests {
             assert!(p.rule.hp_pct >= base.hp_pct, "HP% ≥ ligne (H)");
             assert_eq!(p.rule.res, r.res_for(Difficulty::Hell), "résists (H) de {}", p.mon_id);
             if p.rule.kind == MonKind::Normal {
+                // 13a : règle retail de nommage — le marqueur est INSÉRÉ
+                // après le préfixe d'acte (« Act 1 H2H A » → « Act 1 (H) H2H
+                // A », TreasureClassEx.txt:299) ; l'ancienne attente
+                // « Act 1 H2H A (H) » (suffixe final) désignait une TC
+                // absente de la table ⇒ drops NM/Enfer en repli MVP.
                 assert_eq!(
                     p.rule.treasure_class.as_deref(),
-                    Some(format!("{} (H)", r.tc[0]).as_str()),
-                    "TC suffixée (H) — variante réelle TreasureClassEx"
+                    Some(Difficulty::tc_variant(&r.tc[0], Difficulty::Hell).as_str()),
+                    "TC variante (H) réelle TreasureClassEx (insertion après « Act N »)"
                 );
             }
         }
