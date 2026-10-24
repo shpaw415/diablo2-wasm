@@ -1,0 +1,40 @@
+{
+ "d2data": {
+  "probed": 1722,
+  "hits": [
+   {
+    "path": "data\\global\\ui\\spells\\skillicon.dc6",
+    "fsize": 58560
+   },
+   {
+    "path": "data\\global\\palette\\act1\\pal.dat",
+    "fsize": 768
+   },
+   {
+    "path": "data\\global\\palette\\act1\\pal.pl2",
+    "fsize": 443175
+   }
+  ],
+  "n_miss": 1719
+ },
+ "d2exp": {
+  "probed": 1111,
+  "hits": [
+   {
+    "path": "data\\global\\ui\\panel\\800ctrlpnl7.dc6",
+    "fsize": 42008
+   }
+  ],
+  "n_miss": 1110
+ },
+ "d2char": {
+  "probed": 611,
+  "hits": [],
+  "n_miss": 611
+ },
+ "patch_d2": {
+  "probed": 0,
+  "hits": [],
+  "n_miss": 0
+ }
+}

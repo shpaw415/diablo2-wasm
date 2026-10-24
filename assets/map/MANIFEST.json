@@ -1,0 +1,33 @@
+{
+ "_note": "Manifeste des assets carte. Sections 'town' (Camp des Rousses, levelId 1) et 'bloodmoor' (levelId 2, composée type-DRLG depuis presets réels). Format d'un triplet DT1 : [chemin MPQ, fichier local, taille o]. Les indices de tuiles du DS1 sont CUMULATIFS dans l'ordre de la liste 'dt1' — ne pas réordonner.",
+ "_release": "d2_d2es_2000-01_fr-fr digital release v1.12 — DT1 au format conteneur digital (sig 7,6 ; pas de signature C7 25 AB 0B), cf. evidence/MAP-SPEC.md",
+ "town": [
+  ["data\\global\\tiles\\act1\\town\\floor.dt1", "town_floor.dt1", 1008003],
+  ["data\\global\\tiles\\act1\\town\\fence.dt1", "town_fence.dt1", 423367],
+  ["data\\global\\tiles\\act1\\town\\objects.dt1", "town_objects.dt1", 661515],
+  ["data\\global\\tiles\\act1\\outdoors\\treegroups.dt1", "out_treegroups.dt1", 505504],
+  ["data\\global\\tiles\\act1\\outdoors\\stonewall.dt1", "out_stonewall.dt1", 439569],
+  ["data\\global\\tiles\\act1\\outdoors\\river.dt1", "out_river.dt1", 316344],
+  ["data\\global\\tiles\\act1\\outdoors\\objects.dt1", "out_objects.dt1", 338205],
+  ["data\\global\\tiles\\act1\\barracks\\warp.dt1", "warp.dt1", 658158]
+ ],
+ "bloodmoor": {
+  "level": {"id": 2, "name": "Blood Moor", "act": 1, "drlgType": 3, "levelType": 2, "levelsSize": [80, 80], "monsters": ["zombie1", "fallen1", "quillrat1"]},
+  "ds1": {"file": "bloodmoor.ds1", "size": 124825, "md5_8": "1f3bca17", "version": 18, "grid": [72, 72], "tag": [2, 1], "seed": 20261022, "generator": "tools/bloodmoor_build.py", "note": "DS1 synthétique v18 valide : composition type-DRLG simplifiée (la Blood Moor retail est un niveau ALÉATOIRE sans DS1 complet ; le jeu l'assemble depuis presets). Ici : presets réels d2exp.mpq posés sur un canevas 72x72, indices remappés vers la liste DT1 unifiée ci-dessous."},
+  "dt1": [
+   ["data\\global\\tiles\\act1\\outdoors\\treegroups.dt1", "out_treegroups.dt1", 505504, 21],
+   ["data\\global\\tiles\\act1\\outdoors\\stonewall.dt1", "out_stonewall.dt1", 439569, 52],
+   ["data\\global\\tiles\\act1\\town\\floor.dt1", "floor.dt1", 1008003, 144],
+   ["data\\global\\tiles\\act1\\outdoors\\stones.dt1", "out_stones.dt1", 318414, 41],
+   ["data\\global\\tiles\\act1\\outdoors\\river.dt1", "out_river.dt1", 316344, 45],
+   ["data\\global\\tiles\\act1\\outdoors\\cliff2.dt1", "bloodmoor_cliff2.dt1", 459509, 13],
+   ["data\\global\\tiles\\act1\\outdoors\\corner.dt1", "bloodmoor_corner.dt1", 139154, 3],
+   ["data\\global\\tiles\\act1\\outdoors\\cliff1.dt1", "bloodmoor_cliff1.dt1", 477434, 13]
+  ],
+  "dt1_md5_8": {"out_treegroups.dt1": "926e0481", "out_stonewall.dt1": "a8106765", "floor.dt1": "50eeb597", "out_stones.dt1": "21649e3d", "out_river.dt1": "3cf26b18", "bloodmoor_cliff2.dt1": "856817cc", "bloodmoor_corner.dt1": "6f44bcfb", "bloodmoor_cliff1.dt1": "28212e0f"},
+  "dt1_source": {"cliff1": "d2data.mpq (listfile strippé, sonde par hash)", "cliff2/corner": "cliff2=d2data.mpq, corner=d2exp.mpq", "autres": "déjà extraits (Town)"},
+  "presets": {"dir": "presets_bloodmoor/", "source": "d2exp.mpq : data\\global\\tiles\\ACT1\\Outdoors\\*.ds1 (36 fichiers, listfile complet)", "note": "chunks outdoor v18 9x9 : tag(1,1)=4 murs seuls ; tag(2,1)=[mur1..4, sol@4, ombre@5] ; tag(3,1)=[mur1..6, sol@6, ombre@7]"},
+  "outputs": ["bloodmoor-render.png", "bloodmoor-collision.json", "bloodmoor-collision-heat.png", "bloodmoor-collision-overlay.png"],
+  "collision": {"file": "bloodmoor-collision.json", "grid": [72, 72], "blocked": 1410, "free": 3774, "contract": "rows[cy][cx] true = BLOQUÉ ; anneau extérieur bloqué (bord de carte)"}
+ }
+}

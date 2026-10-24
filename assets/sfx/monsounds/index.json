@@ -1,0 +1,346 @@
+{
+ "families": {
+  "ancient": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "andariel": {
+   "attack": "andariel_attack1.wav",
+   "death": "andariel_death.wav",
+   "hit": "andariel_gethit1.wav",
+   "taunt": "andariel_taunt1.wav"
+  },
+  "arach": {
+   "attack": "spider_attack1.wav",
+   "death": "spider_death1.wav",
+   "hit": "spider_gethit1.wav",
+   "taunt": null
+  },
+  "baalcrab": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "baalminion": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "batdemon": {
+   "attack": "batdemon_attack1.wav",
+   "death": "batdemon_death1.wav",
+   "hit": "batdemon_gethit1.wav",
+   "taunt": null
+  },
+  "bighead": {
+   "attack": "bighead_attack1.wav",
+   "death": "bighead_death1.wav",
+   "hit": "bighead_gethit1.wav",
+   "taunt": null
+  },
+  "bloodlord": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "bloodraven": {
+   "attack": null,
+   "death": "bloodraven_death.wav",
+   "hit": "bloodraven_gethit1.wav",
+   "taunt": "bloodraven_taunt1.wav"
+  },
+  "brute": {
+   "attack": "yeti_attack1.wav",
+   "death": "yeti_death1.wav",
+   "hit": "yeti_gethit1.wav",
+   "taunt": null
+  },
+  "clawviper": {
+   "attack": "serpentdemon_attacktail1.wav",
+   "death": "serpentdemon_death1.wav",
+   "hit": "serpentdemon_gethit1.wav",
+   "taunt": null
+  },
+  "corruptrogue": {
+   "attack": "corrupt_attack1.wav",
+   "death": null,
+   "hit": "corrupt_gethit1.wav",
+   "taunt": null
+  },
+  "councilmember": {
+   "attack": "zakarumhighpriest_attack1.wav",
+   "death": "zakarumhighpriest_death1.wav",
+   "hit": "zakarumhighpriest_gethit1.wav",
+   "taunt": null
+  },
+  "cr_archer": {
+   "attack": null,
+   "death": null,
+   "hit": "corrupt_gethit1.wav",
+   "taunt": null
+  },
+  "cr_lancer": {
+   "attack": "corrupt_attack1.wav",
+   "death": null,
+   "hit": "corrupt_gethit1.wav",
+   "taunt": null
+  },
+  "deathmauler": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "diablo": {
+   "attack": "diablo_attack1.wav",
+   "death": "diablo_death.wav",
+   "hit": "diablo_gethit1.wav",
+   "taunt": null
+  },
+  "doomknight": {
+   "attack": "undeadhorror_attack1.wav",
+   "death": "undeadhorror_death1.wav",
+   "hit": "undeadhorror_gethit1.wav",
+   "taunt": null
+  },
+  "duriel": {
+   "attack": "duriel_attack1.wav",
+   "death": null,
+   "hit": "duriel_gethit1.wav",
+   "taunt": "duriel_taunt1.wav"
+  },
+  "fallen": {
+   "attack": null,
+   "death": "fallen_death1.wav",
+   "hit": "fallen_gethit1.wav",
+   "taunt": null
+  },
+  "fallenshaman": {
+   "attack": null,
+   "death": "fallenshaman_death1.wav",
+   "hit": "fallenshaman_gethit1.wav",
+   "taunt": null
+  },
+  "fetishshaman": {
+   "attack": "pygmyshaman_spell1.wav",
+   "death": "pygmyshaman_death1.wav",
+   "hit": "pygmyshaman_gethit1.wav",
+   "taunt": null
+  },
+  "fingermage": {
+   "attack": "fingermage_attack1.wav",
+   "death": "fingermage_death1.wav",
+   "hit": "fingermage_gethit1.wav",
+   "taunt": null
+  },
+  "foulcrow": {
+   "attack": "hawk_attack1.wav",
+   "death": "hawk_death1.wav",
+   "hit": "hawk_gethit1.wav",
+   "taunt": null
+  },
+  "frozenhorror": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "goatman": {
+   "attack": "goatman_attack1.wav",
+   "death": "goatman_death1.wav",
+   "hit": "goatman_gethit1.wav",
+   "taunt": null
+  },
+  "hellbovine": {
+   "attack": "moo_attack1.wav",
+   "death": "moo_death1.wav",
+   "hit": "moo_gethit1.wav",
+   "taunt": null
+  },
+  "imp": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "izual": {
+   "attack": "izual_attack1.wav",
+   "death": "izual_death.wav",
+   "hit": "izual_gethit1.wav",
+   "taunt": "izual_taunt1.wav"
+  },
+  "maggotqueen": {
+   "attack": null,
+   "death": "sandmaggotmama_death.wav",
+   "hit": "sandmaggot_gethit1.wav",
+   "taunt": null
+  },
+  "megademon": {
+   "attack": "megademon_attack1.wav",
+   "death": "megademon_death1.wav",
+   "hit": "megademon_gethit1.wav",
+   "taunt": null
+  },
+  "mephisto": {
+   "attack": "mephisto_attack1.wav",
+   "death": "mephisto_death.wav",
+   "hit": "mephisto_gethit1.wav",
+   "taunt": "mephisto_taunt1.wav"
+  },
+  "minion": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "mummy": {
+   "attack": "mummy_attack1.wav",
+   "death": "mummy_death1.wav",
+   "hit": "mummy_gethit1.wav",
+   "taunt": null
+  },
+  "nihlathak": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "overseer": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "pantherwoman": {
+   "attack": "pantherwoman_attack1.wav",
+   "death": "pantherwoman_death1.wav",
+   "hit": "pantherwoman_gethit1.wav",
+   "taunt": null
+  },
+  "quillrat": {
+   "attack": "spikefiend_attack1.wav",
+   "death": "spikefiend_death1.wav",
+   "hit": "spikefiend_gethit1.wav",
+   "taunt": null
+  },
+  "radament": {
+   "attack": "greatermummy_attack1.wav",
+   "death": "greatermummy_death1.wav",
+   "hit": "greatermummy_gethit1.wav",
+   "taunt": "radament_taunt1.wav"
+  },
+  "reanimatedhorde": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "regurgitator": {
+   "attack": "regurgitator_attack1.wav",
+   "death": "regurgitator_death1.wav",
+   "hit": "regurgitator_gethit1.wav",
+   "taunt": null
+  },
+  "sandraider": {
+   "attack": "sandraider_attack1.wav",
+   "death": "sandraider_death1.wav",
+   "hit": "sandraider_gethit1.wav",
+   "taunt": null
+  },
+  "scarab": {
+   "attack": "beetle_attack1.wav",
+   "death": "beetle_death1.wav",
+   "hit": "beetle_gethit1.wav",
+   "taunt": null
+  },
+  "siegebeast": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "sk_mage": {
+   "attack": null,
+   "death": "skeleton_death1.wav",
+   "hit": "skeleton_gethit1.wav",
+   "taunt": null
+  },
+  "skeleton": {
+   "attack": null,
+   "death": "skeleton_death1.wav",
+   "hit": "skeleton_gethit1.wav",
+   "taunt": null
+  },
+  "smith": {
+   "attack": "smith_attack1.wav",
+   "death": "smith_death.wav",
+   "hit": "smith_gethit1.wav",
+   "taunt": "smith_taunt2.wav"
+  },
+  "smithdemon": {
+   "attack": "smith_attack1.wav",
+   "death": "smith_death.wav",
+   "hit": "smith_gethit1.wav",
+   "taunt": null
+  },
+  "succubus": {
+   "attack": null,
+   "death": null,
+   "hit": null,
+   "taunt": null
+  },
+  "summoner": {
+   "attack": null,
+   "death": "summoner_death.wav",
+   "hit": "summoner_gethit1.wav",
+   "taunt": "summoner_taunt1.wav"
+  },
+  "thornhulk": {
+   "attack": null,
+   "death": "thornhulk_death1.wav",
+   "hit": "thornhulk_gethit1.wav",
+   "taunt": null
+  },
+  "unraveler": {
+   "attack": "greatermummy_attack1.wav",
+   "death": "greatermummy_death1.wav",
+   "hit": "greatermummy_gethit1.wav",
+   "taunt": null
+  },
+  "vilemother": {
+   "attack": "vilemother_attack1.wav",
+   "death": "vilemother_death1.wav",
+   "hit": "vilemother_gethit1.wav",
+   "taunt": null
+  },
+  "willowisp": {
+   "attack": "willowisp_attack1.wav",
+   "death": "willowisp_death1.wav",
+   "hit": "willowisp_gethit1.wav",
+   "taunt": null
+  },
+  "zombie": {
+   "attack": "zombie_attack1.wav",
+   "death": "zombie_death1.wav",
+   "hit": "zombie_gethit1.wav",
+   "taunt": null
+  },
+  "zombieunique": {
+   "attack": "zombie_attack1.wav",
+   "death": "zombie_death1.wav",
+   "hit": "zombie_gethit1.wav",
+   "taunt": null
+  }
+ },
+ "meta": {
+  "extrait_le": "2026-10-24",
+  "inventaire": "data\\global\\excel\\sounds.txt (d2data.mpq), col FileName",
+  "note": "chemins retail data\\global\\monsounds\\ absents de la release (sweep 568 sondes = 0 hit)",
+  "source": "data\\global\\sfx\\monster\\… (d2sfx.mpq) + taunts data\\local\\sfx\\act*\\… (d2speech.mpq) — v1.12, LECTURE SEULE"
+ }
+}

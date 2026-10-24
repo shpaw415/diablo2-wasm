@@ -96,6 +96,15 @@ impl SpriteSet {
 
         let order = self.cof.draw_order(slot, frame);
         let mut ordered: Vec<&DccDirection> = Vec::new();
+        // FIX-HEROS : la couche LG (jambes) n'existe pas dans l'enum COF
+        // (0=HD..14=S8, evidence/DCC-SPEC.md §7.3) — draw_order ne la
+        // renverra jamais. Empilée en bas de pile (dessinée en premier, sous
+        // torse/bras/tête), aux coords de sa propre box DCC ; l'union des
+        // boxes l'intègre sans rognure.
+        if let Some(lg) = self.layers.get("LG") {
+            let s = dir64_to_dcc(dir64, lg.number_of_directions);
+            ordered.push(&lg.directions[s]);
+        }
         for ct in order {
             if let Some(d) = self.layers.get(ct.token()) {
                 let s = dir64_to_dcc(dir64, d.number_of_directions);

@@ -58,6 +58,10 @@ pub mod npc_bridge;
 /// objgroup.txt, coffres TC/shrines/portes/portails) — plan testable au
 /// niveau, câblage game.rs/wasm au pas d'intégration (`objects_live.rs`).
 pub mod objects_live;
+/// Overlays d'états + missiles animés 15c (tables overlay/states v1.12 + DCC) —
+/// teintes poison/froid, buffs shrines, auras ; blit additif + direction
+/// Necrolis (`overlays.rs`).
+pub mod overlays;
 pub mod pal;
 /// Palettes d'actes : conteneur runtime `pal.pl2` v1.12 (acts 1-5) et
 /// ponts vers les deux chemins de couleur du renderer (`palette/pl2.rs`).

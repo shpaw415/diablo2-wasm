@@ -229,6 +229,11 @@ pub(crate) struct HeroData {
     pub path: Vec<(f32, f32)>,
     /// Compteur du swing en cours (= cooldown).
     pub swing_ms: u32,
+    /// Étape 15b : le swing courant est un CAST de skill (`AnimState::SC`)
+    /// et non une attaque A1 — transitoire, jamais sauvegardé (même traitement
+    /// que `stamina_milli`) ; posé par `hero_ranged_attack` (skill porteur de
+    /// missile) et `hero_attack` (faux).
+    pub swing_cast: bool,
     /// > 0 : héros mort, compte jusqu'à réapparition.
     pub dead_ms: u32,
     /// Horloge d'animation (reset à chaque changement d'état).
@@ -297,12 +302,16 @@ pub(crate) struct MonData {
     /// Résists effectifs de la difficulté de spawn (`SpawnRule::res`, W08/K)
     /// — indexés comme les colonnes ResDm/Ma/Fi/Li/Co/Po ; ≥100 = immunité.
     pub res: [i32; 6],
-    /// 12c (additif, transitoire non persisté) : plaies ouvertes en cours.
+    /// 12c (additif, transitoire non persisté) : DoT plaies/poison/froid.
     pub wounds: Option<combat_mods::Dot>,
     /// 12c (idem) : poison en cours (ticks de 25 frames).
     pub poison: Option<combat_mods::Dot>,
     /// 12c (idem) : froid — ralenti restant en ms (vitesse ×1/2).
     pub chill_ms: u32,
+    /// 16a (additif, transitoire non persisté — comme les DoT ci-dessus) :
+    /// malédiction de nécromancien active ([`crate::auras::ActiveCurse`] —
+    /// UNE par monstre, durée `auralen`, jamais persistée).
+    pub curse: Option<crate::auras::ActiveCurse>,
 }
 
 /// Monde de jeu complet (pur : aucune IO, aucune dépendance de rendu).
@@ -400,6 +409,19 @@ pub struct World {
     /// diablo/baalcrab sans les spawner) ; la mort de Baal émet
     /// [`GameEvent::GameWon`].
     pub(crate) quests_finale: Option<crate::quests_finale::QuestsFinale>,
+    /// Auras & malédictions 16a (`auras.rs`) — aura de paladin ACTIVE
+    /// (transitoire, jamais persistée) + accumulateur de pulse. Additif :
+    /// save v3 inchangée (vides au chargement).
+    pub(crate) auras: crate::auras::AuraState,
+    /// Étape 16c (assassin_druid.rs) — pièges/combos Assassine + formes
+    /// Druide. Additif, TRANSITOIRE (jamais persisté, comme `ai`) : les
+    /// événements sortent par [`World::drain_ad_events`].
+    pub(crate) ad: crate::assassin_druid::AdState,
+    /// Invocations 16b (`minions.rs`, PLAN-FIDÉLITÉ) — summons necro/druid,
+    /// registre de cadavres invocables, missiles des mages. Additif,
+    /// TRANSITOIRE : JAMAIS persisté (retail — les invocations ne survivent
+    /// ni au save/load ni à un changement de niveau).
+    pub(crate) minions: crate::minions::Minions,
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
@@ -553,6 +575,7 @@ impl World {
                 },
                 path: Vec::new(),
                 swing_ms: 0,
+                swing_cast: false,
                 dead_ms: 0,
                 anim_ms: 0,
                 run: false,
@@ -588,7 +611,12 @@ impl World {
             quests_actes2: None,
             quests_actes45: None,
             quests_finale: None,
+            ad: crate::assassin_druid::AdState::default(),
             consum: crate::consumables::ConsumState::default(),
+            // 16a : aucune aura active à la construction (transitoire).
+            auras: crate::auras::AuraState::default(),
+            // 16b : invocations vides, missiles seedés (déterminisme).
+            minions: crate::minions::Minions::with_seed(seed),
         };
         let mut world = world;
         world.init_hero();
@@ -796,6 +824,8 @@ impl World {
             wounds: None,
             poison: None,
             chill_ms: 0,
+            // 16a : aucune malédiction à l'apparition (transitoire).
+            curse: None,
         };
         self.mon_ent.push(ent);
         self.mon_dat.push(dat);
@@ -826,11 +856,14 @@ impl World {
         self.update_hero(dt, &mut ev);
         self.update_monsters(dt, &mut ev);
         self.update_missiles(dt, &mut ev);
+        crate::auras::tick(self, dt, &mut ev); // 16a : pulses d'aura (dégâts/soin/régén)
         self.update_waypoints(&mut ev); // W05 : activation au contact (waypoints.rs)
         self.update_npcs(dt); // W16 : patrouilles NPC de ville (npc.rs)
         crate::consumables::tick_buffs(self, dt); // 11b : buffs potions temporisés
         crate::mercenary::tick_mercenary(self, dt, &mut ev); // H : FSM mercenaire
         crate::mercenary::tick_merc_missiles(self, dt, &mut ev); // H : missiles du merc
+        crate::assassin_druid::tick(self, dt); // 16c : pièges/combos/formes (events via drain_ad_events)
+        crate::minions::tick_minions(self, dt, &mut ev); // 16b : invocations (IA compagnon + missiles mages)
         ev
     }
 
@@ -992,6 +1025,55 @@ impl World {
         true
     }
 
+    /// Résolution pour les BOSS SCRIPTÉS : le bloc `manifest.bosses` (stats
+    /// réelles — Duriel 3995 PV etc.) PRIME sur une entrée homonyme de la
+    /// table data-driven (un tpl générique du même code la masquerait).
+    /// Repli : table data-driven.
+    pub(crate) fn resolve_tpl_boss(&mut self, code: &str) -> Option<usize> {
+        if let Some(bosses) = self.manifest.get("bosses").and_then(|b| b.as_array()) {
+            let block = bosses
+                .iter()
+                .find(|b| {
+                    ["code", "id"].iter().any(|k| {
+                        b.get(k)
+                            .and_then(|c| c.as_str())
+                            .map(|c| c.eq_ignore_ascii_case(code))
+                            .unwrap_or(false)
+                    })
+                });
+            if let Some(block) = block {
+                let tpl = Self::mon_tpl_from_block(block);
+                self.mon_tpls.push(tpl);
+                return Some(self.mon_tpls.len() - 1);
+            }
+        }
+        self.mon_tpls.iter().position(|t| t.code == code)
+    }
+
+    /// Les TABLES font foi : force les stats du tpl boss depuis
+    /// `BossStats` (le manifest régressé peut perdre le sous-objet stats —
+    /// cf. étape 15a, blocs régénérés sprites sans `/stats`).
+    pub(crate) fn override_tpl_boss_stats(&mut self, i: usize, level: u32, hp: u32, exp: u32) {
+        let Some(t) = self.mon_tpls.get_mut(i) else { return };
+        t.level = level.max(1);
+        t.hp_min = hp.max(1);
+        t.hp_max = t.hp_min;
+        t.exp = exp;
+    }
+
+    /// Comme [`Self::spawn_monster_rule`] mais avec la résolution boss
+    /// (manifest prioritaire) — utilisé par les spawns scriptés de quêtes.
+    pub(crate) fn spawn_monster_rule_boss(&mut self, code: &str, x: i32, y: i32, rule: SpawnRule) -> bool {
+        let Some(i) = self.resolve_tpl_boss(code) else {
+            return false;
+        };
+        if !self.is_walkable(x, y) {
+            return false;
+        }
+        self.spawn_monster_at_rule(i, x as f32 + 0.5, y as f32 + 0.5, rule);
+        true
+    }
+
     /// Rang du monstre `index` ([`MonKind`]) — teinte/labels d2game, events
     /// quête. `None` hors bornes.
     pub fn monster_kind(&self, index: usize) -> Option<MonKind> {
@@ -1061,6 +1143,11 @@ impl World {
     pub fn set_level_key(&mut self, key: &str) {
         let k = key.trim().to_ascii_lowercase();
         if !k.is_empty() {
+            // 16b : les invocations ne traversent pas les warps (retail v1.12)
+            // — DESPAWN documenté dans minions.rs §docs (re-summon requis).
+            if k != self.level_key {
+                self.minions.clear();
+            }
             self.level_key = k;
         }
     }
@@ -1304,7 +1391,13 @@ impl World {
                 AnimState::WL
             }
         } else if self.hero.swing_ms > 0 {
-            AnimState::A1
+            // Étape 15b : cast de skill ⇒ SC (mode COF cast, extrait pour les
+            // 7 classes) ; attaque simple ⇒ A1 (comportement historique).
+            if self.hero.swing_cast {
+                AnimState::SC
+            } else {
+                AnimState::A1
+            }
         } else {
             AnimState::NU
         };
@@ -1324,6 +1417,8 @@ impl World {
 
     fn respawn_hero(&mut self, ev: &mut Vec<GameEvent>) {
         let (sx, sy) = self.hero.spawn;
+        // 16a : l'aura se coupe à la mort (états perdus au respawn).
+        self.on_respawn();
         self.hero_ent.x = sx;
         self.hero_ent.y = sy;
         self.hero_ent.facing = 0;
@@ -1355,14 +1450,25 @@ impl World {
     fn hero_attack(&mut self, i: usize, ev: &mut Vec<GameEvent>) {
         let (dx, dy) = (self.mon_ent[i].x - self.hero_ent.x, self.mon_ent[i].y - self.hero_ent.y);
         self.hero_ent.facing = facing_from(dx, dy);
-        self.hero.swing_ms = HERO_SWING_MS;
+        // 16c (additif) : swing IAS des formes druides (loup dm34) —
+        // HERO_SWING_MS sans transformation (comportement historique).
+        self.hero.swing_ms = crate::assassin_druid::hero_swing_ms(self);
         self.hero.anim_ms = 0;
-        let ac = self.mon_dat[i].ac;
-        let chance = hit_chance(self.hero.stats.to_hit, ac);
+        let ac = self.monster_effective_ac(i); // 16a : Conviction (-AC) additif
+        // 16c (additif) : +par4 (50) par charge de combo (progressive_tohit).
+        let chance =
+            hit_chance(self.hero.stats.to_hit.saturating_add(crate::assassin_druid::hero_to_hit_bonus(self)), ac);
         if (self.rng.below(100)) < chance {
             // dégâts héros = floor(rand(mindam..maxdam) × (1 + force/100))
             let base = self.rng.range_u32(self.hero_tpl.weapon_min, self.hero_tpl.weapon_max) as f32;
             let dmg = (base * (1.0 + self.hero.stats.strength as f32 / 100.0)).floor() as u32;
+            // 16a (additif) : auras de dégâts (Might/Concentration/Fanaticism)
+            // — ×(100+pct)/100, zéro changement sans aura active.
+            let dmg = self.scale_hero_damage(dmg);
+            // 16c (additif) : multiplicateur Werebear (damagepercent ln12) +
+            // bonus des charges Tiger Strike (ln12 % PAR charge de l'arme) —
+            // inchangé sans forme ni charges (zéro régression).
+            let dmg = crate::assassin_druid::scaled_hero_melee(self, dmg, base as u32);
             // 12c (additif) : mods de coup via `combat_mods::apply_combat_mods`.
             // SANS mods, l'arithmétique est STRICTEMENT l'ancienne
             // (résist ResDm puis soustraction) ; les 3 jets de mod ne sont
@@ -1383,7 +1489,10 @@ impl World {
                 victim: combat_mods::Victim {
                     kind: combat_mods::VictimKind::from_mon_kind(&self.mon_dat[i].kind),
                     cur_hp: self.mon_dat[i].hp,
-                    res: self.mon_dat[i].res,
+                    // 16a (additif) : résists EFFECTIFS — malédiction
+                    // (Amplify -100 % ResDm, Lower Resist, Decrepify) +
+                    // aura Conviction dans le rayon ; identiques sans.
+                    res: self.monster_effective_res(i),
                 },
                 wearer_life: self.hero.stats.life,
                 wearer_max_life: self.hero.stats.max_life,
@@ -1426,6 +1535,9 @@ impl World {
                 ent.anim = AnimState::DD;
                 ent.anim_frame = 0;
             }
+            // 16c (additif) : charge-up/finisher Assassine (machines combo) +
+            // knockback Werebear — état 16c uniquement, zéro effet sinon.
+            crate::assassin_druid::note_hero_melee_hit(self, i, dealt, base as u32);
         } else {
             ev.push(GameEvent::HeroMissed { target: i });
         }
@@ -1446,6 +1558,12 @@ impl World {
         let (dx, dy) = (aim.0 - self.hero_ent.x, aim.1 - self.hero_ent.y);
         self.hero_ent.facing = facing_from(dx, dy);
         self.hero.swing_ms = HERO_SWING_MS;
+        // Étape 15b : skill lancé (porteur de missile) ⇒ cast SC ;
+        // tir d'arme simple (repli arrow) ⇒ A1/TH non distingués au MVP.
+        self.hero.swing_cast = self
+            .active_skill()
+            .map(|s| s.missile.is_some())
+            .unwrap_or(false);
         self.hero.anim_ms = 0;
         let from = (self.hero_ent.x, self.hero_ent.y);
         let active = self.active_skill().map(|s| (s.code.clone(), s.missile.clone()));
@@ -1523,7 +1641,8 @@ impl World {
             match me {
                 d2missiles::MissileEvent::Hit { id, target, dmg, .. } => {
                     // jet de toucher : attack rating héros vs AC monstre (§3)
-                    let ac = self.mon_dat[target].ac;
+                    // 16a : AC EFFECTIF (Conviction -AC dans le rayon).
+                    let ac = self.monster_effective_ac(target);
                     let chance = hit_chance(self.hero.stats.to_hit, ac);
                     if (self.rng.below(100)) < chance {
                         // 12c (additif) : résolution du coup missile via
@@ -1562,7 +1681,8 @@ impl World {
                             victim: combat_mods::Victim {
                                 kind: combat_mods::VictimKind::from_mon_kind(&self.mon_dat[target].kind),
                                 cur_hp: self.mon_dat[target].hp,
-                                res: self.mon_dat[target].res,
+                                // 16a (additif) : résists EFFECTIFS (cf. mêlée).
+                                res: self.monster_effective_res(target),
                             },
                             wearer_life: self.hero.stats.life,
                             wearer_max_life: self.hero.stats.max_life,
@@ -1687,6 +1807,7 @@ impl World {
                     // IA P1 (ai_behaviors) : cadavre persistant + panique des
                     // Fallen vivants proches — AVANT le retrait (indices).
                     crate::ai_behaviors::register_corpse(self, i, ev);
+                    crate::minions::register_raisable_corpse(self, i); // 16b : cadavre invocable
                     self.mon_dat.remove(i);
                     self.mon_ent.remove(i);
                     self.ai.ext.remove(i); // IA P1 : réaligne l'extension AI
@@ -1735,6 +1856,14 @@ impl World {
                 }
             }
 
+            // 16a (additif) : malédictions nécromancien — Dim Vision / Terror /
+            // in-fighting Attract/Confuse prennent la main (auras.rs) ;
+            // `false` = flux historique strictement inchangé.
+            if crate::auras::tick_monster(self, i, dt, ev) {
+                i += 1;
+                continue;
+            }
+
             // H (mercenaire, additif) : la cible effective de poursuite/frappe
             // est la PLUS PROCHE de (héros, mercenaire vivant). Sans mercenaire
             // (ou KO) : héros, flux historique inchangé, zéro RNG ajouté.
@@ -1746,6 +1875,14 @@ impl World {
                 }
                 None => (hero_pos, false),
             };
+            // 16b (additif) : une invocation vivante plus PROCHE devient la
+            // cible de poursuite (strict — à égalité le flux historique gagne).
+            let tgt_pos = crate::minions::nearest_minion_override(
+                self,
+                tgt_pos,
+                self.mon_ent[i].x,
+                self.mon_ent[i].y,
+            );
             let d = dist(self.mon_ent[i].x - tgt_pos.0, self.mon_ent[i].y - tgt_pos.1);
             let hero_dead = self.hero.dead_ms > 0;
 
@@ -1819,13 +1956,17 @@ impl World {
                 if !self.mon_dat[i].path.is_empty() {
                     // 12c (additif) : froid — vitesse ×1/2 tant que le
                     // refroidissement reste actif (`chill_ms` > 0).
+                    let base = self.mon_dat[i].speed;
                     let speed = if self.mon_dat[i].chill_ms > 0 {
-                        self.mon_dat[i].speed
+                        base
                             * combat_mods::CHILL_SPEED_NUM as f32
                             / combat_mods::CHILL_SPEED_DEN as f32
                     } else {
-                        self.mon_dat[i].speed
+                        base
                     };
+                    // 16a (additif) : Decrepify — vitesse ×1/2
+                    // (velocitypercent -50, L89).
+                    let speed = if self.monster_slowed(i) { speed / 2.0 } else { speed };
                     advance_along_path(&mut self.mon_ent[i], &mut self.mon_dat[i].path, speed, dt);
                 }
                 let st = if !self.mon_dat[i].path.is_empty() { AnimState::WL } else { AnimState::NU };
@@ -1881,6 +2022,11 @@ impl World {
                 return crate::mercenary::monster_strike_merc(self, i, ev);
             }
         }
+        // 16b (additif) : une invocation vivante plus PROCHE que le héros
+        // encaisse le coup (strict — à égalité le flux historique gagne).
+        if crate::minions::monster_strikes_minion(self, i, ev) {
+            return;
+        }
         let (dmin, dmax, th) = {
             let d = &self.mon_dat[i];
             (d.dmg_min, d.dmg_max, d.th)
@@ -1888,11 +2034,20 @@ impl World {
         // défense du héros pour ce coup : dex/4 + rand(minac..maxac bouclier)
         let def = self.hero.stats.dexterity / 4
             + self.rng.range_u32(self.hero_tpl.shield_ac_min, self.hero_tpl.shield_ac_max);
+        // 16a (additif) : Defiance — ×(100+pct)/100, inchangé sans aura.
+        let def = self.scale_hero_defense(def);
+        // 16c (additif) : Werebear skill_armor_percent (ln34) — 0 sans forme.
+        let def = def.saturating_add(crate::assassin_druid::hero_defense_bonus(self, def));
         let chance = hit_chance(th, def);
         if (self.rng.below(100)) < chance {
-            let dmg = self.rng.range_u32(dmin, dmax).max(1);
+            let raw = self.rng.range_u32(dmin, dmax).max(1);
+            // 16a (additif) : Weaken/Decrepify — dégâts du monstre scalés.
+            let dmg = self.scale_monster_damage(i, raw);
             self.hero.stats.life = self.hero.stats.life.saturating_sub(dmg);
             ev.push(GameEvent::HeroHit { index: i, dmg });
+            // 16a (additif) : renvois Thorns (aura) + Iron Maiden
+            // (malédiction) — peut abattre le monstre, même si le héros meurt.
+            self.reflect_on_hero_hit(i, dmg);
             if self.hero.stats.life == 0 {
                 self.hero.dead_ms = 1; // démarre le compte à rebours de respawn
                 self.hero.path.clear();
@@ -1974,5 +2129,47 @@ impl World {
             });
             self.items.push(ItemOnGround { def, x, y });
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Étape 16c (assassin_druid.rs) — pièges/combos Assassine + formes
+    // Druide : API additive. État & logique dans assassin_druid.rs ;
+    // événements du module via [`World::drain_ad_events`] (pattern
+    // `pending_events`), état TRANSITOIRE (jamais persisté, comme `ai`).
+    // ------------------------------------------------------------------
+
+    /// Lance un skill du périmètre 16c : pièges (posés au héros),
+    /// `Shock Field` (« Shock Web » — volée vers `aim`), formes druides
+    /// (`Wearwolf`/`Wearbear`). Valide apprentissage, castabilité, classe et
+    /// mana (coût `mana_cost_at` de la table). `Err` = raison exacte
+    /// ([`crate::assassin_druid::AdError`]) ; état inchangé sur refus.
+    pub fn cast_ad_skill(
+        &mut self,
+        code: &str,
+        aim: Option<(i32, i32)>,
+    ) -> Result<crate::assassin_druid::AdCast, crate::assassin_druid::AdError> {
+        crate::assassin_druid::cast(self, code, aim)
+    }
+
+    /// Pièges posés (lecture — positions/états pour le rendu d2game).
+    pub fn ad_traps(&self) -> &[crate::assassin_druid::TrapRec] {
+        &self.ad.traps
+    }
+
+    /// Forme druide courante (`None` = humain).
+    pub fn ad_form(&self) -> Option<crate::assassin_druid::AdForm> {
+        self.ad.form.as_ref().map(|f| f.form)
+    }
+
+    /// Charges actives d'un charge-up (0 si aucune pile).
+    pub fn ad_charges(&self, code: &str) -> u32 {
+        self.ad.combos.iter().find(|c| c.skill.eq_ignore_ascii_case(code)).map(|c| c.charges).unwrap_or(0)
+    }
+
+    /// Draine les événements du module 16c ([`crate::assassin_druid::AdEvent`]
+    /// : poses/tirs de pièges, charges/releases de combos, transformations,
+    /// knockback) — contrat UI/d2game, même pattern que `pending_events`.
+    pub fn drain_ad_events(&mut self) -> Vec<crate::assassin_druid::AdEvent> {
+        std::mem::take(&mut self.ad.events)
     }
 }

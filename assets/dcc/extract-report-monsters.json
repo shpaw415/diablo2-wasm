@@ -1,0 +1,6226 @@
+{
+ "ZM": {
+  "mon_id": "zombie1",
+  "name": "Zombie",
+  "note": "planches 2/65 (Blood Moor, Ancient Tunnels) \u2014 d\u00e9j\u00e0 au manifest",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/zm/cof/zmnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 80,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 620
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/zm/hd/zmhdlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 2310
+     },
+     "LA": {
+      "internal": "data/global/monsters/zm/la/zmlalitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 4105
+     },
+     "RA": {
+      "internal": "data/global/monsters/zm/ra/zmralitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3866
+     },
+     "TR": {
+      "internal": "data/global/monsters/zm/tr/zmtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 8260
+     },
+     "S2": {
+      "internal": "data/global/monsters/zm/s2/zms2litnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 2678
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/zm/cof/zmwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 104,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 880
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/zm/hd/zmhdlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3377
+     },
+     "LA": {
+      "internal": "data/global/monsters/zm/la/zmlalitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6226
+     },
+     "RA": {
+      "internal": "data/global/monsters/zm/ra/zmralitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6117
+     },
+     "TR": {
+      "internal": "data/global/monsters/zm/tr/zmtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 12149
+     },
+     "S2": {
+      "internal": "data/global/monsters/zm/s2/zms2litwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3620
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "RN": {
+    "cof": {
+     "internal": "data/global/monsters/zm/cof/zmrnhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 620
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/zm/hd/zmhdlitrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 2478
+     },
+     "LA": {
+      "internal": "data/global/monsters/zm/la/zmlalitrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3812
+     },
+     "RA": {
+      "internal": "data/global/monsters/zm/ra/zmralitrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3736
+     },
+     "TR": {
+      "internal": "data/global/monsters/zm/tr/zmtrlitrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 8386
+     },
+     "S2": {
+      "internal": "data/global/monsters/zm/s2/zms2litrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 2668
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/zm/cof/zma1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 1140
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/zm/hd/zmhdlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 4753
+     },
+     "LA": {
+      "internal": "data/global/monsters/zm/la/zmlalita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 8816
+     },
+     "RA": {
+      "internal": "data/global/monsters/zm/ra/zmralita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 8931
+     },
+     "TR": {
+      "internal": "data/global/monsters/zm/tr/zmtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 17697
+     },
+     "S2": {
+      "internal": "data/global/monsters/zm/s2/zms2lita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 4985
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/zm/cof/zma2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 1140
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/zm/hd/zmhdlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 4692
+     },
+     "LA": {
+      "internal": "data/global/monsters/zm/la/zmlalita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 8445
+     },
+     "RA": {
+      "internal": "data/global/monsters/zm/ra/zmralita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 8542
+     },
+     "TR": {
+      "internal": "data/global/monsters/zm/tr/zmtrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 17286
+     },
+     "S2": {
+      "internal": "data/global/monsters/zm/s2/zms2lita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 5061
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/zm/cof/zmddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 208,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 165
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/zm/hd/zmhdlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 618
+     },
+     "LA": {
+      "internal": "data/global/monsters/zm/la/zmlalitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 708
+     },
+     "RA": {
+      "internal": "data/global/monsters/zm/ra/zmralitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 790
+     },
+     "TR": {
+      "internal": "data/global/monsters/zm/tr/zmtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 1272
+     },
+     "S2": {
+      "internal": "data/global/monsters/zm/s2/zms2litddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 614
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S4",
+     "S3"
+    ]
+   }
+  },
+  "missing_modes": [
+   "SC"
+  ]
+ },
+ "FA": {
+  "mon_id": "fallen1",
+  "name": "Fallen",
+  "note": "planche 2 \u2014 d\u00e9j\u00e0 au manifest",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/fa/cof/fanuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 20,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 724
+    },
+    "layers": {
+     "S1": {
+      "internal": "data/global/monsters/fa/s1/fas1litnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6603
+     },
+     "TR": {
+      "internal": "data/global/monsters/fa/tr/fatrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 63776
+     }
+    },
+    "missing_layers": [
+     "RH",
+     "S2"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/fa/cof/fawlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 394
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fa/tr/fatrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 37037
+     },
+     "S1": {
+      "internal": "data/global/monsters/fa/s1/fas1litwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3516
+     }
+    },
+    "missing_layers": [
+     "S2",
+     "RH"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/fa/cof/faa1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 394
+    },
+    "layers": {
+     "S1": {
+      "internal": "data/global/monsters/fa/s1/fas1lita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3678
+     },
+     "TR": {
+      "internal": "data/global/monsters/fa/tr/fatrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 37493
+     }
+    },
+    "missing_layers": [
+     "S2",
+     "RH"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/fa/cof/faa2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 559
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fa/tr/fatrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 56470
+     },
+     "S1": {
+      "internal": "data/global/monsters/fa/s1/fas1lita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 5568
+     }
+    },
+    "missing_layers": [
+     "S2",
+     "RH"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/fa/cof/faddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 1,
+     "bytes": 80
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fa/tr/fatrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 3823
+     },
+     "S2": {
+      "internal": "data/global/monsters/fa/s2/fas2litddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 399
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "SI": {
+  "mon_id": "quillrat1",
+  "name": "QuillRat",
+  "note": "planches 2/110 \u2014 d\u00e9j\u00e0 au manifest",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/si/cof/sinuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/si/tr/sitrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 28852
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/si/cof/siwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 9,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 118
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/si/tr/sitrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 31893
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/si/cof/sia1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/si/tr/sitrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 60299
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/si/cof/sia2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 154
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/si/tr/sitrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 61869
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/si/cof/siddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 1,
+     "bytes": 63
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/si/tr/sitrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 5137
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "SK": {
+  "mon_id": "skeleton5",
+  "name": "Skeleton",
+  "note": "planches 55/65/110 \u2014 d\u00e9j\u00e0 au manifest",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/sk/cof/sknuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 693
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/sk/hd/skhdlitnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 2617
+     },
+     "LA": {
+      "internal": "data/global/monsters/sk/la/sklalitnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 3788
+     },
+     "RA": {
+      "internal": "data/global/monsters/sk/ra/skralitnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 3728
+     },
+     "TR": {
+      "internal": "data/global/monsters/sk/tr/sktrlitnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 6769
+     },
+     "S3": {
+      "internal": "data/global/monsters/sk/s3/sks3litnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 6238
+     },
+     "S2": {
+      "internal": "data/global/monsters/sk/s2/sks2litnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 1899
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S6",
+     "S5"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/sk/cof/skwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 693
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/sk/hd/skhdlitwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 2762
+     },
+     "LA": {
+      "internal": "data/global/monsters/sk/la/sklalitwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 4101
+     },
+     "RA": {
+      "internal": "data/global/monsters/sk/ra/skralitwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 4046
+     },
+     "TR": {
+      "internal": "data/global/monsters/sk/tr/sktrlitwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 6808
+     },
+     "S2": {
+      "internal": "data/global/monsters/sk/s2/sks2litwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 2188
+     },
+     "S3": {
+      "internal": "data/global/monsters/sk/s3/sks3litwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 6568
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S5",
+     "S6"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/sk/cof/ska1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 208,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 1277
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/sk/hd/skhdlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 5291
+     },
+     "LA": {
+      "internal": "data/global/monsters/sk/la/sklalita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 7779
+     },
+     "RA": {
+      "internal": "data/global/monsters/sk/ra/skralita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 7394
+     },
+     "TR": {
+      "internal": "data/global/monsters/sk/tr/sktrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 14093
+     },
+     "S2": {
+      "internal": "data/global/monsters/sk/s2/sks2lita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 4014
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3",
+     "S5",
+     "S6"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/sk/cof/ska2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 1003
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/sk/hd/skhdlita21hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 5282
+     },
+     "LA": {
+      "internal": "data/global/monsters/sk/la/sklalita21hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 7695
+     },
+     "RA": {
+      "internal": "data/global/monsters/sk/ra/skralita21hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 7426
+     },
+     "TR": {
+      "internal": "data/global/monsters/sk/tr/sktrlita21hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 13810
+     },
+     "S3": {
+      "internal": "data/global/monsters/sk/s3/sks3lita21hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 13558
+     },
+     "S2": {
+      "internal": "data/global/monsters/sk/s2/sks2lita21hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 4020
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/sk/cof/skddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 152,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 148
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sk/tr/sktrlitdd1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 2870
+     },
+     "HD": {
+      "internal": "data/global/monsters/sk/hd/skhdlitdd1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 882
+     },
+     "LA": {
+      "internal": "data/global/monsters/sk/la/sklalitdd1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 1044
+     },
+     "RA": {
+      "internal": "data/global/monsters/sk/ra/skralitdd1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 931
+     },
+     "S2": {
+      "internal": "data/global/monsters/sk/s2/sks2litdd1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 607
+     },
+     "S3": {
+      "internal": "data/global/monsters/sk/s3/sks3litdd1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 1491
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "FS": {
+  "mon_id": "fallenshaman5",
+  "name": "FallenShaman",
+  "note": "vague 1 du tr\u00f4ne (fallenshaman5) \u2014 d\u00e9j\u00e0 au manifest",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/fs/cof/fsnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fs/tr/fstrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 75880
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/fs/cof/fswlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 163
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fs/tr/fstrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 105020
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/fs/cof/fsa1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 17,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 190
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fs/tr/fstrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 129407
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/fs/cof/fsa2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 17,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 335
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fs/tr/fstrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 111139
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/fs/cof/fsddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 1,
+     "bytes": 63
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fs/tr/fstrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6418
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "YE": {
+  "mon_id": "brute2",
+  "name": "Brute",
+  "note": "gabarit historique \u2014 d\u00e9j\u00e0 au manifest",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/ye/cof/yenuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ye/tr/yetrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 118682
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/ye/cof/yewlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ye/tr/yetrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 215360
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/ye/cof/yea1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ye/tr/yetrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 239391
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/ye/cof/yea2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 199
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ye/tr/yetrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 348482
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/ye/cof/yeddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ye/tr/yetrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 24667
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "SC": {
+  "mon_id": "scarab1",
+  "name": "Scarab",
+  "note": "planche 55 (Stony Tomb)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/sc/cof/scnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 255
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/sc/hd/schdlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6845
+     },
+     "TR": {
+      "internal": "data/global/monsters/sc/tr/sctrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 59597
+     },
+     "RA": {
+      "internal": "data/global/monsters/sc/ra/scralitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 8754
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/sc/cof/scwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 405
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sc/tr/sctrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 116916
+     },
+     "HD": {
+      "internal": "data/global/monsters/sc/hd/schdlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 12650
+     },
+     "RA": {
+      "internal": "data/global/monsters/sc/ra/scralitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 14902
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/sc/cof/sca1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 455
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sc/tr/sctrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 128684
+     },
+     "RA": {
+      "internal": "data/global/monsters/sc/ra/scralita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 19854
+     },
+     "HD": {
+      "internal": "data/global/monsters/sc/hd/schdlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 15513
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/sc/cof/sca2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 405
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sc/tr/sctrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 116081
+     },
+     "RA": {
+      "internal": "data/global/monsters/sc/ra/scralita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 16078
+     },
+     "HD": {
+      "internal": "data/global/monsters/sc/hd/schdlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 13408
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/sc/cof/scddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 1,
+     "bytes": 97
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sc/tr/sctrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 9264
+     },
+     "RA": {
+      "internal": "data/global/monsters/sc/ra/scralitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 1396
+     },
+     "HD": {
+      "internal": "data/global/monsters/sc/hd/schdlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 1479
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "SR": {
+  "mon_id": "sandraider3",
+  "name": "SandRaider",
+  "note": "planche 65 (Ancient Tunnels)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/sr/cof/srnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 172
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sr/tr/srtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 164409
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/sr/cof/srwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 29,
+     "dirs": 8,
+     "speed": 80,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 298
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sr/tr/srtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 326478
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/sr/cof/sra1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 200,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 172
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sr/tr/srtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 180927
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/sr/cof/sra2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 224,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 172
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sr/tr/srtrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 191877
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/sr/cof/srddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/sr/tr/srtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 12693
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "MM": {
+  "mon_id": "mummy3",
+  "name": "Mummy",
+  "note": "planche 65",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/mm/cof/mmnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 163
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/mm/tr/mmtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 56118
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/mm/cof/mmwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/mm/tr/mmtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 64801
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/mm/cof/mma1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 199
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/mm/tr/mmtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 93351
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/mm/cof/mma2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/mm/tr/mmtrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 89494
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/mm/cof/mmddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/mm/tr/mmtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6149
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "WR": {
+  "mon_id": "wraith3",
+  "name": "Wraith",
+  "note": "planche 74 (Arcane Sanctuary)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/wr/cof/wrnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/wr/tr/wrtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 152705
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/wr/cof/wrwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 163
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/wr/tr/wrtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 166839
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/wr/cof/wra1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 199
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/wr/tr/wrtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 236162
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/wr/cof/wrddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/wr/tr/wrtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6885
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/wr/cof/wrschth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/wr/tr/wrtrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 418521
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2"
+  ]
+ },
+ "GM": {
+  "mon_id": "goatman4",
+  "name": "Goatman",
+  "note": "planche 74 \u2014 COF wc 2hs (sonde, pas de hth)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/gm/cof/gmnu2hs.cof",
+     "archive": "d2data",
+     "wc": "2hs",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 160,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 216
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gm/tr/gmtrlitnu2hs.dcc",
+      "archive": "d2data",
+      "wc": "2hs",
+      "bytes": 47711
+     }
+    },
+    "missing_layers": [
+     "RH"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/gm/cof/gmwl2hs.cof",
+     "archive": "d2data",
+     "wc": "2hs",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gm/tr/gmtrlitwl2hs.dcc",
+      "archive": "d2data",
+      "wc": "2hs",
+      "bytes": 41179
+     }
+    },
+    "missing_layers": [
+     "RH"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/gm/cof/gma12hs.cof",
+     "archive": "d2data",
+     "wc": "2hs",
+     "frames": 20,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 386
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gm/tr/gmtrlita12hs.dcc",
+      "archive": "d2data",
+      "wc": "2hs",
+      "bytes": 102048
+     }
+    },
+    "missing_layers": [
+     "RH"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/gm/cof/gma22hs.cof",
+     "archive": "d2data",
+     "wc": "2hs",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 318
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gm/tr/gmtrlita22hs.dcc",
+      "archive": "d2data",
+      "wc": "2hs",
+      "bytes": 83429
+     }
+    },
+    "missing_layers": [
+     "RH"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "DD",
+   "SC"
+  ]
+ },
+ "VA": {
+  "mon_id": "vampire1",
+  "name": "Vampire",
+  "note": "planche 74",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/va/cof/vanuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 136,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 172
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/va/tr/vatrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 68090
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/va/cof/vawlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 160,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 199
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/va/tr/vatrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 84823
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/va/cof/vaa1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 176,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 163
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/va/tr/vatrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 85940
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/va/cof/vaddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/va/tr/vatrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6595
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/va/cof/vaschth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 160,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 301
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/va/tr/vatrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 99040
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2"
+  ]
+ },
+ "BH": {
+  "mon_id": "bighead6",
+  "name": "Afflicted",
+  "note": "planche 110 (Bloody Foothills)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/bh/cof/bhnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 176,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/bh/tr/bhtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 88495
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/bh/cof/bhwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 176,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/bh/tr/bhtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 104205
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/bh/cof/bha1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 176,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/bh/tr/bhtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 106361
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/bh/cof/bha2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 216
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/bh/tr/bhtrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 123346
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/bh/cof/bhddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/bh/tr/bhtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 14795
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "ip": {
+  "mon_id": "imp1",
+  "name": "Imp",
+  "note": "planche 110",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/ip/cof/ipnuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 200,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 127
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ip/tr/iptrlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 49330
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/ip/cof/ipwlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ip/tr/iptrlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 39335
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/ip/cof/ipa1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 163
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ip/tr/iptrlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 72661
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/ip/cof/ipddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ip/tr/iptrlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 6997
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/ip/cof/ipschth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 163
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/ip/tr/iptrlitschth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 72661
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2"
+  ]
+ },
+ "os": {
+  "mon_id": "overseer1",
+  "name": "Overseer",
+  "note": "planche 110",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/os/cof/osnuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 9,
+     "dirs": 8,
+     "speed": 104,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 604
+    },
+    "layers": {
+     "S2": {
+      "internal": "data/global/monsters/os/s2/oss2litnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 12026
+     },
+     "HD": {
+      "internal": "data/global/monsters/os/hd/oshdlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 13379
+     },
+     "TR": {
+      "internal": "data/global/monsters/os/tr/ostrlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 99289
+     },
+     "LH": {
+      "internal": "data/global/monsters/os/lh/oslhlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 37100
+     },
+     "RA": {
+      "internal": "data/global/monsters/os/ra/osralitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 28653
+     }
+    },
+    "missing_layers": [
+     "S3",
+     "SH"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/os/cof/oswlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 136,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 661
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/os/hd/oshdlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 15839
+     },
+     "LH": {
+      "internal": "data/global/monsters/os/lh/oslhlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 47423
+     },
+     "RA": {
+      "internal": "data/global/monsters/os/ra/osralitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 34676
+     },
+     "S2": {
+      "internal": "data/global/monsters/os/s2/oss2litwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 14275
+     },
+     "TR": {
+      "internal": "data/global/monsters/os/tr/ostrlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 129303
+     }
+    },
+    "missing_layers": [
+     "SH",
+     "S3"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/os/cof/osa1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 208,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 889
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/os/tr/ostrlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 174542
+     },
+     "HD": {
+      "internal": "data/global/monsters/os/hd/oshdlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 21677
+     },
+     "LH": {
+      "internal": "data/global/monsters/os/lh/oslhlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 64057
+     },
+     "RA": {
+      "internal": "data/global/monsters/os/ra/osralita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 51458
+     },
+     "S2": {
+      "internal": "data/global/monsters/os/s2/oss2lita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 19968
+     }
+    },
+    "missing_layers": [
+     "SH",
+     "S3"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/os/cof/osa2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 192,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 1003
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/os/hd/oshdlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 25539
+     },
+     "LH": {
+      "internal": "data/global/monsters/os/lh/oslhlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 98894
+     },
+     "RA": {
+      "internal": "data/global/monsters/os/ra/osralita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 59663
+     },
+     "S2": {
+      "internal": "data/global/monsters/os/s2/oss2lita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 22592
+     },
+     "TR": {
+      "internal": "data/global/monsters/os/tr/ostrlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 201783
+     }
+    },
+    "missing_layers": [
+     "SH",
+     "S3"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/os/cof/osddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 63
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/os/tr/ostrlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 42267
+     }
+    },
+    "missing_layers": [
+     "S5"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "m5": {
+  "mon_id": "deathmauler1",
+  "name": "DeathMauler",
+  "note": "planche 110",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/m5/cof/m5nuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 232,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 154
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/m5/tr/m5trlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 100990
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/m5/cof/m5wlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 168,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 154
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/m5/tr/m5trlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 120539
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/m5/cof/m5a1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 11,
+     "dirs": 8,
+     "speed": 216,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 136
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/m5/tr/m5trlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 109881
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/m5/cof/m5a2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 224,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 172
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/m5/tr/m5trlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 142006
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/m5/cof/m5ddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/m5/tr/m5trlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 13869
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "xx": {
+  "mon_id": "minion1",
+  "name": "Minion",
+  "note": "planches 110/124",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/xx/cof/xxnuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 64,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 328
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/xx/tr/xxtrlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 52965
+     },
+     "HD": {
+      "internal": "data/global/monsters/xx/hd/xxhdlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 8354
+     },
+     "RH": {
+      "internal": "data/global/monsters/xx/rh/xxrhlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 16310
+     }
+    },
+    "missing_layers": [
+     "S1"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/xx/cof/xxwlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 328
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/xx/tr/xxtrlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 56528
+     },
+     "RH": {
+      "internal": "data/global/monsters/xx/rh/xxrhlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 17068
+     },
+     "HD": {
+      "internal": "data/global/monsters/xx/hd/xxhdlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 8473
+     }
+    },
+    "missing_layers": [
+     "S1"
+    ]
+   },
+   "RN": {
+    "cof": {
+     "internal": "data/global/monsters/xx/cof/xxrnhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 394
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/xx/tr/xxtrlitrnhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 69417
+     },
+     "HD": {
+      "internal": "data/global/monsters/xx/hd/xxhdlitrnhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 10615
+     },
+     "RH": {
+      "internal": "data/global/monsters/xx/rh/xxrhlitrnhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 23527
+     }
+    },
+    "missing_layers": [
+     "S1"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/xx/cof/xxa1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 9,
+     "dirs": 8,
+     "speed": 96,
+     "n_layers": 5,
+     "null_slots": 0,
+     "bytes": 442
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/xx/tr/xxtrlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 66626
+     },
+     "HD": {
+      "internal": "data/global/monsters/xx/hd/xxhdlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 9597
+     },
+     "RH": {
+      "internal": "data/global/monsters/xx/rh/xxrhlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 21549
+     },
+     "S1": {
+      "internal": "data/global/monsters/xx/s1/xxs1lita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 12445
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/xx/cof/xxa2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 11,
+     "dirs": 8,
+     "speed": 88,
+     "n_layers": 5,
+     "null_slots": 0,
+     "bytes": 524
+    },
+    "layers": {
+     "RH": {
+      "internal": "data/global/monsters/xx/rh/xxrhlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 26229
+     },
+     "TR": {
+      "internal": "data/global/monsters/xx/tr/xxtrlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 78482
+     },
+     "HD": {
+      "internal": "data/global/monsters/xx/hd/xxhdlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 11827
+     },
+     "S1": {
+      "internal": "data/global/monsters/xx/s1/xxs1lita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 13012
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/xx/cof/xxddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 63
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/xx/tr/xxtrlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 7644
+     },
+     "HD": {
+      "internal": "data/global/monsters/xx/hd/xxhdlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 1232
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "SC"
+  ]
+ },
+ "f0": {
+  "mon_id": "frozenhorror1",
+  "name": "FrozenHorror",
+  "note": "planche 113 (Crystalline Cavern)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/f0/cof/f0nuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 6,
+     "dirs": 8,
+     "speed": 88,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 148
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/f0/tr/f0trlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 73935
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/f0/cof/f0wlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 184,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 284
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/f0/tr/f0trlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 212255
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/f0/cof/f0a1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 160,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 267
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/f0/tr/f0trlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 214140
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/f0/cof/f0a2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 48,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 284
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/f0/tr/f0trlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 214059
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/f0/cof/f0ddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/f0/tr/f0trlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 3769
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "0B": {
+  "mon_id": "succubus3",
+  "name": "Succubus",
+  "note": "planches 113/124",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/0b/cof/0bnuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 9,
+     "dirs": 8,
+     "speed": 80,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 118
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0b/tr/0btrlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 105417
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/0b/cof/0bwlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0b/tr/0btrlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 91136
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/0b/cof/0ba1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 96,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0b/tr/0btrlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 95546
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/0b/cof/0bddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0b/tr/0btrlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 6057
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2",
+   "SC"
+  ]
+ },
+ "L3": {
+  "mon_id": "bloodlord1",
+  "name": "BloodLord",
+  "note": "planche 113",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/l3/cof/l3nuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 104,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 693
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/l3/hd/l3hdlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 10500
+     },
+     "LA": {
+      "internal": "data/global/monsters/l3/la/l3lalitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 12579
+     },
+     "RA": {
+      "internal": "data/global/monsters/l3/ra/l3ralitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 13868
+     },
+     "TR": {
+      "internal": "data/global/monsters/l3/tr/l3trlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 23920
+     },
+     "S2": {
+      "internal": "data/global/monsters/l3/s2/l3s2litnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 7588
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "SH",
+     "RH",
+     "S3"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/l3/cof/l3wlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 192,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 693
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/l3/hd/l3hdlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 10281
+     },
+     "LA": {
+      "internal": "data/global/monsters/l3/la/l3lalitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 12377
+     },
+     "RA": {
+      "internal": "data/global/monsters/l3/ra/l3ralitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 13106
+     },
+     "S2": {
+      "internal": "data/global/monsters/l3/s2/l3s2litwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 7946
+     },
+     "TR": {
+      "internal": "data/global/monsters/l3/tr/l3trlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 23659
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "SH",
+     "RH",
+     "S3"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/l3/cof/l3a1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 184,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 1277
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/l3/hd/l3hdlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 21789
+     },
+     "LA": {
+      "internal": "data/global/monsters/l3/la/l3lalita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 28692
+     },
+     "RA": {
+      "internal": "data/global/monsters/l3/ra/l3ralita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 31225
+     },
+     "S2": {
+      "internal": "data/global/monsters/l3/s2/l3s2lita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 15660
+     },
+     "TR": {
+      "internal": "data/global/monsters/l3/tr/l3trlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 48963
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "SH",
+     "RH",
+     "S3"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/l3/cof/l3a2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 20,
+     "dirs": 8,
+     "speed": 208,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 1569
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/l3/la/l3lalita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 37311
+     },
+     "HD": {
+      "internal": "data/global/monsters/l3/hd/l3hdlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 26521
+     },
+     "RA": {
+      "internal": "data/global/monsters/l3/ra/l3ralita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 38535
+     },
+     "S2": {
+      "internal": "data/global/monsters/l3/s2/l3s2lita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 19486
+     },
+     "TR": {
+      "internal": "data/global/monsters/l3/tr/l3trlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 62670
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "SH",
+     "RH",
+     "S3"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/l3/cof/l3ddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 10,
+     "null_slots": 1,
+     "bytes": 199
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/l3/hd/l3hdlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 1488
+     },
+     "LA": {
+      "internal": "data/global/monsters/l3/la/l3lalitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 1826
+     },
+     "RA": {
+      "internal": "data/global/monsters/l3/ra/l3ralitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 1937
+     },
+     "S2": {
+      "internal": "data/global/monsters/l3/s2/l3s2litddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 1199
+     },
+     "TR": {
+      "internal": "data/global/monsters/l3/tr/l3trlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 2923
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "SH",
+     "RH",
+     "S3"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "45": {
+  "mon_id": "putriddefiler2",
+  "name": "PutridDefiler",
+  "note": "planche 124 (Halls of Vaught)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/45/cof/45nuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 9,
+     "dirs": 8,
+     "speed": 104,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 118
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/45/tr/45trlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 104790
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/45/cof/45wlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 127
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/45/tr/45trlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 117212
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/45/cof/45a1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 127
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/45/tr/45trlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 127496
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/45/cof/45ddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 63
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/45/tr/45trlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 14721
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2",
+   "SC"
+  ]
+ },
+ "AN": {
+  "mon_id": "andariel",
+  "name": "Andariel",
+  "note": "boss a1q6 \u2014 d\u00e9j\u00e0 au manifest (bosses)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/an/cof/annuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 160,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/an/tr/antrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 411767
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/an/cof/anwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/an/tr/antrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 328006
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/an/cof/ana1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/an/tr/antrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 446578
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/an/cof/anddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/an/tr/antrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 16293
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/an/cof/anschth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 352
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/an/tr/antrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 524466
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2"
+  ]
+ },
+ "DU": {
+  "mon_id": "duriel",
+  "name": "Duriel",
+  "note": "boss a2q5 script\u00e9 (quests_actes2)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/du/cof/dunuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 460
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/du/tr/dutrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 161911
+     },
+     "RA": {
+      "internal": "data/global/monsters/du/ra/duralitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 92832
+     },
+     "LA": {
+      "internal": "data/global/monsters/du/la/dulalitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 90650
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/du/cof/duwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 592
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/du/la/dulalitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 149198
+     },
+     "RA": {
+      "internal": "data/global/monsters/du/ra/duralitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 147784
+     },
+     "TR": {
+      "internal": "data/global/monsters/du/tr/dutrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 263040
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/du/cof/dua1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 394
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/du/la/dulalita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 93076
+     },
+     "RA": {
+      "internal": "data/global/monsters/du/ra/duralita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 95369
+     },
+     "TR": {
+      "internal": "data/global/monsters/du/tr/dutrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 163226
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/du/cof/dua2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 15,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 559
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/du/la/dulalita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 145927
+     },
+     "RA": {
+      "internal": "data/global/monsters/du/ra/duralita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 128440
+     },
+     "TR": {
+      "internal": "data/global/monsters/du/tr/dutrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 225380
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/du/cof/duddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 5,
+     "null_slots": 0,
+     "bytes": 114
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/du/tr/dutrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 14616
+     },
+     "LA": {
+      "internal": "data/global/monsters/du/la/dulalitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6005
+     },
+     "RA": {
+      "internal": "data/global/monsters/du/ra/duralitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 6503
+     }
+    },
+    "missing_layers": [
+     "S2",
+     "LH"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "MP": {
+  "mon_id": "mephisto",
+  "name": "Mephisto",
+  "note": "boss a3q6 script\u00e9 (quests_actes2)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/mp/cof/mpnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 160,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 380
+    },
+    "layers": {},
+    "missing_layers": [
+     "RA",
+     "LH",
+     "TR"
+    ],
+    "dc6_layers": {
+     "RA": {
+      "internal": "data/global/monsters/mp/ra/mpralitnuhth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 136648
+     },
+     "TR": {
+      "internal": "data/global/monsters/mp/tr/mptrlitnuhth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 381850
+     }
+    }
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/mp/cof/mpwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 184,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 380
+    },
+    "layers": {},
+    "missing_layers": [
+     "TR",
+     "LH",
+     "RA"
+    ],
+    "dc6_layers": {
+     "TR": {
+      "internal": "data/global/monsters/mp/tr/mptrlitwlhth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 374713
+     },
+     "RA": {
+      "internal": "data/global/monsters/mp/ra/mpralitwlhth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 114386
+     }
+    }
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/mp/cof/mpa1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 192,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 505
+    },
+    "layers": {},
+    "missing_layers": [
+     "LH",
+     "RA",
+     "TR"
+    ],
+    "dc6_layers": {
+     "RA": {
+      "internal": "data/global/monsters/mp/ra/mpralita1hth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 159658
+     },
+     "TR": {
+      "internal": "data/global/monsters/mp/tr/mptrlita1hth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 523359
+     }
+    }
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/mp/cof/mpa2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 17,
+     "dirs": 8,
+     "speed": 184,
+     "n_layers": 5,
+     "null_slots": 0,
+     "bytes": 770
+    },
+    "layers": {},
+    "missing_layers": [
+     "LH",
+     "RA",
+     "S6",
+     "S7",
+     "TR"
+    ],
+    "dc6_layers": {
+     "RA": {
+      "internal": "data/global/monsters/mp/ra/mpralita2hth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 150166
+     },
+     "S6": {
+      "internal": "data/global/monsters/mp/s6/mps6lita2hth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 406411
+     },
+     "TR": {
+      "internal": "data/global/monsters/mp/tr/mptrlita2hth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 475408
+     }
+    }
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/mp/cof/mpddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 16,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 129
+    },
+    "layers": {},
+    "missing_layers": [
+     "TR",
+     "S2",
+     "S3",
+     "S4"
+    ],
+    "dc6_layers": {
+     "TR": {
+      "internal": "data/global/monsters/mp/tr/mptrlitddhth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 14638
+     },
+     "S2": {
+      "internal": "data/global/monsters/mp/s2/mps2litddhth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 352
+     },
+     "S3": {
+      "internal": "data/global/monsters/mp/s3/mps3litddhth.dc6",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 352
+     }
+    }
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "22": {
+  "mon_id": "izual",
+  "name": "Izual",
+  "note": "boss a4q1 script\u00e9 (quests_actes45)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/22/cof/22nuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 120,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/22/tr/22trlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 152317
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/22/cof/22wlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 208,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/22/tr/22trlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 162507
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/22/cof/22a1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 232,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/22/tr/22trlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 330387
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/22/cof/22ddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/22/tr/22trlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 18537
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/22/cof/22schth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 318
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/22/tr/22trlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 369373
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2"
+  ]
+ },
+ "5P": {
+  "mon_id": "hephasto",
+  "name": "Hephasto",
+  "note": "boss a4q3 script\u00e9 (quests_actes45) \u2014 code partag\u00e9 avec \u00ab smith \u00bb a1q3",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/5p/cof/5pnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/5p/tr/5ptrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 90290
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/5p/cof/5pwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 88,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/5p/tr/5ptrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 136961
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/5p/cof/5pa1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 163
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/5p/tr/5ptrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 176769
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/5p/cof/5pddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/5p/tr/5ptrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 12448
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2",
+   "SC"
+  ]
+ },
+ "DI": {
+  "mon_id": "diablo",
+  "name": "Diablo",
+  "note": "boss a4q2 script\u00e9 (quests_finale)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/di/cof/dinuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 96,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 460
+    },
+    "layers": {
+     "RA": {
+      "internal": "data/global/monsters/di/ra/diralitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 46836
+     },
+     "LA": {
+      "internal": "data/global/monsters/di/la/dilalitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 48973
+     },
+     "TR": {
+      "internal": "data/global/monsters/di/tr/ditrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 166094
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/di/cof/diwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 192,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 460
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/di/la/dilalitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 57914
+     },
+     "TR": {
+      "internal": "data/global/monsters/di/tr/ditrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 189761
+     },
+     "RA": {
+      "internal": "data/global/monsters/di/ra/diralitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 57574
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "RN": {
+    "cof": {
+     "internal": "data/global/monsters/di/cof/dirnhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 22,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 790
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/di/la/dilalitrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 108231
+     },
+     "RA": {
+      "internal": "data/global/monsters/di/ra/diralitrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 111869
+     },
+     "TR": {
+      "internal": "data/global/monsters/di/tr/ditrlitrnhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 370994
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/di/cof/dia1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 592
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/di/la/dilalita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 77743
+     },
+     "TR": {
+      "internal": "data/global/monsters/di/tr/ditrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 268417
+     },
+     "RA": {
+      "internal": "data/global/monsters/di/ra/diralita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 85201
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/di/cof/dia2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 20,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 4,
+     "null_slots": 0,
+     "bytes": 724
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/di/la/dilalita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 127301
+     },
+     "TR": {
+      "internal": "data/global/monsters/di/tr/ditrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 324786
+     },
+     "RA": {
+      "internal": "data/global/monsters/di/ra/diralita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 97174
+     }
+    },
+    "missing_layers": [
+     "LH"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/di/cof/diddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 1,
+     "speed": 0,
+     "n_layers": 5,
+     "null_slots": 0,
+     "bytes": 79
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/di/la/dilalitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 892
+     },
+     "RA": {
+      "internal": "data/global/monsters/di/ra/diralitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 820
+     },
+     "TR": {
+      "internal": "data/global/monsters/di/tr/ditrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 2215
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/di/cof/dischth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 17,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 5,
+     "null_slots": 0,
+     "bytes": 770
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/di/la/dilalitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 100195
+     },
+     "RA": {
+      "internal": "data/global/monsters/di/ra/diralitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 103714
+     },
+     "TR": {
+      "internal": "data/global/monsters/di/tr/ditrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 280727
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S2"
+    ]
+   }
+  },
+  "missing_modes": []
+ },
+ "0D": {
+  "mon_id": "ancientbarb1",
+  "name": "Korlic",
+  "note": "Ancien script\u00e9 (quests_actes45)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/0d/cof/0dnuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 104,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 255
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0d/tr/0dtrlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 67870
+     },
+     "S2": {
+      "internal": "data/global/monsters/0d/s2/0ds2litnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 100480
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/0d/cof/0dwlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 168,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 255
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0d/tr/0dtrlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 80520
+     },
+     "S2": {
+      "internal": "data/global/monsters/0d/s2/0ds2litwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 130560
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/0d/cof/0da1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 455
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0d/tr/0dtrlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 164083
+     },
+     "S2": {
+      "internal": "data/global/monsters/0d/s2/0ds2lita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 266817
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/0d/cof/0da2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 455
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0d/tr/0dtrlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 165181
+     },
+     "S2": {
+      "internal": "data/global/monsters/0d/s2/0ds2lita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 267232
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/0d/cof/0dddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0d/tr/0dtrlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "0F": {
+  "mon_id": "ancientbarb2",
+  "name": "Talic",
+  "note": "Ancien script\u00e9",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/0f/cof/0fnuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 96,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0f/tr/0ftrlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 51859
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/0f/cof/0fwlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 152,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0f/tr/0ftrlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 63181
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/0f/cof/0fa1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 318
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0f/tr/0ftrlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 133473
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/0f/cof/0fddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0f/tr/0ftrlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/0f/cof/0fschth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 14,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 284
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0f/tr/0ftrlitschth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 108720
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2"
+  ]
+ },
+ "0E": {
+  "mon_id": "ancientbarb3",
+  "name": "Madawc",
+  "note": "Ancien script\u00e9",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/0e/cof/0enuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 104,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0e/tr/0etrlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 64101
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/0e/cof/0ewlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 152,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0e/tr/0etrlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 77141
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/0e/cof/0ea1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 19,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 369
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0e/tr/0etrlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 183489
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/0e/cof/0ea2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 19,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 369
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0e/tr/0etrlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 189022
+     }
+    },
+    "missing_layers": [
+     "S3"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/0e/cof/0eddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/0e/tr/0etrlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "GY": {
+  "mon_id": "unraveler5",
+  "name": "Baal Subject 2",
+  "note": "vague 2 du tr\u00f4ne (quests_finale)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/gy/cof/gynuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 136,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gy/tr/gytrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 121103
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/gy/cof/gywlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 199
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gy/tr/gytrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 198202
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/gy/cof/gya1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gy/tr/gytrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 181964
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/gy/cof/gya2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 20,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 217
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gy/tr/gytrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 212707
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/gy/cof/gyddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gy/tr/gytrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 14758
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/gy/cof/gyschth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/gy/tr/gytrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 171457
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN"
+  ]
+ },
+ "HP": {
+  "mon_id": "baalhighpriest",
+  "name": "Baal Subject 3",
+  "note": "vague 3 du tr\u00f4ne",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/hp/cof/hpnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 7,
+     "dirs": 8,
+     "speed": 96,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 100
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/hp/tr/hptrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 57262
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/hp/cof/hpwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 11,
+     "dirs": 8,
+     "speed": 168,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 136
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/hp/tr/hptrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 106206
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/hp/cof/hpa1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 168,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 127
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/hp/tr/hptrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 91889
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/hp/cof/hpddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/hp/tr/hptrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 16679
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2",
+   "SC"
+  ]
+ },
+ "DM": {
+  "mon_id": "venomlord",
+  "name": "Baal Subject 4",
+  "note": "vague 4 du tr\u00f4ne",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/dm/cof/dmnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 144,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/dm/tr/dmtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 158994
+     }
+    },
+    "missing_layers": [
+     "RH"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/dm/cof/dmwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/dm/tr/dmtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 160854
+     }
+    },
+    "missing_layers": [
+     "RH"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/dm/cof/dma1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 168,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 318
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/dm/tr/dmtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 357566
+     }
+    },
+    "missing_layers": [
+     "RH"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/dm/cof/dmddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/dm/tr/dmtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 15675
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2",
+   "SC"
+  ]
+ },
+ "43": {
+  "mon_id": "baalminion1",
+  "name": "Baal Subject 5",
+  "note": "vague 5 du tr\u00f4ne",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/43/cof/43nuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 775
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/43/hd/43hdlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 42074
+     },
+     "LA": {
+      "internal": "data/global/monsters/43/la/43lalitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 57408
+     },
+     "RA": {
+      "internal": "data/global/monsters/43/ra/43ralitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 54486
+     },
+     "S2": {
+      "internal": "data/global/monsters/43/s2/43s2litnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 38433
+     },
+     "TR": {
+      "internal": "data/global/monsters/43/tr/43trlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 39080
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/43/cof/43wlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 240,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 775
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/43/hd/43hdlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 43558
+     },
+     "LA": {
+      "internal": "data/global/monsters/43/la/43lalitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 65256
+     },
+     "RA": {
+      "internal": "data/global/monsters/43/ra/43ralitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 60884
+     },
+     "S2": {
+      "internal": "data/global/monsters/43/s2/43s2litwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 40672
+     },
+     "TR": {
+      "internal": "data/global/monsters/43/tr/43trlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 41686
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/43/cof/43a1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 775
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/43/hd/43hdlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 50776
+     },
+     "LA": {
+      "internal": "data/global/monsters/43/la/43lalita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 69343
+     },
+     "RA": {
+      "internal": "data/global/monsters/43/ra/43ralita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 68086
+     },
+     "S2": {
+      "internal": "data/global/monsters/43/s2/43s2lita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 42027
+     },
+     "TR": {
+      "internal": "data/global/monsters/43/tr/43trlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 44153
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/43/cof/43a2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 832
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/43/hd/43hdlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 51697
+     },
+     "LA": {
+      "internal": "data/global/monsters/43/la/43lalita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 70985
+     },
+     "RA": {
+      "internal": "data/global/monsters/43/ra/43ralita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 66535
+     },
+     "S2": {
+      "internal": "data/global/monsters/43/s2/43s2lita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 44404
+     },
+     "TR": {
+      "internal": "data/global/monsters/43/tr/43trlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 42444
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/43/cof/43ddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 9,
+     "null_slots": 0,
+     "bytes": 182
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/43/hd/43hdlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     },
+     "LA": {
+      "internal": "data/global/monsters/43/la/43lalitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     },
+     "RA": {
+      "internal": "data/global/monsters/43/ra/43ralitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     },
+     "S2": {
+      "internal": "data/global/monsters/43/s2/43s2litddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     },
+     "S3": {
+      "internal": "data/global/monsters/43/s3/43s3litddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 15937
+     },
+     "TR": {
+      "internal": "data/global/monsters/43/tr/43trlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 399
+     },
+     "S4": {
+      "internal": "data/global/monsters/43/s4/43s4litddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 2569
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S5"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "SC"
+  ]
+ },
+ "42": {
+  "mon_id": "baalcrab",
+  "name": "Baal",
+  "note": "boss final (Chambre de la Pierre d'Worldstone)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/42/cof/42nuhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 6,
+     "null_slots": 0,
+     "bytes": 670
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/42/tr/42trlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 86289
+     },
+     "HD": {
+      "internal": "data/global/monsters/42/hd/42hdlitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 82068
+     },
+     "LA": {
+      "internal": "data/global/monsters/42/la/42lalitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 92987
+     },
+     "RA": {
+      "internal": "data/global/monsters/42/ra/42ralitnuhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 101812
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S2"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/42/cof/42wlhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 6,
+     "null_slots": 0,
+     "bytes": 670
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/42/hd/42hdlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 84045
+     },
+     "LA": {
+      "internal": "data/global/monsters/42/la/42lalitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 104200
+     },
+     "RA": {
+      "internal": "data/global/monsters/42/ra/42ralitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 100565
+     },
+     "TR": {
+      "internal": "data/global/monsters/42/tr/42trlitwlhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 94584
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S2"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/42/cof/42a1hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 19,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 6,
+     "null_slots": 0,
+     "bytes": 1013
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/42/tr/42trlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 174186
+     },
+     "HD": {
+      "internal": "data/global/monsters/42/hd/42hdlita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 156822
+     },
+     "LA": {
+      "internal": "data/global/monsters/42/la/42lalita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 170047
+     },
+     "RA": {
+      "internal": "data/global/monsters/42/ra/42ralita1hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 170722
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S2"
+    ]
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/42/cof/42a2hth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 200,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 1003
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/42/hd/42hdlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 111309
+     },
+     "LA": {
+      "internal": "data/global/monsters/42/la/42lalita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 130470
+     },
+     "RA": {
+      "internal": "data/global/monsters/42/ra/42ralita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 134766
+     },
+     "TR": {
+      "internal": "data/global/monsters/42/tr/42trlita2hth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 127231
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S2",
+     "S4"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/42/cof/42ddhth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 1,
+     "speed": 0,
+     "n_layers": 3,
+     "null_slots": 0,
+     "bytes": 59
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/42/hd/42hdlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 982
+     },
+     "TR": {
+      "internal": "data/global/monsters/42/tr/42trlitddhth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 3537
+     }
+    },
+    "missing_layers": [
+     "S7"
+    ]
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/42/cof/42schth.cof",
+     "archive": "d2exp",
+     "wc": "hth",
+     "frames": 19,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 7,
+     "null_slots": 0,
+     "bytes": 1174
+    },
+    "layers": {
+     "HD": {
+      "internal": "data/global/monsters/42/hd/42hdlitschth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 153348
+     },
+     "LA": {
+      "internal": "data/global/monsters/42/la/42lalitschth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 168128
+     },
+     "RA": {
+      "internal": "data/global/monsters/42/ra/42ralitschth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 169296
+     },
+     "TR": {
+      "internal": "data/global/monsters/42/tr/42trlitschth.dcc",
+      "archive": "d2exp",
+      "wc": "hth",
+      "bytes": 182423
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S2",
+     "S6"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN"
+  ]
+ },
+ "CR": {
+  "mon_id": "bloodraven",
+  "name": "BloodRaven",
+  "note": "kill \u00e9v\u00e9nementiel a1q2/a1q3 (bloodraven/corruptrogue3) \u2014 COF wc bow",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/cr/cof/crnubow.cof",
+     "archive": "d2data",
+     "wc": "bow",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 192,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 945
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/cr/la/crlalitnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 8028
+     },
+     "RA": {
+      "internal": "data/global/monsters/cr/ra/crralitnubow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 7108
+     },
+     "TR": {
+      "internal": "data/global/monsters/cr/tr/crtrlitnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 13488
+     },
+     "S2": {
+      "internal": "data/global/monsters/cr/s2/crs2litnubow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 5330
+     },
+     "HD": {
+      "internal": "data/global/monsters/cr/hd/crhdlitnu1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 8433
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3",
+     "SH"
+    ]
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/cr/cof/crwlbow.cof",
+     "archive": "d2data",
+     "wc": "bow",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 880
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/cr/la/crlalitwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 7880
+     },
+     "TR": {
+      "internal": "data/global/monsters/cr/tr/crtrlitwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 12743
+     },
+     "RA": {
+      "internal": "data/global/monsters/cr/ra/crralitwlbow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 7044
+     },
+     "S2": {
+      "internal": "data/global/monsters/cr/s2/crs2litwlbow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 4902
+     },
+     "HD": {
+      "internal": "data/global/monsters/cr/hd/crhdlitwl1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 8166
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3",
+     "SH"
+    ]
+   },
+   "RN": {
+    "cof": {
+     "internal": "data/global/monsters/cr/cof/crrnbow.cof",
+     "archive": "d2data",
+     "wc": "bow",
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 750
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/cr/la/crlalitrn1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 5901
+     },
+     "TR": {
+      "internal": "data/global/monsters/cr/tr/crtrlitrn1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 10584
+     },
+     "RA": {
+      "internal": "data/global/monsters/cr/ra/crralitrnbow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 4932
+     },
+     "HD": {
+      "internal": "data/global/monsters/cr/hd/crhdlitrn1hs.dcc",
+      "archive": "d2data",
+      "wc": "1hs",
+      "bytes": 7053
+     },
+     "S2": {
+      "internal": "data/global/monsters/cr/s2/crs2litrnbow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 4185
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3",
+     "SH"
+    ]
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/cr/cof/cra1bow.cof",
+     "archive": "d2data",
+     "wc": "bow",
+     "frames": 13,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 945
+    },
+    "layers": {
+     "RA": {
+      "internal": "data/global/monsters/cr/ra/crralita1bow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 6715
+     },
+     "LA": {
+      "internal": "data/global/monsters/cr/la/crlalita1bow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 8562
+     },
+     "TR": {
+      "internal": "data/global/monsters/cr/tr/crtrlita1bow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 12888
+     },
+     "S2": {
+      "internal": "data/global/monsters/cr/s2/crs2lita1bow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 5046
+     },
+     "HD": {
+      "internal": "data/global/monsters/cr/hd/crhdlita1bow.dcc",
+      "archive": "d2data",
+      "wc": "bow",
+      "bytes": 8159
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "S3",
+     "SH"
+    ]
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/cr/cof/crddbow.cof",
+     "archive": "d2data",
+     "wc": "bow",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 8,
+     "null_slots": 0,
+     "bytes": 165
+    },
+    "layers": {
+     "LA": {
+      "internal": "data/global/monsters/cr/la/crlalitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 922
+     },
+     "TR": {
+      "internal": "data/global/monsters/cr/tr/crtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 1287
+     },
+     "RA": {
+      "internal": "data/global/monsters/cr/ra/crralitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 845
+     },
+     "S2": {
+      "internal": "data/global/monsters/cr/s2/crs2litddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 713
+     },
+     "S3": {
+      "internal": "data/global/monsters/cr/s3/crs3litddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 9808
+     },
+     "HD": {
+      "internal": "data/global/monsters/cr/hd/crhdlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 1017
+     }
+    },
+    "missing_layers": [
+     "LH",
+     "SH"
+    ]
+   }
+  },
+  "missing_modes": [
+   "A2",
+   "SC"
+  ]
+ },
+ "RD": {
+  "mon_id": "radament",
+  "name": "Radament",
+  "note": "kill \u00e9v\u00e9nementiel a2q1",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/rd/cof/rdnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/rd/tr/rdtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 106095
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/rd/cof/rdwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 18,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 199
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/rd/tr/rdtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 177912
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/rd/cof/rda1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/rd/tr/rdtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 160416
+     }
+    },
+    "missing_layers": []
+   },
+   "A2": {
+    "cof": {
+     "internal": "data/global/monsters/rd/cof/rda2hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 20,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 217
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/rd/tr/rdtrlita2hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 180198
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/rd/cof/rdddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/rd/tr/rdtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 12692
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/rd/cof/rdschth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 181
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/rd/tr/rdtrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 155274
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN"
+  ]
+ },
+ "SU": {
+  "mon_id": "summoner",
+  "name": "Summoner",
+  "note": "kill \u00e9v\u00e9nementiel a2q3",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/su/cof/sunuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/su/tr/sutrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 42742
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/su/cof/suwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 160,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/su/tr/sutrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 56926
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/su/cof/suddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/su/tr/sutrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 5672
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/su/cof/suschth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 2,
+     "null_slots": 0,
+     "bytes": 250
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/su/tr/sutrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 105551
+     }
+    },
+    "missing_layers": [
+     "S2"
+    ]
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A1",
+   "A2"
+  ]
+ },
+ "FW": {
+  "mon_id": "fetishshaman4",
+  "name": "WitchDoctor",
+  "note": "kill \u00e9v\u00e9nementiel a2q4 (Endugu)",
+  "modes": {
+   "NU": {
+    "cof": {
+     "internal": "data/global/monsters/fw/cof/fwnuhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 145
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fw/tr/fwtrlitnuhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 80184
+     }
+    },
+    "missing_layers": []
+   },
+   "WL": {
+    "cof": {
+     "internal": "data/global/monsters/fw/cof/fwwlhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 109
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fw/tr/fwtrlitwlhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 54406
+     }
+    },
+    "missing_layers": []
+   },
+   "A1": {
+    "cof": {
+     "internal": "data/global/monsters/fw/cof/fwa1hth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 25,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 262
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fw/tr/fwtrlita1hth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 164605
+     }
+    },
+    "missing_layers": []
+   },
+   "DD": {
+    "cof": {
+     "internal": "data/global/monsters/fw/cof/fwddhth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 46
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fw/tr/fwtrlitddhth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 5539
+     }
+    },
+    "missing_layers": []
+   },
+   "SC": {
+    "cof": {
+     "internal": "data/global/monsters/fw/cof/fwschth.cof",
+     "archive": "d2data",
+     "wc": "hth",
+     "frames": 17,
+     "dirs": 8,
+     "speed": 0,
+     "n_layers": 1,
+     "null_slots": 0,
+     "bytes": 190
+    },
+    "layers": {
+     "TR": {
+      "internal": "data/global/monsters/fw/tr/fwtrlitschth.dcc",
+      "archive": "d2data",
+      "wc": "hth",
+      "bytes": 109487
+     }
+    },
+    "missing_layers": []
+   }
+  },
+  "missing_modes": [
+   "RN",
+   "A2"
+  ]
+ }
+}

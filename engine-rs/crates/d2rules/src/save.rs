@@ -369,6 +369,7 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 dead_ms: s.hero.dead_ms,
                 anim_ms: s.hero.anim_ms,
                 run: false, // transient (touche Maj) — jamais persisté
+                swing_cast: false, // 15b : transitoire (jamais persisté)
                 spawn: s.hero.spawn,
                 inv,
                 skills,
@@ -407,6 +408,8 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 wounds: None,
                 poison: None,
                 chill_ms: 0,
+                // 16a : malédiction transitoire (jamais persistée) — vide.
+                curse: None,
             })
             .collect(),
         items: s.items,
@@ -465,6 +468,11 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         // cadavres et overlays (panique/incantation) sont transitoires et ne
         // survivent pas au rechargement, comme `corpse_pending`.
         ai: crate::ai_behaviors::AiState::default(),
+        // 16b : invocations JAMAIS persistées (retail — elles ne survivent
+        // pas au save/load) — état vide au chargement, comme les transitoires.
+        minions: crate::minions::Minions::with_seed(s.rng),
+        // 16c : pièges/combos/formes transitoires (jamais persistés) — vide.
+        ad: Default::default(),
         // Journal de quêtes Acte I spec : JSON versionné strict
         // (`ActQuests::from_json`) — présent mais invalide ⇒ Err.
         quests_act1: match s.quest_act1 {
@@ -497,6 +505,9 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             }
             None => None,
         },
+        // 16a : aura active transitoire (jamais persistée) — vide au
+        // chargement, comme `corpse_pending`/`HitMods`.
+        auras: crate::auras::AuraState::default(),
     };
     let mut world = world;
     // sanité minimale : gabarits connus, entités dans les bornes

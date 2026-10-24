@@ -7,25 +7,23 @@
         font: 11px/1.3 system-ui, sans-serif; color: #e8dcbf; }
 #hudx * { box-sizing: border-box; }
 
-/* --- EXP-H2 : barre d'endurance (à droite du globe de vie) ---------------- */
-#staminawrap { position: absolute; left: 134px; bottom: 48px; width: 116px; height: 8px;
-               background: #16120ccc; border: 1px solid #000000aa; border-radius: 3px;
-               box-shadow: inset 0 1px 2px #000; }
-#staminafill { height: 100%; width: 100%; border-radius: 2px;
-               background: linear-gradient(#7ec850, #2e6b1e); transition: width .12s linear; }
-#staminawrap.low #staminafill { background: linear-gradient(#d8b23a, #7a5c14); }
-#staminawrap.empty #staminafill { background: linear-gradient(#a04030, #5a1c10); }
+/* --- FIX-UI (d2w-fix-ui) : l'art de la barre du bas est DÉSORMAIS dessiné
+   sur le canvas par ui-d2.js (sprites réels D2 v1.12). Les anciens widgets
+   DOM redondants sont masqués ; les boutons de compétence L/R deviennent des
+   zones cliquables invisibles posées exactement sur les icônes dessinées. */
+#staminawrap, #minipanel { display: none; }
 
-/* --- EXP-H4 : boutons de compétence L/R + popup --------------------------- */
-.skbtn { position: absolute; bottom: 40px; width: 38px; height: 34px; pointer-events: auto;
-         background: linear-gradient(#3a2f1c, #241c10); color: #d9b96a;
-         border: 1px solid #5a4a2a; border-radius: 4px; cursor: pointer;
-         font: 700 10px system-ui; letter-spacing: .02em;
-         box-shadow: inset 0 1px 0 #ffffff14, 0 1px 3px #000c; }
-.skbtn:hover { border-color: #c7a45a; color: #ffe9ad; }
-.skbtn.selected { border-color: #d9b96a; box-shadow: 0 0 6px #d9b96a55; }
-#skbtn-L { left: 262px; }
-#skbtn-R { right: 262px; }
+/* zones cliquables du HUD (ui-d2.js) : transparentes, au-dessus du canvas */
+.d2-hit { position: absolute; pointer-events: auto; z-index: 4; cursor: pointer; }
+
+/* boutons L/R invisibles (le popup de sélection reste fonctionnel) */
+.skbtn { position: absolute; bottom: auto; width: 48px; height: 48px; pointer-events: auto;
+         background: none; color: transparent; border: none; cursor: pointer;
+         box-shadow: none; }
+.skbtn:hover { border: none; color: transparent; }
+.skbtn.selected { border: none; box-shadow: none; }
+#skbtn-L { left: 117px; top: 552px; }
+#skbtn-R { left: 635px; top: 552px; }
 #skpopup { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%);
            width: 250px; max-height: 240px; overflow-y: auto; pointer-events: auto;
            background: #17120bee; border: 1px solid #5a4a2a; border-radius: 4px;
@@ -40,17 +38,29 @@
 #skpopup .skrow .lvl { color: #8f8676; }
 #skpopup .skrow .missile { color: #6fa7d8; }
 
-/* --- EXP-H3 : minipanel 8 boutons (barre centrale bas) -------------------- */
-#minipanel { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
-             display: flex; gap: 3px; padding: 3px; pointer-events: auto;
-             background: linear-gradient(#2e2517, #1a140c); border: 1px solid #5a4a2a;
-             border-radius: 5px; box-shadow: inset 0 1px 0 #ffffff10, 0 2px 6px #000c; }
-#minipanel button { width: 44px; height: 26px; padding: 0; background: #241c10;
-                    color: #c7a45a; border: 1px solid #4a3c22; border-radius: 3px;
-                    font: 600 10px system-ui; cursor: pointer; }
-#minipanel button:hover { background: #38290f; color: #ffe9ad; border-color: #c7a45a; }
-#minipanel button.soon { opacity: .55; }
-#minipanel button:active { transform: translateY(1px); }
+/* --- EXP-H3 : minipanel 8 boutons — MASQUÉ (dessiné par ui-d2.js) --------- */
+#minipanel { display: none; }
+
+/* --- arbre de compétences D2 (skills-ui.js d2w-fix-ui) --------------------- */
+#d2-tree { position: absolute; left: 400px; top: 60px; width: 320px; height: 432px;
+           z-index: 40; background-size: 320px 432px; background-repeat: no-repeat;
+           image-rendering: pixelated; }
+#d2-tree #sk-icons { position: absolute; inset: 0; }
+#d2-tree .skicon { position: absolute; width: 48px; height: 48px;
+                   image-rendering: pixelated; background-repeat: no-repeat; }
+#d2-tree .skicon.locked { filter: brightness(0.55) saturate(0.6); }
+#d2-tree .skicon.can { cursor: pointer; }
+#d2-tree .skicon.can:hover { filter: brightness(1.25) drop-shadow(0 0 4px #ffd98a); }
+#d2-tree .skicon.owned:hover { filter: brightness(1.15); }
+#d2-tree #sk-points { position: absolute; left: 10px; bottom: 6px; font: 700 12px Georgia, serif;
+                      color: #d9b96a; text-shadow: 0 1px 2px #000; letter-spacing: .06em; }
+#d2-tree .sktab { position: absolute; left: 228px; width: 92px; height: 107px; cursor: pointer;
+                  border: 1px solid #000; border-radius: 3px;
+                  background: url('assets/ui/invchar6tab_f0.png') center/cover no-repeat;
+                  color: #cfc7b8; font: 700 15px Georgia, serif; letter-spacing: .1em;
+                  text-shadow: 0 1px 3px #000; opacity: .82; }
+#d2-tree .sktab:hover { opacity: 1; }
+#d2-tree .sktab.active { outline: 2px solid #d9b96a; opacity: 1; color: #ffe9ad; }
 
 /* --- EXP-H6 : survol monstre (nom + barre de vie) -------------------------- */
 #monhover { position: absolute; transform: translate(-50%, -100%); display: none;
@@ -59,10 +69,6 @@
 #monhover.k-champion .monname { color: #6fa7ff; }
 #monhover.k-unique .monname, #monhover.k-super_unique .monname { color: #d9b96a; }
 #monhover.k-boss .monname { color: #b48be0; }
-/* 13b : badge de rang élite — hérite de la teinte du nom (currentColor). */
-#monhover .monrank { font-weight: 500; font-size: 9px; margin-left: 5px;
-                     padding: 0 4px; border: 1px solid currentColor;
-                     border-radius: 3px; opacity: .85; vertical-align: 1px; }
 #monhpwrap { width: 72px; height: 5px; margin: 2px auto 0; background: #160a08cc;
              border: 1px solid #000; border-radius: 2px; }
 #monhpfill { height: 100%; width: 100%; border-radius: 1px;

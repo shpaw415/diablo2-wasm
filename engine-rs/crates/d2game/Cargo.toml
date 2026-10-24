@@ -15,3 +15,7 @@ serde_json = "1"
 d2dcc = { path = "../d2dcc" }
 d2animdata = { path = "../d2animdata" }
 d2rules = { path = "../d2rules" }
+
+[dev-dependencies]
+# 15a : décodage des couches DC6 (Mephisto, cas spécial retail) dans les goldens sprites
+d2dc6 = { path = "../d2dc6" }

@@ -900,6 +900,39 @@ fn sorceress_starts_with_firebolt_and_ranged_fires_it() {
 }
 
 #[test]
+fn skill_cast_plays_sc_melee_keeps_a1_15b() {
+    // Étape 15b : le cast d'un skill (Fire Bolt SOR) joue le mode COF SC ;
+    // une attaque simple (mêlée BA) reste en A1 — branch minimal dans la
+    // sélection anim existante (swing_cast, transitoire non persisté).
+    let m = manifest_heroes();
+    let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 4242, "SOR");
+    w.clear_monsters();
+    let (hx, hy) = (w.hero().x.floor() as i32, w.hero().y.floor() as i32);
+    assert!(w.spawn_monster("FA", hx + 8, hy));
+    let _ = run(&mut w, 16, Some(PlayerInput::RangedAttack { x: hx + 8, y: hy }));
+    assert_eq!(w.hero().anim, AnimState::SC, "cast de skill = mode SC");
+    assert!(w.hero().anim_frame <= 1, "le cast vient de démarrer");
+    // le swing SC se termine : retour NU (jamais de SC figé)
+    run(&mut w, 900, None);
+    assert_eq!(w.hero().anim, AnimState::NU, "SC terminé ⇒ idle");
+    // save/load pendant le cast transitoire : charge sans erreur (l'anim
+    // SC n'est pas un état persistant, le repli A1/NU au tick est voulu)
+    let mut w2 = World::with_seed_and_hero(open_grid(56, 40), manifest_heroes(), 7, "SOR");
+    w2.clear_monsters();
+    let (hx2, hy2) = (w2.hero().x.floor() as i32, w2.hero().y.floor() as i32);
+    w2.spawn_monster("FA", hx2 + 8, hy2);
+    let _ = run(&mut w2, 16, Some(PlayerInput::RangedAttack { x: hx2 + 8, y: hy2 }));
+    let mut w3 = World::load(&w2.save()).expect("save pendant SC charge");
+    let _ = w3.tick(50, None);
+    // mêlée : Attack sur un monstre adjacent ⇒ A1 (swing_cast = false)
+    let mut w4 = World::with_seed_and_hero(open_grid(56, 40), manifest_full(), 9, "BA");
+    let (hx4, hy4) = (w4.hero().x.floor() as i32, w4.hero().y.floor() as i32);
+    assert!(w4.spawn_monster("FA", hx4 + 1, hy4));
+    let _ = run(&mut w4, 16, Some(PlayerInput::Attack { x: hx4 + 1, y: hy4 }));
+    assert_eq!(w4.hero().anim, AnimState::A1, "mêlée simple = A1, jamais SC");
+}
+
+#[test]
 fn classes_without_start_skill_fallback_to_weapon_arrow() {
     let m = manifest_full();
     // BA/PA (StartSkill vide dans charstats v1.12) : AUCUN skill actif —

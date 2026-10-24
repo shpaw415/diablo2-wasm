@@ -183,6 +183,20 @@ pub mod consumables;
 // --- Cube horadrim 11a (cubemain.txt v1.12 + transmutation, 2026-10-24) ---
 pub mod cube;
 
+/// Invocations 16b (PLAN-FIDÉLITÉ) : summons necro/druid, IA compagnon, corpse registry — cf. minions.rs.
+pub mod minions;
+
+// --- Auras & malédictions 16a (PLAN-FIDELITE phase 16, 2026-10-24) ---
+/// Auras de paladin (toggle unique, pulse 1 s, pont statlist `aurastat`) +
+/// malédictions de nécromancien (zone, durée `auralen`, effets FSM/combat).
+/// Données réelles `patch_skills.txt` (aurastate/aurastat/aurarange/
+/// auralen) + états `states.txt` ; état transitoire porté par `World`
+/// (`AuraState` + `MonData::curse`, jamais persisté).
+pub mod auras;
+
+// --- Comportements Assassine/Druide 16c (PLAN-FIDELITE phase 16, 2026-10-24) ---
+pub mod assassin_druid;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
@@ -405,6 +419,26 @@ pub enum AnimState {
     A1,
     /// Mort.
     DD,
+    /// Cast (lancement de skill — étape 15b).
+    SC,
+    /// Bloc (bouclier — étape 15b, non branché au gameplay).
+    BL,
+    /// Touché (get hit — étape 15b, non branché au gameplay).
+    GH,
+    /// Skill 1 (étape 15b, non branché au gameplay).
+    S1,
+    /// Skill 2 (étape 15b, non branché au gameplay).
+    S2,
+    /// Skill 3 (étape 15b, non branché au gameplay).
+    S3,
+    /// Skill 4 (étape 15b, non branché au gameplay).
+    S4,
+    /// Coup de pied (assassin — étape 15b, non branché au gameplay).
+    KK,
+    /// Lancer (javelot — étape 15b, non branché au gameplay).
+    TH,
+    /// Attaque à deux mains (étape 15b, non branché au gameplay).
+    A2,
 }
 
 /// Entité visible : position, orientation, animation.

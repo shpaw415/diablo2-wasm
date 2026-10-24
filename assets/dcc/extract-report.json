@@ -1,0 +1,1431 @@
+{
+ "ANNU": {
+  "kind": "mons",
+  "cof": {
+   "internal": "data/global/monsters/an/cof/annuhth.cof",
+   "archive": "d2data",
+   "frames": 16,
+   "dirs": 8,
+   "speed": 160,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/monsters/an/tr/antrlitnuhth.dcc",
+    "archive": "d2data",
+    "wc": "hth",
+    "bytes": 411767
+   }
+  },
+  "missing": []
+ },
+ "ANWL": {
+  "kind": "mons",
+  "cof": {
+   "internal": "data/global/monsters/an/cof/anwlhth.cof",
+   "archive": "d2data",
+   "frames": 12,
+   "dirs": 8,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/monsters/an/tr/antrlitwlhth.dcc",
+    "archive": "d2data",
+    "wc": "hth",
+    "bytes": 328006
+   }
+  },
+  "missing": []
+ },
+ "ANA1": {
+  "kind": "mons",
+  "cof": {
+   "internal": "data/global/monsters/an/cof/ana1hth.cof",
+   "archive": "d2data",
+   "frames": 16,
+   "dirs": 8,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/monsters/an/tr/antrlita1hth.dcc",
+    "archive": "d2data",
+    "wc": "hth",
+    "bytes": 446578
+   }
+  },
+  "missing": []
+ },
+ "ANDD": {
+  "kind": "mons",
+  "cof": {
+   "internal": "data/global/monsters/an/cof/anddhth.cof",
+   "archive": "d2data",
+   "frames": 1,
+   "dirs": 8,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/monsters/an/tr/antrlitddhth.dcc",
+    "archive": "d2data",
+    "wc": "hth",
+    "bytes": 16293
+   }
+  },
+  "missing": []
+ },
+ "AMNU": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/am/cof/amnu1ht.cof",
+   "archive": "d2char",
+   "frames": 8,
+   "dirs": 16,
+   "speed": 128,
+   "layers": [
+    {
+     "token": "HD",
+     "wc": "1ht"
+    },
+    {
+     "token": "LH",
+     "wc": "1ht"
+    },
+    {
+     "token": "LA",
+     "wc": "1ht"
+    },
+    {
+     "token": "RA",
+     "wc": "1ht"
+    },
+    {
+     "token": "RH",
+     "wc": "1ht"
+    },
+    {
+     "token": "S2",
+     "wc": "1ht"
+    },
+    {
+     "token": "S3",
+     "wc": "1ht"
+    },
+    {
+     "token": "S1",
+     "wc": "1ht"
+    },
+    {
+     "token": "TR",
+     "wc": "1ht"
+    }
+   ]
+  },
+  "layers": {
+   "HD": {
+    "internal": "data/global/chars/am/hd/amhdlitnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 10931
+   },
+   "LA": {
+    "internal": "data/global/chars/am/la/amlalitnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 12765
+   },
+   "RA": {
+    "internal": "data/global/chars/am/ra/amralitnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 11566
+   },
+   "RH": {
+    "internal": "data/global/chars/am/rh/amrhjavnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 21472
+   },
+   "S2": {
+    "internal": "data/global/chars/am/s2/ams2litnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 4902
+   },
+   "S1": {
+    "internal": "data/global/chars/am/s1/ams1litnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 3781
+   },
+   "TR": {
+    "internal": "data/global/chars/am/tr/amtrlitnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 17401
+   },
+   "LG": {
+    "internal": "data/global/chars/am/lg/amlglitnu1ht.dcc",
+    "archive": "d2char",
+    "wc": "1HT",
+    "bytes": 37659,
+    "note": "hors-COF"
+   }
+  },
+  "missing": [
+   "LH",
+   "S3"
+  ]
+ },
+ "AMWL": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/am/cof/amwl1ht.cof",
+   "archive": "d2char",
+   "frames": 8,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "HD",
+     "wc": "1ht"
+    },
+    {
+     "token": "LH",
+     "wc": "1ht"
+    },
+    {
+     "token": "LA",
+     "wc": "1ht"
+    },
+    {
+     "token": "RA",
+     "wc": "1ht"
+    },
+    {
+     "token": "RH",
+     "wc": "1ht"
+    },
+    {
+     "token": "S2",
+     "wc": "1ht"
+    },
+    {
+     "token": "S3",
+     "wc": "1ht"
+    },
+    {
+     "token": "S1",
+     "wc": "1ht"
+    },
+    {
+     "token": "TR",
+     "wc": "1ht"
+    }
+   ]
+  },
+  "layers": {
+   "HD": {
+    "internal": "data/global/chars/am/hd/amhdlitwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 10924
+   },
+   "LA": {
+    "internal": "data/global/chars/am/la/amlalitwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 13390
+   },
+   "RA": {
+    "internal": "data/global/chars/am/ra/amralitwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 11744
+   },
+   "RH": {
+    "internal": "data/global/chars/am/rh/amrhjavwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 22470
+   },
+   "S2": {
+    "internal": "data/global/chars/am/s2/ams2litwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 5214
+   },
+   "S1": {
+    "internal": "data/global/chars/am/s1/ams1litwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 3933
+   },
+   "TR": {
+    "internal": "data/global/chars/am/tr/amtrlitwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 18481
+   },
+   "LG": {
+    "internal": "data/global/chars/am/lg/amlglitwl1ht.dcc",
+    "archive": "d2char",
+    "wc": "1HT",
+    "bytes": 43119,
+    "note": "hors-COF"
+   }
+  },
+  "missing": [
+   "LH",
+   "S3"
+  ]
+ },
+ "AMA1": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/am/cof/ama11ht.cof",
+   "archive": "d2char",
+   "frames": 15,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "HD",
+     "wc": "1ht"
+    },
+    {
+     "token": "LH",
+     "wc": "1ht"
+    },
+    {
+     "token": "LA",
+     "wc": "1ht"
+    },
+    {
+     "token": "RA",
+     "wc": "1ht"
+    },
+    {
+     "token": "RH",
+     "wc": "1ht"
+    },
+    {
+     "token": "S2",
+     "wc": "1ht"
+    },
+    {
+     "token": "S3",
+     "wc": "1ht"
+    },
+    {
+     "token": "S1",
+     "wc": "1ht"
+    },
+    {
+     "token": "TR",
+     "wc": "1ht"
+    }
+   ]
+  },
+  "layers": {
+   "HD": {
+    "internal": "data/global/chars/am/hd/amhdlita11ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 21531
+   },
+   "LA": {
+    "internal": "data/global/chars/am/la/amlalita11ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 26189
+   },
+   "RA": {
+    "internal": "data/global/chars/am/ra/amralita11ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 23464
+   },
+   "RH": {
+    "internal": "data/global/chars/am/rh/amrhjava11ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 46605
+   },
+   "S2": {
+    "internal": "data/global/chars/am/s2/ams2lita11ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 9540
+   },
+   "S1": {
+    "internal": "data/global/chars/am/s1/ams1lita11ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 7188
+   },
+   "TR": {
+    "internal": "data/global/chars/am/tr/amtrlita11ht.dcc",
+    "archive": "d2char",
+    "wc": "1ht",
+    "bytes": 35922
+   },
+   "LG": {
+    "internal": "data/global/chars/am/lg/amlglita11ht.dcc",
+    "archive": "d2char",
+    "wc": "1HT",
+    "bytes": 84266,
+    "note": "hors-COF"
+   }
+  },
+  "missing": [
+   "LH",
+   "S3"
+  ]
+ },
+ "AMDD": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/am/cof/amddhth.cof",
+   "archive": "d2char",
+   "frames": 1,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/chars/am/tr/amtrlitddhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 12594
+   }
+  },
+  "missing": []
+ },
+ "AINU": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ai/cof/ainuht1.cof",
+   "archive": "d2exp",
+   "frames": 8,
+   "dirs": 16,
+   "speed": 128,
+   "layers": [
+    {
+     "token": "LA",
+     "wc": "hth"
+    },
+    {
+     "token": "RA",
+     "wc": "hth"
+    },
+    {
+     "token": "TR",
+     "wc": "hth"
+    },
+    {
+     "token": "S2",
+     "wc": "hth"
+    },
+    {
+     "token": "HD",
+     "wc": "hth"
+    },
+    {
+     "token": "LH",
+     "wc": "hth"
+    },
+    {
+     "token": "S3",
+     "wc": "hth"
+    },
+    {
+     "token": "S1",
+     "wc": "hth"
+    },
+    {
+     "token": "SH",
+     "wc": "hth"
+    },
+    {
+     "token": "RH",
+     "wc": "ht1"
+    }
+   ]
+  },
+  "layers": {
+   "LA": {
+    "internal": "data/global/chars/ai/la/ailalitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 8844
+   },
+   "RA": {
+    "internal": "data/global/chars/ai/ra/airalitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 7802
+   },
+   "TR": {
+    "internal": "data/global/chars/ai/tr/aitrlitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 15540
+   },
+   "S2": {
+    "internal": "data/global/chars/ai/s2/ais2litnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 4575
+   },
+   "HD": {
+    "internal": "data/global/chars/ai/hd/aihdlitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 5546
+   },
+   "LH": {
+    "internal": "data/global/chars/ai/lh/ailhlitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 2652
+   },
+   "S1": {
+    "internal": "data/global/chars/ai/s1/ais1litnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 4447
+   },
+   "SH": {
+    "internal": "data/global/chars/ai/sh/aishbucnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 11136
+   },
+   "RH": {
+    "internal": "data/global/chars/ai/rh/airhktrnuht1.dcc",
+    "archive": "d2exp",
+    "wc": "ht1",
+    "bytes": 6346
+   }
+  },
+  "missing": [
+   "S3"
+  ]
+ },
+ "AIWL": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ai/cof/aiwlht1.cof",
+   "archive": "d2exp",
+   "frames": 8,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "RA",
+     "wc": "hth"
+    },
+    {
+     "token": "LA",
+     "wc": "hth"
+    },
+    {
+     "token": "TR",
+     "wc": "hth"
+    },
+    {
+     "token": "LH",
+     "wc": "hth"
+    },
+    {
+     "token": "S2",
+     "wc": "hth"
+    },
+    {
+     "token": "S3",
+     "wc": "hth"
+    },
+    {
+     "token": "HD",
+     "wc": "hth"
+    },
+    {
+     "token": "S1",
+     "wc": "hth"
+    },
+    {
+     "token": "RH",
+     "wc": "ht1"
+    },
+    {
+     "token": "SH",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "RA": {
+    "internal": "data/global/chars/ai/ra/airalitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 8083
+   },
+   "LA": {
+    "internal": "data/global/chars/ai/la/ailalitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 9125
+   },
+   "TR": {
+    "internal": "data/global/chars/ai/tr/aitrlitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 17101
+   },
+   "LH": {
+    "internal": "data/global/chars/ai/lh/ailhlitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 2726
+   },
+   "S2": {
+    "internal": "data/global/chars/ai/s2/ais2litwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 4751
+   },
+   "HD": {
+    "internal": "data/global/chars/ai/hd/aihdlitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 5534
+   },
+   "S1": {
+    "internal": "data/global/chars/ai/s1/ais1litwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 4563
+   },
+   "RH": {
+    "internal": "data/global/chars/ai/rh/airhktrwlht1.dcc",
+    "archive": "d2exp",
+    "wc": "ht1",
+    "bytes": 6404
+   },
+   "SH": {
+    "internal": "data/global/chars/ai/sh/aishbucwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 11973
+   }
+  },
+  "missing": [
+   "S3"
+  ]
+ },
+ "AIA1": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ai/cof/aia1ht1.cof",
+   "archive": "d2exp",
+   "frames": 11,
+   "dirs": 16,
+   "speed": 208,
+   "layers": [
+    {
+     "token": "LA",
+     "wc": "hth"
+    },
+    {
+     "token": "RA",
+     "wc": "hth"
+    },
+    {
+     "token": "TR",
+     "wc": "hth"
+    },
+    {
+     "token": "LH",
+     "wc": "hth"
+    },
+    {
+     "token": "SH",
+     "wc": "hth"
+    },
+    {
+     "token": "HD",
+     "wc": "hth"
+    },
+    {
+     "token": "S2",
+     "wc": "hth"
+    },
+    {
+     "token": "S3",
+     "wc": "hth"
+    },
+    {
+     "token": "S1",
+     "wc": "hth"
+    },
+    {
+     "token": "RH",
+     "wc": "ht1"
+    }
+   ]
+  },
+  "layers": {
+   "LA": {
+    "internal": "data/global/chars/ai/la/ailalita1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 10853
+   },
+   "RA": {
+    "internal": "data/global/chars/ai/ra/airalita1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 10692
+   },
+   "TR": {
+    "internal": "data/global/chars/ai/tr/aitrlita1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 23028
+   },
+   "LH": {
+    "internal": "data/global/chars/ai/lh/ailhlita1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 3702
+   },
+   "SH": {
+    "internal": "data/global/chars/ai/sh/aishbuca1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 17588
+   },
+   "HD": {
+    "internal": "data/global/chars/ai/hd/aihdlita1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 8425
+   },
+   "S2": {
+    "internal": "data/global/chars/ai/s2/ais2lita1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 6544
+   },
+   "S1": {
+    "internal": "data/global/chars/ai/s1/ais1lita1hth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 6466
+   },
+   "RH": {
+    "internal": "data/global/chars/ai/rh/airhktra1ht1.dcc",
+    "archive": "d2exp",
+    "wc": "ht1",
+    "bytes": 9443
+   }
+  },
+  "missing": [
+   "S3"
+  ]
+ },
+ "AIDD": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ai/cof/aiddhth.cof",
+   "archive": "d2exp",
+   "frames": 1,
+   "dirs": 8,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/chars/ai/tr/aitrlitddhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 9887
+   },
+   "LG": {
+    "internal": "data/global/chars/ai/lg/ailglitddhth.dcc",
+    "archive": "d2exp",
+    "wc": "HTH",
+    "bytes": 5351,
+    "note": "hors-COF"
+   }
+  },
+  "missing": []
+ },
+ "DZNU": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/dz/cof/dznu1hs.cof",
+   "archive": "d2exp",
+   "frames": 6,
+   "dirs": 16,
+   "speed": 120,
+   "layers": [
+    {
+     "token": "HD",
+     "wc": "hth"
+    },
+    {
+     "token": "LH",
+     "wc": "hth"
+    },
+    {
+     "token": "LA",
+     "wc": "hth"
+    },
+    {
+     "token": "RA",
+     "wc": "1hs"
+    },
+    {
+     "token": "S2",
+     "wc": "1hs"
+    },
+    {
+     "token": "S3",
+     "wc": "hth"
+    },
+    {
+     "token": "S1",
+     "wc": "hth"
+    },
+    {
+     "token": "TR",
+     "wc": "hth"
+    },
+    {
+     "token": "RH",
+     "wc": "1hs"
+    }
+   ]
+  },
+  "layers": {
+   "HD": {
+    "internal": "data/global/chars/dz/hd/dzhdlitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 8272
+   },
+   "LA": {
+    "internal": "data/global/chars/dz/la/dzlalitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 8442
+   },
+   "RA": {
+    "internal": "data/global/chars/dz/ra/dzralitnu1hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 8257
+   },
+   "S1": {
+    "internal": "data/global/chars/dz/s1/dzs1litnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 4927
+   },
+   "TR": {
+    "internal": "data/global/chars/dz/tr/dztrlitnuhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 17228
+   },
+   "RH": {
+    "internal": "data/global/chars/dz/rh/dzrhclbnu1hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 8706
+   }
+  },
+  "missing": [
+   "LH",
+   "S2",
+   "S3"
+  ]
+ },
+ "DZWL": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/dz/cof/dzwl1hs.cof",
+   "archive": "d2exp",
+   "frames": 8,
+   "dirs": 16,
+   "speed": 136,
+   "layers": [
+    {
+     "token": "HD",
+     "wc": "hth"
+    },
+    {
+     "token": "LH",
+     "wc": "hth"
+    },
+    {
+     "token": "LA",
+     "wc": "hth"
+    },
+    {
+     "token": "RA",
+     "wc": "1hs"
+    },
+    {
+     "token": "S2",
+     "wc": "1hs"
+    },
+    {
+     "token": "S3",
+     "wc": "hth"
+    },
+    {
+     "token": "S1",
+     "wc": "hth"
+    },
+    {
+     "token": "TR",
+     "wc": "hth"
+    },
+    {
+     "token": "RH",
+     "wc": "1hs"
+    }
+   ]
+  },
+  "layers": {
+   "HD": {
+    "internal": "data/global/chars/dz/hd/dzhdlitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 11850
+   },
+   "LA": {
+    "internal": "data/global/chars/dz/la/dzlalitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 11256
+   },
+   "RA": {
+    "internal": "data/global/chars/dz/ra/dzralitwl1hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 11115
+   },
+   "S1": {
+    "internal": "data/global/chars/dz/s1/dzs1litwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 7042
+   },
+   "TR": {
+    "internal": "data/global/chars/dz/tr/dztrlitwlhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 26632
+   },
+   "RH": {
+    "internal": "data/global/chars/dz/rh/dzrhclbwl1hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 10913
+   }
+  },
+  "missing": [
+   "LH",
+   "S2",
+   "S3"
+  ]
+ },
+ "DZA1": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/dz/cof/dza11hs.cof",
+   "archive": "d2exp",
+   "frames": 19,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "HD",
+     "wc": "1hs"
+    },
+    {
+     "token": "LH",
+     "wc": "1hs"
+    },
+    {
+     "token": "LA",
+     "wc": "1hs"
+    },
+    {
+     "token": "RA",
+     "wc": "1hs"
+    },
+    {
+     "token": "RH",
+     "wc": "1hs"
+    },
+    {
+     "token": "S2",
+     "wc": "1hs"
+    },
+    {
+     "token": "S3",
+     "wc": "1hs"
+    },
+    {
+     "token": "S1",
+     "wc": "1hs"
+    },
+    {
+     "token": "TR",
+     "wc": "1hs"
+    }
+   ]
+  },
+  "layers": {
+   "HD": {
+    "internal": "data/global/chars/dz/hd/dzhdlita11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 28767
+   },
+   "LA": {
+    "internal": "data/global/chars/dz/la/dzlalita11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 26872
+   },
+   "RA": {
+    "internal": "data/global/chars/dz/ra/dzralita11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 26999
+   },
+   "RH": {
+    "internal": "data/global/chars/dz/rh/dzrhclba11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 26244
+   },
+   "S2": {
+    "internal": "data/global/chars/dz/s2/dzs2lita11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 28012
+   },
+   "S1": {
+    "internal": "data/global/chars/dz/s1/dzs1lita11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 16284
+   },
+   "TR": {
+    "internal": "data/global/chars/dz/tr/dztrlita11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1hs",
+    "bytes": 65859
+   },
+   "LG": {
+    "internal": "data/global/chars/dz/lg/dzlglita11hs.dcc",
+    "archive": "d2exp",
+    "wc": "1HS",
+    "bytes": 108391,
+    "note": "hors-COF"
+   }
+  },
+  "missing": [
+   "LH",
+   "S3"
+  ]
+ },
+ "DZDD": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/dz/cof/dzddhth.cof",
+   "archive": "d2exp",
+   "frames": 1,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/chars/dz/tr/dztrlitddhth.dcc",
+    "archive": "d2exp",
+    "wc": "hth",
+    "bytes": 10847
+   }
+  },
+  "missing": []
+ },
+ "NENU": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ne/cof/nenu1hs.cof",
+   "archive": "d2char",
+   "frames": 8,
+   "dirs": 16,
+   "speed": 128,
+   "layers": [
+    {
+     "token": "LA",
+     "wc": "hth"
+    },
+    {
+     "token": "TR",
+     "wc": "hth"
+    },
+    {
+     "token": "LH",
+     "wc": "hth"
+    },
+    {
+     "token": "RA",
+     "wc": "1hs"
+    },
+    {
+     "token": "S2",
+     "wc": "hth"
+    },
+    {
+     "token": "S3",
+     "wc": "hth"
+    },
+    {
+     "token": "HD",
+     "wc": "hth"
+    },
+    {
+     "token": "S1",
+     "wc": "hth"
+    },
+    {
+     "token": "RH",
+     "wc": "1hs"
+    }
+   ]
+  },
+  "layers": {
+   "LA": {
+    "internal": "data/global/chars/ne/la/nelalitnuhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 10527
+   },
+   "TR": {
+    "internal": "data/global/chars/ne/tr/netrlitnuhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 19999
+   },
+   "RA": {
+    "internal": "data/global/chars/ne/ra/neralitnu1hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 10380
+   },
+   "S2": {
+    "internal": "data/global/chars/ne/s2/nes2litnuhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 4580
+   },
+   "HD": {
+    "internal": "data/global/chars/ne/hd/nehdlitnuhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 9013
+   },
+   "S1": {
+    "internal": "data/global/chars/ne/s1/nes1litnuhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 4580
+   },
+   "RH": {
+    "internal": "data/global/chars/ne/rh/nerhwndnu1hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 9258
+   }
+  },
+  "missing": [
+   "LH",
+   "S3"
+  ]
+ },
+ "NEWL": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ne/cof/newl1hs.cof",
+   "archive": "d2char",
+   "frames": 8,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "LA",
+     "wc": "hth"
+    },
+    {
+     "token": "TR",
+     "wc": "hth"
+    },
+    {
+     "token": "RA",
+     "wc": "1hs"
+    },
+    {
+     "token": "LH",
+     "wc": "hth"
+    },
+    {
+     "token": "S2",
+     "wc": "hth"
+    },
+    {
+     "token": "S3",
+     "wc": "hth"
+    },
+    {
+     "token": "HD",
+     "wc": "hth"
+    },
+    {
+     "token": "S1",
+     "wc": "hth"
+    },
+    {
+     "token": "RH",
+     "wc": "1hs"
+    }
+   ]
+  },
+  "layers": {
+   "LA": {
+    "internal": "data/global/chars/ne/la/nelalitwlhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 11534
+   },
+   "TR": {
+    "internal": "data/global/chars/ne/tr/netrlitwlhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 22865
+   },
+   "RA": {
+    "internal": "data/global/chars/ne/ra/neralitwl1hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 11446
+   },
+   "S2": {
+    "internal": "data/global/chars/ne/s2/nes2litwlhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 4992
+   },
+   "HD": {
+    "internal": "data/global/chars/ne/hd/nehdlitwlhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 9207
+   },
+   "S1": {
+    "internal": "data/global/chars/ne/s1/nes1litwlhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 4926
+   },
+   "RH": {
+    "internal": "data/global/chars/ne/rh/nerhwndwl1hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 9217
+   }
+  },
+  "missing": [
+   "LH",
+   "S3"
+  ]
+ },
+ "NEA1": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ne/cof/nea11hs.cof",
+   "archive": "d2char",
+   "frames": 19,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "LA",
+     "wc": "1hs"
+    },
+    {
+     "token": "TR",
+     "wc": "1hs"
+    },
+    {
+     "token": "RA",
+     "wc": "1hs"
+    },
+    {
+     "token": "RH",
+     "wc": "1hs"
+    },
+    {
+     "token": "S2",
+     "wc": "1hs"
+    },
+    {
+     "token": "HD",
+     "wc": "1hs"
+    },
+    {
+     "token": "LH",
+     "wc": "1hs"
+    },
+    {
+     "token": "S3",
+     "wc": "1hs"
+    },
+    {
+     "token": "S1",
+     "wc": "1hs"
+    }
+   ]
+  },
+  "layers": {
+   "LA": {
+    "internal": "data/global/chars/ne/la/nelalita11hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 26987
+   },
+   "TR": {
+    "internal": "data/global/chars/ne/tr/netrlita11hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 56205
+   },
+   "RA": {
+    "internal": "data/global/chars/ne/ra/neralita11hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 27551
+   },
+   "RH": {
+    "internal": "data/global/chars/ne/rh/nerhwnda11hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 22488
+   },
+   "S2": {
+    "internal": "data/global/chars/ne/s2/nes2lita11hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 12153
+   },
+   "HD": {
+    "internal": "data/global/chars/ne/hd/nehdlita11hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 21538
+   },
+   "S1": {
+    "internal": "data/global/chars/ne/s1/nes1lita11hs.dcc",
+    "archive": "d2char",
+    "wc": "1hs",
+    "bytes": 11892
+   },
+   "LG": {
+    "internal": "data/global/chars/ne/lg/nelglita11hs.dcc",
+    "archive": "d2char",
+    "wc": "1HS",
+    "bytes": 91262,
+    "note": "hors-COF"
+   }
+  },
+  "missing": [
+   "LH",
+   "S3"
+  ]
+ },
+ "NEDD": {
+  "kind": "chars",
+  "cof": {
+   "internal": "data/global/chars/ne/cof/neddhth.cof",
+   "archive": "d2char",
+   "frames": 1,
+   "dirs": 16,
+   "speed": 0,
+   "layers": [
+    {
+     "token": "TR",
+     "wc": "hth"
+    }
+   ]
+  },
+  "layers": {
+   "TR": {
+    "internal": "data/global/chars/ne/tr/netrlitddhth.dcc",
+    "archive": "d2char",
+    "wc": "hth",
+    "bytes": 11672
+   }
+  },
+  "missing": []
+ }
+}

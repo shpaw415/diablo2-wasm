@@ -1166,9 +1166,21 @@ impl World {
                     if dx.abs().max(dy.abs()) != r {
                         continue; // anneau courant seulement
                     }
-                    if self.spawn_monster_rule(stats.rec.code, hx + dx, hy + dy, rule.clone()) {
-                        return true;
+                                        let Some(i) = self.resolve_tpl_boss(stats.rec.code) else {
+                        continue;
+                    };
+                    // Les tables font foi (manifest sprites sans /stats, 15a).
+                    self.override_tpl_boss_stats(i, stats.level, stats.hp, stats.exp);
+                    if !self.is_walkable(hx + dx, hy + dy) {
+                        continue;
                     }
+                    self.spawn_monster_at_rule(
+                        i,
+                        (hx + dx) as f32 + 0.5,
+                        (hy + dy) as f32 + 0.5,
+                        rule.clone(),
+                    );
+                    return true;
                 }
             }
         }

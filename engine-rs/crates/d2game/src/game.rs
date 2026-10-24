@@ -1126,6 +1126,15 @@ impl GameCore {
         if let Some(layers) = walk.get("layers").and_then(|l| l.as_object()) {
             for (token, path) in layers {
                 let path = path.as_str().ok_or("manifest: layer path not a string")?;
+                // 15a : couches DC6 (Mephisto — ses composantes sont en
+                // FORMAT DC6 dans le retail, aucun DCC n'existe) sautées
+                // gracieusement : SpriteSet/compose est DCC-only, le
+                // branchement d2dc6 est hors scope. Sans ce filtre le set
+                // entier est rejeté (BadSignature) et le monstre perd même
+                // son COF.
+                if path.ends_with(".dc6") {
+                    continue;
+                }
                 let dcc = Dcc::decode(self.asset(path)?).map_err(|e| format!("{path}: {e:?}"))?;
                 set.add_layer(token, dcc);
             }
@@ -1166,11 +1175,15 @@ impl GameCore {
             sprites.insert(base.to_string(), s);
         }
 
-        // 2. Modes additionnels. `modes` = {NU|WL|RN|A1|DD: {cof, layers}} ;
+        // 2. Modes additionnels. `modes` = {NU|WL|RN|A1|DD|SC|BL|GH|S1|S2|S3|
+        //    S4|KK|TH|A2: {cof, layers}} (étape 15b : tags additifs) ;
         //    à défaut blocs nommés idle→NU, attack→A1, death→DD.
         let mut mode_of: Vec<(&str, &Value)> = Vec::new();
         if let Some(modes) = def.get("modes").and_then(|m| m.as_object()) {
-            for tag in ["NU", "WL", "RN", "A1", "DD"] {
+            for tag in [
+                "NU", "WL", "RN", "A1", "DD", "SC", "BL", "GH", "S1", "S2", "S3", "S4",
+                "KK", "TH", "A2",
+            ] {
                 if let Some(v) = modes.get(tag).filter(|v| v.get("cof").is_some()) {
                     mode_of.push((tag, v));
                 }
@@ -1307,6 +1320,16 @@ impl GameCore {
                     AnimState::RN => "RN",
                     AnimState::A1 => "A1",
                     AnimState::DD => "DD",
+                    AnimState::SC => "SC",
+                    AnimState::BL => "BL",
+                    AnimState::GH => "GH",
+                    AnimState::S1 => "S1",
+                    AnimState::S2 => "S2",
+                    AnimState::S3 => "S3",
+                    AnimState::S4 => "S4",
+                    AnimState::KK => "KK",
+                    AnimState::TH => "TH",
+                    AnimState::A2 => "A2",
                 };
                 serde_json::json!({
                     "anim": anim,
@@ -1325,6 +1348,18 @@ impl GameCore {
     /// du fallback gracieux côté page. JSON `["hero:DD: ignoré (…)", …]`.
     pub fn sprite_notes_json(&self) -> String {
         serde_json::to_string(&self.sprite_notes).unwrap_or_else(|_| "[]".into())
+    }
+
+    /// Set de sprites construit pour une clé `"<entity>"` / `"<entity>:MODE"`
+    /// (15a : vérification golden que finalize a bien porté tous les blocs
+    /// monstres/bosses du manifest). Lecture seule, aucun coût.
+    pub fn sprite_set(&self, key: &str) -> Option<&SpriteSet> {
+        self.sprites.get(key)
+    }
+
+    /// Clés de tous les sets construits (diagnostic golden/tests).
+    pub fn sprite_set_keys(&self) -> Vec<String> {
+        self.sprites.keys().cloned().collect()
     }
 
     /// Niveau chargé — JSON `{"key":"bloodmoor","name":"Blood Moor (Acte I)"}`
@@ -1926,12 +1961,24 @@ impl GameCore {
         tint: Option<[f32; 3]>,
     ) {
         // Set par mode "<key>:<ANIM>" en priorité, repli "<key>" (la marche).
+        // Étape 15b : tags additifs des modes COF extraits (manifest modes) ;
+        // un tag sans set dédié retombe sur la marche (fallback gracieux).
         let tag = match e.anim {
             AnimState::NU => "NU",
             AnimState::WL => "WL",
             AnimState::RN => "RN",
             AnimState::A1 => "A1",
             AnimState::DD => "DD",
+            AnimState::SC => "SC",
+            AnimState::BL => "BL",
+            AnimState::GH => "GH",
+            AnimState::S1 => "S1",
+            AnimState::S2 => "S2",
+            AnimState::S3 => "S3",
+            AnimState::S4 => "S4",
+            AnimState::KK => "KK",
+            AnimState::TH => "TH",
+            AnimState::A2 => "A2",
         };
         let mode_key = format!("{key}:{tag}");
         let (set, fallback_idle) = match (self.sprites.get(&mode_key), self.sprites.get(key)) {
