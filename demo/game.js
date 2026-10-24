@@ -435,6 +435,7 @@ function levelFade() {
 function handleEvents(events, manifest) {
   for (const ev of events) {
     window.__d2.events++;
+    if (window.D2MonSfx) window.D2MonSfx.feed(ev); // 14a : sons monstres data-driven (attaque/hit/mort/annonce)
     if (ev.LevelSwitch) {
       const info = ev.LevelSwitch;
       window.__d2.level = info.key;
@@ -1005,3 +1006,4 @@ function fallback(reason) {
 main().catch((e) => fallback(e && e.message ? e.message : String(e)));
 
 import("./stash-ui.js").catch(() => {}); // 11c : panneau Stash 6×4 + or (window.D2Stash, miroir economy.rs)
+import("./game-sfx.js").catch(() => {}); // 14b : SFX gameplay par event (window.D2SFX, miroir game_audio.rs — file non bloquante, mute partagé musique)

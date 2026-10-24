@@ -11,6 +11,18 @@ export class D2Game {
      */
     automap(): string;
     /**
+     * « Auto-ranger » : déplace les potions `autobelt=1` (hp1-5, mp1-5,
+     * rvs, rvl) de l'inventaire vers la ceinture 4×4 — nombre rangé
+     * (idempotent ; la page l'appelle après un ramassage).
+     */
+    beltAutoStore(): number;
+    /**
+     * État ceinture + buffs (lecture HUD) — JSON
+     * `{"belt":[[4×4 cellules null|{code,name,kind}]],"buffs":[{"state",
+     * "remainingMs","stats":[[id,val],…]},…]}` ; `{}` avant `finalize`.
+     */
+    beltInfo(): string;
+    /**
      * Collision grid as 0/1 bytes (row-major), for d2rules/debug overlays.
      */
     collisionGrid(): Uint8Array;
@@ -202,6 +214,21 @@ export class D2Game {
      * port's manifest.
      */
     travelWaypoint(slot: number): string;
+    /**
+     * Touche de ceinture `key` (1..=4) — boit le premier objet de la
+     * colonne (rangée 0 d'abord), mêmes effets/JSON que `useConsumable`.
+     */
+    useBeltKey(key: number): string;
+    /**
+     * Utilise le consommable du slot d'inventaire `slot` (effets réels par
+     * code — potions hp1-5/mp1-5/rejuv/buffs 30 s, parchemin de porte de
+     * ville, tomes à charges) — JSON
+     * `{"use":{code,name,family,heal,mana,buffMs,townPortal,identified,
+     * chargesLeft},"levelSwitch":{key,name}?}` ; un parchemin/tome de porte
+     * de ville BASCULE vers le camp (switch_level existant). `Err` lisible
+     * (`"slot vide"`, `"tome vide"`, `"rien à identifier"`…).
+     */
+    useConsumable(slot: number): string;
     viewportHeight(): number;
     viewportWidth(): number;
     /**
@@ -223,6 +250,8 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_d2game_free: (a: number, b: number) => void;
     readonly d2game_automap: (a: number) => [number, number];
+    readonly d2game_beltAutoStore: (a: number) => number;
+    readonly d2game_beltInfo: (a: number) => [number, number];
     readonly d2game_collisionGrid: (a: number) => [number, number];
     readonly d2game_composeStats: (a: number) => [number, number];
     readonly d2game_corpseInfo: (a: number) => [number, number];
@@ -260,6 +289,8 @@ export interface InitOutput {
     readonly d2game_talkNpc: (a: number, b: number) => [number, number, number, number];
     readonly d2game_tick: (a: number, b: number, c: number, d: number) => [number, number];
     readonly d2game_travelWaypoint: (a: number, b: number) => [number, number, number, number];
+    readonly d2game_useBeltKey: (a: number, b: number) => [number, number, number, number];
+    readonly d2game_useConsumable: (a: number, b: number) => [number, number, number, number];
     readonly d2game_viewportHeight: (a: number) => number;
     readonly d2game_viewportWidth: (a: number) => number;
     readonly d2game_waypoints: (a: number) => [number, number];

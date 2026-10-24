@@ -110,7 +110,7 @@
         ['Stats', 'Panneau de stats — à venir (EXP-E9)', null],
         ['Skills', 'Arbre de compétences — à venir (EXP-E8)', () => openSkillPopup('R')],
         ['Quêtes', 'Journal de quêtes — à venir (EXP-E7)', null],
-        ['Carte', 'Automap Tab — à venir (EXP-E6)', null],
+        ['Carte', 'Automap (Tab)', () => { if (window.D2Automap) window.D2Automap.toggle(); }],
         ['Aide', 'Aide (H) — à venir (EXP-E5)', null],
         ['Son', 'Activer/couper le son', () => {
           const b = document.getElementById('btn-sound');
@@ -331,6 +331,25 @@
     if (D2HUD.els.monHover) D2HUD.els.monHover.style.display = 'none';
   }
 
+  // 13b : label de rang élite — un badge « Champion » bleu / « Unique » doré
+  // (couleur du nom déjà teintée par .k-* ; le badge hérite en currentColor),
+  // « Super-unique », « Boss ». Aucun effet si kind normal/inconnu.
+  const MON_RANKS = {
+    champion: 'Champion', unique: 'Unique', super_unique: 'Super-unique', boss: 'Boss',
+  };
+  function setMonRank(kind) {
+    const name = D2HUD.els.monName;
+    if (!name) return;
+    const old = name.querySelector('.monrank');
+    if (old) old.remove();
+    const label = MON_RANKS[kind];
+    if (!label) return;
+    const tag = document.createElement('span');
+    tag.className = 'monrank';
+    tag.textContent = label;
+    name.appendChild(tag);
+  }
+
   function frameMonsterHover(game) {
     if (!D2HUD.mouse.inside) { hideMonHover(); return; }
     const [wx, wy] = game.screenToWorld(D2HUD.mouse.x, D2HUD.mouse.y);
@@ -342,6 +361,7 @@
     mh.className = 'k-' + info.kind; // garde #monhover + teinte du nom
     mh.id = 'monhover';
     D2HUD.els.monName.textContent = info.name;
+    setMonRank(info.kind); // 13b : label de rang (champion bleu / unique doré)
     const frac = info.maxHp > 0 ? Math.max(0, Math.min(1, info.hp / info.maxHp)) : 0;
     D2HUD.els.monHpFill.style.width = `${(frac * 100).toFixed(0)}%`;
     mh.style.left = `${Math.round(info.sx)}px`;

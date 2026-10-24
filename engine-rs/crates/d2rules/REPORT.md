@@ -174,3 +174,49 @@ vente+achat objets réels · durabilité tables réelles (usure/bris/réparation
 stash canFit 6×4 (dépôt/retrait/plein/trop grand) · roundtrip save `gold_stash`
 + rétro-compat · pickup monde capé · auto-pickup en mouvement. JS : `node --check`
 stash-ui.js/game.js OK.
+
+## 14a — Sons monstres data-driven (mon_audio.rs, 2026-10-24)
+
+### Table + résolution (monsounds.txt v1.12, 141 rec dont 1 séparateur → 140 familles)
+* `family_of(token)` : jeton monstats → famille (`zombie2`→`zombie`) — chiffres
+  finaux retirés, remontée des `_`, alias documentés : `ancientbarb→ancient`
+  (Anciens = sons barbare), `griswold→zombieunique`, `nihlathakboss→nihlathak`,
+  `hephasto→smithdemon` (col MonSound superuniques.txt), `skmage→sk_mage`
+  (lignes sk_mage/necromage identiques). Familles hors table (`venomlord`,
+  `baalhighpriest`, `snowyeti`, `succubuswitch`) → `None`, repli générique JS.
+* `event_file(token, Attack|Hit|Death|Taunt)` : cellule brute TABLE ;
+  cellule vide = pas de son en retail (squelettes sans voix d'attaque) —
+  fidélité, pas d'invention.
+* `PORT_CODES` (23) : codes sprites du port → famille (6 manifest + planches + 16 boss/
+  super-uniques/vagues, miroir JS vérifié par test de parité).
+
+### Fichiers réellement embarqués (couche index.json)
+* Extraction RÉELLE : `tools/extract_mon_sfx.py` — sons =
+  `data\global\sfx\monster\<famille>\*.wav` (d2sfx.mpq), annonces =
+  `data\local\sfx\act*\…\*taunt*.wav` (d2speech.mpq), noms inventoriés via
+  `data\global\excel\sounds.txt` (d2data.mpq, col FileName). NOTE : chemins
+  retail `data\global\monsounds\…` ABSENTS de cette release digitale (sweep
+  568 sondes sur d2sfx/d2data/d2exp/d2char/patch_d2/d2speech = 0 hit).
+* Bilan : 56 familles indexées, 124 entrées sonorisées, 110 wav uniques
+  (~6 Mo) pour 43 familles (incl. planches A1 goatman/foulcrow/cr_lancer) ;
+  dossiers taillés (imp, overseer, baal, succubus, bloodlord,
+  ancient/barbarian…) → repli générique documenté côté JS (hit.wav /
+  fallen_die.wav du port + 3 replis legacy fallen/zombie/quillrat).
+* Taunts réels extraits : andariel, bloodraven, countess, duriel, radament,
+  summoner, smith, mephisto, izual, diablo.
+
+### Consommation (aucun endpoint wasm modifié — zéro rebuild)
+Lecteur `demo/mon-sfx.js` (autoportant, pattern music.js) : `feed(ev)` sur les
+GameEvent existants — `HeroAttacked`/`MissileHit`/`MercAttacked` → HIT du
+monstre cible, `HeroHit` → ATTACK du monstre frappeur, `MonsterDied` → DEATH ;
+taunt à la première implication d'un `kind` ∈ super_unique/boss/champion
+(monsterInfo). Panning stéréo (`monsterInfo().sx`), volume par distance
+écran au héros (`heroScreen`), autoplay premier geste, anti-spam 70 ms,
+suit le bouton « Son ». game.js : 1 ligne (`if (window.D2MonSfx)
+window.D2MonSfx.feed(ev);`) ; game.html : 1 ligne script.
+
+### Tests (+10 → workspace 848 passed / 0 failed / 1 ignoré)
+140 familles · goldens fallen/zombie/quillrat/boss/taunts · 5 alias · familles
+absentes → None · 67 classes super-uniques résolues · PORT_CODES manifest+finale
+· index 56/124/110 avec RIFF/WAVE vérifié sur disque · parité JS (chaque fichier
+indexé présent dans mon-sfx.js, codes mappés).

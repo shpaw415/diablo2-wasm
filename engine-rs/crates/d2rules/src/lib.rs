@@ -139,6 +139,12 @@ pub mod tables;
 /// réelles `patch_monstats.txt` (aip1/aip4/aidel). État non persisté.
 pub mod ai_behaviors;
 
+// --- Sons monstres data-driven (monsounds.txt v1.12, étape 14a, 2026-10-24) ---
+/// Table officielle monstre → événements sonores (attaque/touché/mort/annonce),
+/// résolution jeton→famille + alias, fichiers locaux extraits (index.json) et
+/// parité avec le lecteur `demo/mon-sfx.js`.
+pub mod mon_audio;
+
 pub mod statlist; // 7c A1 : StatList par ids ItemStatCost (socle loot D2 réel)
 pub mod equipment; // 7c F6/F7 : 10 slots bodyloc d2s + canFit 10×4 + belts slots
 pub mod economy; // 11c économie & inventaire : or (cap 10k×niveau, stash), durabilité, vente, auto-pickup
@@ -213,6 +219,12 @@ pub use waypoints::{for_level as waypoint_for_level, by_slot as waypoint_by_slot
 /// Waypoints des actes 8c : 38 slots retail (colonne `Waypoint`), attach des
 /// niveaux réels, état PAR DIFFICULTÉ additif (`waypoints_actes.rs`).
 pub mod waypoints_actes;
+
+/// Étape 14c (audio) : résolution pure région → ambiance (SoundEnviron v1.12,
+/// golden A1-A5) — contrat data de la couche JS `demo/music.js`.
+pub mod audio_env;
+
+pub mod game_audio; // 14b audio : table data-driven GameEvent → WAV réel v1.12 (contrat demo/game-sfx.js)
 
 // -- Types items/loot purs, consommables par d2game (F1-F7) --
 pub use affixes::{AffixKind, AffixRec, AffixTables, ItemTypeSet};

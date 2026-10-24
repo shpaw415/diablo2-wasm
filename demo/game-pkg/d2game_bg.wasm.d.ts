@@ -3,6 +3,8 @@
 export const memory: WebAssembly.Memory;
 export const __wbg_d2game_free: (a: number, b: number) => void;
 export const d2game_automap: (a: number) => [number, number];
+export const d2game_beltAutoStore: (a: number) => number;
+export const d2game_beltInfo: (a: number) => [number, number];
 export const d2game_collisionGrid: (a: number) => [number, number];
 export const d2game_composeStats: (a: number) => [number, number];
 export const d2game_corpseInfo: (a: number) => [number, number];
@@ -40,6 +42,8 @@ export const d2game_switchNotes: (a: number) => [number, number];
 export const d2game_talkNpc: (a: number, b: number) => [number, number, number, number];
 export const d2game_tick: (a: number, b: number, c: number, d: number) => [number, number];
 export const d2game_travelWaypoint: (a: number, b: number) => [number, number, number, number];
+export const d2game_useBeltKey: (a: number, b: number) => [number, number, number, number];
+export const d2game_useConsumable: (a: number, b: number) => [number, number, number, number];
 export const d2game_viewportHeight: (a: number) => number;
 export const d2game_viewportWidth: (a: number) => number;
 export const d2game_waypoints: (a: number) => [number, number];

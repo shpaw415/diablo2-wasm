@@ -59,6 +59,10 @@
 #monhover.k-champion .monname { color: #6fa7ff; }
 #monhover.k-unique .monname, #monhover.k-super_unique .monname { color: #d9b96a; }
 #monhover.k-boss .monname { color: #b48be0; }
+/* 13b : badge de rang élite — hérite de la teinte du nom (currentColor). */
+#monhover .monrank { font-weight: 500; font-size: 9px; margin-left: 5px;
+                     padding: 0 4px; border: 1px solid currentColor;
+                     border-radius: 3px; opacity: .85; vertical-align: 1px; }
 #monhpwrap { width: 72px; height: 5px; margin: 2px auto 0; background: #160a08cc;
              border: 1px solid #000; border-radius: 2px; }
 #monhpfill { height: 100%; width: 100%; border-radius: 1px;
