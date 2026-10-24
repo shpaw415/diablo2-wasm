@@ -25,11 +25,11 @@ const TRUNCATED: &[u8] = include_bytes!("vectors/truncated.d2s");
 /// Checksums dorés stockés dans l'en-tête de chaque vecteur (champ 0x0C,
 /// lu indépendamment — preuve que le calcul Rust retombe dessus).
 const GOLDEN_CHECKSUMS: &[(&[u8], u32)] = &[
-    (MINIMAL, 0xE73D_F9D5),
-    (V109, 0xAFF4_3121),
-    (MAGIC_ITEM, 0x932D_2517),
-    (SOCKETED_ARMOR, 0x59A4_1D0B),
-    (TRUNCATED, 0xD4B8_58B8),
+    (MINIMAL, 0x15CD_FB70),
+    (V109, 0xB65A_A261),
+    (MAGIC_ITEM, 0x232E_BF55),
+    (SOCKETED_ARMOR, 0x3284_2040),
+    (TRUNCATED, 0x416C_591F),
 ];
 
 // ---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ fn minimal_summary_conversion() {
 fn bad_checksum_fails_cleanly_in_strict() {
     assert_eq!(
         SaveFile::parse(BAD_CHECKSUM),
-        Err(D2sError::ChecksumMismatch { stored: 0xDEAD_BEEF, computed: 0xE73D_F9D5 })
+        Err(D2sError::ChecksumMismatch { stored: 0xDEAD_BEEF, computed: 0x15CD_FB70 })
     );
 }
 

@@ -17,6 +17,7 @@ use serde_json::Value;
 
 use crate::compose::{self, ComposedMap};
 use crate::drlg;
+use crate::drlg_maze;
 use crate::ds1::{self, Ds1};
 use crate::dt1::{self, Dt1Tile};
 use crate::levels;
@@ -197,6 +198,9 @@ pub struct GameCore {
     difficulty: Difficulty,
     /// Graphe Vis/Warp (W04) dérivé des tables — `None` sans tables.
     warp_graph: Option<levels::WarpGraph>,
+    /// Cache AutoMap du niveau courant (9d monde vivant, `automap.rs`) —
+    /// reconstruit à chaque `load_level`, sérialisé par `automap_json`.
+    pub(crate) automap: Option<crate::automap::LevelAutomap>,
     /// Graine de partie : combine la graine DRLG de chaque niveau (W02) —
     /// même graine ⇒ mêmes cartes, parties différentes ⇒ mondes différents.
     /// 0 par défaut (cartes stables d'un boot à l'autre, historique respecté).
@@ -256,6 +260,7 @@ impl GameCore {
             tables: None,
             difficulty: Difficulty::default(),
             warp_graph: None,
+            automap: None,
             game_seed: 0,
             vw: DEFAULT_VIEWPORT_W,
             vh: DEFAULT_VIEWPORT_H,
@@ -472,50 +477,104 @@ impl GameCore {
     }
 
     /// Ce niveau doit-il passer par le DRLG seedé ? Oui si les tables sont
-    /// branchées, que le record levels.txt existe (`levelsId`) et déclare un
-    /// wilderness (DrlgType 3), et que [`drlg::supports`] couvre le niveau
-    /// (phase 1 : Blood Moor — banque de presets + tileset unifié extraits).
+    /// branchées, que le record levels.txt existe (`levelsId`) et déclare
+    /// un niveau généré supporté : wilderness (DrlgType 3, phase 1 Blood
+    /// Moor — banque de presets extraite) ou maze (DrlgType 1, étape 8a —
+    /// [`drlg_maze::supports`] : record LvlMaze + banque LvlTypes).
     fn drlg_applies(&self, def: &LevelDef) -> bool {
         let Some(tables) = &self.tables else { return false };
         let Some(id) = def.levels_id else { return false };
         let Some(rec) = tables.get(id) else { return false };
-        rec.drlg_type == 3 && drlg::supports(&def.key)
+        match rec.drlg_type {
+            3 => drlg::supports(&def.key),
+            1 => drlg_maze::supports(id),
+            _ => false,
+        }
+    }
+
+    /// Niveau maze (DrlgType 1) : ni DS1 figé dans les données release ni
+    /// repli possible — utilisé par la branche DRLG de [`GameCore::load_level`]
+    /// pour rendre l'échec DRLG fatal (jamais de carte noire silencieuse).
+    fn maze_applies(&self, def: &LevelDef) -> bool {
+        self.drlg_applies(def)
+            && self
+                .tables
+                .as_ref()
+                .and_then(|t| def.levels_id.and_then(|id| t.get(id)))
+                .is_some_and(|rec| rec.drlg_type == 1)
     }
 
     /// Chemin historique : DS1 figé du manifest + DT1 résolus par .tg1.
-    fn build_frozen_tiles(&self, def: &LevelDef) -> Result<(Ds1, Vec<Dt1Tile>), String> {
+    /// Rend aussi la méta AutoMap (9d) alignée sur la table de tuiles —
+    /// chaque conteneur contribue ses `(Type, Style, Sequence)` dans le
+    /// MÊME ordre que ses tuiles décodées (voir `automap::dt1_meta_aligned`).
+    fn build_frozen_tiles(&self, def: &LevelDef) -> Result<(Ds1, Vec<Dt1Tile>, Vec<crate::automap::TileMeta>), String> {
         let ds1_bytes = self.asset(&def.ds1)?.clone();
         let ds1 = ds1::decode_ds1(&ds1_bytes).map_err(|e| format!("{}: {e:?}", def.ds1))?;
         let mut tilesets: Vec<Dt1Tile> = Vec::new();
+        let mut meta: Vec<crate::automap::TileMeta> = Vec::new();
         for tg1 in &ds1.files {
             let container = resolve_container(tg1, &def.dt1);
             let bytes = self.asset(&container)?.clone();
             let mut tiles = dt1::decode_dt1(&bytes).map_err(|e| format!("{container}: {e:?}"))?;
+            meta.append(&mut crate::automap::dt1_meta_aligned(&bytes).map_err(|e| format!("{container}: {e:?}"))?);
             tilesets.append(&mut tiles);
         }
-        Ok((ds1, tilesets))
+        Ok((ds1, tilesets, meta))
     }
 
-    /// Chemin DRLG (W02) : tuiles réelles des 8 conteneurs unifiés (ordre =
-    /// [`drlg::UNIFIED_FILES`], résolus par la liste `dt1` du niveau) →
-    /// comptes de tuiles → génération seedée du layout. L'ordre de
-    /// concaténation produit ici est exactement celui que la boucle
-    /// historique aurait suivi sur les fichiers du [`Ds1`] généré — les
-    /// indices des couches générées tombent donc dans le bon espace.
-    fn build_drlg_tiles(&self, def: &LevelDef) -> Result<(Ds1, Vec<Dt1Tile>), String> {
+    /// Chemin DRLG (W02 + étape 8a) : dispatch par DrlgType du record —
+    /// 1 = maze ([`build_maze_tiles`]), 3 = wilderness Blood Moor (tuiles
+    /// réelles des 8 conteneurs unifiés, ordre = [`drlg::UNIFIED_FILES`]).
+    /// L'ordre de concaténation produit ici est exactement celui que la
+    /// boucle historique aurait suivi sur les fichiers du [`Ds1`] généré —
+    /// les indices des couches générées tombent donc dans le bon espace.
+    fn build_drlg_tiles(&self, def: &LevelDef) -> Result<(Ds1, Vec<Dt1Tile>, Vec<crate::automap::TileMeta>), String> {
+        let id = def
+            .levels_id
+            .and_then(|id| self.tables.as_ref()?.get(id).map(|_| id))
+            .ok_or_else(|| format!("drlg : niveau {} sans record levels.txt", def.key))?;
+        if self.tables.as_ref().is_some_and(|t| t.get(id).is_some_and(|r| r.drlg_type == 1)) {
+            return self.build_maze_tiles(def, id);
+        }
         let mut tilesets: Vec<Dt1Tile> = Vec::new();
+        let mut meta: Vec<crate::automap::TileMeta> = Vec::new();
         let mut counts: Vec<usize> = Vec::with_capacity(drlg::UNIFIED_FILES.len());
         for tg1 in drlg::UNIFIED_TG1 {
             let container = resolve_container(tg1, &def.dt1);
             let bytes = self.asset(&container)?.clone();
             let tiles = dt1::decode_dt1(&bytes).map_err(|e| format!("{container}: {e:?}"))?;
+            meta.append(&mut crate::automap::dt1_meta_aligned(&bytes).map_err(|e| format!("{container}: {e:?}"))?);
             counts.push(tiles.len());
             tilesets.extend(tiles);
         }
         let counts = drlg::UnifiedCounts::from_slices(&counts)?;
         let seed = drlg::level_seed(self.game_seed, &def.key);
         let (ds1, _stats) = drlg::generate_bloodmoor(seed, &counts)?;
-        Ok((ds1, tilesets))
+        Ok((ds1, tilesets, meta))
+    }
+
+    /// DRLG maze (étape 8a, DrlgType 1) : les DT1 de la banque du niveau
+    /// ([`drlg_maze::bank_for_level`], résolus par la liste `dt1` du bloc
+    /// manifest), concaténés dans l'ordre [`drlg_maze::MazeBank::files`] —
+    /// puis `drlg_maze::generate(level_id, graine de partie)` : grille
+    /// LvlMaze seedée (rooms + couloirs), tuiles réelles LvlTypes, sortie
+    /// [`Ds1`] synthétique consommé par le composeur (comme la Blood Moor).
+    fn build_maze_tiles(&self, def: &LevelDef, id: u32) -> Result<(Ds1, Vec<Dt1Tile>, Vec<crate::automap::TileMeta>), String> {
+        let bank = drlg_maze::bank_for_level(id)
+            .ok_or_else(|| format!("drlg maze : niveau {id} sans banque supportée"))?;
+        let mut tilesets: Vec<Dt1Tile> = Vec::new();
+        let mut meta: Vec<crate::automap::TileMeta> = Vec::new();
+        for file in bank.files {
+            let container = resolve_container(file.tg1, &def.dt1);
+            let bytes = self.asset(&container)?.clone();
+            let tiles = dt1::decode_dt1(&bytes).map_err(|e| format!("{container}: {e:?}"))?;
+            meta.append(&mut crate::automap::dt1_meta_aligned(&bytes).map_err(|e| format!("{container}: {e:?}"))?);
+            tilesets.extend(tiles);
+        }
+        let seed = drlg::level_seed(self.game_seed, &def.key);
+        let (ds1, _stats) = drlg_maze::generate(id, seed, &tilesets)?;
+        Ok((ds1, tilesets, meta))
     }
 
     /// (Re)charge un niveau : palette, DS1+DT1 (mapping .tg1 par niveau),
@@ -529,19 +588,26 @@ impl GameCore {
         self.sprite_pal = sprite_palette(&raw_pal);
 
         // --- tilesets + layout, résolution .tg1 → DT1 du niveau -------------
-        // Deux chemins : DRLG seedé (W02) quand les tables sont branchées et
-        // que le niveau est un wilderness supporté (Blood Moor phase 1) —
-        // le layout est GÉNÉRÉ en mémoire depuis les presets, seedé par
-        // partie ; sinon le DS1 figé du manifest (comportement historique).
-        // Tout échec DRLG retombe sur le DS1 figé avec note (jamais fatal).
+        // Deux chemins : DRLG seedé quand les tables sont branchées et que
+        // le niveau est un wilderness supporté (Blood Moor) ou un maze
+        // (DrlgType 1, étape 8a — drlg_maze) — le layout est GÉNÉRÉ en
+        // mémoire depuis les tables réelles, seedé par partie. Sinon le
+        // DS1 figé du manifest (comportement historique). UN SEUL POINT DE
+        // BRANCHEMENT (ce match) : l'échec DRLG retombe sur le DS1 figé
+        // avec note — SAUF maze, qui n'a AUCUN DS1 figé dans les données
+        // release (DrlgType 1 = généré) : l'échec y est fatal, jamais une
+        // carte invalide silencieuse.
         let mut drlg_used = false;
-        let (ds1, tilesets) = match self.drlg_applies(def) {
+        let (ds1, tilesets, meta) = match self.drlg_applies(def) {
             true => match self.build_drlg_tiles(def) {
                 Ok(tiles) => {
                     drlg_used = true;
                     tiles
                 }
                 Err(e) => {
+                    if self.maze_applies(def) {
+                        return Err(format!("niveau {} : DRLG maze en échec ({e})", def.key));
+                    }
                     self.switch_notes
                         .push(format!("niveau {} : DRLG en échec ({e}) — repli DS1 figé", def.key));
                     self.build_frozen_tiles(def)?
@@ -551,8 +617,11 @@ impl GameCore {
         };
         if drlg_used {
             self.switch_notes.push(format!(
-                "drlg seedé actif (W02) : {} 72×72 généré, graine partie {}",
-                def.key, self.game_seed
+                "drlg seedé actif (W02/8a) : {} {}×{} généré, graine partie {}",
+                def.key,
+                ds1.w,
+                ds1.h,
+                self.game_seed
             ));
         }
 
@@ -560,6 +629,18 @@ impl GameCore {
         // Variation seedée des tuiles (Go getRandomTile) : graine par clé
         // de niveau — même niveau ⇒ même carte, indépendamment du combat.
         let map = compose::compose_seeded(&ds1, &tilesets, fnv1a(&def.key));
+        // 9d (monde vivant) : cache AutoMap du niveau — cellules visibles
+        // classées + Cel résolus depuis AutoMap.txt (automap.rs). La grille
+        // de marche vient d'être composée ; DS1/tuiles/méta encore en main.
+        self.automap = Some(crate::automap::LevelAutomap::build(
+            &def.key,
+            self.tables.as_ref(),
+            def.levels_id,
+            &ds1,
+            &tilesets,
+            &meta,
+            &map,
+        ));
         self.cam_x = 0.0;
         self.cam_y = 0.0;
 
@@ -3036,6 +3117,43 @@ mod tests {
         );
     }
 
+    // --- étape 8a : DRLG maze (DrlgType 1) — branche unique de load_level ----
+
+    #[test]
+    fn maze_drlg_branch_generates_seeded_tomb_then_tunnels() {
+        let Some(root) = ws_root() else { return };
+        let notes = |g: &GameCore| g.switch_notes_json();
+        // Boot Stony Tomb 1 (levelsId 55, LvlMaze 4 rooms 16×16) : le DRLG
+        // maze s'active par la MÊME branche que la Blood Moor (load_level).
+        let mut a = full_game_with_tables(MANIFEST, "tombf1", &root, 42);
+        assert!(notes(&a).contains("tables de niveaux branchées"), "{}", notes(&a));
+        assert!(notes(&a).contains("drlg seedé actif"), "{}", notes(&a));
+        // Grille 3×3 rooms de 16×16 = 48×48 tuiles (×5 sous-tuiles).
+        assert_eq!(a.grid_size(), (48 * 5, 48 * 5));
+        // Le monde tourne et rend une carte non noire.
+        let _ = a.tick(16, None);
+        let lit = a
+            .render()
+            .chunks_exact(4)
+            .filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30)
+            .count();
+        assert!(lit > 10_000, "maze rendu trop sombre : {lit}");
+        // Déterminisme seedé au niveau du jeu complet.
+        let b = full_game_with_tables(MANIFEST, "tombf1", &root, 42);
+        assert_eq!(a.collision(), b.collision(), "même partie ⇒ même tombeau");
+        let c = full_game_with_tables(MANIFEST, "tombf1", &root, 43);
+        assert_ne!(a.collision(), c.collision(), "graine différente ⇒ tombeau différent");
+        // Switch vers les Ancient Tunnels (65) : même branche, autre banque
+        // (LvlType 13) — 5×5 rooms de 12×12 = 60×60 tuiles.
+        let info = a.switch_level("ancienttunnels", 24.0, 24.0).unwrap();
+        assert_eq!(info.key, "ancienttunnels");
+        assert_eq!(a.grid_size(), (60 * 5, 60 * 5));
+        let world = a.world.as_ref().unwrap();
+        let h = *world.hero();
+        assert!(world.is_walkable(h.x as i32, h.y as i32), "héros posé hors marchable");
+        assert!(notes(&a).contains("ancienttunnels 60×60 généré"), "{}", notes(&a));
+    }
+
     // --- ARBRE DE COMPÉTENCES (C2/C3/C4/C5, mission arbre 2026-10-23) ------
 
     #[test]
@@ -3165,5 +3283,94 @@ mod tests {
         let r: Value = serde_json::from_str(&g.learn_skill("Fire Ball")).unwrap();
         assert_eq!(r["ok"], false);
         assert!(r["error"].as_str().unwrap().contains("12"), "{}", r["error"]);
+    }
+
+    // --- 9d (monde vivant) : AutoMap — automap_json (automap.rs) -------------
+
+    #[test]
+    fn automap_empty_before_finalize() {
+        let g = GameCore::new(MANIFEST, "BA").unwrap();
+        assert_eq!(g.automap_json(), "{}");
+    }
+
+    #[test]
+    fn automap_town_matches_grid_and_is_deterministic() {
+        let Some(root) = ws_root() else { return };
+        let g = full_game_with_tables(MANIFEST, "town", &root, 7);
+        let j1 = g.automap_json();
+        let v: Value = serde_json::from_str(&j1).unwrap();
+        assert_eq!(v["level"], "town");
+        assert_eq!(v["mode"], "automap", "tables branchées + groupe « 1 Town »");
+        assert_eq!(v["lvlType"], "Town");
+        assert_eq!(v["cellW"], 57);
+        assert_eq!(v["cellH"], 41);
+        assert_eq!(v["sub"], 5);
+        // Comptes cohérents avec la grille : les cellules « walk » du JSON
+        // sont EXACTEMENT les centres 5×5 marchables de la grille de collision.
+        let cells = v["cells"].as_array().unwrap();
+        assert!(!cells.is_empty());
+        let mut walk = 0usize;
+        let mut cels = 0usize;
+        for c in cells {
+            assert_eq!(c.as_array().map(|a| a.len()), Some(4), "cellule [x, y, flags, cel]");
+            let (x, y) = (c[0].as_u64().unwrap() as usize, c[1].as_u64().unwrap() as usize);
+            assert!(x < 57 && y < 41, "cellule dans les bornes");
+            let f = c[2].as_i64().unwrap();
+            if f & 1 != 0 { walk += 1; }
+            if c[3].as_i64().unwrap() >= 0 { cels += 1; }
+        }
+        assert!(cels > 0, "groupe 1 Town : au moins un Cel résolu");
+        let map = g.map.as_ref().unwrap();
+        let expected_walk: usize = (0..map.grid_h)
+            .filter(|gy| gy % 5 == 2)
+            .map(|gy| (0..map.grid_w).filter(|gx| gx % 5 == 2 && map.walkable(*gx, gy)).count())
+            .sum();
+        assert_eq!(walk, expected_walk, "JSON walk == centres marchables de la grille");
+        // Déterminisme : même instance, puis même graine dans une 2e instance.
+        assert_eq!(j1, g.automap_json(), "deux appels identiques");
+        let g2 = full_game_with_tables(MANIFEST, "town", &root, 7);
+        assert_eq!(j1, g2.automap_json(), "même graine ⇒ même automap");
+    }
+
+    #[test]
+    fn automap_bloodmoor_seeded_drlg_wilderness() {
+        let Some(root) = ws_root() else { return };
+        let mut g = full_game_with_tables(MANIFEST, "bloodmoor", &root, 42);
+        let j1 = g.automap_json();
+        let v: Value = serde_json::from_str(&j1).unwrap();
+        assert_eq!(v["level"], "bloodmoor");
+        assert_eq!(v["mode"], "automap");
+        assert_eq!(v["lvlType"], "Wilderness", "LvlTypes.txt Id 2 « Act 1 - Wilderness »");
+        assert_eq!(v["cellW"], 72);
+        assert_eq!(v["cellH"], 72);
+        let cells = v["cells"].as_array().unwrap();
+        let walk = cells.iter().filter(|c| c[2].as_i64().unwrap() & 1 == 1).count();
+        assert!(walk > 500, "lande : {walk} cellules marchables attendues");
+        // DRLG seedé : même graine de partie ⇒ JSON AutoMap identique.
+        let g2 = full_game_with_tables(MANIFEST, "bloodmoor", &root, 42);
+        assert_eq!(j1, g2.automap_json(), "même graine ⇒ même automap (DRLG + résolution)");
+        // Après un switch retour ville : le cache suit le niveau courant.
+        g.switch_level("town", 247.0, 107.0).unwrap();
+        let vt: Value = serde_json::from_str(&g.automap_json()).unwrap();
+        assert_eq!(vt["level"], "town");
+        assert_eq!(vt["cellW"], 57);
+    }
+
+    #[test]
+    fn automap_fallback_without_tables() {
+        // Sans patch_levels.txt : pas d'identité (acte/LvlType) ⇒ mode
+        // « fallback » documenté (polygone marchable côté démo), cellules
+        // présentes mais AUCUN Cel.
+        let Some(root) = ws_root() else { return };
+        let g = full_game(MANIFEST, "town", &root);
+        let v: Value = serde_json::from_str(&g.automap_json()).unwrap();
+        assert_eq!(v["level"], "town");
+        assert_eq!(v["mode"], "fallback");
+        assert_eq!(v["lvlType"], "");
+        let cells = v["cells"].as_array().unwrap();
+        assert!(!cells.is_empty(), "les cellules visibles restent exposées");
+        assert!(cells.iter().all(|c| c[3].as_i64().unwrap() == -1), "fallback : aucun Cel");
+        let walk = cells.iter().filter(|c| c[2].as_i64().unwrap() & 1 == 1).count();
+        assert!(walk > 0, "le polygone marchable a de la matière");
     }
 }

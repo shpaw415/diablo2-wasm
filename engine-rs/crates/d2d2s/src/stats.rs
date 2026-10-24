@@ -101,10 +101,16 @@ pub fn stat_name(id: u16) -> Option<&'static str> {
 /// Format du flux de stats tel que lu.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StatsFormat {
-    /// 1.10+ : flux (ID 9 bits, valeur CSvBits) + 0x1FF.
+    /// 1.10+ (0x60) : flux (ID 9 bits, valeur CSvBits) + 0x1FF.
     V110Plus,
-    /// 1.09 : "gf" + bitfield présence u16 + u32 par stat présente.
+    /// 1.09 (0x5C) : "gf" + bitfield présence u16 + u32 par stat présente.
     Gf109,
+    /// D2R (0x61) : marqueur "gf" + flux (ID 9 bits, valeur CSvBits) + 0x1FF.
+    /// [VALIDATION RÉELLE 2026-10-24 : Javazon.d2s — les 2 octets `gf`
+    /// (0x67 0x66) précèdent la liste ; l'« ID 103 » du parseur python
+    /// était ces octets décodés comme un ID. Confirmé par le parseur
+    /// D2R fredimachado/Diablo2R (« reader.ReadInt16() // Header »).]
+    GfPrefixed110,
 }
 
 /// Une stat lue : `raw` = valeur stockée dans le flux, `value` = recharge
@@ -129,9 +135,26 @@ impl Stats {
     pub fn parse(reader: &mut BitReader, version: u32) -> Result<Stats, D2sError> {
         if version < crate::header::VERSION_V112 {
             Self::parse_gf109(reader)
+        } else if version >= crate::header::VERSION_D2R {
+            Self::parse_gf_prefixed_110(reader)
         } else {
             Self::parse_v110(reader)
         }
+    }
+
+    /// Branche D2R (0x61) : "gf" + (ID 9 bits, valeur CSvBits) + 0x1FF.
+    fn parse_gf_prefixed_110(reader: &mut BitReader) -> Result<Stats, D2sError> {
+        let start = reader.bit_pos();
+        let marker = reader.read_ascii(2)?;
+        if marker != "gf" {
+            return Err(D2sError::BadMarker {
+                expected: "gf".into(),
+                got: marker,
+                bit: start,
+            });
+        }
+        let Stats { entries, .. } = Self::parse_v110(reader)?;
+        Ok(Stats { format: StatsFormat::GfPrefixed110, entries })
     }
 
     /// Branche 1.10+ : (ID 9 bits, valeur CSvBits) croissant + 0x1FF.
@@ -182,7 +205,10 @@ impl Stats {
     /// les IDs 1.10+ sont réécrits triés croissants comme l'exige la spec).
     pub fn serialize(&self, writer: &mut BitWriter) {
         match self.format {
-            StatsFormat::V110Plus => {
+            StatsFormat::V110Plus | StatsFormat::GfPrefixed110 => {
+                if self.format == StatsFormat::GfPrefixed110 {
+                    writer.write_ascii("gf");
+                }
                 let mut sorted: Vec<&StatEntry> = self.entries.iter().collect();
                 sorted.sort_by_key(|e| e.id);
                 for e in sorted {

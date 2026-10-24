@@ -9,6 +9,7 @@
 // cache Chromium malgré le nouveau binaire.
 
 const $ = (id) => document.getElementById(id);
+import './automap.js'; // 9d monde vivant : mini-carte (window.D2Automap, Tab / bouton Carte)
 const status = $('status');
 const canvas = $('game');
 const ctx = canvas.getContext('2d');
@@ -903,6 +904,10 @@ async function main() {
     window.D2Npc.init({ getGame: () => window.__d2.game, queue: loop.queue, note, flash, manifest, sfx });
     window.D2Npc.frame(canvas, game); // premier rendu des marqueurs
   }
+  // 6b : export/import .d2s — toute la logique vit dans d2s-io.js (le
+  // moteur WASM encode/décode via d2rules::save_d2s) ; on ne branche que
+  // les boutons et les aides d'affichage.
+  if (window.D2sIO) window.D2sIO.init({ getGame: () => window.__d2.game, note, flash });
   requestAnimationFrame(frame);
 }
 

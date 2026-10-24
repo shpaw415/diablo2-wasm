@@ -343,6 +343,19 @@ impl D2Game {
     pub fn corpse_info(&self) -> String {
         self.core.corpse_info_json()
     }
+
+    // ------------------------------------------------------------------
+    // AutoMap 9d (monde vivant) — endpoint additif consommé par
+    // demo/automap.js (window.D2Automap). Append-only.
+    // ------------------------------------------------------------------
+
+    /// Mini-carte du niveau courant (9d) — JSON
+    /// `{level,name,mode,lvlType,cellW,cellH,sub,cells:[[x,y,flags,cel],…]}`
+    /// (voir `automap.rs` : mode `automap` / fallback polygone marchable).
+    #[wasm_bindgen(js_name = automap)]
+    pub fn automap(&self) -> String {
+        self.core.automap_json()
+    }
 }
 
 fn parse_input(json: &str) -> Option<PlayerInput> {

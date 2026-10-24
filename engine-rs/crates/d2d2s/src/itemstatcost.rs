@@ -1,14 +1,23 @@
 //! Table ItemStatCost v1.12 RÉELLE — embarquée en compile-time
 //! (`data/itemstatcost_d2s.tsv`, extraction des colonnes ID/Stat/CSvBits/
-//! ValShift/Save Bits/Save Add depuis `d2w-integ/assets/patch_itemstatcost.txt`,
-//! 40 109 o, SHA-256 ee7fa82b…8375, 359 records).
+//! ValShift/Save Bits/Save Add/Save Param Bits depuis
+//! `d2w-integ/assets/patch_itemstatcost.txt`, 40 109 o,
+//! SHA-256 ee7fa82b…8375, 359 records).
 //!
-//! Rôles (evidence.md §6 et §8.6) :
+//! Rôles (evidence.md §6 et §8.6, **corrigés §VALIDATION RÉELLE 2026-10-24**
+//! sur Javazon.d2s, fichier D2R v0x61 réel fourni par Justin) :
 //! * **CSvBits / ValShift** : largeurs et décalage des stats caractère
-//!   (validation croisée locale 16/16 avec nokka).
-//! * **Save Bits / Save Add** : largeurs des mods d'item ; paires min/max =
-//!   largeur de la stat min + celle de la stat max (ID suivant, même base).
-//!   Ex. mindamage (6) + maxdamage (7) = 13 bits.
+//!   (validation croisée locale 16/16 avec nokka ; confirmée sur le réel).
+//! * **Save Bits / Save Param Bits / Save Add** : largeurs des mods d'item.
+//!   ⚠ CORRECTION (le fichier réel invalide l'ancienne règle « paires
+//!   min/max par nom ») : la largeur d'un mod = `Save Bits` **+
+//!   `Save Param Bits`** (couche param, lue AVANT la valeur — ex.
+//!   item_nonclassskill 97 : param 9 bits = skill, valeur 6 bits = niveau ;
+//!   item_charged_skill 204 : 16+16) **+ `Save Bits` des stats appariées**
+//!   [`PAIRED`] (ex. coldmindam 54 = 8+9+8 avec coldmaxdam 55 et
+//!   coldlength 56). nokka et d2savior concordent ; l'Enigma du réel
+//!   (+775 def, +14 life/kill, +45% FRW, +1 Téléport p54, +2 skills,
+//!   +str/lvl, +MF/lvl) ne se lit que sous cette règle.
 
 #![allow(dead_code)]
 
@@ -24,10 +33,13 @@ pub struct IscRow {
     pub csv_bits: u8,
     /// Décalage de recharge (hp/mana/stamina ÷256).
     pub val_shift: u8,
-    /// Bits de sauvegarde des **mods d'item**.
+    /// Bits de sauvegarde des **mods d'item** (valeur).
     pub save_bits: u8,
     /// Offset négatif des mods (valeur chargée = stockée − Save Add).
     pub save_add: u32,
+    /// Bits de **param** des mods (couche lue avant la valeur : skill,
+    /// classe…). 0 = pas de param. — colonne ajoutée §VALIDATION RÉELLE.
+    pub save_param_bits: u8,
 }
 
 /// Table en mémoire (359 records).
@@ -51,7 +63,8 @@ fn load_embedded() -> ItemStatCost {
         let val_shift: u8 = f.next().unwrap_or("0").parse().unwrap_or(0);
         let save_bits: u8 = f.next().unwrap_or("0").parse().unwrap_or(0);
         let save_add: u32 = f.next().unwrap_or("0").parse().unwrap_or(0);
-        rows.push(IscRow { id, stat, csv_bits, val_shift, save_bits, save_add });
+        let save_param_bits: u8 = f.next().unwrap_or("0").parse().unwrap_or(0);
+        rows.push(IscRow { id, stat, csv_bits, val_shift, save_bits, save_add, save_param_bits });
     }
     let mut by_id = std::collections::HashMap::with_capacity(rows.len());
     for (i, row) in rows.iter().enumerate() {
@@ -89,34 +102,52 @@ impl ItemStatCost {
         self.by_id.get(&id).map(|&i| &self.rows[i])
     }
 
-    /// Largeur effective d'un mod d'item : `Save Bits` (paires min/max =
-    /// min + max de l'ID suivant), + `Save Add`/`ValShift` exposés.
-    ///
-    /// Règle du parseur de référence (`mod_widths` de d2s_parse.py) :
-    /// stat contenant `min` + ID+1 contenant `max` même base → somme.
-    pub fn mod_width(&self, id: u16) -> Option<(u8, u32, u8)> {
-        let row = self.row(id)?;
+    /// Stats appariées : après la valeur de l'ID, on lit `Save Bits` de
+    /// chaque apparié (correction §VALIDATION RÉELLE — nokka + d2savior
+    /// concordent ; l'ancienne règle « min/max par nom » est invalide :
+    /// elle ratait coldlength/poisonlength et la paire 17→18).
+    pub const PAIRED: &[(u16, &[u16])] = &[
+        (17, &[18]),          // maxdamage_percent → mindamage_percent
+        (48, &[49]),          // firemindam → firemaxdam
+        (50, &[51]),          // lightmindam → lightmaxdam
+        (52, &[53]),          // magicmindam → magicmaxdam
+        (54, &[55, 56]),      // coldmindam → maxdam + length
+        (57, &[58, 59]),      // poisonmindam → maxdam + length
+    ];
+
+    /// Bits appariés d'un ID (Σ Save Bits des appariés, 0 si aucun).
+    fn paired_bits(&self, id: u16) -> u8 {
+        Self::PAIRED
+            .iter()
+            .find(|(i, _)| *i == id)
+            .map(|(_, ps)| {
+                ps.iter().map(|&p| self.row(p).map(|r| r.save_bits).unwrap_or(0)).sum()
+            })
+            .unwrap_or(0)
+    }
+
+    /// Shape d'un mod : (bits param, bits valeur, save_add, val_shift).
+    /// `Err(())` si l'ID est absent ou sans `Save Bits` (non sérialisable).
+    pub fn mod_shape(&self, id: u16) -> Result<(u8, u8, u32, u8), ()> {
+        let row = self.row(id).ok_or(())?;
         if row.save_bits == 0 {
-            return None;
+            return Err(());
         }
-        if let Some(rest) = row.stat.split_once("min") {
-            let base = rest.0.to_string() + rest.1;
-            if let Some(next) = self.row(id + 1) {
-                if next.save_bits > 0 {
-                    if let Some(nrest) = next.stat.split_once("max") {
-                        let nbase = nrest.0.to_string() + nrest.1;
-                        if base == nbase {
-                            return Some((
-                                row.save_bits + next.save_bits,
-                                row.save_add,
-                                row.val_shift,
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-        Some((row.save_bits, row.save_add, row.val_shift))
+        Ok((
+            row.save_param_bits,
+            row.save_bits + self.paired_bits(id),
+            row.save_add,
+            row.val_shift,
+        ))
+    }
+
+    /// Largeur totale d'un mod d'item : `Save Bits` **+ `Save Param Bits`**
+    /// **+ bits des appariés** ([`Self::PAIRED`]) — correction §VALIDATION
+    /// RÉELLE ; paires min/max = min + max de l'ID suivant, même base.
+    /// (Rétrocompat : l'ancienne signature (bits, save_add, val_shift).)
+    pub fn mod_width(&self, id: u16) -> Option<(u8, u32, u8)> {
+        let (spb, vbits, sa, vs) = self.mod_shape(id).ok()?;
+        Some((spb + vbits, sa, vs))
     }
 }
 
@@ -145,24 +176,34 @@ mod tests {
         }
     }
 
-    /// Evidence §8.6 : largeurs de mods réelles de la table locale.
+    /// Evidence §8.6 **corrigée §VALIDATION RÉELLE** : shapes réelles de la
+    /// table locale (param + valeur + appariés).
     #[test]
     fn mod_widths_from_local_table() {
         let t = ItemStatCost::embedded();
-        // exemples cités dans evidence.md §8.6
+        // exemples simples (sans param, sans apparié)
         assert_eq!(t.row(19).map(|r| (r.stat, r.save_bits)), Some(("tohit", 10)));
-        assert_eq!(t.row(21).map(|r| (r.stat, r.save_bits)), Some(("mindamage", 6)));
-        assert_eq!(t.row(22).map(|r| (r.stat, r.save_bits)), Some(("maxdamage", 7)));
         assert_eq!(t.row(31).map(|r| (r.stat, r.save_bits)), Some(("armorclass", 11)));
-        // paires min/max → largeur somme
-        assert_eq!(t.mod_width(21), Some((13, 0, 0))); // mindamage+maxdamage
-        assert_eq!(t.mod_width(23), Some((13, 0, 0))); // secondary_*
-        assert_eq!(t.mod_width(48), Some((17, 0, 0))); // firemindam+firemaxdam
-        // stats simples
-        assert_eq!(t.mod_width(0), Some((8, 32, 0)));  // strength : 8 bits
-        assert_eq!(t.mod_width(9), Some((8, 32, 8)));  // maxmana : 8 bits
+        assert_eq!(t.mod_shape(19), Ok((0, 10, 0, 0))); // tohit
+        assert_eq!(t.mod_shape(0), Ok((0, 8, 32, 0)));   // strength
+        assert_eq!(t.mod_shape(9), Ok((0, 8, 32, 8)));   // maxmana
+        // paires appariées [VALIDATION RÉELLE] — plus de fusion « min/max par nom »
+        assert_eq!(t.mod_shape(21), Ok((0, 6, 0, 0)));  // mindamage SEUL = 6 bits
+        assert_eq!(t.mod_shape(22), Ok((0, 7, 0, 0)));  // maxdamage SEUL = 7 bits
+        assert_eq!(t.mod_shape(48), Ok((0, 17, 0, 0))); // fire = 8+9
+        assert_eq!(t.mod_shape(50), Ok((0, 16, 0, 0))); // light = 6+10
+        assert_eq!(t.mod_shape(54), Ok((0, 25, 0, 0))); // cold = 8+9+8 (length)
+        assert_eq!(t.mod_shape(57), Ok((0, 29, 0, 0))); // poison = 10+10+9
+        // param bits [VALIDATION RÉELLE : +1 Téléport p54 dans l'Enigma]
+        assert_eq!(t.mod_shape(97), Ok((9, 6, 0, 0))); // nonclassskill
+        assert_eq!(t.mod_shape(204), Ok((16, 16, 0, 0))); // charged_skill
         // Save Bits nuls → pas de mod sérialisable
-        assert_eq!(t.mod_width(4), None); // statpts : Save Bits = 0
-        assert_eq!(t.mod_width(5000), None);
+        assert_eq!(t.mod_shape(4), Err(())); // statpts : Save Bits = 0
+        assert_eq!(t.mod_shape(103), Err(())); // skill_bypass_undead : 0 (le
+        // « ID 103 » du parseur python = les octets « gf » du v0x61 réel !)
+        assert_eq!(t.mod_shape(5000), Err(()));
+        // compat : mod_width = spb + valeur
+        assert_eq!(t.mod_width(97), Some((15, 0, 0)));
+        assert_eq!(t.mod_width(54), Some((25, 0, 0)));
     }
 }

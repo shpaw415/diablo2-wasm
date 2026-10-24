@@ -123,6 +123,7 @@ dependencies = [
 name = "d2rules"
 version = "0.1.0"
 dependencies = [
+ "d2d2s",
  "d2missiles",
  "serde",
  "serde_json",

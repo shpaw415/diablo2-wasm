@@ -120,6 +120,9 @@
   <div id="toolbar">
     <button id="btn-save" title="Sauvegarde la partie dans le navigateur">Sauvegarder</button>
     <button id="btn-load" title="Recharge la partie sauvegardée">Charger</button>
+    <button id="btn-export-d2s" title="Exporte le héros en fichier .d2s v1.12 (checksum valide)">Exporter .d2s</button>
+    <button id="btn-import-d2s" title="Importe un fichier .d2s v1.12 — charge la classe, les stats, les skills, les waypoints et les objets basiques du héros">Importer .d2s</button>
+    <input type="file" id="file-d2s" accept=".d2s" style="display:none">
     <button id="btn-waypoints" title="Panneau des waypoints (Tab)">Waypoints</button>
     <button id="btn-skills" title="Arbre de compétences (T)">Skills</button>
     <button id="btn-sound" title="Active/coupe le son">Son : oui</button>
@@ -137,6 +140,7 @@
   <script src="./npc-ui.js"></script> <!-- W16 villes vivantes : NPC du camp (marqueurs + dialogues) : window.D2Npc -->
   <script src="./skills-ui.js"></script> <!-- C arbre de compétences : window.D2Skills -->
   <script src="./merc-ui.js"></script> <!-- H mercenaire : window.D2Merc (carte vie/KO) -->
+  <script src="./d2s-io.js"></script> <!-- 6b export/import .d2s : window.D2sIO -->
   <script type="module" src="./game.js"></script>
 </body>
 </html>

@@ -5,6 +5,12 @@ export class D2Game {
     free(): void;
     [Symbol.dispose](): void;
     /**
+     * Mini-carte du niveau courant (9d) — JSON
+     * `{level,name,mode,lvlType,cellW,cellH,sub,cells:[[x,y,flags,cel],…]}`
+     * (voir `automap.rs` : mode `automap` / fallback polygone marchable).
+     */
+    automap(): string;
+    /**
      * Collision grid as 0/1 bytes (row-major), for d2rules/debug overlays.
      */
     collisionGrid(): Uint8Array;
@@ -216,6 +222,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_d2game_free: (a: number, b: number) => void;
+    readonly d2game_automap: (a: number) => [number, number];
     readonly d2game_collisionGrid: (a: number) => [number, number];
     readonly d2game_composeStats: (a: number) => [number, number];
     readonly d2game_corpseInfo: (a: number) => [number, number];

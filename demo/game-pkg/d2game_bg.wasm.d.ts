@@ -2,6 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export const __wbg_d2game_free: (a: number, b: number) => void;
+export const d2game_automap: (a: number) => [number, number];
 export const d2game_collisionGrid: (a: number) => [number, number];
 export const d2game_composeStats: (a: number) => [number, number];
 export const d2game_corpseInfo: (a: number) => [number, number];

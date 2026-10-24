@@ -81,6 +81,7 @@
 pub mod bits;
 pub mod checksum;
 pub mod codes;
+pub mod d2r;
 pub mod error;
 pub mod header;
 pub mod items;
@@ -102,6 +103,7 @@ pub use sections::{
 pub use stats::{Skills, StatEntry, Stats, StatsFormat, END_ID};
 
 use bits::{BitReader, BitWriter};
+use itemstatcost::ItemStatCost;
 
 /// Liste d'items "JM" (caractère, corpse, merc, golem).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -143,6 +145,18 @@ pub struct SaveFile {
     pub merc_items: Option<ItemList>,
     /// Trailer golem de fer ("kf"), si présent.
     pub golem: Option<GolemTrailer>,
+    /// Items **D2R (v0x61)** — présent uniquement si `header.version >= 97`.
+    /// Dans ce cas `character_items`/`corpse_items`/`merc_items` restent vides
+    /// et tout passe par [`D2rItemList`] (layout + Huffman, cf. [`d2r`]).
+    ///
+    /// [`d2r`]: crate::d2r
+    pub d2r: Option<d2r::D2rItemList>,
+    /// Liste corpse D2R (「JM」+count+items ; absente si pas de marqueur).
+    pub corpse_d2r: Option<d2r::D2rItemList>,
+    /// Items du mercenaire D2R (「jf」 sans count).
+    pub merc_d2r: Option<Vec<d2r::ItemD2R>>,
+    /// Items du golem de fer D2R (「kf」+flag).
+    pub golem_d2r: Option<(bool, Vec<d2r::ItemD2R>)>,
 }
 
 impl Default for SaveFile {
@@ -165,6 +179,10 @@ impl SaveFile {
             corpse_items: None,
             merc_items: None,
             golem: Some(GolemTrailer { has_golem: false, items: Vec::new() }),
+            d2r: None,
+            corpse_d2r: None,
+            merc_d2r: None,
+            golem_d2r: None,
         }
     }
 
@@ -209,37 +227,92 @@ impl SaveFile {
         let skills = Skills::parse(data, skills_offset)?;
         let mut reader = BitReader::new(data, (skills_offset + 32) * 8);
 
-        // ---- Items ----
-        let character_items = parse_item_list(&mut reader)?;
-        let byte_pos = reader.byte_pos();
+        // ---- Items (branch D2R 0x61 / legacy 0x60-) ----
+        let (character_items, corpse_items, merc_items, golem, d2r, corpse_d2r, merc_d2r, golem_d2r) =
+            if header.version >= header::VERSION_D2R {
+                let list = d2r::parse_item_list_with(&mut reader, data, &ItemStatCost::embedded())?;
+                let byte_pos = reader.byte_pos();
+                // corpse : "JM" + count + items (D2R, aucun item = 4 octets).
+                let corpse_d2r = if has_marker(data, byte_pos, b"JM") {
+                    Some(d2r::parse_item_list_with(&mut reader, data, &ItemStatCost::embedded())?)
+                } else {
+                    None
+                };
+                let byte_pos = reader.byte_pos();
+                // merc : "jf" + items (D2R : pas de count), golem : "kf" + flag.
+                let mut merc_d2r = None;
+                let mut golem_d2r = None;
+                if has_marker(data, byte_pos, b"jf") {
+                    reader.read(16)?; // consomme le marqueur "jf" (pas de count en D2R)
+                    let mut items = Vec::new();
+                    loop {
+                        let byte_pos = reader.byte_pos();
+                        if byte_pos >= data.len() || has_marker(data, byte_pos, b"kf") {
+                            break;
+                        }
+                        items.push(d2r::parse_item_with(&mut reader, &ItemStatCost::embedded())?);
+                    }
+                    merc_d2r = Some(items);
+                }
+                let byte_pos = reader.byte_pos();
+                if has_marker(data, byte_pos, b"kf") {
+                    let mut r = BitReader::new(data, (byte_pos + 2) * 8);
+                    let has_golem = r.read(8)? != 0;
+                    let mut items = Vec::new();
+                    if has_golem {
+                        loop {
+                            let byte_pos = r.byte_pos();
+                            if byte_pos >= data.len() {
+                                break;
+                            }
+                            items.push(d2r::parse_item_with(&mut r, &ItemStatCost::embedded())?);
+                        }
+                    }
+                    golem_d2r = Some((has_golem, items));
+                }
+                (
+                    ItemList { declared_count: list.declared_count, items: Vec::new() },
+                    None,
+                    None,
+                    None,
+                    Some(list),
+                    corpse_d2r,
+                    merc_d2r,
+                    golem_d2r,
+                )
+            } else {
+                let character_items = parse_item_list(&mut reader)?;
+                let byte_pos = reader.byte_pos();
 
-        // Liste corpse : un second "JM" immédiatement après.
-        let corpse_items = if has_marker(data, byte_pos, b"JM") {
-            Some(parse_item_list(&mut reader)?)
-        } else {
-            None
-        };
-        let byte_pos = reader.byte_pos();
+                // Liste corpse : un second "JM" immédiatement après.
+                let corpse_items = if has_marker(data, byte_pos, b"JM") {
+                    Some(parse_item_list(&mut reader)?)
+                } else {
+                    None
+                };
+                let byte_pos = reader.byte_pos();
 
-        // Mercenaire : "jf" + liste (expansion).
-        let merc_items = if has_marker(data, byte_pos, b"jf") {
-            reader.read(16)?; // marqueur déjà vérifié
-            let list = parse_item_list(&mut reader)?;
-            Some(list)
-        } else {
-            None
-        };
-        let byte_pos = reader.byte_pos();
+                // Mercenaire : "jf" + liste (expansion).
+                let merc_items = if has_marker(data, byte_pos, b"jf") {
+                    reader.read(16)?; // marqueur déjà vérifié
+                    let list = parse_item_list(&mut reader)?;
+                    Some(list)
+                } else {
+                    None
+                };
+                let byte_pos = reader.byte_pos();
 
-        // Golem de fer : "kf" + flag + liste éventuelle.
-        let golem = if has_marker(data, byte_pos, b"kf") {
-            reader.read(16)?; // marqueur déjà vérifié
-            let has_golem = reader.read(8)? != 0;
-            let items = if has_golem { parse_item_list(&mut reader)?.items } else { Vec::new() };
-            Some(GolemTrailer { has_golem, items })
-        } else {
-            None
-        };
+                // Golem de fer : "kf" + flag + liste éventuelle.
+                let golem = if has_marker(data, byte_pos, b"kf") {
+                    reader.read(16)?; // marqueur déjà vérifié
+                    let has_golem = reader.read(8)? != 0;
+                    let items = if has_golem { parse_item_list(&mut reader)?.items } else { Vec::new() };
+                    Some(GolemTrailer { has_golem, items })
+                } else {
+                    None
+                };
+                (character_items, corpse_items, merc_items, golem, None, None, None, None)
+            };
 
         Ok(SaveFile {
             header,
@@ -252,6 +325,10 @@ impl SaveFile {
             corpse_items,
             merc_items,
             golem,
+            d2r,
+            corpse_d2r,
+            merc_d2r,
+            golem_d2r,
         })
     }
 
@@ -276,24 +353,47 @@ impl SaveFile {
         for i in 0..30 {
             w.write(self.skills.level(i) as u32, 8);
         }
-        serialize_item_list(&self.character_items, &mut w);
-        if let Some(corpse) = &self.corpse_items {
-            serialize_item_list(corpse, &mut w);
-        }
-        if let Some(merc) = &self.merc_items {
-            w.write_ascii("jf");
-            serialize_item_list(merc, &mut w);
-        }
-        if let Some(g) = &self.golem {
-            w.write_ascii("kf");
-            w.write(g.has_golem as u32, 8);
-            if g.has_golem {
-                w.write_ascii("JM");
-                w.write(g.items.len() as u32 & 0xFFFF, 16);
-                for item in &g.items {
-                    items::serialize_item(item, &mut w);
-                    for child in &item.children {
-                        items::serialize_item(child, &mut w);
+        if let Some(list) = &self.d2r {
+            // ---- branche D2R (0x61) : items Huffman, merc sans count ----
+            d2r::serialize_item_list(list, &mut w);
+            if let Some(corpse) = &self.corpse_d2r {
+                d2r::serialize_item_list(corpse, &mut w);
+            }
+            if let Some(items) = &self.merc_d2r {
+                w.write_ascii("jf");
+                for item in items {
+                    d2r::serialize_item(item, &mut w);
+                }
+            }
+            if let Some((has, items)) = &self.golem_d2r {
+                w.write_ascii("kf");
+                w.write(*has as u32, 8);
+                if *has {
+                    for item in items {
+                        d2r::serialize_item(item, &mut w);
+                    }
+                }
+            }
+        } else {
+            serialize_item_list(&self.character_items, &mut w);
+            if let Some(corpse) = &self.corpse_items {
+                serialize_item_list(corpse, &mut w);
+            }
+            if let Some(merc) = &self.merc_items {
+                w.write_ascii("jf");
+                serialize_item_list(merc, &mut w);
+            }
+            if let Some(g) = &self.golem {
+                w.write_ascii("kf");
+                w.write(g.has_golem as u32, 8);
+                if g.has_golem {
+                    w.write_ascii("JM");
+                    w.write(g.items.len() as u32 & 0xFFFF, 16);
+                    for item in &g.items {
+                        items::serialize_item(item, &mut w);
+                        for child in &item.children {
+                            items::serialize_item(child, &mut w);
+                        }
                     }
                 }
             }
@@ -350,7 +450,21 @@ impl SaveFile {
             items: count_items(&self.character_items.items)
                 + self.corpse_items.as_ref().map(|l| count_items(&l.items)).unwrap_or(0)
                 + self.merc_items.as_ref().map(|l| count_items(&l.items)).unwrap_or(0)
-                + self.golem.as_ref().map(|g| count_items(&g.items)).unwrap_or(0),
+                + self.golem.as_ref().map(|g| count_items(&g.items)).unwrap_or(0)
+                + self
+                    .d2r
+                    .as_ref()
+                    .map(|l| {
+                        l.items.len()
+                            + self.corpse_d2r.as_ref().map(|c| c.items.len()).unwrap_or(0)
+                            + self.merc_d2r.as_ref().map(|m| m.len()).unwrap_or(0)
+                            + self
+                                .golem_d2r
+                                .as_ref()
+                                .map(|(_, items)| items.len())
+                                .unwrap_or(0)
+                    })
+                    .unwrap_or(0),
         }
     }
 }

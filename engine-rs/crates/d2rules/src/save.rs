@@ -95,6 +95,13 @@ struct Save {
     /// (contrat quests_actes.rs : tout écart = pas d'état incohérent).
     #[serde(default)]
     quest_act1: Option<serde_json::Value>,
+    /// Journal de quêtes Actes II-III SPEC (quests_actes2.rs, JSON de
+    /// `Act2Quests::to_json`) — absent des sauvegardes antérieures
+    /// (rétro-compat : pas de journal branché). Champ OPTIONNEL ADDITIF
+    /// `#[serde(default)]` : save v3 inchangée ; présent mais invalide ⇒
+    /// Err (contrat quests_actes2.rs : tout écart = pas d'état incohérent).
+    #[serde(default)]
+    quest_actes2: Option<serde_json::Value>,
 }
 
 /// État complet du héros.
@@ -239,6 +246,9 @@ pub(crate) fn save_json(w: &World) -> String {
         corpse: w.corpse.clone(), // J1 : champ additif (rétro-compat v3 sans corps)
         quest_act1: w.quests_act1.as_ref().map(|log| {
             serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation quêtes acte I")
+        }),
+        quest_actes2: w.quests_actes2.as_ref().map(|log| {
+            serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation quêtes actes II-III")
         }),
         missiles: Some(serde_json::to_value(&w.missiles).expect("d2rules: sérialisation missiles")),
         waypoints: Some(w.wp.active.clone()),
@@ -421,16 +431,26 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
             }
             None => None,
         },
+        // Journal de quêtes Actes II-III spec : JSON versionné strict
+        // (`Act2Quests::from_json`) — présent mais invalide ⇒ Err.
+        quests_actes2: match s.quest_actes2 {
+            Some(v) => {
+                Some(crate::quests_actes2::Act2Quests::from_json(&v.to_string()).map_err(|_| ())?)
+            }
+            None => None,
+        },
     };
     let mut world = world;
-    // IA P1 : reconstruit les archétypes depuis les codes gabarits chargés.
-    world.ai = crate::ai_behaviors::AiState::rebuild(&world);
     // sanité minimale : gabarits connus, entités dans les bornes
     for d in &world.mon_dat {
         if d.tpl >= world.mon_tpls.len() {
             return Err(());
         }
     }
+    // IA P1 : reconstruit les archétypes depuis les codes gabarits chargés —
+    // APRÈS la validation des gabarits (un tpl hors bornes ⇒ Err, jamais un
+    // panic : boss ajoutés paresseusement au spawn, absent du manifest).
+    world.ai = crate::ai_behaviors::AiState::rebuild(&world);
     for e in world
         .mon_ent
         .iter()

@@ -35,6 +35,14 @@
 
 mod data;
 mod loot;
+/// Pont `.d2s` ⇄ save v3 (étape 6b) — format d'échange OPTIONNEL par bouton
+/// (export monde → fichier v1.12 valide, import fichier → héros) ; le save
+/// JSON v3 reste le défaut. Pur : octets seuls, zéro IO.
+pub mod save_d2s;
+
+/// Étape 7a « loot D2 réel » : contrat `RolledItem` (Affixes/Équipement) +
+/// roll de qualité ItemRatio v1.12 + branchement sur la chaîne `loot`.
+mod item_roll;
 mod path;
 mod rng;
 mod save;
@@ -111,12 +119,30 @@ pub mod tables;
 /// réelles `patch_monstats.txt` (aip1/aip4/aidel). État non persisté.
 pub mod ai_behaviors;
 
+pub mod statlist; // 7c A1 : StatList par ids ItemStatCost (socle loot D2 réel)
+pub mod equipment; // 7c F6/F7 : 10 slots bodyloc d2s + canFit 10×4 + belts slots
+
 // --- Quêtes Acte I spec (quests-actes.md, étape 4 RE d2w-re, 2026-10-24) ---
 /// Machine A1Q1→A1Q6 (phases, events typés, flags u16 façon .d2s, gating
 /// d'acte II) + branchement `World`/save additif (`quest_act1`). Coexiste
 /// avec le journal W13 ([`crate::quests`]) — l'intégrateur branche l'un ou
 /// l'autre.
 pub mod quests_actes;
+
+// --- Quêtes Actes II-III spec (quests-actes.md §3/§4, étape 8d, 2026-10-24) ---
+/// Machines a2q1→a2q6 / a3q1→a3q6 (slots de sauvegarde, events [`ActEvent`]
+/// partagés avec l'acte I, gating d'actes III/IV, boss scriptés duriel +
+/// mephisto stats réelles) + branchement `World`/save additif
+/// (`quest_actes2`). Coexiste avec les journaux W13/A1.
+pub mod quests_actes2;
+
+// --- Monde vivant 9c (shrines.txt v1.12 + usage des objets interactifs) ---
+/// Sanctuaires data-driven (23 codes `shrines.txt`, tirage pondéré par
+/// `rarity`, effets temporisés branchés au socle `statlist`) + règles
+/// `World` d'usage : recharge instantanée et butin de conteneurs via
+/// `pending_events` (pattern `NpcTalked`). Table embarquée en l'état depuis
+/// `d2w-re/tables/monde/shrines.txt`.
+pub mod shrines;
 
 #[cfg(test)]
 mod tests;
@@ -143,10 +169,17 @@ pub use mercenary::{
 /// Difficulté (W08/K) — consommée par d2game (wasm `setDifficulty`, plan de
 /// spawn) et persistée dans la save.
 pub use difficulty::Difficulty;
+/// Paliers/densités par difficulté (`patch_difficultylevels.txt`) — consommé
+/// par d2game/elite_mods (9c).
+pub use difficulty::DifficultyLevels;
 
 /// Waypoints W05 : table réelle v1.12 + état (d2game attache au chargement
 /// du niveau et branche le voyage UI).
 pub use waypoints::{for_level as waypoint_for_level, by_slot as waypoint_by_slot, WaypointDef, WAYPOINTS};
+
+/// Waypoints des actes 8c : 38 slots retail (colonne `Waypoint`), attach des
+/// niveaux réels, état PAR DIFFICULTÉ additif (`waypoints_actes.rs`).
+pub mod waypoints_actes;
 
 // -- Types items/loot purs, consommables par d2game (F1-F7) --
 pub use affixes::{AffixKind, AffixRec, AffixTables, ItemTypeSet};
@@ -168,6 +201,9 @@ pub use npc::{
 // -- IA P1 monstres + quêtes Acte I spec (étape 4 RE d2w-re) — consommés par d2game --
 pub use ai_behaviors::{AiArchetype, AiState, CorpseRec, MonAiExt};
 pub use quests_actes::{ActEvent, ActPhase, ActQuests, ActReward, ActRun};
+pub use quests_actes2::{
+    boss_stats, Act2Quests, Act2Reward, Act2Run, BossRec, BossStats, BOSSES_ACTS23,
+};
 
 /// Projectiles (crate sœur pure) : système embarqué dans le `World`,
 /// re-exporté pour le rendu d2game (positions/sprites des missiles en vol).
@@ -439,4 +475,10 @@ pub struct HeroStats {
     /// antérieures chargent à 0) — un autre chantier ajoute d'autres champs.
     #[serde(default)]
     pub skill_points: u32,
+    /// Points de caractéristique NON DÉPENSÉS (récompenses de quêtes :
+    /// Livre de Lam Esen A3 +5, spec quests-actes.md §4 [CITÉ Arreat
+    /// Summit]). `#[serde(default)]` OBLIGATOIRE : champ save additif (les
+    /// saves antérieures chargent à 0).
+    #[serde(default)]
+    pub stat_points: u32,
 }

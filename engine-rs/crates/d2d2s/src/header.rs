@@ -20,6 +20,9 @@ pub const MAGIC: u32 = 0xAA55_AA55;
 pub const VERSION_V112: u32 = 96;
 /// Version 92 = v1.09 (stats au format "gf").
 pub const VERSION_V109: u32 = 92;
+/// Version 0x61 (97) = Diablo II Resurrected (v1.14+) : stats « gf » + liste
+/// 1.10+, items au layout D2R (codes Huffman). [VALIDATION RÉELLE]
+pub const VERSION_D2R: u32 = 97;
 
 /// Nom de version lisible (evidence.md §1).
 pub fn version_name(version: u32) -> &'static str {
@@ -29,6 +32,7 @@ pub fn version_name(version: u32) -> &'static str {
         89 => "v1.08 standard",
         92 => "v1.09",
         96 => "v1.10+ (v1.12 = 0x60)",
+        97 => "D2R / 0x61 (v1.14+ : stats « gf » + liste 1.10+, items Huffman)",
         _ => "inconnue",
     }
 }

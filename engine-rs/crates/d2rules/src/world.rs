@@ -351,6 +351,10 @@ pub struct World {
     /// save additive `quest_act1` (champ `#[serde(default)]`, v3 inchangée).
     /// Coexiste avec [`World::quests`] (journal W13) — l'intégrateur branche.
     pub(crate) quests_act1: Option<crate::quests_actes::ActQuests>,
+    /// Journal de quêtes Actes II-III SPEC (quests_actes2.rs) — `None` par
+    /// défaut ; save additive `quest_actes2` (champ `#[serde(default)]`,
+    /// v3 inchangée). Même contrat que `quests_act1`.
+    pub(crate) quests_actes2: Option<crate::quests_actes2::Act2Quests>,
 }
 
 ///Chance de toucher : `200×TH/(TH+AC)` bornée [5, 95] (GAME-DATA.md §3).
@@ -500,6 +504,7 @@ impl World {
                     stamina: 0,
                     max_stamina: 0,
                     skill_points: 0,
+                    stat_points: 0,
                 },
                 path: Vec::new(),
                 swing_ms: 0,
@@ -531,6 +536,7 @@ impl World {
             deferred: Vec::new(),
             ai: crate::ai_behaviors::AiState::default(),
             quests_act1: None,
+            quests_actes2: None,
         };
         let mut world = world;
         world.init_hero();
@@ -576,6 +582,9 @@ impl World {
             // ARBRE COMPÉTENCES (C2) : aucun point au démarrage (1/niveau +
             // quêtes) — champ save additif (`#[serde(default)]` HeroStats).
             skill_points: 0,
+            // Étape 8d : caractéristiques de quêtes (Lam Esen A3 +5) —
+            // champ save additif (`#[serde(default)]` HeroStats).
+            stat_points: 0,
         };
         self.hero.stamina_milli = (t.stamina as i64) * 1000;
         self.hero.spawn = (sx, sy);

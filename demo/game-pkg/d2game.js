@@ -18,6 +18,24 @@ export class D2Game {
         wasm.__wbg_d2game_free(ptr, 0);
     }
     /**
+     * Mini-carte du niveau courant (9d) — JSON
+     * `{level,name,mode,lvlType,cellW,cellH,sub,cells:[[x,y,flags,cel],…]}`
+     * (voir `automap.rs` : mode `automap` / fallback polygone marchable).
+     * @returns {string}
+     */
+    automap() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_automap(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Collision grid as 0/1 bytes (row-major), for d2rules/debug overlays.
      * @returns {Uint8Array}
      */
