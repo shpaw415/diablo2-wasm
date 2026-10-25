@@ -303,9 +303,11 @@
     const e = json[code] || json[ALIAS[code]] || null;
     return (e && e.file && e.frames > 0 && e.w > 0 && e.h > 0) ? e : null;
   }
+  const BUST = 'v=' + Date.now(); // contrat en chantier multi-agents : jamais de cache
   function sheetURL(file) {
     // contrat : heroes/<CODE>.png — un file contenant déjà un chemin est respecté
-    return file.indexOf('/') >= 0 ? MENU + file : MENU + 'heroes/' + file;
+    const base = file.indexOf('/') >= 0 ? MENU + file : MENU + 'heroes/' + file;
+    return base + (base.indexOf('?') < 0 ? '?' : '&') + BUST;
   }
 
   // rangée à plat comme l'écran original : pieds alignés sur la cour, le feu
@@ -318,7 +320,7 @@
   async function tryScene(manifest) {
     let json = null;
     try {
-      const r = await fetch(MENU + 'heroes.json');
+      const r = await fetch(MENU + 'heroes.json?' + BUST);
       if (r.ok) json = await r.json();
     } catch (e) { /* contrat absent -> cartes */ }
     if (!json) return;
@@ -415,6 +417,7 @@
     // du fond au premier plan (pieds les plus bas d'abord, position glissante)
     const list = heroList.slice().sort((a, b) => (a.pos.y + a.off.y) - (b.pos.y + b.off.y));
     for (const h of list) {
+      try {
       if (!h.anim) { drawMissingHero(h, stageXY({ x: h.pos.x + h.off.x, y: h.pos.y + h.off.y })); continue; }
       const hovered = scene.hover === h.code, sel = selectedCode === h.code;
       // FIX-MENU-ANIM : séquences ancrées — marche et anims d'état jouent
@@ -454,6 +457,7 @@
       const wy = h.walk && a.ax != null ? y - a.ay * SCALE : y - dh;
       sctx.drawImage(a.img, fi * a.w, 0, a.w, a.h, wx, wy, dw, dh);
       if (hovered) drawLabel(x, Math.max(22, y - dh - 12), heroName(h.def, h.code));
+      } catch (e) { errlog.style.display = 'block'; errlog.textContent += '[draw ' + h.code + '] ' + e.message + '\n'; }
     }
   }
 
