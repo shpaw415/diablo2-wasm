@@ -328,6 +328,10 @@ impl Default for Waypoints {
             raw[base] = 0x02;
             raw[base + 1] = 0x01;
         }
+        // Octet 80 : toujours 1 en retail (saves oracle 19a/19c —
+        // krisives l'annonçait « inexpliqué », l'oracle le pose à 1 dans
+        // TOUTES ses saves, même fraîches). Lecture : conservé brut.
+        raw[80] = 1;
         Waypoints { raw }
     }
 }

@@ -14,8 +14,11 @@
 //!   la part `refused` qui reste au sol).
 //! * **Or du stash** (séparé de la bourse) : dépôt/retrait via
 //!   [`Stash::deposit_gold`]/[`Stash::withdraw_gold`] ; plafond du stash
-//!   par difficulté [`stash_gold_cap`] — 300 000 / 500 000 / 800 000
-//!   (Normal/NM/Enfer, source fan citée ci-dessus, constante documentée).
+//!   [`stash_gold_cap`] = **2 500 000** sur les trois difficultés (étape 19b,
+//!   interop .d2s : le README de l'oracle d2s-file-generator accepte
+//!   « stashed gold 0..2 500 000 » et le vrai .d2s javazon du corpus d2d2s
+//!   porte `goldbank = 2 500 000` — fait de format ; remplace la table
+//!   fan-wiki 300k/500k/800k, non officielle).
 //! * **Achat** = débit RÉEL de la bourse + réserve du vendeur crédité
 //!   ([`purchase`], miroir pur de `TradeSession::buy` de `vendor.rs`).
 //!
@@ -125,14 +128,18 @@ pub fn auto_pickup(carried: u32, level: u32, piles: &[u32]) -> AutoPickup {
     AutoPickup { gained, piles: left }
 }
 
-/// Plafond d'or du STASH par difficulté (Basin « Gold », wiki fan officieux —
-/// constante documentée : Normal 300 000, Nightmare 500 000, Hell 800 000).
-pub fn stash_gold_cap(diff: Difficulty) -> u32 {
-    match diff {
-        Difficulty::Normal => 300_000,
-        Difficulty::Nightmare => 500_000,
-        Difficulty::Hell => 800_000,
-    }
+/// Plafond d'or du STASH — **2 500 000** sur les trois difficultés (étape
+/// 19b, interop .d2s) : fait de FORMAT confirmé deux fois (README de
+/// l'oracle d2s-file-generator « stashed gold 0..2 500 000 » ; vrai .d2s
+/// javazon du corpus d2d2s : `goldbank = 2 500 000`). Remplace la table
+/// fan-wiki 300k/500k/800k (source non officielle) — le paramètre
+/// `diff` reste dans la signature pour l'API existante (UI/game) mais ne
+/// différencie plus les difficultés.
+pub const STASH_GOLD_CAP: u32 = 2_500_000;
+
+/// Plafond d'or du STASH (constante unique [`STASH_GOLD_CAP`] — étape 19b).
+pub fn stash_gold_cap(_diff: Difficulty) -> u32 {
+    STASH_GOLD_CAP
 }
 
 // ---------------------------------------------------------------------------
@@ -389,7 +396,7 @@ impl Stash {
             return Err(EconError::NotEnoughGold { need: amount, have: hero_gold });
         }
         let cap = stash_gold_cap(diff);
-        let new_stash = self.gold + amount; // u32 : cap 800k, pas d'overflow
+        let new_stash = self.gold + amount; // u32 : cap 2.5M, pas d'overflow
         if new_stash > cap {
             return Err(EconError::StashGoldFull { cap });
         }
@@ -584,13 +591,15 @@ mod tests {
         assert_eq!(auto_pickup(1, 1, &[]), AutoPickup { gained: 0, piles: vec![] });
     }
 
-    /// Stash or : dépôt/retrait, plafond de difficulté (300k/500k/800k)
-    /// et plafond porté au retrait — erreurs exactes, rien ne bouge.
+    /// Stash or : dépôt/retrait, plafond interop UNIQUE 2 500 000 (étape
+    /// 19b — fait de format .d2s) et plafond porté au retrait — erreurs
+    /// exactes, rien ne bouge.
     #[test]
     fn stash_gold_deposit_withdraw_caps() {
-        assert_eq!(stash_gold_cap(Difficulty::Normal), 300_000);
-        assert_eq!(stash_gold_cap(Difficulty::Nightmare), 500_000);
-        assert_eq!(stash_gold_cap(Difficulty::Hell), 800_000);
+        assert_eq!(STASH_GOLD_CAP, 2_500_000);
+        assert_eq!(stash_gold_cap(Difficulty::Normal), 2_500_000);
+        assert_eq!(stash_gold_cap(Difficulty::Nightmare), 2_500_000);
+        assert_eq!(stash_gold_cap(Difficulty::Hell), 2_500_000);
 
         let mut s = Stash::new();
         // Dépôt simple : bourse −100, stash +100.
@@ -601,22 +610,30 @@ mod tests {
             Err(EconError::NotEnoughGold { need: 5_000, have: 900 })
         );
         assert_eq!(s.gold, 100);
-        // Plafond Normal 300k atteint : refus StashGoldFull.
-        s.gold = 299_000;
+        // Plafond 2 500 000 atteint : refus StashGoldFull.
+        s.gold = 2_499_000;
         assert_eq!(
-            s.deposit_gold(2_000, 300_000, 1, Difficulty::Normal),
-            Err(EconError::StashGoldFull { cap: 300_000 })
+            s.deposit_gold(2_000, 3_000_000, 1, Difficulty::Normal),
+            Err(EconError::StashGoldFull { cap: 2_500_000 })
         );
-        assert_eq!(s.deposit_gold(1_000, 300_000, 1, Difficulty::Hell).unwrap(), (299_000, 300_000));
+        assert_eq!(s.deposit_gold(1_000, 3_000_000, 1, Difficulty::Hell).unwrap(), (2_999_000, 2_500_000));
         // Retrait au-delà du cap porté (niveau 1 = 10 000) : refus.
         assert_eq!(
             s.withdraw_gold(20_000, 0, 1),
             Err(EconError::CarryGoldFull { cap: 10_000 })
         );
-        // Retrait au-delà du stash : refus.
-        assert_eq!(s.withdraw_gold(400_000, 0, 30), Err(EconError::NotEnoughGold { need: 400_000, have: 300_000 }));
-        // Retrait normal : stash −50 000, bourse +50 000.
-        assert_eq!(s.withdraw_gold(50_000, 0, 30).unwrap(), (50_000, 250_000));
+        // Cap porté à haut niveau aussi (30 = 300 000), stash large.
+        assert_eq!(
+            s.withdraw_gold(400_000, 0, 30),
+            Err(EconError::CarryGoldFull { cap: 300_000 })
+        );
+        // Retrait au-delà du stash : refus (cap porté niveau 90 = 900 000).
+        assert_eq!(
+            s.withdraw_gold(2_600_000, 0, 90),
+            Err(EconError::NotEnoughGold { need: 2_600_000, have: 2_500_000 })
+        );
+        // Retrait normal : stash −50 000, bourse +50 000 (cap porté 60).
+        assert_eq!(s.withdraw_gold(50_000, 0, 60).unwrap(), (50_000, 2_450_000));
     }
 
     // -- VENTE / ACHAT (marges officielles, objets réels) --------------------

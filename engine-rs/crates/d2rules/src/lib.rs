@@ -586,4 +586,17 @@ pub struct HeroStats {
     /// saves antérieures chargent à 0).
     #[serde(default)]
     pub stat_points: u32,
+    /// Bonus PERMANENT en points de % aux TOUTES les résistances (récompense
+    /// de quête « Prison de glace » A5Q3 : +10 par difficulté — Malah,
+    /// parchemin de résistance [CITÉ trevin ; valeur confirmée par le README
+    /// de l'oracle d2s-file-generator, étape 19b 2026-10-25 : « +10% to all
+    /// resistances for each completed difficulty »]). S'additionne à travers
+    /// les difficultés (max +30). `#[serde(default)]` OBLIGATOIRE : champ
+    /// save additif (saves antérieures à 19b chargent à 0).
+    #[serde(default)]
+    pub res_all_pct: u32,
 }
+
+// --- Interop .d2s 19c : tests d'écriture durcie vs saves oracle (layout) ---
+#[cfg(test)]
+mod save_d2s_interop;

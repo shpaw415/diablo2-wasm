@@ -27,8 +27,14 @@
 //!   [CITÉ trevin, spec §6], posé à la remise de Malah (même esprit que le
 //!   bit 4 du Repaire du Mal, acte I).
 //! * [`Act45Reward`] — variantes A4/A5 : `LarzukSocket` (a5q1 serti [CITÉ]),
-//!   `ResistAll` (a5q3 +10 tout [CITÉ, valeur NON VÉRIFIÉ]), `AnyaPersonalize`
+//!   `ResistAll` (a5q3 +10 % tout [CITÉ trevin ; valeur CONFIRMÉE par le
+//!   README de l'oracle d2s-file-generator, étape 19b]), `AnyaPersonalize`
 //!   (a5q3/a5q4 [FIDÈLE]), `BarbarianMercs` (a5q2 [CITÉ]).
+//! * Gate retail « Rite de Passage » (étape 19b — README oracle d2s : niveau
+//!   minimal **pour faire** la quête des Anciens = 20/40/60 selon la
+//!   difficulté) : [`Act45Quests::ancients_min_level`] + contexte RUNTIME
+//!   posé par [`World::quest_actes45_event`] (jamais sérialisé) — l'autel
+//!   des Cieux n'active pas, ni ne spawn les Anciens, sous ce niveau.
 //! * Fin de jeu : a5q6 complète → event `GameEvent::GameWon` (additif,
 //!   spec §6 « fin de jeu ») + [`Act45Quests::game_won`].
 //! * Gating inter-actes : accès acte V = a4q2 bit 0 (portail de Tyrael) ;
@@ -79,6 +85,13 @@
 //! # Récompenses
 //! Récompenses NPC [CITÉ Arreat Summit via spec §5/§6] portées par le
 //! journal ; bonus XP **[INVENTÉ]** (plafonds de notre cru — spec §7).
+//! Étape 19b (interop .d2s) : les valeurs chiffrées sont réconciliées avec
+//! le README de l'oracle d2s-file-generator (valeurs de format = faits) —
+//! +4 points de skill PAR difficulté = 1 (Den of Evil A1Q1) + 1 (Radament
+//! A2Q1) + 2 (Izual A4Q1), +5 stats (Lam Esen), +20 vie (Oiseau de Feu),
+//! +10 % résists tout (Prison de glace, appliqué au héros via
+//! `HeroStats::res_all_pct`) ; or du stash interop = 2 500 000
+//! (economy.rs, confirmé par le vrai .d2s « goldbank » d2d2s).
 
 use serde::{Deserialize, Serialize};
 
@@ -114,9 +127,10 @@ pub enum Act45Reward {
     /// Larzuk sertit 1 objet (a5q1 [CITÉ] ; MVP +1 socket [ARRANGÉ-MVP]) —
     /// porté par le journal, consommé via la valeur de retour.
     LarzukSocket,
-    /// +n résistances tout PERMANENT (a5q3 parchemin `tr2` [CITÉ, valeur NON
-    /// VÉRIFIÉ]) — porté par le journal (aucun champ resist dans `HeroStats`
-    /// v3 ; l'application moteur attend la couche statlist).
+    /// +n % à TOUTES les résistances, PERMANENT (a5q3 parchemin `tr2` [CITÉ
+    /// trevin ; +10 CONFIRMÉ par le README oracle d2s, étape 19b]) —
+    /// appliqué au héros par [`World::quest_actes45_event`] (champ save
+    /// additif `HeroStats::res_all_pct`, +10 par difficulté, max +30).
     ResistAll(u32),
     /// Anya personnalise 1 objet gratuitement (a5q3/a5q4 [FIDÈLE]) — porté
     /// par le journal, consommé via la valeur de retour.
@@ -214,6 +228,14 @@ mod slot {
     pub const A5Q5: usize = 7;
     pub const A5Q6: usize = 8;
 }
+
+/// Gate retail « Rite de Passage » (étape 19b — README oracle d2s :
+/// « minimal level constraint to finish each difficulty (due to "Rite of
+/// Passage" quest requirements) ») : niveau MINIMAL POUR FAIRE la quête des
+/// Anciens (a5q5), par difficulté (index 0/1/2 = Normal/Cauchemar/Enfer).
+/// En-dessous, l'autel des Cieux n'active pas (et les Anciens ne spawnent
+/// pas) — la difficulté ne peut littéralement pas se finir avant ce niveau.
+pub const ANCIENTS_MIN_LEVELS: [u32; 3] = [20, 40, 60];
 
 /// `patch_levels.txt` : ids de niveaux réels des triggers (re-vérifiés le
 /// 2026-10-24 — cf. en-tête de module).
@@ -509,6 +531,13 @@ pub struct Act45Run {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Act45Quests {
     runs: [Act45Run; 9],
+    /// Contexte RUNTIME de la gate retail a5q5 (étape 19b) : niveau courant
+    /// du héros. `None` = journal PUR sans contexte de jeu (défaut des
+    /// tests et de `from_json` : AUCUNE gate). Jamais sérialisé — la save
+    /// porte l'état des quêtes, pas le contexte.
+    gate_level: Option<u32>,
+    /// Difficulté du contexte de gate (index 0/1/2).
+    gate_difficulty: usize,
 }
 
 impl Default for Act45Quests {
@@ -518,10 +547,38 @@ impl Default for Act45Quests {
 }
 
 impl Act45Quests {
-    /// Journal neuf : tout INACTIF, flags 0.
+    /// Journal neuf : tout INACTIF, flags 0, sans contexte de gate.
     pub fn new() -> Act45Quests {
         Act45Quests {
             runs: [Act45Run { phase: ActPhase::Inactive, step: 0, count: 0, flags: 0, subdone: 0 }; 9],
+            gate_level: None,
+            gate_difficulty: 0,
+        }
+    }
+
+    /// Pose le contexte de la gate retail a5q5 (étape 19b) : niveau courant
+    /// du héros + difficulté (index 0/1/2). Appelé par
+    /// [`World::quest_actes45_event`] à chaque event ; `None` = journal pur
+    /// sans gate (défaut).
+    pub fn set_level_gate(&mut self, hero_level: Option<u32>, difficulty: usize) {
+        self.gate_level = hero_level;
+        self.gate_difficulty = difficulty;
+    }
+
+    /// Niveau minimal retail POUR FAIRE la quête des Anciens (a5q5) à la
+    /// difficulté `difficulty` (index 0/1/2 ; hors bornes = Enfer) —
+    /// oracle d2s-file-generator : 20 Normal / 40 Cauchemar / 60 Enfer.
+    pub fn ancients_min_level(difficulty: usize) -> u32 {
+        ANCIENTS_MIN_LEVELS[difficulty.min(2)]
+    }
+
+    /// Gate a5q5 ACTIVE ? (contexte présent ET niveau du héros sous le
+    /// seuil de la difficulté : l'autel des Cieux n'active pas, ni les
+    /// Anciens ne spawnent.) Contexte absent (`None`) = jamais bloquée.
+    pub fn ancients_gate_blocked(&self) -> bool {
+        match self.gate_level {
+            Some(level) => level < Self::ancients_min_level(self.gate_difficulty),
+            None => false,
         }
     }
 
@@ -612,6 +669,12 @@ impl Act45Quests {
     pub fn on_event(&mut self, ev: &ActEvent) -> Vec<Act45Reward> {
         let mut out = Vec::new();
         for slot in 0..9 {
+            // Gate retail 19b : la quête des Anciens (a5q5) n'avance JAMAIS
+            // sous le niveau minimal de la difficulté (20/40/60, oracle d2s)
+            // — ni activation, ni kills : l'autel ne « fait » pas la quête.
+            if slot == slot::A5Q5 && self.ancients_gate_blocked() {
+                continue;
+            }
             match self.runs[slot].phase {
                 ActPhase::Inactive => {
                     // Gating inter-quêtes (a5q4 ← a5q3, a5q6 ← a5q5).
@@ -854,7 +917,7 @@ impl Act45Quests {
             runs[slot] =
                 Act45Run { phase: save.phase, step: save.step, count: save.count, flags: save.flags, subdone: save.subdone };
         }
-        Ok(Act45Quests { runs })
+        Ok(Act45Quests { runs, gate_level: None, gate_difficulty: 0 })
     }
 }
 
@@ -1014,6 +1077,11 @@ pub fn boss_stats45(id_or_code: &str) -> Option<BossStats> {
 pub(crate) fn scripted_bosses45_for_trigger(log: &Act45Quests, ev: &ActEvent) -> Vec<(&'static str, &'static str)> {
     let mut out = Vec::new();
     for b in BOSSES_ACTS45 {
+        // Gate retail 19b : niveau insuffisant ⇒ l'autel des Anciens
+        // n'active pas et AUCUN Ancien ne spawn (oracle d2s 20/40/60).
+        if b.quest_slot == slot::A5Q5 && log.ancients_gate_blocked() {
+            continue;
+        }
         let run = &log.runs[b.quest_slot];
         let step = match run.phase {
             ActPhase::Inactive => 0,
@@ -1070,8 +1138,9 @@ impl World {
     /// Point d'entrée unique de l'intégrateur : avance le journal A4-A5 avec
     /// un event de gameplay (MÊME flux [`ActEvent`] que les journaux A1 et
     /// A2-A3 — l'appelant feede les trois), applique les récompenses motrices
-    /// (XP, skill points, objets → inventaire/sol ; serti/personnalisation/
-    /// résistances/mercenaires = valeur de retour journal), émet
+    /// (XP, skill points, objets → inventaire/sol ; 19b : +10 % résists tout
+    /// → `HeroStats::res_all_pct` ; serti/personnalisation/mercenaires =
+    /// valeur de retour journal), émet
     /// [`GameEvent::ActQuestChanged`] par quête changée de phase,
     /// [`GameEvent::ActUnlocked`] au déblocage de l'acte V, **`GameEvent::
     /// GameWon` à la complétion d'a5q6** (fin de jeu — spec §6), fait
@@ -1079,6 +1148,12 @@ impl World {
     /// id 107, 3 Anciens id 120 — stats réelles [`boss_stats45`]) et renvoie
     /// les récompenses. Sans journal branché : no-op, renvoie vide.
     pub fn quest_actes45_event(&mut self, ev: &ActEvent) -> Vec<Act45Reward> {
+        // Gate retail 19b (oracle d2s : Anciens = niveau 20/40/60) : le
+        // contexte niveau héros + difficulté est posé à CHAQUE event (état
+        // RUNTIME, jamais persisté — `from_json` recharge sans contexte).
+        if let Some(log) = self.quests_actes45.as_mut() {
+            log.set_level_gate(Some(self.hero.stats.level), self.difficulty.index());
+        }
         // Décision de spawn scripté sur l'état AVANT avancement.
         let spawns = self
             .quests_actes45
@@ -1124,11 +1199,16 @@ impl World {
                         self.items.push(crate::ItemOnGround { def, x, y });
                     }
                 }
+                // 19b : Prison de glace — +10 % résists tout PERMANENT
+                // appliqué au héros (champ save additif `res_all_pct`,
+                // +10 par difficulté [CITÉ + oracle d2s confirmé]).
+                Act45Reward::ResistAll(n) => {
+                    self.hero.stats.res_all_pct = self.hero.stats.res_all_pct.saturating_add(n);
+                }
                 // Portés par le journal (gating d'acte) ou par la valeur de
-                // retour (serti/personnalisation/résistances/mercenaires —
-                // l'UI et la couche statlist les consomment) :
+                // retour (serti/personnalisation/mercenaires — l'UI et la
+                // couche statlist les consomment) :
                 Act45Reward::LarzukSocket
-                | Act45Reward::ResistAll(_)
                 | Act45Reward::AnyaPersonalize
                 | Act45Reward::BarbarianMercs
                 | Act45Reward::UnlockAccessAct(_) => {}
@@ -1909,6 +1989,9 @@ mod tests {
     fn world_spawns_three_ancients_and_completes_rite() {
         let mut w = World::with_seed(open_grid(24, 24), manifest_bosses45(), 0xD2_45);
         w.set_quest_actes45(Act45Quests::new());
+        // Gate retail 19b : le héros est au niveau minimal Normal (20) —
+        // l'autel des Cieux répond (le niveau 19 est testé en golden).
+        w.hero.stats.level = 20;
         // Entrée Sommet d'Arreat : les 3 Anciens apparaissent (activation +
         // spawns même event).
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
@@ -1928,6 +2011,8 @@ mod tests {
     fn world_events_act_unlock_and_game_won_are_emitted() {
         let mut w = World::with_seed(open_grid(24, 24), manifest_bosses45(), 0xD2_45);
         w.set_quest_actes45(Act45Quests::new());
+        // Gate retail 19b : niveau minimal Normal (l'autel exige 20).
+        w.hero.stats.level = 20;
         // A4Q2 complète (sceaux + Diablo + Tyrael) : ActUnlocked(5).
         w.quest_actes45_event(&zone(lvl::CHAOS_SANCTUARY));
         for g in ["Lord De Seis", "Infector of Souls", "Grand Vizier of Chaos"] {
@@ -2046,5 +2131,215 @@ mod tests {
             1,
             "la progression de quête n'est pas bloquée"
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // Étape 19b — interop .d2s (PLAN-FIDÉLITÉ phase 19) : récompenses CHIFFRÉES
+    // citées par le README de l'oracle d2s-file-generator (GPL : valeurs de
+    // format = faits, réimplémentation propre), gate niveau des Anciens
+    // 20/40/60, chaîne des 3 difficultés, save additive rétro-compatible.
+    // -------------------------------------------------------------------------
+
+    use crate::Difficulty;
+
+    /// Golden 19a — oracle d2s : « +4 skill points for each completed
+    /// difficulty ("Den of Evil", "Radament's Lair" and "The Fallen Angel"),
+    /// +5 stats points ("Lam Esen's Tome"), +20 life ("The Golden Bird"),
+    /// +10% to all resistances ("Prison of Ice") ». Les trois journaux
+    /// attribuent EXACTEMENT ces valeurs (1 + 1 + 2 = 4 SP par difficulté) ;
+    /// l'or de stash interop = 2 500 000 (confirmé par le vrai .d2s javazon :
+    /// goldbank = 2 500 000, test d2d2s).
+    #[test]
+    fn golden_interop_oracle_cited_rewards_per_difficulty() {
+        use crate::quests_actes::{ActReward, DEFS_ACT1};
+        use crate::quests_actes2::{Act2Reward, DEFS_ACT2, DEFS_ACT3};
+        // +4 SP par difficulté = Den of Evil 1 + Radament 1 + Izual 2.
+        let sp1 = |rs: &[ActReward]| {
+            rs.iter()
+                .filter_map(|r| match r {
+                    ActReward::SkillPoint(n) => Some(*n),
+                    _ => None,
+                })
+                .sum::<u32>()
+        };
+        let sp23 = |rs: &[Act2Reward]| {
+            rs.iter()
+                .filter_map(|r| match r {
+                    Act2Reward::SkillPoint(n) => Some(*n),
+                    _ => None,
+                })
+                .sum::<u32>()
+        };
+        let sp45 = |rs: &[Act45Reward]| {
+            rs.iter()
+                .filter_map(|r| match r {
+                    Act45Reward::SkillPoint(n) => Some(*n),
+                    _ => None,
+                })
+                .sum::<u32>()
+        };
+        assert_eq!(sp1(DEFS_ACT1[0].rewards), 1, "Den of Evil (A1Q1)");
+        assert_eq!(sp23(DEFS_ACT2[0].rewards), 1, "Radament's Lair (A2Q1)");
+        assert_eq!(sp45(DEFS_ACT4[0].rewards), 2, "The Fallen Angel (A4Q1)");
+        assert_eq!(
+            sp1(DEFS_ACT1[0].rewards) + sp23(DEFS_ACT2[0].rewards) + sp45(DEFS_ACT4[0].rewards),
+            4,
+            "oracle d2s : +4 skill points par difficulté complétée"
+        );
+        // +5 stats (Lam Esen — slot 0 acte III = clé de save a3q1).
+        let stats = |rs: &[Act2Reward]| {
+            rs.iter()
+                .filter_map(|r| match r {
+                    Act2Reward::StatPoint(n) => Some(*n),
+                    _ => None,
+                })
+                .sum::<u32>()
+        };
+        assert_eq!(stats(DEFS_ACT3[0].rewards), 5, "Lam Esen's Tome (+5 stats)");
+        // +20 vie (Oiseau de Feu — slot 3 acte III = clé de save a3q4).
+        let life = |rs: &[Act2Reward]| {
+            rs.iter()
+                .filter_map(|r| match r {
+                    Act2Reward::MaxLife(n) => Some(*n),
+                    _ => None,
+                })
+                .sum::<u32>()
+        };
+        assert_eq!(life(DEFS_ACT3[3].rewards), 20, "The Golden Bird (+20 vie)");
+        // +10 % résists tout (Prison de glace — slot 5 du journal = a5q3).
+        let res = DEFS_ACT5[2]
+            .rewards
+            .iter()
+            .filter_map(|r| match r {
+                Act45Reward::ResistAll(n) => Some(*n),
+                _ => None,
+            })
+            .sum::<u32>();
+        assert_eq!(res, 10, "Prison of Ice (+10 % résists tout)");
+        // Cap d'or stash interop .d2s = 2 500 000, identique sur les 3
+        // difficultés (README oracle ; economy.rs aligné étape 19b).
+        assert_eq!(crate::economy::stash_gold_cap(Difficulty::Normal), 2_500_000);
+        assert_eq!(crate::economy::stash_gold_cap(Difficulty::Nightmare), 2_500_000);
+        assert_eq!(crate::economy::stash_gold_cap(Difficulty::Hell), 2_500_000);
+    }
+
+    /// Golden 19b — gate retail du Rite de Passage : niveau minimal POUR
+    /// FAIRE la quête des Anciens (oracle : contrainte de fin de difficulté)
+    /// — 20 Normal / 40 Cauchemar / 60 Enfer. Sous le seuil : ni activation
+    /// (zone 120), ni kills. Journal pur (sans contexte) : jamais bloqué.
+    #[test]
+    fn golden_a5q5_level_gate_oracle_20_40_60() {
+        assert_eq!(ANCIENTS_MIN_LEVELS, [20, 40, 60]);
+        assert_eq!(Act45Quests::ancients_min_level(0), 20);
+        assert_eq!(Act45Quests::ancients_min_level(1), 40);
+        assert_eq!(Act45Quests::ancients_min_level(2), 60);
+        assert!(!Act45Quests::new().ancients_gate_blocked(), "journal pur : pas de contexte, pas de gate");
+        // Normal : 19 bloqué (zone ET kills), 20 passe.
+        let mut log = Act45Quests::new();
+        log.set_level_gate(Some(19), 0);
+        assert!(log.ancients_gate_blocked());
+        assert!(rewards_of(&mut log, &zone(lvl::MOUNTAIN_TOP)).is_empty());
+        assert_eq!(phase(&log, "a5q5"), ActPhase::Inactive);
+        assert!(rewards_of(&mut log, &kill("ancientbarb1")).is_empty());
+        log.set_level_gate(Some(20), 0);
+        assert!(!log.ancients_gate_blocked());
+        assert!(rewards_of(&mut log, &zone(lvl::MOUNTAIN_TOP)).is_empty());
+        assert_eq!(phase(&log, "a5q5"), ActPhase::Active);
+        // Cauchemar : 39 bloqué, 40 passe.
+        let mut nm = Act45Quests::new();
+        nm.set_level_gate(Some(39), 1);
+        assert!(nm.ancients_gate_blocked());
+        nm.on_event(&zone(lvl::MOUNTAIN_TOP));
+        assert_eq!(phase(&nm, "a5q5"), ActPhase::Inactive);
+        nm.set_level_gate(Some(40), 1);
+        assert!(!nm.ancients_gate_blocked());
+        // Enfer : 59 bloqué, 60 passe.
+        let mut hell = Act45Quests::new();
+        hell.set_level_gate(Some(59), 2);
+        assert!(hell.ancients_gate_blocked());
+        hell.set_level_gate(Some(60), 2);
+        assert!(!hell.ancients_gate_blocked());
+    }
+
+    /// Golden 19c — chaîne des 3 difficultés dans un même monde : la gate
+    /// suit la difficulté courante (20/40/60) et la Prison de glace
+    /// s'additionne (+10 % par difficulté → +30) sur `HeroStats::res_all_pct`
+    /// (oracle : « for each completed difficulty »).
+    #[test]
+    fn golden_world_three_difficulties_chain_gates_and_resists() {
+        let mut m = manifest_bosses45();
+        m["monsters"] = serde_json::json!([]);
+        m["bosses"] = serde_json::json!([]);
+        let mut w = World::with_seed(open_grid(16, 16), m, 0x19B_01);
+        w.set_quest_actes45(Act45Quests::new());
+        // NORMAL — 19 : l'autel reste muet ; 20 : le Rite s'active.
+        w.hero.stats.level = 19;
+        w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
+        assert!(w.monsters().is_empty(), "19 < 20 : aucun Ancien");
+        assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Inactive);
+        w.hero.stats.level = 20;
+        w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
+        assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Active);
+        // Prison de glace Normal : Malah → +10 %.
+        for ev in [zone(lvl::ICE_CAVE_3A), kill("frozenstein"), talk("anya"), talk("malah")] {
+            w.quest_actes45_event(&ev);
+        }
+        assert_eq!(w.hero_stats().res_all_pct, 10);
+        // CAUCHEMAR — journal neuf (une course par difficulté) : 39 bloqué,
+        // 40 passe ; a5q3 → +20 cumulé.
+        w.set_difficulty(Difficulty::Nightmare);
+        w.set_quest_actes45(Act45Quests::new());
+        w.hero.stats.level = 39;
+        w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
+        assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Inactive, "NM : 39 < 40");
+        w.hero.stats.level = 40;
+        w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
+        assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Active);
+        for ev in [zone(lvl::ICE_CAVE_3A), kill("frozenstein"), talk("anya"), talk("malah")] {
+            w.quest_actes45_event(&ev);
+        }
+        assert_eq!(w.hero_stats().res_all_pct, 20, "chaque difficulté ajoute +10 %");
+        // ENFER — 59 bloqué, 60 passe ; a5q3 → +30 cumulé.
+        w.set_difficulty(Difficulty::Hell);
+        w.set_quest_actes45(Act45Quests::new());
+        w.hero.stats.level = 59;
+        w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
+        assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Inactive, "Enfer : 59 < 60");
+        w.hero.stats.level = 60;
+        w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
+        assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Active);
+        for ev in [zone(lvl::ICE_CAVE_3A), kill("frozenstein"), talk("anya"), talk("malah")] {
+            w.quest_actes45_event(&ev);
+        }
+        assert_eq!(w.hero_stats().res_all_pct, 30, "Normal + NM + Enfer = +30 % résists");
+    }
+
+    /// Golden 19d — save additive rétro-compatible : `res_all_pct` ABSENT
+    /// (saves antérieures à 19b) charge à 0 ; présent, traverse le round
+    /// trip (+10). La gate 19b n'est PAS sérialisée (contexte runtime —
+    /// `from_json` recharge sans contexte, cf. `ancients_gate_blocked`).
+    #[test]
+    fn golden_world_save_res_all_pct_retro_compatible() {
+        let mut m = manifest_bosses45();
+        m["monsters"] = serde_json::json!([]);
+        m["bosses"] = serde_json::json!([]);
+        let mut w = World::with_seed(open_grid(16, 16), m, 0x19B_02);
+        w.set_quest_actes45(Act45Quests::new());
+        w.hero.stats.level = 20;
+        for ev in [zone(lvl::ICE_CAVE_3A), kill("frozenstein"), talk("anya"), talk("malah")] {
+            w.quest_actes45_event(&ev);
+        }
+        assert_eq!(w.hero_stats().res_all_pct, 10);
+        let json = w.save();
+        // Rétro-compat : save SANS le champ ⇒ charge à 0 (jamais d'erreur).
+        let mut v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        v["hero"]["stats"].as_object_mut().unwrap().remove("res_all_pct");
+        let old = World::load(&v.to_string()).expect("save sans res_all_pct");
+        assert_eq!(old.hero_stats().res_all_pct, 0);
+        // Round trip : la save fraîche porte le bonus.
+        let back = World::load(&json).expect("save 19b");
+        assert_eq!(back.hero_stats().res_all_pct, 10);
+        // La gate n'apparaît nulle part dans la save (contexte runtime).
+        assert!(!json.contains("gate_level"), "contexte de gate jamais sérialisé");
     }
 }

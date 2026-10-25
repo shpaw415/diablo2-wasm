@@ -211,6 +211,16 @@ fn type_raw_of(code: &str) -> [u8; 4] {
     raw
 }
 
+/// Plafond de VALEUR d'une stat de base : largeur CSvBits (table réelle
+/// embarquée d2d2s, repli 32 bits) ramenée par ValShift — ex. hp 21 bits
+/// ÷256 ⇒ 8191, or 25 bits ⇒ 0x1FFFFFF. Remplace les bornes codées en dur
+/// de l'étape 6b (identiques bit pour bit, mais dérivées de la table).
+fn csv_bits_max(id: u16) -> u32 {
+    let bits = u64::from(d2d2s::stats::csv_bits(id).unwrap_or(32));
+    let shift = u32::from(d2d2s::stats::val_shift(id));
+    (((1u64 << bits) - 1) >> shift) as u32
+}
+
 // ---------------------------------------------------------------------------
 // Export — save v3 → .d2s v0x60
 // ---------------------------------------------------------------------------
@@ -230,33 +240,55 @@ impl World {
         save.header.level = self.hero.stats.level.clamp(1, 99) as u8;
         // Port LOD v1.12 : personnage d'expansion (acte V, mercenaires…).
         save.header.status.expansion = true;
-        // Horodatage à 0 : l'export est DÉTERMINISTE (même état ⇒ mêmes octets).
-        save.header.timestamp = 0;
         let d_idx = self.difficulty.index();
+        // Progression « retail » : +5 par difficulté franchie (oracle
+        // d2s-file-generator : 0 / 5 / 10 / 15). Le save v3 ne porte que la
+        // difficulté COURANTE — approximation 5 × index (Normal 0, NM 5,
+        // Enfer 10 ; le cas « Enfer terminé » retail 15 n'est pas
+        // exprimable sans les quêtes, cf. docs/d2s-export-interop.md).
+        save.header.progression = (5 * d_idx) as u8;
+        // Horodatage à 0 : l'export est DÉTERMINISTE (même état ⇒ mêmes
+        // octets). Retail écrit l'heure réelle — écart volontaire documenté.
+        save.header.timestamp = 0;
         for (i, entry) in save.header.difficulty.iter_mut().enumerate() {
             *entry = DifficultyEntry { active: i == d_idx, act: 0, unknown: 0 };
         }
 
-        // --- stats (flux 1.10+) — valeurs bornées aux largeurs CSvBits ----
+        // --- stats (flux 1.10+ PRÉFIXÉ « gf », zeros omis) -----------------
+        // Layout « retail 1.14d » étape 19c (saves oracle, jeu réel) : la
+        // section 765 commence par `67 66` = « gf » puis le flux standard
+        // (ID 9 bits + CSvBits, 0x1FF final, align octet). Retail omet en
+        // outre les stats À ZÉRO (statpts/newskills/xp/or à 0 n'apparaissent
+        // pas dans ses fichiers) — seules les attrs 0–3, le bloc vie 6–11
+        // et le niveau 12 sont écrits inconditionnellement.
+        save.stats = d2d2s::Stats {
+            format: d2d2s::StatsFormat::GfPrefixed110,
+            entries: Vec::new(),
+        };
         let s = &self.hero.stats;
         let (energy, vitality) = charstats_bases(&self.hero_code);
-        save.stats.set(0, s.strength.min(1023)); // strength
-        save.stats.set(1, energy.min(1023)); // energy (charstats)
-        save.stats.set(2, s.dexterity.min(1023)); // dexterity
-        save.stats.set(3, vitality.min(1023)); // vitality (charstats)
-        save.stats.set(4, 0); // statpts : le save v3 ne porte pas de points de stats
-        save.stats.set(5, s.skill_points.min(255)); // newskills
+        let mut set_stat = |id: u16, v: u32, force: bool| {
+            if force || v != 0 {
+                save.stats.set(id, v.min(csv_bits_max(id)));
+            }
+        };
+        set_stat(0, s.strength, true); // strength
+        set_stat(1, energy, true); // energy (charstats)
+        set_stat(2, s.dexterity, true); // dexterity
+        set_stat(3, vitality, true); // vitality (charstats)
+        set_stat(4, s.stat_points, false); // statpts (points de stats non dépensés — save v3 19b)
+        set_stat(5, s.skill_points, false); // newskills
         // hp/mana/stamina stockés ×256 (ValShift 8) — 21 bits ⇒ max 8191.
-        save.stats.set(6, s.life.min(8191));
-        save.stats.set(7, s.max_life.min(8191));
-        save.stats.set(8, s.mana.min(8191));
-        save.stats.set(9, s.max_mana.min(8191));
-        save.stats.set(10, s.stamina.min(8191));
-        save.stats.set(11, s.max_stamina.min(8191));
-        save.stats.set(12, s.level.min(127)); // level
-        save.stats.set(13, s.xp); // experience (32 bits)
-        save.stats.set(14, s.gold.min(0x0200_0000)); // gold (25 bits)
-        save.stats.set(15, 0); // goldbank : pas de coffre dans le save v3
+        set_stat(6, s.life, true);
+        set_stat(7, s.max_life, true);
+        set_stat(8, s.mana, true);
+        set_stat(9, s.max_mana, true);
+        set_stat(10, s.stamina, true);
+        set_stat(11, s.max_stamina, true);
+        set_stat(12, s.level.min(127), true); // level
+        set_stat(13, s.xp, false); // experience (32 bits)
+        set_stat(14, s.gold, false); // gold (25 bits)
+        set_stat(15, 0, false); // goldbank : pas de coffre dans le save v3
 
         // --- compétences : codes → slots réels skills.txt (offset classe) --
         let base = Skills::class_slot_base(class) as u32;
@@ -270,14 +302,25 @@ impl World {
         }
 
         // --- waypoints activés (bits retail 0..=38 de la difficulté) ------
+        // Retail (saves oracle) : le bit 0 (Rogue Encampment) est posé dans
+        // les TROIS enregistrements de difficulté dès la création (le camp
+        // est le point d'entrée de chacune) — on l'aligne sur le jeu.
         let mut bits = WaypointBits::default();
         for &slot in self.wp.active.iter() {
             if (slot as usize) < 39 {
                 bits.set(slot as usize, true);
             } // slot 39 (MVP Blood Moor) : hors plage retail — non exporté
         }
+        bits.set(0, true);
         if !save.waypoints.set_difficulty(d_idx, bits) {
             return Err("index de difficulté hors plage".into());
+        }
+        for i in 0..d2d2s::sections::DIFFICULTIES {
+            if i != d_idx {
+                let mut other = save.waypoints.difficulty(i).unwrap_or_default();
+                other.set(0, true);
+                save.waypoints.set_difficulty(i, other);
+            }
         }
 
         // --- inventaire → items basiques identifiés ------------------------
@@ -312,6 +355,10 @@ impl World {
             save.character_items.items.push(Item {
                 header: ItemHeader {
                     identified: true,
+                    // Gear de départ retail (bit 33 « starter/newbie ») :
+                    // mission 19c — items exportés comme l'équipement de
+                    // départ du jeu, identifiés (cf. docs/d2s-export-interop.md).
+                    starter: true,
                     location: Location::Stored,
                     container: Container::Inventory,
                     column: (i % INV_COLS) as u8,
@@ -339,6 +386,12 @@ impl World {
             file_id += 1;
         }
         save.character_items.declared_count = save.character_items.items.len() as u16;
+        // Squelette de listes « retail 1.14d » (saves oracle 19a/19c) : le
+        // jeu écrit TOUJOURS les quatre listes, même vides —
+        // `JM+count / JM+count (corpse) / jf NU (merc, sans count) / kf+flag`.
+        save.corpse_items = Some(d2d2s::ItemList { declared_count: 0, items: Vec::new() });
+        save.merc_items = Some(d2d2s::ItemList { declared_count: 0, items: Vec::new() });
+        save.merc_bare = true;
 
         Ok(save.to_bytes())
     }
@@ -372,6 +425,9 @@ impl World {
         let dexterity = st.value(2).unwrap_or(0);
         let gold = st.value(14).unwrap_or(0);
         let skill_points = st.value(5).unwrap_or(0);
+        // Points de stats non dépensés (stat 4 — mappé depuis 19c : les
+        // saves retail les portent, le save v3 a le champ `stat_points`).
+        let stat_points = st.value(4).unwrap_or(0);
         // Niveau plafonné au `MaxLvl` de la table XP réelle (99 en v1.12,
         // `world::max_level_of`) ; XP réalignée au seuil du niveau appliqué
         // (cohérence HUD/arbre) — l'XP brut du fichier n'est pas conservable
@@ -403,6 +459,7 @@ impl World {
             stats.stamina = stamina;
             stats.gold = gold;
             stats.skill_points = skill_points;
+            stats.stat_points = stat_points;
             stats.defense = dexterity / 4 + (tpl.shield_ac_min + tpl.shield_ac_max) / 2;
             stats.to_hit = tpl.to_hit_factor + dexterity;
             stats.walk_speed = tpl.walk_speed;

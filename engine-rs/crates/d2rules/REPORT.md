@@ -220,3 +220,45 @@ window.D2MonSfx.feed(ev);`) ; game.html : 1 ligne script.
 absentes → None · 67 classes super-uniques résolues · PORT_CODES manifest+finale
 · index 56/124/110 avec RIFF/WAVE vérifié sur disque · parité JS (chaque fichier
 indexé présent dans mon-sfx.js, codes mappés).
+
+## Étape 19b — interop .d2s : récompenses oracle + gate Anciens + cap stash (2026-10-25)
+
+Réconciliation des valeurs chiffrées avec le README de l'oracle GPL
+`d2w-oracle/d2s-file-generator` (valeurs de format = FAITS, réimplémentation
+propre — aucun code copié), mission étape 19b PLAN-FIDÉLITÉ.
+
+### Vérification (1) — les journaux attribuent-ils les récompenses EXACTES ?
+OUI, déjà alignés (golden `golden_interop_oracle_cited_rewards_per_difficulty`) :
++4 skill points PAR difficulté = 1 (Den of Evil A1Q1) + 1 (Radament A2Q1) +
+2 (The Fallen Angel A4Q1) ; +5 stats (Lam Esen) ; +20 vie (Oiseau de Feu) ;
++10 % résists tout (Prison de glace).
+
+### Ajouts additifs (2/3)
+* **Prison de glace appliquée au héros** : nouveau champ
+  `HeroStats::res_all_pct` (`#[serde(default)]` — save v3 rétro-compatible,
+  saves antérieures chargent à 0) ; `World::quest_actes45_event` additionne
+  +10 par difficulté (chaîne N→NM→H = +30, golden `golden_world_three_
+  difficulties_chain_gates_and_resists`).
+* **Gate retail « Rite de Passage »** (oracle : niveau minimal POUR FAIRE la
+  quête) : `ANCIENTS_MIN_LEVELS = [20, 40, 60]` — sous le seuil de la
+  difficulté, l'autel des Cieux (a5q5) n'active pas et les 3 Anciens ne
+  spawnent pas. Contexte RUNTIME (`set_level_gate`) posé à chaque event par
+  le World, JAMAIS sérialisé ; journal pur (tests/`from_json`) non gate.
+* **Cap d'or stash = 2 500 000** (economy.rs) : la table fan-wiki
+  300k/500k/800k est remplacée par le fait de format .d2s confirmé DEUX fois
+  (README oracle « stashed gold 0..2 500 000 » ; vrai .d2s javazon du corpus
+  d2d2s : `goldbank = 2_500_000`). Signature `stash_gold_cap(diff)` conservée
+  (API game/UI inchangée).
+
+### Tests rouges revalidés avant correction (procédure livraison)
+`panels_18b_golden` (d2game) : 2 asserts `goldCap` 300k/500k = ANCIENNE table
+fan-wiki non officielle → corrigés vers 2 500 000 avec justification ; le
+remplissage boucle 40×10 000 (400k < 2.5M) est remplacé par un pré-remplissage
+save près du cap + 1 dépôt débordant (message fr « Stash plein : plafond
+2500000 » vérifié). Aucun endpoint wasm changé → pas de rebuild pkg.
+
+### Tests (+4 → workspace 1015 passed / 0 failed / 1 ignoré, --no-fail-fast)
+golden récompenses citées (SP 1+1+2=4, stats 5, vie 20, rés 10, cap 2.5M) ·
+gate 20/40/60 journal + World (19/39/59 bloqués, 20/40/60 passent) · chaîne 3
+difficultés (+10/+20/+30 résists) · save rétro-compatible (champ absent → 0,
+round trip +10, gate jamais sérialisée).

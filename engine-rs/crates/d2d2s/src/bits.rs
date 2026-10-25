@@ -93,6 +93,17 @@ impl<'a> BitReader<'a> {
     pub fn byte_pos(&self) -> usize {
         self.pos / 8
     }
+
+    /// Aperçu des `n` octets à la position courante, sans avancer. `None`
+    /// si la position n'est pas alignée sur un octet ou s'il reste moins
+    /// de `n` octets. (Sonde du préfixe « gf » des stats, étape 19a.)
+    pub fn peek_bytes(&self, n: usize) -> Option<&'a [u8]> {
+        if self.pos % 8 != 0 {
+            return None;
+        }
+        let start = self.pos / 8;
+        self.data.get(start..start + n)
+    }
 }
 
 /// Écrivain de bits LSB-first — symétrique exact du `BitWriter` de

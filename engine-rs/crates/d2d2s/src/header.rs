@@ -238,17 +238,24 @@ impl Default for Header {
             progression: 0,
             unk_26: [0; 2],
             class: Class::default(),
-            unk_29: [0; 2],
+            // Écriture « retail 1.14d » (étape 19c : saves oracle du
+            // générateur vérifiées jeu réel, octets 0x29–0x2A = `10 1E`) —
+            // la LECTURE conserve les octets bruts, ce défaut ne concerne
+            // que les fichiers NOUVEAUX (export save_d2s).
+            unk_29: [16, 30],
             level: 1,
             unk_2c: [0; 4],
             timestamp: 0,
-            unk_34: [0; 4],
+            // 0x34–0x37 : 0xFF en retail (saves oracle 19a/19c).
+            unk_34: [0xFF; 4],
             hotkeys: [0xFFFF; 16],
             left_skill: 0,
             right_skill: 0,
             left_skill_swap: 0,
             right_skill_swap: 0,
-            appearance: [0; 32],
+            // 0x88–0xA7 : apparence = 0xFF en retail (saves oracle
+            // 19a/19c) — conservé brut à la lecture.
+            appearance: [0xFF; 32],
             difficulty: [DifficultyEntry::default(); 3],
             map_id: 0,
             unk_af: [0; 2],

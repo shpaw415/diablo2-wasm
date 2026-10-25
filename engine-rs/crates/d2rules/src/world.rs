@@ -572,6 +572,7 @@ impl World {
                     max_stamina: 0,
                     skill_points: 0,
                     stat_points: 0,
+                    res_all_pct: 0,
                 },
                 path: Vec::new(),
                 swing_ms: 0,
@@ -665,6 +666,9 @@ impl World {
             // Étape 8d : caractéristiques de quêtes (Lam Esen A3 +5) —
             // champ save additif (`#[serde(default)]` HeroStats).
             stat_points: 0,
+            // Étape 19b : bonus résistances de quêtes (Prison de glace +10 %
+            // par difficulté) — champ save additif (`#[serde(default)]`).
+            res_all_pct: 0,
         };
         self.hero.stamina_milli = (t.stamina as i64) * 1000;
         self.hero.spawn = (sx, sy);

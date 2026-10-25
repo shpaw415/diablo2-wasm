@@ -15,11 +15,13 @@
 //!
 //! # Divergences evidence vs krisives — tranchées (l'evidence gagne)
 //!
-//! | Sujet | krisives (tiers) | Retenu (evidence) | Pourquoi |
-//! |---|---|---|---|
-//! | Type d'item bits 76–107 | 4 bits @76 + 24 bits @80 (3 lettres) | **4 ASCII (32 bits)** | trevin + parseurs réels concordants (evidence §8.2 [CITÉ]) ; nos vecteurs écrivent/lisent 4 ASCII (`rin `, `cap `, `cm1 `) et le round-trip octet-à-octet le prouve. |
-//! | Nb de sockets (armure/arme sertie) | 3 bits | **4 bits** | trevin + parseurs réels (evidence §8.5) ; le vecteur `socketed_armor` (2 sockets, liste de mods `0x1FF` juste après) ne se lit juste qu'avec 4 bits — à 3 bits le marqueur final est décalé d'un bit. |
-//! | Largeur d'un mod | `Save Bits` (+ Param Bits) | **`Save Bits` seule** | table ItemStatCost v1.12 locale [VÉRIFIÉ-LOCAL, 247 stats] ; le vecteur `magic_item` encode strength/maxmana sur 8 bits = `Save Bits` — avec Param Bits le round-trip échoue. |
+ //! | Sujet | krisives (tiers) | Retenu (evidence) | Pourquoi |
+ //! |---|---|---|---|
+ //! | Type d'item bits 76–107 | 4 bits @76 + 24 bits @80 (3 lettres) | **4 ASCII (32 bits)** | trevin + parseurs réels concordants (evidence §8.2 [CITÉ]) ; nos vecteurs écrivent/lisent 4 ASCII (`rin `, `cap `, `cm1 `) et le round-trip octet-à-octet le prouve. |
+ //! | Nb de sockets (armure/arme sertie) | 3 bits | **4 bits** | trevin + parseurs réels (evidence §8.5) ; le vecteur `socketed_armor` (2 sockets, liste de mods `0x1FF` juste après) ne se lit juste qu'avec 4 bits — à 3 bits le marqueur final est décalé d'un bit. |
+ //! | Largeur d'un mod | `Save Bits` (+ Param Bits) | **`Save Bits` seule** | table ItemStatCost v1.12 locale [VÉRIFIÉ-LOCAL, 247 stats] ; le vecteur `magic_item` encode strength/maxmana sur 8 bits = `Save Bits` — avec Param Bits le round-trip échoue. |
+ //! | Préfixe « gf » du flux stats en 0x60 | — (0x60 sans préfixe) | **préfixe OPTIONNEL** | étape 19a : le fichier réel v1.14d (référence oracle `Amazon_1_SC_GOLD.d2s`, version 0x60) et les 14 saves oracle ont `67 66` avant le flux — sans lui, décodage « ID 103 » (`UnknownStatId`) ; les vecteurs evidence SANS préfixe restent valides (sonde `peek_bytes`). |
+ //! | Mercenaire vide | « jf » + « JM » + count 0 | **« jf » NUA sans en-tête** | étape 19a : octets réels `6a 66 6b 66 00` = « jf » « kf » 0 (référence v1.14d + 14 saves oracle) — avant fix `BadMarker { expected: "JM", got: "kf" }` ; champ [`SaveFile::merc_bare`], round-trip préservé. |
 //!
 //! Concordances sans divergence : signature `0xAA55AA55` (octets disque
 //! `55 AA 55 AA`), version `0x60` = v1.12, en-tête 765 o, checksum
@@ -27,15 +29,18 @@
 //! @633/81 (bit 0 = Rogue Encampment), NPC @714/51, slots équipés 1–12,
 //! conteneurs stockés 1/4/5.
 //!
-//! # ⚠ Limite assumée
-//!
-//! **Aucun vrai `.d2s` retail n'a encore validé ce crate** (aucun fichier
-//! réel disponible sur le bureau au 2026-10-24). Tout est testé contre les
-//! vecteurs SYNTHÉTIQUES de l'evidence ; la validation finale est prévue
-//! quand Justin fournira un vrai fichier. Ne pas faire confiance
-//! aveuglément aux zones [NON VÉRIFIÉ] de l'evidence (hotkeys `0xFFFF` vs
-//! `0x00`, octet final waypoints, section NPC « sketchy »…) — elles sont
-//! conservées brutes ici, donc sans risque pour le round-trip.
+ //! # ⚠ Limite assumée — levée en partie par l'étape 19a (2026-10-25)
+ //!
+ //! **La branche legacy 0x60 est maintenant validée contre 14 fichiers
+ //! générés par un outil tiers (d2s-file-generator, oracle GPL exécuté
+ //! hors arbre — `d2w-oracle/`, jamais copié) et dont les cas de test
+ //! proviennent du jeu réel v1.14d** : `tests/vectors/oracle/` +
+ //! `tests/oracle_saves.rs` (stats préfixées « gf », merc « jf » nu,
+ //! quêtes/waypoints/NPC par difficulté, round-trip octet-à-octet).
+ //! Restent non validés par un fichier retail ORIGINAL : les zones
+ //! [NON VÉRIFIÉ] de l'evidence (hotkeys `0xFFFF` vs `0x00`, octet final
+ //! waypoints — confirmé = 1 par l'oracle —, section NPC « sketchy »…) ;
+ //! elles sont conservées brutes, donc sans risque pour le round-trip.
 //!
 //! # PAS de branchement dans le save v3
 //!
@@ -143,6 +148,12 @@ pub struct SaveFile {
     pub corpse_items: Option<ItemList>,
     /// Liste mercenaire ("jf" + liste, expansion).
     pub merc_items: Option<ItemList>,
+    /// Le "jf" mercenaire a été lu en forme NUE : pas d'en-tête "JM count"
+    /// après le marqueur (liste vide du jeu réel v1.14d et des saves
+    /// oracle étape 19a — octets `6a 66 6b 66 00` = "jf" "kf" 0). Sérialisé
+    /// tel quel pour le round-trip octet-à-octet ; `false` pour la forme
+    /// "JM + count" des vecteurs evidence, `false` aussi en branche D2R.
+    pub merc_bare: bool,
     /// Trailer golem de fer ("kf"), si présent.
     pub golem: Option<GolemTrailer>,
     /// Items **D2R (v0x61)** — présent uniquement si `header.version >= 97`.
@@ -178,6 +189,7 @@ impl SaveFile {
             character_items: ItemList { declared_count: 0, items: Vec::new() },
             corpse_items: None,
             merc_items: None,
+            merc_bare: false,
             golem: Some(GolemTrailer { has_golem: false, items: Vec::new() }),
             d2r: None,
             corpse_d2r: None,
@@ -228,7 +240,7 @@ impl SaveFile {
         let mut reader = BitReader::new(data, (skills_offset + 32) * 8);
 
         // ---- Items (branch D2R 0x61 / legacy 0x60-) ----
-        let (character_items, corpse_items, merc_items, golem, d2r, corpse_d2r, merc_d2r, golem_d2r) =
+        let (character_items, corpse_items, merc_items, merc_bare, golem, d2r, corpse_d2r, merc_d2r, golem_d2r) =
             if header.version >= header::VERSION_D2R {
                 let list = d2r::parse_item_list_with(&mut reader, data, &ItemStatCost::embedded())?;
                 let byte_pos = reader.byte_pos();
@@ -274,6 +286,7 @@ impl SaveFile {
                     ItemList { declared_count: list.declared_count, items: Vec::new() },
                     None,
                     None,
+                    false,
                     None,
                     Some(list),
                     corpse_d2r,
@@ -292,11 +305,37 @@ impl SaveFile {
                 };
                 let byte_pos = reader.byte_pos();
 
-                // Mercenaire : "jf" + liste (expansion).
+                // Mercenaire : "jf" + liste (expansion). Deux formes dans
+                // les DONNÉES : « JM + count + items » (vecteurs evidence,
+                // Hero Editor) ou, liste vide, marqueur « jf » nu
+                // directement suivi de « kf » (jeu réel v1.14d, 14 saves
+                // oracle étape 19a — avant fix :
+                // `BadMarker { expected: "JM", got: "kf" }`).
+                let mut merc_bare = false;
                 let merc_items = if has_marker(data, byte_pos, b"jf") {
                     reader.read(16)?; // marqueur déjà vérifié
-                    let list = parse_item_list(&mut reader)?;
-                    Some(list)
+                    if has_marker(data, reader.byte_pos(), b"JM") {
+                        merc_bare = false;
+                        Some(parse_item_list(&mut reader)?)
+                    } else {
+                        // Forme nue : pas d'en-tête « JM count » ; items
+                        // éventuels scannés jusqu'au marqueur golem « kf »
+                        // (miroir de la branche D2R).
+                        merc_bare = true;
+                        let mut items = Vec::new();
+                        loop {
+                            let p = reader.byte_pos();
+                            if p >= data.len() || has_marker(data, p, b"kf") {
+                                break;
+                            }
+                            let mut item = items::parse_item(&mut reader)?;
+                            for _ in 0..item.header.children_count {
+                                item.children.push(items::parse_item(&mut reader)?);
+                            }
+                            items.push(item);
+                        }
+                        Some(ItemList { declared_count: items.len() as u16, items })
+                    }
                 } else {
                     None
                 };
@@ -311,7 +350,7 @@ impl SaveFile {
                 } else {
                     None
                 };
-                (character_items, corpse_items, merc_items, golem, None, None, None, None)
+                (character_items, corpse_items, merc_items, merc_bare, golem, None, None, None, None)
             };
 
         Ok(SaveFile {
@@ -324,6 +363,7 @@ impl SaveFile {
             character_items,
             corpse_items,
             merc_items,
+            merc_bare,
             golem,
             d2r,
             corpse_d2r,
@@ -381,7 +421,20 @@ impl SaveFile {
             }
             if let Some(merc) = &self.merc_items {
                 w.write_ascii("jf");
-                serialize_item_list(merc, &mut w);
+                if self.merc_bare {
+                    // Forme nue du jeu réel v1.14d / saves oracle (étape
+                    // 19a) : PAS d'en-tête « JM + count » après « jf » —
+                    // les items éventuels sont écrits directement (la
+                    // relecture les scanne jusqu'au « kf » golem).
+                    for item in &merc.items {
+                        items::serialize_item(item, &mut w);
+                        for child in &item.children {
+                            items::serialize_item(child, &mut w);
+                        }
+                    }
+                } else {
+                    serialize_item_list(merc, &mut w);
+                }
             }
             if let Some(g) = &self.golem {
                 w.write_ascii("kf");

@@ -110,6 +110,12 @@ pub enum StatsFormat {
     /// (0x67 0x66) précèdent la liste ; l'« ID 103 » du parseur python
     /// était ces octets décodés comme un ID. Confirmé par le parseur
     /// D2R fredimachado/Diablo2R (« reader.ReadInt16() // Header »).]
+    /// **Étape 19a (2026-10-25)** : ce format n'est PAS propre à la branche
+    /// 0x61 — les fichiers 0x60 ÉCRITS PAR LE JEU RÉEL (référence v1.14d de
+    /// l'oracle, `Amazon_1_SC_GOLD.d2s`) et les 14 vecteurs oracle ont aussi
+    /// le préfixe `gf` devant le flux 1.10+. Le format est donc enregistré
+    /// ici dès que le préfixe est présent, quelle que soit la version ;
+    /// la branche (0x60/0x61) reste portée par `header.version`.
     GfPrefixed110,
 }
 
@@ -138,7 +144,7 @@ impl Stats {
         } else if version >= crate::header::VERSION_D2R {
             Self::parse_gf_prefixed_110(reader)
         } else {
-            Self::parse_v110(reader)
+            Self::parse_v110_legacy(reader)
         }
     }
 
@@ -155,6 +161,27 @@ impl Stats {
         }
         let Stats { entries, .. } = Self::parse_v110(reader)?;
         Ok(Stats { format: StatsFormat::GfPrefixed110, entries })
+    }
+
+    /// Branche 0x60 : flux 1.10+ avec préfixe « gf » OPTIONNEL.
+    ///
+    /// Divergence tranchée par les DONNÉES (étape 19a, 2026-10-25) :
+    /// l'evidence (vecteurs synthétiques) écrivait le flux 0x60 SANS
+    /// préfixe, mais le fichier réel v1.14d (référence de l'oracle
+    /// `Amazon_1_SC_GOLD.d2s`, version 0x60 vérifiée à l'octet 4) et les 14
+    /// saves oracle commencent par `67 66` = « gf ». Sans préfixe, ces 2
+    /// octets décodent en « ID 103 » (0x167|… = 103, cf. erreur
+    /// `UnknownStatId { id: 103 }` du sondage d'avant fix) — la sonde est
+    /// donc sûre : un flux de stats de personnage commence toujours par un
+    /// ID de base ≤ 12 (entrées triées croissantes, str/ene/dex/vit
+    /// toujours présentes), jamais 103.
+    fn parse_v110_legacy(reader: &mut BitReader) -> Result<Stats, D2sError> {
+        if reader.peek_bytes(2) == Some(b"gf") {
+            reader.read(16)?;
+            let Stats { entries, .. } = Self::parse_v110(reader)?;
+            return Ok(Stats { format: StatsFormat::GfPrefixed110, entries });
+        }
+        Self::parse_v110(reader)
     }
 
     /// Branche 1.10+ : (ID 9 bits, valeur CSvBits) croissant + 0x1FF.
