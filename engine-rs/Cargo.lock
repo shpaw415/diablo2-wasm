@@ -95,6 +95,7 @@ name = "d2game"
 version = "0.1.0"
 dependencies = [
  "d2animdata",
+ "d2dc6",
  "d2dcc",
  "d2rules",
  "serde",
