@@ -32,6 +32,7 @@ pub mod drlg_a45;
 pub mod compose;
 pub mod drlg;
 pub mod ds1;
+pub mod ds1_real; // FIX-CAMPES : schéma réel DS1 v18 (ville 1 = camp fortifié)
 /// DS1 complet + section PATH (patrouilles NPC) — port `ds1_path`
 /// (`ds1_path.rs`), compagnon additif du décodeur de rendu `ds1`.
 pub mod ds1_path;
@@ -62,6 +63,13 @@ pub mod objects_live;
 /// teintes poison/froid, buffs shrines, auras ; blit additif + direction
 /// Necrolis (`overlays.rs`).
 pub mod overlays;
+
+/// 18b : panneaux fidèles (personnage complet fr, inventaire 10×4 X×Y,
+/// stash/or) — `panels_ui.rs`, contrat JSON `hero_panel_json`/`stash_json`.
+pub mod panels_ui;
+
+/// 18c : couche UI du cube horadrim (endpoints transmutation) — `cube_ui.rs`.
+pub mod cube_ui;
 pub mod pal;
 /// Palettes d'actes : conteneur runtime `pal.pl2` v1.12 (acts 1-5) et
 /// ponts vers les deux chemins de couleur du renderer (`palette/pl2.rs`).

@@ -1102,6 +1102,15 @@ impl World {
         true
     }
 
+    /// FIX-CAMPES : place l'entité héros à une position sous-tuile — boot
+    /// d'un monde neuf au camp (la position initiale sinon vient du centre
+    /// via `pick_auto_spawns`, en pleine forêt sur la ville 1).
+    pub fn place_hero_at(&mut self, x: f32, y: f32) {
+        self.hero_ent.x = x;
+        self.hero_ent.y = y;
+        self.hero_ent.facing = 0;
+    }
+
     /// Tuile marchable ?
     pub fn is_walkable(&self, x: i32, y: i32) -> bool {
         x >= 0 && y >= 0 && x < self.w && y < self.h && !self.grid[y as usize][x as usize]

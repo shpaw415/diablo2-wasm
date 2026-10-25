@@ -208,6 +208,9 @@ pub mod minions;
 /// (`AuraState` + `MonData::curse`, jamais persisté).
 pub mod auras;
 
+/// 18c : couche tables/endpoints du cube pour l UI (d2game/src/cube_ui.rs).
+pub mod cube_ui;
+
 // --- Comportements Assassine/Druide 16c (PLAN-FIDELITE phase 16, 2026-10-24) ---
 pub mod assassin_druid;
 

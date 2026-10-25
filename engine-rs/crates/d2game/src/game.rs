@@ -519,6 +519,29 @@ impl GameCore {
     /// Rend aussi la méta AutoMap (9d) alignée sur la table de tuiles —
     /// chaque conteneur contribue ses `(Type, Style, Sequence)` dans le
     /// MÊME ordre que ses tuiles décodées (voir `automap::dt1_meta_aligned`).
+    /// FIX-CAMPES : decode le DS1 figé au schéma réel v18 + les 8 conteneurs
+    /// en lecture appariée « tuile k = record k » (métadonnées dir/type/
+    /// style/seq). `None` = le DS1 n'est pas au schéma réel (DRLG, autres
+    /// niveaux) — chemin historique. Ordre des conteneurs = ordre des .tg1
+    /// du DS1 (l'espace d'indices du pool est celui de la concaténation).
+    fn build_frozen_real(
+        &self,
+        def: &LevelDef,
+    ) -> Option<(crate::ds1_real::Ds1Real, Vec<crate::dt1::Dt1Tile>, Vec<crate::dt1::Dt1Meta>)> {
+        let ds1_bytes = self.asset(&def.ds1).ok()?.clone();
+        let real = crate::ds1_real::decode_ds1_real(&ds1_bytes).ok()?;
+        let mut tiles: Vec<crate::dt1::Dt1Tile> = Vec::new();
+        let mut metas: Vec<crate::dt1::Dt1Meta> = Vec::new();
+        for tg1 in &real.files {
+            let container = resolve_container(tg1, &def.dt1);
+            let bytes = self.asset(&container).ok()?.clone();
+            let mut paired = crate::dt1::decode_dt1_paired(&bytes).ok()?;
+            tiles.extend(paired.iter().map(|(t, _)| t.clone()));
+            metas.extend(paired.drain(..).map(|(_, m)| m));
+        }
+        Some((real, tiles, metas))
+    }
+
     fn build_frozen_tiles(&self, def: &LevelDef) -> Result<(Ds1, Vec<Dt1Tile>, Vec<crate::automap::TileMeta>), String> {
         let ds1_bytes = self.asset(&def.ds1)?.clone();
         let ds1 = ds1::decode_ds1(&ds1_bytes).map_err(|e| format!("{}: {e:?}", def.ds1))?;
@@ -673,7 +696,19 @@ impl GameCore {
         // --- map ----------------------------------------------------------
         // Variation seedée des tuiles (Go getRandomTile) : graine par clé
         // de niveau — même niveau ⇒ même carte, indépendamment du combat.
-        let map = compose::compose_seeded(&ds1, &tilesets, fnv1a(&def.key));
+        // FIX-CAMPES : le DS1 figé porte-t-il le schéma réel v18 (section
+        // `(2,1)` — ville 1) ? Si oui, la composition/appariement passent
+        // par la règle du jeu réel ; sinon (DRLG synthétique, autres DS1)
+        // chemin historique inchangé.
+        let real = if drlg_used {
+            None
+        } else {
+            self.build_frozen_real(def)
+        };
+        let map = match &real {
+            Some((r, ts, ms)) => compose::compose_real_town(r, ts, ms, fnv1a(&def.key)),
+            None => compose::compose_seeded(&ds1, &tilesets, fnv1a(&def.key)),
+        };
         // 9d (monde vivant) : cache AutoMap du niveau — cellules visibles
         // classées + Cel résolus depuis AutoMap.txt (automap.rs). La grille
         // de marche vient d'être composée ; DS1/tuiles/méta encore en main.
@@ -699,6 +734,13 @@ impl GameCore {
             .collect();
         // Snap du point d'entrée sur une tuile marchable (le warp/handoff
         // donne des coordonnées approximatives au bord des zones).
+        // FIX-CAMPES : sans point d'entrée explicite (boot du monde), le
+        // héros démarre au camp (centroïde des tentes du layout réel) au
+        // lieu du centre de la carte (historique = en pleine forêt).
+        let spawn = match spawn {
+            None => map.camp_spawn.map(|(x, y)| (x as f32 + 0.5, y as f32 + 0.5)),
+            other => other,
+        };
         let spawn = match spawn {
             Some((x, y)) => {
                 let sx = (x.max(0.0) as usize).min(map.grid_w.saturating_sub(1));
@@ -743,7 +785,16 @@ impl GameCore {
                     }
                 }
             }
-            None => World::with_hero(blocked, self.manifest.clone(), &self.hero_request),
+            None => {
+                // FIX-CAMPES : monde neuf au boot — le héros démarre au point
+                // d'entrée calculé (camp des tentes sur la ville 1) au lieu
+                // du centre de la grille (pick_auto_spawns).
+                let mut w = World::with_hero(blocked, self.manifest.clone(), &self.hero_request);
+                if let Some((x, y)) = spawn {
+                    w.place_hero_at(x, y);
+                }
+                w
+            }
         };
         // Clé du niveau courant (save v3) : cohérente avec le bloc `levels`
         // du manifest, y compris après un transfert de héros par warp.
@@ -1139,6 +1190,23 @@ impl GameCore {
                 set.add_layer(token, dcc);
             }
         }
+        // FIX-HEROS : la couche LG (jambes) n'est pas déclarée dans les blocs
+        // manifest (régénérations sans /LG) — convention de fichier D2 :
+        // <code><mode>LG.dcc à côté du COF (stem « BAWLHTH » → code BA, mode
+        // WL). Attachée au set si le fichier existe ; no-op pour les
+        // monstres (aucun *LG.dcc de monstre dans les MPQ v1.12).
+        {
+            let base = cof_path.rsplit('/').next().unwrap_or(cof_path);
+            let stem: Vec<char> = base.split('.').next().unwrap_or(base).chars().collect();
+            if stem.len() >= 4 {
+                let lg_path = format!("assets/dcc/{}{}LG.dcc", &stem[..2].iter().collect::<String>(), &stem[2..4].iter().collect::<String>());
+                if let Ok(bytes) = self.asset(&lg_path) {
+                    if let Ok(dcc) = Dcc::decode(&bytes) {
+                        set.add_layer("LG", dcc);
+                    }
+                }
+            }
+        }
         Ok(set)
     }
 
@@ -1306,6 +1374,15 @@ impl GameCore {
             .and_then(|n| n.as_str())
             .unwrap_or(&code);
         serde_json::json!({ "code": code, "name": name }).to_string()
+    }
+
+    /// État d'animation du héros, JSON `{"anim":"RN","frame":3,"facing":6,
+    /// "run":true,"moving":true}` — HUD course + captures E2E.
+    /// Manifest brut (lecture) pour les blocs `impl GameCore` additifs qui
+    /// composent du JSON d'UI depuis le gabarit (18b `panels_ui.rs` :
+    /// vitalité/énergie/arme de départ). Lecture seule, aucun coût.
+    pub(crate) fn manifest_value(&self) -> &Value {
+        &self.manifest
     }
 
     /// État d'animation du héros, JSON `{"anim":"RN","frame":3,"facing":6,
@@ -2279,6 +2356,32 @@ pub fn resolve_container(tg1: &str, level_dt1: &[String]) -> String {
             .iter()
             .map(|d| d.rsplit('/').next().unwrap_or(d).to_ascii_lowercase())
             .collect();
+        // 0. FIX-CAMPES : règle dossier AVANT le suffixe — le .tg1 porte le
+        // dossier du tileset réel et deux conteneurs partagent le stem
+        // "objects" (`town\objects.tg1` → town_objects.dt1 ;
+        // `outdoors\objects.tg1` → out_objects.dt1). L'ancienne règle du
+        // suffixe résolvait les deux sur town_objects : les tentures/props
+        // du camp (out_objects) n'entraient jamais dans le pool.
+        let segs: Vec<String> = norm
+            .split('\\')
+            .filter(|p| !p.is_empty())
+            .map(|p| p.to_ascii_lowercase())
+            .collect();
+        let prefixes: &[&str] = if segs.iter().any(|s| s == "town") {
+            &["town_"]
+        } else if segs.iter().any(|s| s == "outdoors") {
+            &["out_"]
+        } else {
+            &[]
+        };
+        for pfx in prefixes {
+            if let Some(b) = basenames
+                .iter()
+                .find(|b| b.strip_suffix(".dt1").is_some_and(|s| s.strip_prefix(pfx) == Some(&stem)))
+            {
+                return b.clone();
+            }
+        }
         // 1. stem exact ("floor" → "floor.dt1")
         if let Some(b) = basenames.iter().find(|b| b.strip_suffix(".dt1") == Some(&stem)) {
             return b.clone();

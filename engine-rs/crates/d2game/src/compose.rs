@@ -699,3 +699,164 @@ mod tests {
         }
     }
 }
+
+/// FIX-CAMPES : composition du layout RÉEL (ville 1) — la règle du jeu :
+/// sols = candidats `(style, seq)` parmi les tuiles `kind == 0` ; murs =
+/// candidats `(kind == code d'orientation, style, seq)` ; `prop % candidats`
+/// choisit la variation ; `hidden` = cellule non dessinée ; flux d'ombre
+/// jamais dessiné. Validé sur TownN1 : 2337/2337 sols, 346/346 murs,
+/// 43 cachées, 19 tentes (kind 15), 16 feux (12), 118 arbres (14).
+pub fn compose_real_town(
+    real: &crate::ds1_real::Ds1Real,
+    tilesets: &[Dt1Tile],
+    metas: &[crate::dt1::Dt1Meta],
+    seed: u64,
+) -> ComposedMap {
+    use std::collections::HashMap;
+    let _ = seed; // la variation vient du `prop` du DS1 réel, pas du RNG
+
+    let width = (real.w + real.h) * CW as usize;
+    let height = (real.w + real.h) * CH as usize + (WALL_HEAD + CW) as usize;
+    let origin_x = real.h as i32 * CW;
+    let origin_y = WALL_HEAD;
+    let mut stats = ComposeStats::default();
+
+    let tall_of: Vec<bool> = tilesets.iter().map(tile_is_tall).collect();
+
+    // Candidats par clé — construits UNE fois (2337 cellules × 2-3 flux).
+    let mut floors: HashMap<(i32, i32), Vec<usize>> = HashMap::new();
+    let mut walls: HashMap<(i32, i32, i32), Vec<usize>> = HashMap::new();
+    for (k, m) in metas.iter().enumerate() {
+        if m.kind == 0 {
+            floors.entry((m.style, m.seq)).or_default().push(k);
+        } else {
+            walls.entry((m.kind, m.style, m.seq)).or_default().push(k);
+        }
+    }
+
+    let mut buf: Vec<u8> = vec![0u8; width * height];
+    let mut overlay: Vec<u8> = vec![0u8; width * height];
+    let walk = vec![false; real.w * SUB * real.h * SUB];
+    let grid_w = real.w * SUB;
+    let mut walk = walk;
+    let mut tents: Vec<(f32, f32)> = Vec::new();
+    {
+        let mut px = Painter {
+            idx: &mut buf,
+            overlay: &mut overlay,
+            width,
+            height,
+            origin_x,
+            origin_y,
+            tall_of: &tall_of,
+        };
+        let mut draw_tile = |px: &mut Painter, k: usize, cx: usize, cy: usize, stats: &mut ComposeStats| {
+            let sx = (cx as i32 - cy as i32) * CW + origin_x;
+            let sy = (cx as i32 + cy as i32) * CH + origin_y;
+            let (b, w, h): (&mut [u8], usize, usize) = if px.tall_of[k] {
+                stats.tall += 1;
+                (px.overlay, px.width, px.height)
+            } else {
+                (px.idx, px.width, px.height)
+            };
+            for blk in &tilesets[k].blocks {
+                if tilesets[k].is_floor {
+                    Painter::draw_floor_block(b, w, h, sx + blk.a as i32, sy + blk.b as i32, &blk.data);
+                } else {
+                    Painter::draw_wall_block(b, w, h, sx + blk.a as i32, sy + blk.b as i32, &blk.data);
+                }
+            }
+            stats.drawn += 1;
+        };
+
+        // --- sols (flux floor) ------------------------------------------------
+        for cy in 0..real.h {
+            for cx in 0..real.w {
+                let i = cy * real.w + cx;
+                let c = real.floor[i];
+                if c.prop == 0 {
+                    stats.empty += 1;
+                    continue;
+                }
+                if c.hidden {
+                    stats.hidden += 1;
+                    continue;
+                }
+                match floors.get(&(c.style as i32, c.seq as i32)) {
+                    Some(cands) if !cands.is_empty() => {
+                        let k = cands[c.prop as usize % cands.len()];
+                        draw_tile(&mut px, k, cx, cy, &mut stats);
+                        open_cell(&mut walk, grid_w, cx, cy, true);
+                        for b in &tilesets[k].blocks {
+                            if b.flags & FLOOR_BLOCK_BITS != 0 {
+                                block_region(&mut walk, grid_w, cx, cy, b.a, b.b, 32, 8);
+                            }
+                        }
+                    }
+                    _ => stats.unresolved += 1,
+                }
+            }
+        }
+
+        // --- murs (wall1 puis wall2, code d'orientation = kind) ---------------
+        for (wall, orient) in [(&real.wall1, &real.orient1), (&real.wall2, &real.orient2)] {
+            for cy in 0..real.h {
+                for cx in 0..real.w {
+                    let i = cy * real.w + cx;
+                    let o = orient[i];
+                    if o == 0 {
+                        continue;
+                    }
+                    let c = wall[i];
+                    if c.prop == 0 {
+                        stats.empty += 1;
+                        continue;
+                    }
+                    if c.hidden {
+                        stats.hidden += 1;
+                        continue;
+                    }
+                    match walls.get(&(o as i32, c.style as i32, c.seq as i32)) {
+                        Some(cands) if !cands.is_empty() => {
+                            let k = cands[c.prop as usize % cands.len()];
+                            if o == 15 {
+                                tents.push((cx as f32, cy as f32));
+                            }
+                            draw_tile(&mut px, k, cx, cy, &mut stats);
+                            open_cell(&mut walk, grid_w, cx, cy, false);
+                        }
+                        _ => stats.unresolved += 1,
+                    }
+                }
+            }
+        }
+    }
+    // Flux d'ombre : jamais dessiné, aucun effet de marche (rendu lumière du
+    // jeu original) — `real.shadow` volontairement non consommé ici.
+
+    // Apparition du camp : centroïde des tentes → sous-tuile centrale la
+    // plus proche marchable (le héros démarre au milieu des tentes, comme
+    // dans le jeu réel).
+    let camp_spawn = if tents.is_empty() {
+        None
+    } else {
+        let n = tents.len() as f32;
+        let tcx = (tents.iter().map(|t| t.0).sum::<f32>() / n).round() as usize;
+        let tcy = (tents.iter().map(|t| t.1).sum::<f32>() / n).round() as usize;
+        find_nearby_walkable(&walk, grid_w, real.h * SUB, tcx * SUB + 2, tcy * SUB + 2, 12)
+    };
+
+    ComposedMap {
+        width,
+        height,
+        origin_x,
+        origin_y,
+        idx: buf,
+        overlay,
+        grid_w,
+        grid_h: real.h * SUB,
+        walk,
+        stats,
+        camp_spawn,
+    }
+}

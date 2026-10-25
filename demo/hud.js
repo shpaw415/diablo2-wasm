@@ -107,7 +107,7 @@
       const defs = [
         ['Menu', 'Menu jeu / pause — à venir (EXP-E4)', null],
         ['Inv', 'Inventaire (I)', () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'i' }))],
-        ['Stats', 'Panneau de stats — à venir (EXP-E9)', null],
+        ['Stats', 'Panneau de personnage (C)', () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'c' }))],
         ['Skills', 'Arbre de compétences — à venir (EXP-E8)', () => openSkillPopup('R')],
         ['Quêtes', 'Journal de quêtes — à venir (EXP-E7)', null],
         ['Carte', 'Automap (Tab)', () => { if (window.D2Automap) window.D2Automap.toggle(); }],

@@ -282,10 +282,6 @@ function drawGlobe(g, frac, topColor, bottomColor) {
   ctx.restore();
 }
 function drawGlobes(s) {
-  // FIX-UI : barre du bas D2 réelle (800ctrlpnl7.dc6 + orbes hlthmana/overlap +
-  // ceinture + XP + endurance + icônes L/R) via demo/ui-d2.js — sprites MPQ
-  // extraits. Repli : anciens globes si l'UI D2 n'est pas prête (fallback JS).
-  if (window.D2UI && window.D2UI.ready && window.D2UI.drawHud(ctx, s)) return;
   drawGlobe(HP_GLOBE, s ? s.life / Math.max(1, s.max_life) : 0, '#e05545', '#5e120c');
   drawGlobe(MP_GLOBE, s ? s.mana / Math.max(1, s.max_mana) : 0, '#4f8fd4', '#122a52');
 }
@@ -323,12 +319,11 @@ const INV_COLS = 10, INV_ROWS = 4;
 const inv = {
   open: false,
   hover: -1,
-  // FIX-UI : géométrie D2 réelle (inventory.txt v1.12, ligne Barbarian2 —
-  // identique pour les 7 classes) : grille 10×4 de cellules 29×29 dont
-  // l'origine écran est (419,315), posée sur le panneau invchar6.dc6
-  // (dessiné par ui-d2.js à (400,60), 320×432).
-  cell: 29, pad: 0, header: 0,
-  x0: 419, y0: 315, w: INV_COLS * 29, h: INV_ROWS * 29,
+  cell: 42, pad: 14, header: 30,
+  get x0() { return (canvas.width - this.w) / 2; },
+  get y0() { return (canvas.height - this.h) / 2; },
+  get w() { return this.pad * 2 + INV_COLS * this.cell; },
+  get h() { return this.pad * 2 + this.header + INV_ROWS * this.cell; },
 };
 function invSlotAt(px, py) {
   const cx = Math.floor((px - inv.x0 - inv.pad) / inv.cell);
@@ -343,13 +338,6 @@ const ITEM_COLORS = {
   Gold: ['#d9b96a', '#6e5626'],
 };
 function drawInventory() {
-  // FIX-UI : panneau d'inventaire D2 réel (invchar6.dc6 recollé 320×432 +
-  // grille 10×4 de 29 px + sprites d'objets extraits des MPQ) via
-  // demo/ui-d2.js. Repli : le dessin historique si l'UI D2 n'est pas prête.
-  if (window.D2UI && window.D2UI.ready) {
-    window.D2UI.drawInventory(ctx, window.__d2.invCache || [], null);
-    return;
-  }
   const { x0, y0, w, h } = inv;
   ctx.save();
   // cadre pierre sombre
@@ -447,6 +435,7 @@ function levelFade() {
 function handleEvents(events, manifest) {
   for (const ev of events) {
     window.__d2.events++;
+    if (window.D2MonSfx) window.D2MonSfx.feed(ev); // 14a : sons monstres data-driven (attaque/hit/mort/annonce)
     if (ev.LevelSwitch) {
       const info = ev.LevelSwitch;
       window.__d2.level = info.key;
@@ -598,13 +587,8 @@ function wireCommon(manifest) {
   canvas.addEventListener('click', (e) => {
     acx();
     const [px, py] = canvasXY(e);
-    // clic dans le panneau inventaire ouvert : utiliser l'objet, pas bouger.
-    // FIX-UI : la zone active est le PANNEAU D2 entier (400,60,320×432) quand
-    // l'UI D2 est prête, sinon l'ancienne boîte de grille.
-    const inInv = (window.D2UI && window.D2UI.ready)
-      ? window.D2UI.invHit(px, py)
-      : (px >= inv.x0 && px < inv.x0 + inv.w && py >= inv.y0 && py < inv.y0 + inv.h);
-    if (inv.open && inInv) {
+    // clic dans le panneau inventaire ouvert : utiliser l'objet, pas bouger
+    if (inv.open && px >= inv.x0 && px < inv.x0 + inv.w && py >= inv.y0 && py < inv.y0 + inv.h) {
       const slot = invSlotAt(px, py);
       const it = slot >= 0 ? (window.__d2.invCache || [])[slot] : null;
       if (it) {
@@ -890,7 +874,6 @@ async function main() {
   // EXP-H* (HUD parité) : init de l'overlay DOM (boutons L/R, minipanel,
   // survol monstre, labels Alt, dégâts flottants, endurance) — hud.js.
   if (window.D2HUD) window.D2HUD.init(manifest, window.__d2.game);
-  if (window.D2UI) window.D2UI.init(manifest); // FIX-UI : sprites HUD D2 (ui-d2.js)
   $('loading').style.display = 'none';
   window.__d2.mode = 'wasm';
 
@@ -907,14 +890,12 @@ async function main() {
       updateHud(stats);
       if (window.D2HUD) window.D2HUD.update(stats); // EXP-H2 : barre d'endurance
       window.__d2.invCache = JSON.parse(game.inventory());
-      window.__d2.invHover = inv.hover; // FIX-UI : survol lu par ui-d2.js
       window.__d2.monCodes = JSON.parse(game.monsterCodes());
       const hs = JSON.parse(game.heroState());
       hud.run.style.display = hs.run && hs.moving ? 'block' : 'none';
       imgData.data.set(game.render());
       ctx.putImageData(imgData, 0, 0);
       drawGlobes(stats);
-      if (window.D2UI) window.D2UI.poll(game, now); // FIX-UI : ceinture/points/icônes ~1 Hz
       if (inv.open) drawInventory();
       const [hsx, hsy] = game.heroScreen();
       const [hwx, hwy] = game.screenToWorld(hsx, hsy);
@@ -1025,3 +1006,6 @@ function fallback(reason) {
 main().catch((e) => fallback(e && e.message ? e.message : String(e)));
 
 import("./stash-ui.js").catch(() => {}); // 11c : panneau Stash 6×4 + or (window.D2Stash, miroir economy.rs)
+import("./game-sfx.js").catch(() => {}); // 14b : SFX gameplay par event (window.D2SFX, miroir game_audio.rs — file non bloquante, mute partagé musique)
+import("./cube-ui.js").catch(() => {}); // 18c : Cube Horadrim 3×4 + tooltips fr (window.D2CubeUI, moteurs cube.rs/tooltips)
+import("./panels-ui.js").catch(() => {}); // 18b : UI fidèle — perso/inventaire/stash (window.D2Panels, heroPanel+stash* economy.rs)

@@ -12,9 +12,10 @@
   #stage { position: relative; }
   canvas { border: 1px solid #3a3226; image-rendering: pixelated; cursor: crosshair; background: #000; display: block; }
   #hud { position: absolute; inset: 0; pointer-events: none; }
-  .globe-text { left: 70px; top: 556px; transform: translate(-50%, -50%); font-size: 11px; font-weight: 600; }
-  #mptext { left: auto; left: 730px; }
-  #xpwrap { display: none; } /* FIX-UI : barre d'XP D2 dessinée sur le canvas (ui-d2.js) */
+  .globe-text { left: 64px; top: 537px; transform: translate(-50%, -50%); font-size: 11px; font-weight: 600; }
+  #mptext { left: auto; left: 736px; }
+  #xpwrap { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); width: 320px; height: 5px;
+            background: #1a1210cc; border: 1px solid #00000088; }
   #xpfill { height: 100%; background: linear-gradient(#d9b96a, #8a6d2c); width: 0%; }
   .hudtext { position: absolute; font-size: 11px; text-shadow: 0 1px 2px #000; color: #e8dcbf; }
   #lvltext { left: 10px; top: 10px; color: var(--gold); }
@@ -132,10 +133,10 @@
   <div id="help"><b>Clic</b> = se déplacer · <b>Maj</b> = courir · <b>Clic sur un monstre</b> = attaquer · <b>E</b> = ramasser · <b>P</b> = potion · <b>I</b> = inventaire · <b>Clic droit</b> = compétence main droite · <b>Alt</b> = étiquettes des objets au sol</div>
   <script src="./slots.js"></script>
   <script src="./hud.js"></script> <!-- EXP-H* HUD parité : définit window.D2HUD avant game.js -->
-  <script src="./ui-d2.js"></script> <!-- FIX-UI : HUD D2 fidèle (sprites MPQ réels, window.D2UI) -->
   <script src="./waypoints.js"></script> <!-- W05/W19 panneau waypoints : window.D2Waypoints -->
   <script src="./corpse-ui.js"></script> <!-- J1 corps au sol : window.D2CorpseUI (overlay mort + flare + hint) -->
   <script src="./music.js"></script> <!-- EXP-A1 musique par zone : window.D2Music (autoplay 1er geste, bouton toolbar, mute persistant) -->
+  <script src="./mon-sfx.js"></script> <!-- 14a SFX monstres data-driven : window.D2MonSfx (monsounds.txt v1.12, panning, autoplay 1er geste) -->
   <script src="./vendor.js"></script>
   <script src="./npc-ui.js"></script> <!-- W16 villes vivantes : NPC du camp (marqueurs + dialogues) : window.D2Npc -->
   <script src="./skills-ui.js"></script> <!-- C arbre de compétences : window.D2Skills -->

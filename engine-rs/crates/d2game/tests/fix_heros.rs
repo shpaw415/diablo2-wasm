@@ -34,6 +34,24 @@ fn build_set(root: &str, blk: &Value, with_lg: bool) -> SpriteSet {
         let bytes = std::fs::read(format!("{root}/{}", p.as_str().unwrap())).unwrap();
         set.add_layer(tok, Dcc::decode(&bytes).unwrap());
     }
+    // FIX-HEROS : convention fichier (comme game.rs build_sprite_set) —
+    // les blocs manifest régénérés peuvent omettre LG ; le DCC
+    // <code><mode>LG.dcc fait foi s'il existe (stem « BANUHTH » → BANULG).
+    if with_lg && !set.has_layer("LG") {
+        let cof_path = blk["cof"].as_str().unwrap();
+        let base = cof_path.rsplit('/').next().unwrap_or(cof_path);
+        let stem: Vec<char> = base.split('.').next().unwrap_or(base).chars().collect();
+        if stem.len() >= 4 {
+            let lg = format!(
+                "{root}/assets/dcc/{}{}LG.dcc",
+                &stem[..2].iter().collect::<String>(),
+                &stem[2..4].iter().collect::<String>()
+            );
+            if let Ok(bytes) = std::fs::read(&lg) {
+                set.add_layer("LG", Dcc::decode(&bytes).unwrap());
+            }
+        }
+    }
     set
 }
 

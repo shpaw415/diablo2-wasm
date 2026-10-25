@@ -85,6 +85,11 @@ impl SpriteSet {
     /// layers' direction boxes; the entity's world position sits at the
     /// **bottom-center** of that canvas (feet on the tile). `left`/`top`
     /// carry the box origin for callers that want exact layer geometry.
+    /// La couche `token` est-elle présente dans le set ? (tests FIX-HEROS.)
+    pub fn has_layer(&self, token: &str) -> bool {
+        self.layers.contains_key(token)
+    }
+
     pub fn compose(&self, facing: u8, frame: usize, pal: &Palette) -> Option<SpriteFrame> {
         let dir64 = facing as usize * 4;
         let slot = match self.layers.values().next() {
