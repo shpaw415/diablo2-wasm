@@ -618,6 +618,7 @@ fn save_rejects_garbage_and_wrong_version() {
     v["version"] = serde_json::json!(999);
     assert!(World::load(&v.to_string()).is_err(), "mauvaise version refusée");
     v["version"] = serde_json::json!(1);
+    v.as_object_mut().unwrap().remove("players"); // simule une v1 réelle (3b-1)
     v["collision"] = serde_json::json!(["1X1"]); // caractère illégal
     assert!(World::load(&v.to_string()).is_err());
 }
@@ -649,23 +650,23 @@ fn hero_selection_picks_stats_per_code() {
     let m = manifest_heroes();
     // Défaut (World::new / with_seed) : classe du bloc `hero` (BA) — 55 pv.
     let w = World::with_seed(open_grid(56, 40), m.clone(), 7);
-    assert_eq!(w.hero_code(), "BA");
+    assert_eq!(w.players[0].code(), "BA");
     assert_eq!(w.hero_stats().max_life, 55);
     assert_eq!(w.hero_stats().strength, 30);
     // with_hero("SOR") : stats de la sorcière — 40 pv, 60 mana, force 10.
     let wsor = World::with_hero(open_grid(56, 40), m.clone(), "SOR");
-    assert_eq!(wsor.hero_code(), "SOR");
+    assert_eq!(wsor.players[0].code(), "SOR");
     assert_eq!(wsor.hero_stats().max_life, 40);
     assert_eq!(wsor.hero_stats().max_mana, 60);
     assert_eq!(wsor.hero_stats().strength, 10);
     assert_eq!(wsor.hero_stats().dexterity, 25);
     // Insensible à la casse.
     let wlow = World::with_hero(open_grid(56, 40), m.clone(), "sor");
-    assert_eq!(wlow.hero_code(), "SOR");
+    assert_eq!(wlow.players[0].code(), "SOR");
     assert_eq!(wlow.hero_stats().max_life, 40);
     // Code inconnu : retombée sur le bloc `hero` (BA), jamais de panic.
     let wunk = World::with_hero(open_grid(56, 40), m, "XX");
-    assert_eq!(wunk.hero_code(), "BA");
+    assert_eq!(wunk.players[0].code(), "BA");
     assert_eq!(wunk.hero_stats().max_life, 55);
 }
 
@@ -679,7 +680,7 @@ fn hero_selection_default_stays_retrocompatible() {
     assert!(m.get("heroes").is_none());
     for req in ["BA", "SOR", "PA", ""] {
         let w = World::with_hero(open_grid(56, 40), m.clone(), req);
-        assert_eq!(w.hero_code(), "BA");
+        assert_eq!(w.players[0].code(), "BA");
         assert_eq!(w.hero_stats().max_life, 55);
     }
     // resolve_hero_code (API partagée avec d2game) : même règle.
@@ -696,14 +697,18 @@ fn hero_selection_survives_save_load() {
     let mut w = World::with_seed_and_hero(open_grid(56, 40), m, 4242, "SOR");
     run(&mut w, 1000, None);
     let w2 = World::load(&w.save()).expect("rechargement");
-    assert_eq!(w2.hero_code(), "SOR");
+    assert_eq!(w2.players[0].code(), "SOR");
     assert_eq!(w2.hero_stats().max_life, 40);
     assert_eq!(w2.hero_stats().max_mana, 60);
     // Sauvegarde v1 SANS hero_code (ancienne page) : charge quand même.
+    // 3b-1 : sans `players` non plus — sinon le champ v4 (prioritaire)
+    // masquerait la rétro-compat des champs de tête.
     let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
-    v.as_object_mut().unwrap().remove("hero_code");
+    let obj = v.as_object_mut().unwrap();
+    obj.remove("hero_code");
+    obj.remove("players");
     let w3 = World::load(&v.to_string()).expect("rechargement save v1 sans hero_code");
-    assert_eq!(w3.hero_code(), "BA"); // défaut du manifest (gabarit futur)
+    assert_eq!(w3.players[0].code(), "BA"); // défaut du manifest (gabarit futur)
     assert_eq!(w3.hero_stats().max_life, 40); // stats courantes persistées
 }
 
@@ -966,7 +971,7 @@ fn classes_without_start_skill_fallback_to_weapon_arrow() {
     mx.as_object_mut().unwrap().remove("heroes");
     mx["hero"]["class"] = json!("XX");
     let w = World::with_seed_and_hero(open_grid(56, 40), mx, 17, "");
-    assert_eq!(w.hero_code(), "XX");
+    assert_eq!(w.players[0].code(), "XX");
     assert!(w.hero_skills().is_empty());
     assert!(w.active_skill().is_none());
     assert_eq!(w.hero_stats().skill, "");
@@ -1068,7 +1073,7 @@ fn manifest_carries_seven_playable_heroes() {
         assert_eq!((s["life"].as_u64().unwrap() as u32, s["mana"].as_u64().unwrap() as u32), (life, mana), "{code}");
         assert_eq!((s["strength"].as_u64().unwrap() as u32, s["dexterity"].as_u64().unwrap() as u32), (str_, dex), "{code}");
         let w = World::with_hero(open_grid(56, 40), m.clone(), code);
-        assert_eq!(w.hero_code(), code, "{code} : résolution manifest");
+        assert_eq!(w.players[0].code(), code, "{code} : résolution manifest");
         assert_eq!(w.hero_stats().max_life, life, "{code} : vie chargée du manifest");
         assert_eq!(w.hero_stats().max_mana, mana, "{code} : mana chargé du manifest");
     }
@@ -1097,8 +1102,10 @@ fn skills_survive_save_load_and_v1_saves_load_with_defaults() {
 
     // sauvegarde v2 SANS champ skills (page intermédiaire) : défauts de classe
     let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
-    v.as_object_mut().unwrap().remove("skills");
-    v.as_object_mut().unwrap().remove("active_skill");
+    let obj = v.as_object_mut().unwrap();
+    obj.remove("skills");
+    obj.remove("active_skill");
+    obj.remove("players"); // 3b-1 : la rétro-compat v2 lit les champs de tête
     let w3 = World::load(&v.to_string()).expect("rechargement v2 sans skills");
     assert_eq!(w3.hero_skills(), crate::skills::starting_skills("SOR"));
     assert_eq!(w3.active_skill().unwrap().code, "Fire Bolt");
@@ -1106,6 +1113,7 @@ fn skills_survive_save_load_and_v1_saves_load_with_defaults() {
     // sauvegarde v1 RÉELLE (ancienne page) : version 1, aucun champ skill
     let mut v1 = v;
     v1["version"] = serde_json::json!(1);
+    v1.as_object_mut().unwrap().remove("players");
     let w4 = World::load(&v1.to_string()).expect("rechargement v1 rétro-compat");
     assert_eq!(w4.hero_skills(), crate::skills::starting_skills("SOR"));
 
@@ -1167,7 +1175,7 @@ fn save_v3_roundtrip_preserves_level_key() {
 
     let snapshot = w.save();
     let v: serde_json::Value = serde_json::from_str(&snapshot).unwrap();
-    assert_eq!(v["version"], serde_json::json!(3), "format courant = v3");
+    assert_eq!(v["version"], serde_json::json!(4), "format courant = v4 (players[] 3b-1)");
     assert_eq!(v["level"], serde_json::json!("bloodmoor"), "clé de niveau persistée");
 
     let w2 = World::load(&snapshot).expect("rechargement v3");
@@ -1185,14 +1193,16 @@ fn save_v2_without_level_loads_in_town() {
     // rétro-compat v2 : pas de champ `level` (saves antérieurs au P0 save)
     let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
     v["version"] = serde_json::json!(2);
-    v.as_object_mut().unwrap().remove("level");
+    let obj = v.as_object_mut().unwrap();
+    obj.remove("level");
+    obj.remove("players"); // 3b-1 : rétro-compat = champs de tête
     let w2 = World::load(&v.to_string()).expect("chargement v2 sans level");
     assert_eq!(w2.level_key(), "town", "défaut sensible : Camp des Rousses");
-    assert_eq!(w2.hero_code(), w.hero_code());
-    // re-sauvegarde : le monde migré ressort en v3 avec sa clé par défaut
-    let v3: serde_json::Value = serde_json::from_str(&w2.save()).unwrap();
-    assert_eq!(v3["version"], serde_json::json!(3));
-    assert_eq!(v3["level"], serde_json::json!("town"));
+    assert_eq!(w2.players[0].code(), w.players[0].code());
+    // re-sauvegarde : le monde migré ressort en v4 avec sa clé par défaut
+    let v4: serde_json::Value = serde_json::from_str(&w2.save()).unwrap();
+    assert_eq!(v4["version"], serde_json::json!(4));
+    assert_eq!(v4["level"], serde_json::json!("town"));
 }
 
 #[test]
@@ -1205,6 +1215,7 @@ fn save_v1_retrocompat_without_level_or_hero_code() {
     obj.remove("hero_code");
     obj.remove("skills");
     obj.remove("missiles");
+    obj.remove("players"); // 3b-1 : rétro-compat = champs de tête
     let w2 = World::load(&v.to_string()).expect("chargement v1 rétro-compat");
     assert_eq!(w2.level_key(), "town");
     // skills de départ reconstitués (comportement v1 historique préservé) —
@@ -1322,6 +1333,9 @@ fn synergy_scales_fired_missile_damage() {
         { "code": "Fire Ball", "level": 20, "missile": "fireball" },
         { "code": "Meteor", "level": 20, "missile": "meteor" }
     ]);
+    // 3b-1 : l'édition vise les champs de tête — retirer `players` (v4,
+    // prioritaire) pour que la save éditée recharge bien CE jeu de skills.
+    v.as_object_mut().unwrap().remove("players");
     let mut w = World::load(&v.to_string()).expect("save éditée : skills synergie");
     assert_eq!(w.active_skill().unwrap().code, "Fire Bolt");
     w.clear_monsters();
@@ -1371,6 +1385,7 @@ fn save_round_trips_skill_points_and_skills() {
     // à 0, skills conservés (rétro-compat additive).
     let mut old = v.clone();
     old["hero"]["stats"].as_object_mut().unwrap().remove("skill_points");
+    old.as_object_mut().unwrap().remove("players"); // 3b-1 : rétro-compat additive
     let w3 = World::load(&old.to_string()).expect("save sans skill_points");
     assert_eq!(w3.unspent_skill_points(), 0);
     assert_eq!(w3.hero_skills()[0].level, 2, "skills v2 intacts");
@@ -1379,6 +1394,6 @@ fn save_round_trips_skill_points_and_skills() {
 impl World {
     /// Test uniquement : force un slot d'inventaire.
     pub(crate) fn debug_set_slot(&mut self, slot: usize, def: Option<ItemDef>) {
-        self.hero.inv[slot] = def;
+        self.players[0].data.inv[slot] = def;
     }
 }

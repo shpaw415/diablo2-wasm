@@ -1104,10 +1104,10 @@ impl World {
                 FinaleReward::SkillPoint(n) => self.grant_skill_points(n),
                 FinaleReward::Item(code) => {
                     let def = finale_item_def(code);
-                    if let Some(slot) = self.hero.inv.iter().position(|s| s.is_none()) {
-                        self.hero.inv[slot] = Some(def);
+                    if let Some(slot) = self.players[0].data.inv.iter().position(|s| s.is_none()) {
+                        self.players[0].data.inv[slot] = Some(def);
                     } else {
-                        let (x, y) = (self.hero_ent.x, self.hero_ent.y);
+                        let (x, y) = (self.players[0].ent.x, self.players[0].ent.y);
                         self.items.push(crate::ItemOnGround { def, x, y });
                     }
                 }
@@ -1146,7 +1146,13 @@ impl World {
             return false;
         };
         let rule = stats.rule;
-        let (hx, hy) = (self.hero_ent.x as i32, self.hero_ent.y as i32);
+        // 3b-1 (coop) : ancre = héros vivant le plus proche (déterministe ;
+        // solo : slot 0, identique).
+        let anchor = self.nearest_living_hero_slot(self.players[0].ent.x, self.players[0].ent.y);
+        let (hx, hy) = (
+            self.players[anchor].ent.x as i32,
+            self.players[anchor].ent.y as i32,
+        );
         // Recherche en spirale (rayon 0..=3) d'une tuile marchable — la
         // grille vient de la DRLG (stub carré ouvert dans les tests).
         for r in 0..=3i32 {

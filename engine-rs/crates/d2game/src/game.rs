@@ -11,7 +11,7 @@
 //! sorted by screen y. Corpses (`anim == Dd`) are skipped (no DD frames
 //! in the extracted assets yet).
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 
 use serde_json::Value;
 
@@ -31,6 +31,14 @@ use crate::world::{AnimState, Difficulty, Entity, GameEvent, MonKind, PlayerInpu
 
 pub const DEFAULT_VIEWPORT_W: u32 = 800;
 pub const DEFAULT_VIEWPORT_H: u32 = 600;
+
+/// 3b : rayon (px viewport) de capture du survol d'un allié (barre de vie).
+const ALLY_HOVER_RADIUS: f32 = 30.0;
+/// 3b : géométrie de la barre de vie allié (px viewport) — centrée sur le
+/// héros survolé, `ALLY_BAR_LIFT` au-dessus de ses pieds (ancre sprite).
+const ALLY_BAR_W: f32 = 36.0;
+const ALLY_BAR_H: f32 = 5.0;
+const ALLY_BAR_LIFT: f32 = 58.0;
 
 /// Asset optionnel `AnimData.d2` (extraits MPQ v1.12, `docs/GAME-DATA.md`) :
 /// quand il est fourni via [`GameCore::provide`], chaque sprite set reçoit
@@ -131,6 +139,10 @@ pub enum CoreEvent {
     /// Un boss de quête est mort (`manifest.bosses[].questEvent`, ex.
     /// `"andariel_dead"`) — une quête/fin l'écoutera (W11/W13).
     QuestEvent { id: String },
+    /// 3c (coop) : le joueur du `slot` a quitté la partie en jeu — son héros
+    /// est retiré du monde (`World::remove_player`, compaction des slots)
+    /// au même tick chez tous les clients lockstep. HUD/log seulement.
+    HeroLeft { slot: usize },
 }
 
 impl CoreEvent {
@@ -142,12 +154,15 @@ impl CoreEvent {
             CoreEvent::LevelSwitch(i) => serde_json::json!({ "LevelSwitch": i }),
             CoreEvent::LevelSwitchFailed(m) => serde_json::json!({ "LevelSwitchFailed": m }),
             CoreEvent::QuestEvent { id } => serde_json::json!({ "QuestEvent": { "id": id } }),
+            CoreEvent::HeroLeft { slot } => serde_json::json!({ "HeroLeft": { "slot": slot } }),
         }
     }
 }
 
 pub struct GameCore {
-    manifest: Value,
+    // 3c : pub(crate) — les ponts frères (npc_bridge, dialogue_bridge 3c-b)
+    // résolvent des noms/labels dans le manifest sans dupliquer l'état.
+    pub(crate) manifest: Value,
     assets: BTreeMap<String, Vec<u8>>,
     /// Niveau demandé au boot (clé manifest, "town" par défaut) — résolu en
     /// [`LevelDef`] au `finalize`.
@@ -185,6 +200,32 @@ pub struct GameCore {
     /// Héros demandé ("BA"|"SOR"|"PA"…, normalisé uppercase) — résolu contre
     /// `manifest.heroes` (retombée `hero` à l'ancienne via d2rules).
     hero_request: String,
+    /// 3b (coop multi-héros) : codes demandés PAR SLOT (index 0 = slot 0 =
+    /// `hero_request`). Vide hors coop — [`Self::with_level_coop`] le remplit
+    /// (1..=8 codes) ; `finalize` construit alors un set de sprites par slot
+    /// ("hero", "hero1"…) et le monde reçoit les coéquipiers.
+    hero_requests: Vec<String>,
+    /// 3b : slot héros suivi par la caméra (et `hero_screen()`). 0 par
+    /// défaut — chaque client online verrouille la sienne sur SON slot
+    /// (`setCameraSlot`), le rendu des AUTRES héros reste complet.
+    cam_slot: usize,
+    /// 3b (coop lockstep) : file d'entrées PAR SLOT — la page empile les
+    /// entrées du bundle courant (`queue_input`, ordre d'arrivée libre),
+    /// puis UN `tick_queued` les consomme toutes (slots croissants, FIFO
+    /// par slot — déterminisme lockstep) pour un seul pas de simulation.
+    input_queues: BTreeMap<usize, VecDeque<PlayerInput>>,
+    /// 3c (coop lockstep) : départs DEMANDÉS (`queue_leave` — l'entrée
+    /// synthétique `{type:"leave"}` du relais) appliqués au PROCHAIN tick
+    /// par `World::remove_player` (compaction déterministe : tous les
+    /// clients lockstep retirent le même slot au même tick). Requêtes
+    /// transitores — jamais dans la save (chaque client les reçoit par le
+    /// même bundle). Dédupliqué, appliqué en ordre DÉCROISSANT (la
+    /// compaction décale les slots supérieurs).
+    pending_leaves: Vec<usize>,
+    /// 3b : pointeur page (px viewport) — survol d'un allié pour la barre
+    /// de vie du rendu et [`Self::ally_info_at_json`]. Présentation seule :
+    /// jamais sérialisé (zéro impact sur la save/le hash lockstep).
+    pointer: Option<(f32, f32)>,
     /// AnimData.d2 parsé si l'asset [`ANIMDATA_ASSET`] a été fourni — `None`
     /// sinon (fallback historique, zéro changement de comportement).
     animdata: Option<d2animdata::AnimationData>,
@@ -257,6 +298,12 @@ impl GameCore {
             warp_cd_ms: 0,
             world: None,
             hero_request,
+            // 3b : hors coop, un seul héros (slot 0) — caméra sur lui.
+            hero_requests: Vec::new(),
+            cam_slot: 0,
+            input_queues: BTreeMap::new(),
+            pending_leaves: Vec::new(),
+            pointer: None,
             animdata: None,
             tables: None,
             difficulty: Difficulty::default(),
@@ -270,6 +317,91 @@ impl GameCore {
             fb: Vec::new(),
             finalized: false,
         })
+    }
+
+    /// 3b (coop multi-héros) : comme [`Self::with_level`] mais avec UN héros
+    /// PAR SLOT — `heroes_json` = tableau JSON de codes de classe
+    /// (`["BA","SOR"]`, insensibles à la casse, index = slot, 1..=8 entrées,
+    /// slot 0 = héros historique). Chaque slot reçoit son propre personnage
+    /// (stats/inventaire/skills d2rules + set de sprites d2game "heroN") ;
+    /// un seul héros = comportement [`Self::with_level`] strictement identique.
+    pub fn with_level_coop(manifest_json: &str, heroes_json: &str, level: &str) -> Result<GameCore, String> {
+        let parsed: Vec<String> = serde_json::from_str(heroes_json)
+            .map_err(|e| format!("heroes JSON (tableau de codes attendu) : {e}"))?;
+        let mut heroes: Vec<String> = parsed
+            .into_iter()
+            .map(|h| {
+                let t = h.trim().to_ascii_uppercase();
+                if t.is_empty() { "BA".to_string() } else { t }
+            })
+            .collect();
+        if heroes.is_empty() {
+            heroes.push("BA".to_string());
+        }
+        if heroes.len() > d2rules::MAX_HEROES {
+            heroes.truncate(d2rules::MAX_HEROES);
+        }
+        let mut core = Self::with_level(manifest_json, &heroes[0].clone(), level)?;
+        core.hero_requests = heroes;
+        Ok(core)
+    }
+
+    /// 3b : verrouille la caméra (et `hero_screen()`) sur le héros `slot`.
+    /// Hors bornes ⇒ inchangé. Chaque client online appelle avec SON slot ;
+    /// 0 (défaut) = comportement historique. La caméra est recentrée IMMÉ-
+    /// DIATEMENT (état de présentation, hors save/hash — aucune incidence
+    /// déterministe), pas seulement au prochain tick.
+    pub fn set_camera_slot(&mut self, slot: usize) {
+        self.cam_slot = slot;
+        if self.finalized {
+            self.follow_camera();
+        }
+    }
+
+    /// 3b : slot suivi par la caméra.
+    pub fn camera_slot(&self) -> usize {
+        self.cam_slot
+    }
+
+    /// 3b : codes de héros par slot (résolus manifest) — JSON
+    /// `[{"slot":0,"code":"BA","name":"Barbare"},…]`.
+    pub fn heroes_json(&self) -> String {
+        let list: Vec<Value> = (0..self.hero_count_slotted())
+            .filter_map(|slot| {
+                let code = self.hero_code_for_slot(slot)?;
+                let name = self
+                    .manifest
+                    .pointer(&format!("/heroes/{code}/name"))
+                    .and_then(|n| n.as_str())
+                    .unwrap_or(&code)
+                    .to_string();
+                Some(serde_json::json!({ "slot": slot, "code": code, "name": name }))
+            })
+            .collect();
+        serde_json::to_string(&list).unwrap_or_else(|_| "[]".into())
+    }
+
+    /// Nombre de héros du monde courant (1 hors coop / avant finalize).
+    fn hero_count_slotted(&self) -> usize {
+        match self.world.as_ref() {
+            Some(w) => w.hero_count(),
+            // avant finalize : le nombre DEMANDÉ (finalize posera les cohéros)
+            None => self.hero_requests.len().max(1),
+        }
+    }
+
+    /// Code résolu du héros `slot` : monde chargé = vérité d2rules ; sinon
+    /// la liste demandée (slot 0 = `hero_request` historique).
+    fn hero_code_for_slot(&self, slot: usize) -> Option<String> {
+        if let Some(w) = self.world.as_ref() {
+            return w.hero_code_slot(slot).map(|s| s.to_string());
+        }
+        if slot == 0 {
+            return Some(d2rules::resolve_hero_code(&self.manifest, &self.hero_request));
+        }
+        self.hero_requests
+            .get(slot)
+            .map(|c| d2rules::resolve_hero_code(&self.manifest, c))
     }
 
     /// Register one asset blob under its manifest path (case-insensitive;
@@ -368,6 +500,26 @@ impl GameCore {
             let walk = &self.manifest["hero"]["walk"];
             let set = self.build_sprite_set(walk)?;
             sprites.insert("hero".into(), set);
+        }
+        // 3b (coop) : un set PAR COHÉROS — clé "heroN" (N = slot ≥ 1), même
+        // extraction que le slot 0 ("hero"). Un code sans bloc manifest est
+        // noté et sauté (fallback gracieux — le cohéros reste simulé).
+        for (slot, code) in self.hero_requests.iter().enumerate().skip(1) {
+            let key = format!("hero{slot}");
+            let resolved = d2rules::resolve_hero_code(&self.manifest, code);
+            match hero_def_for(&self.manifest, &resolved) {
+                Some(def) => {
+                    Self::build_entity_sets(&key, &def, &mut sprites, &mut notes, self)?;
+                }
+                None => {
+                    notes.push(format!("{key}: bloc manifest héros absent ({resolved}) — sprites en repli"));
+                    if let Some(walk) = self.manifest.get("hero").map(|h| &h["walk"]) {
+                        if let Ok(set) = self.build_sprite_set(walk) {
+                            sprites.insert(key, set);
+                        }
+                    }
+                }
+            }
         }
         if let Some(list) = self.manifest.get("monsters").and_then(|m| m.as_array()) {
             for m in list {
@@ -803,6 +955,22 @@ impl GameCore {
         // le respawn y est posé (l'auto-spawn centre reste la position initiale).
         if let Some((x, y)) = spawn {
             world.set_hero_spawn(x.floor() as i32, y.floor() as i32);
+        }
+        // 3b (coop multi-héros) : complète les cohéros manquants (monde neuf
+        // ou save mono-héros promue), puis les redéploie autour du héros
+        // slot 0 (arrivée de niveau : leurs tuiles d'origine peuvent être
+        // bloquées sur la nouvelle carte) et pose LEUR point d'apparition.
+        if self.hero_requests.len() > 1 {
+            if world.hero_count() < self.hero_requests.len() {
+                let (hx, hy) = { let h = world.hero(); (h.x, h.y) };
+                for code in self.hero_requests.iter().skip(world.hero_count()) {
+                    let _ = world.add_cohero_near(code, hx, hy);
+                }
+            }
+            let (hx, hy) = { let h = world.hero(); (h.x, h.y) };
+            for slot in 1..world.hero_count() {
+                world.place_hero_slot_near(slot, hx, hy);
+            }
         }
         // Difficulté courante (W08/K) : monde neuf OU transféré (la save
         // porte déjà le champ ; remettre ici garde monde↔core synchrones).
@@ -1316,11 +1484,27 @@ impl GameCore {
     }
 
     /// Hero position in viewport px (feet anchor), for the JS cursor UI.
+    /// 3b : position du héros suivi par la caméra ([`Self::set_camera_slot`]
+    /// — slot 0 par défaut, comportement historique).
     pub fn hero_screen(&self) -> (f32, f32) {
         let map = self.map.as_ref().expect("finalize first");
-        let h = self.hero();
+        let world = self.world.as_ref().expect("finalize first");
+        let h = *world.hero_slot_ent(self.cam_slot).unwrap_or_else(|| world.hero());
         let (sx, sy) = map.sub_to_screen(h.x, h.y);
         (sx - self.cam_x, sy - self.cam_y)
+    }
+
+    /// 3b : position écran (pieds) du héros `slot` — `[x, y]` en px viewport.
+    pub fn hero_screen_slot(&self, slot: usize) -> (f32, f32) {
+        let map = self.map.as_ref().expect("finalize first");
+        let world = self.world.as_ref().expect("finalize first");
+        match world.hero_slot_ent(slot) {
+            Some(h) => {
+                let (sx, sy) = map.sub_to_screen(h.x, h.y);
+                (sx - self.cam_x, sy - self.cam_y)
+            }
+            None => (f32::NAN, f32::NAN),
+        }
     }
 
     pub fn map_pixel_size(&self) -> (u32, u32) {
@@ -1357,9 +1541,52 @@ impl GameCore {
 
     /// Hero HUD stats as JSON (`HeroStats`), for the demo status/HUD.
     pub fn hero_stats_json(&self) -> String {
-        match self.world.as_ref() {
-            Some(w) => serde_json::to_string(w.hero_stats()).unwrap_or_else(|_| "{}".into()),
+        self.hero_stats_slot_json(0)
+    }
+
+    /// 3b : stats HUD du héros `slot` (même JSON que [`Self::hero_stats_json`]).
+    pub fn hero_stats_slot_json(&self, slot: usize) -> String {
+        match self.world.as_ref().and_then(|w| w.hero_stats_slot(slot)) {
+            Some(s) => serde_json::to_string(s).unwrap_or_else(|_| "{}".into()),
             None => "{}".into(),
+        }
+    }
+
+    /// 3b : inventaire du héros `slot` (même JSON que [`Self::inventory_json`]).
+    pub fn inventory_slot_json(&self, slot: usize) -> String {
+        match self.world.as_ref().and_then(|w| w.inventory_slot(slot)) {
+            Some(inv) => serde_json::to_string(inv).unwrap_or_else(|_| "[]".into()),
+            None => "[]".into(),
+        }
+    }
+
+    /// 3b : compétences du héros `slot` (même JSON que [`Self::hero_skills_json`]).
+    pub fn hero_skills_slot_json(&self, slot: usize) -> String {
+        match self.world.as_ref().and_then(|w| w.hero_skills_slot(slot)) {
+            Some(sk) => serde_json::to_string(
+                &sk.iter()
+                    .enumerate()
+                    .map(|(index, s)| {
+                        serde_json::json!({
+                            "index": index,
+                            "code": s.code,
+                            "name": s.code,
+                            "level": s.level,
+                            "missile": s.missile,
+                        })
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap_or_else(|_| "[]".into()),
+            None => "[]".into(),
+        }
+    }
+
+    /// 3b : sélection du skill actif du héros `slot` (false si hors bornes).
+    pub fn select_skill_slot(&mut self, slot: usize, index: usize) -> bool {
+        match self.world.as_mut() {
+            Some(w) => w.select_skill_slot(slot, index),
+            None => false,
         }
     }
 
@@ -1388,9 +1615,16 @@ impl GameCore {
     /// État d'animation du héros, JSON `{"anim":"RN","frame":3,"facing":6,
     /// "run":true,"moving":true}` — HUD course + captures E2E.
     pub fn hero_state_json(&self) -> String {
+        self.hero_state_slot_json(0)
+    }
+
+    /// 3b : état d'animation du héros `slot` (même JSON que
+    /// [`Self::hero_state_json`]). `{}` hors bornes.
+    pub fn hero_state_slot_json(&self, slot: usize) -> String {
         match self.world.as_ref() {
             Some(w) => {
-                let h = w.hero();
+                let Some(h) = w.hero_slot_ent(slot) else { return "{}".into() };
+                let h = *h;
                 let anim = match h.anim {
                     AnimState::NU => "NU",
                     AnimState::WL => "WL",
@@ -1409,16 +1643,58 @@ impl GameCore {
                     AnimState::A2 => "A2",
                 };
                 serde_json::json!({
+                    "slot": slot,
                     "anim": anim,
                     "frame": h.anim_frame,
                     "facing": h.facing,
-                    "run": w.hero_is_running(),
-                    "moving": w.hero_is_moving(),
+                    "x": h.x,
+                    "y": h.y,
+                    "run": w.hero_slot_running(slot).unwrap_or(false),
+                    "moving": w.hero_slot_moving(slot).unwrap_or(false),
                 })
                 .to_string()
             }
             None => "{}".into(),
         }
+    }
+
+    /// 3b : vue d'ensemble des héros (positions projetées + anims) — JSON
+    /// `[{slot,code,name,anim,frame,facing,x,y,sx,sy},…]` (sx/sy = px écran).
+    /// Consommé par l'E2E coop et l'UI (liste des héros du salon).
+    pub fn heroes_view_json(&self) -> String {
+        let Some(world) = self.world.as_ref() else { return "[]".into() };
+        let map = match self.map.as_ref() {
+            Some(m) => m,
+            None => return "[]".into(),
+        };
+        let list: Vec<Value> = (0..world.hero_count())
+            .filter_map(|slot| {
+                let h = *world.hero_slot_ent(slot)?;
+                let code = self.hero_code_for_slot(slot)?;
+                let name = self
+                    .manifest
+                    .pointer(&format!("/heroes/{code}/name"))
+                    .and_then(|n| n.as_str())
+                    .unwrap_or(&code)
+                    .to_string();
+                let (sx, sy) = map.sub_to_screen(h.x, h.y);
+                let anim = match h.anim {
+                    AnimState::NU => "NU",
+                    AnimState::WL => "WL",
+                    AnimState::RN => "RN",
+                    AnimState::A1 => "A1",
+                    AnimState::DD => "DD",
+                    AnimState::SC => "SC",
+                    _ => "S?",
+                };
+                Some(serde_json::json!({
+                    "slot": slot, "code": code, "name": name,
+                    "anim": anim, "frame": h.anim_frame, "facing": h.facing,
+                    "x": h.x, "y": h.y, "sx": sx - self.cam_x, "sy": sy - self.cam_y,
+                }))
+            })
+            .collect();
+        serde_json::to_string(&list).unwrap_or_else(|_| "[]".into())
     }
 
     /// Modes d'animation sautés (fichiers absents au manifest) — visibilité
@@ -1850,14 +2126,233 @@ impl GameCore {
     /// recharge le niveau cible immédiatement (transfert du héros) et émet
     /// `LevelSwitch` (HUD/fondu côté page) — ou `LevelSwitchFailed`.
     pub fn tick(&mut self, dt_ms: u32, input: Option<PlayerInput>) -> Vec<CoreEvent> {
-        let mut events: Vec<CoreEvent> = self
+        self.tick_routed(dt_ms, input.map(|i| (0usize, i)).into_iter().collect())
+    }
+
+    /// 3b (coop) : un pas de simulation avec l'entrée routée au héros `slot`
+    /// (slot 0 = héros historique). Mêmes événements JSON que [`Self::tick`].
+    pub fn tick_slot(&mut self, dt_ms: u32, slot: usize, input: Option<PlayerInput>) -> Vec<CoreEvent> {
+        self.tick_routed(dt_ms, input.map(|i| (slot, i)).into_iter().collect())
+    }
+
+    // ------------------------------------------------------------------
+    // 3b (coop) — file d'entrées PAR SLOT (le chemin lockstep attendu) et
+    // survol allié (barre de vie)
+    // ------------------------------------------------------------------
+
+    /// 3b (coop lockstep) : empile une entrée pour le héros `slot` (file
+    /// PAR SLOT, au lieu du héros unique). L'ordre d'arrivée inter-slots
+    /// est sans incidence : [`Self::tick_queued`] consomme toujours les
+    /// slots croissants, FIFO par slot. Sans effet tant que `tick_queued`
+    /// n'est pas appelé (la file n'a aucun effet de bord).
+    pub fn queue_input(&mut self, slot: usize, input: PlayerInput) {
+        self.input_queues.entry(slot).or_default().push_back(input);
+    }
+
+    /// Entrées empilées non consommées (tous slots confondus) — diagnostic/E2E.
+    pub fn queued_inputs(&self) -> usize {
+        self.input_queues.values().map(|q| q.len()).sum()
+    }
+
+    /// 3c (coop lockstep) : demande le DÉPART du héros `slot` — mise en
+    /// file, appliquée au prochain tick (`tick`/`tick_slot`/`tick_queued`
+    /// partagent `tick_routed`) par [`World::remove_player`] : compaction
+    /// déterministe des slots (les supérieurs décalent), sets de sprites
+    /// et demandes de héros remappés à l'identique, event `HeroLeft` émis.
+    /// Tous les clients lockstep reçoivent la demande par le MÊME bundle ⇒
+    /// retrait au MÊME tick, mondes toujours identiques bit-exact. Sans
+    /// effet si le slot est hors monde au moment de l'application (jamais
+    /// de panique réseau). Le slot 0 (socle historique) est refusé par le
+    /// monde — identique chez tous.
+    pub fn queue_leave(&mut self, slot: usize) {
+        if !self.pending_leaves.contains(&slot) {
+            self.pending_leaves.push(slot);
+        }
+    }
+
+    /// 3c : après la compaction du monde (`remove_player(slot)`), aligne les
+    /// états PAR SLOT du moteur sur la nouvelle numérotation — à l'identique
+    /// chez tous les clients lockstep (la compaction du monde est déjà
+    /// déterministe ; les suivantes doivent l'être tout autant) :
+    /// - `hero_requests` (codes demandés par slot — `finalize`/`load_level`
+    ///   y reviennent : sans compaction, un changement de niveau
+    ///   RÉ-ajouterait le héros parti) ;
+    /// - sets de sprites `"heroN"` / `"heroN:TAG"` (le héros ex-slot N+1
+    ///   dessine avec le set de SON nouveau slot — sinon les classes
+    ///   échangeraient leurs sprites à l'écran) ;
+    /// - caméra (présentation seule) : elle suit le MÊME héros.
+    fn compact_after_leave(&mut self, removed: usize) {
+        if removed < self.hero_requests.len() {
+            self.hero_requests.remove(removed);
+        }
+        Self::compact_hero_sprite_sets(&mut self.sprites, removed);
+        if self.cam_slot > removed {
+            self.cam_slot -= 1;
+        }
+    }
+
+    /// 3c : renomme les sets de sprites de héros après compaction — clés
+    /// concernées `"heroN"` et `"heroN:TAG"` (N ≥ 1, N > slot retiré → N-1).
+    /// `"hero"`, `"hero:TAG"` (slot 0) et tout le reste (monstres…) restent
+    /// en place. Retrait du set du partant d'abord, décalage ascendant ensu-
+    /// ite (chaque destination vient d'être libérée — aucune collision).
+    fn compact_hero_sprite_sets(sprites: &mut BTreeMap<String, SpriteSet>, removed: usize) {
+        // "hero" → None ; "hero:WL" → None (numéro absent) ; "hero1" /
+        // "hero2:A1" → Some(1) / Some(2).
+        let hero_num = |k: &str| -> Option<usize> {
+            let rest = k.strip_prefix("hero")?;
+            match rest.split_once(':') {
+                Some((n, _tag)) => n.parse::<usize>().ok(),
+                None => rest.parse::<usize>().ok(),
+            }
+        };
+        // 1. sets du partant ("hero{removed}", "hero{removed}:TAG") dehors.
+        sprites.remove(&format!("hero{removed}"));
+        let prefix = format!("hero{removed}:");
+        for t in sprites.keys().filter(|k| k.starts_with(&prefix)).cloned().collect::<Vec<_>>() {
+            sprites.remove(&t);
+        }
+        // 2. décalage ascendant des slots supérieurs (destinations libérées).
+        let mut nums: Vec<usize> = sprites
+            .keys()
+            .filter_map(|k| hero_num(k))
+            .filter(|n| *n > removed)
+            .collect();
+        nums.sort_unstable();
+        nums.dedup();
+        for n in nums {
+            for key in sprites
+                .keys()
+                .filter(|k| hero_num(k) == Some(n))
+                .cloned()
+                .collect::<Vec<_>>()
+            {
+                if let Some(set) = sprites.remove(&key) {
+                    let new_key = match key.split_once(':') {
+                        Some((_n, tag)) => format!("hero{}:{tag}", n - 1),
+                        None => format!("hero{}", n - 1),
+                    };
+                    sprites.insert(new_key, set);
+                }
+            }
+        }
+    }
+
+    /// 3b (coop lockstep) : un pas de simulation consommant TOUTES les
+    /// files (slots croissants, FIFO par slot) avec UN SEUL dt — chaque
+    /// client traite le même bundle ⇒ le même tableau `(slot, entrée)`
+    /// (contrat [`World::tick_inputs`], déterminisme lockstep). Retour :
+    /// mêmes événements que [`Self::tick`].
+    pub fn tick_queued(&mut self, dt_ms: u32) -> Vec<CoreEvent> {
+        let mut buf: Vec<(usize, PlayerInput)> = Vec::new();
+        for (slot, q) in self.input_queues.iter_mut() {
+            buf.extend(q.drain(..).map(|i| (*slot, i)));
+        }
+        self.tick_routed(dt_ms, buf)
+    }
+
+    /// 3b : survol page (px viewport) — arme la barre de vie allié du
+    /// rendu et la cible d'[`Self::ally_info_at_json`]. Présentation seule
+    /// (jamais dans la save, zéro impact déterministe).
+    pub fn set_pointer(&mut self, x: f32, y: f32) {
+        self.pointer = Some((x, y));
+    }
+
+    /// 3b : efface le survol (pointeur sorti du canvas / solo).
+    pub fn clear_pointer(&mut self) {
+        self.pointer = None;
+    }
+
+    /// Slot allié sous le pointeur page (px viewport) — le plus proche dans
+    /// [`ALLY_HOVER_RADIUS`] px, vivant et AUTRE que le héros suivi (ses
+    /// globes HUD suffisent). Règle « le héros le plus proche du pointeur
+    /// gagne » : si le héros caméra est plus près que tout allié, le survol
+    /// ne montre RIEN (survoler SON héros n'ouvre pas la fiche d'un allié
+    /// coincé à côté). Renvoie `(slot, sx, sy)` (pieds, viewport).
+    fn hovered_ally(&self) -> Option<(usize, f32, f32)> {
+        let (px, py) = self.pointer?;
+        let world = self.world.as_ref()?; // avant finalize : pas de survol
+        let dist_to = |slot: usize| -> Option<f32> {
+            let (sx, sy) = self.hero_screen_slot(slot);
+            sx.is_finite().then(|| ((sx - px) * (sx - px) + (sy - py) * (sy - py)).sqrt())
+        };
+        let mut best: Option<(usize, f32, f32, f32)> = None; // alliés vivants
+        let mut cam_d = f32::INFINITY; // distance au héros caméra
+        for slot in 0..world.hero_count() {
+            if world.hero_slot_dead(slot).unwrap_or(true) {
+                continue;
+            }
+            let Some(d) = dist_to(slot) else { continue };
+            if slot == self.cam_slot {
+                cam_d = d;
+                continue;
+            }
+            if d <= ALLY_HOVER_RADIUS && best.map(|b| d < b.3).unwrap_or(true) {
+                best = Some((slot, 0.0, 0.0, d));
+            }
+        }
+        // un allié seulement s'il est STRICTEMENT plus près que le héros caméra
+        let (slot, _, _, d) = best?;
+        (d < cam_d).then(|| {
+            let (sx, sy) = self.hero_screen_slot(slot);
+            (slot, sx, sy)
+        })
+    }
+
+    /// 3b : fiche de l'allié sous le pointeur (px viewport) — JSON
+    /// `{slot,code,name,hp,maxHp,level,x,y,sx,sy}` ou `null`. Contrat UI de
+    /// la barre de vie allié (dessinée par le rendu) ; lecteur E2E/probe.
+    pub fn ally_info_at_json(&self) -> String {
+        let Some((slot, sx, sy)) = self.hovered_ally() else { return "null".into() };
+        let world = self.world.as_ref().expect("finalize first");
+        let h = *world.hero_slot_ent(slot).expect("slot vivant");
+        let stats = world.hero_stats_slot(slot).expect("slot vivant");
+        let code = self.hero_code_for_slot(slot).unwrap_or_default();
+        let name = self
+            .manifest
+            .pointer(&format!("/heroes/{code}/name"))
+            .and_then(|n| n.as_str())
+            .unwrap_or(&code);
+        let obj = serde_json::json!({
+            "slot": slot, "code": code, "name": name,
+            "hp": stats.life, "maxHp": stats.max_life, "level": stats.level,
+            "x": h.x, "y": h.y, "sx": sx, "sy": sy,
+        });
+        serde_json::to_string(&obj).unwrap_or_else(|_| "null".into())
+    }
+
+    /// Cœur du tick : `input_buf` = tableau `(slot, entrée)` éventuel. Tous
+    /// les chemins (mono-héros, tick_slot, tick_queued coop) partagent ce
+    /// corps.
+    fn tick_routed(&mut self, dt_ms: u32, input_buf: Vec<(usize, PlayerInput)>) -> Vec<CoreEvent> {
+        // 3c (coop) : départs EN FILE appliqués AU DÉBUT du tick — ordre
+        // DÉCROISSANT (la compaction de remove_player décale les slots
+        // supérieurs : retirer du plus haut d'abord garde chaque slot
+        // valide — deux départs dans le même bundle restent corrects).
+        // Tous les clients lockstep voient la même demande au même tick ⇒
+        // même retrait au même tick (zéro désync).
+        let mut events: Vec<CoreEvent> = Vec::new();
+        let mut leaves = std::mem::take(&mut self.pending_leaves);
+        leaves.sort_unstable_by(|a, b| b.cmp(a)); // décroissant, dédupliqué au push
+        for slot in leaves {
+            let removed = {
+                let w = self.world.as_mut().expect("finalize first");
+                w.remove_player(slot)
+            };
+            if removed {
+                self.compact_after_leave(slot);
+                events.push(CoreEvent::HeroLeft { slot });
+            }
+        }
+        let world_events: Vec<CoreEvent> = self
             .world
             .as_mut()
             .expect("finalize first")
-            .tick(dt_ms, input)
+            .tick_inputs(dt_ms, &input_buf)
             .into_iter()
             .map(CoreEvent::World)
             .collect();
+        events.extend(world_events);
         self.follow_camera();
 
         // d2rules retire les cadavres à la fin de l'anim DD (MonsterDied porte
@@ -1890,8 +2385,19 @@ impl GameCore {
         if self.warp_cd_ms > 0 {
             self.warp_cd_ms = self.warp_cd_ms.saturating_sub(dt_ms);
         } else if let Some(warp) = self.level.as_ref().and_then(|l| l.warp.clone()) {
-            let h = *self.world.as_ref().expect("finalize first").hero();
-            if (h.x - warp.at.0).hypot(h.y - warp.at.1) <= warp.r {
+            // 3b : UN HÉROS VIVANT quelconque dans le rayon déclenche le warp
+            // (tout le groupe change de zone — le tick est identique chez tous
+            // les clients lockstep). Mono-héros : flux historique inchangé.
+            let near = {
+                let w = self.world.as_ref().expect("finalize first");
+                (0..w.hero_count()).any(|s| {
+                    !w.hero_slot_dead(s).unwrap_or(true)
+                        && w.hero_slot_ent(s)
+                            .map(|h| (h.x - warp.at.0).hypot(h.y - warp.at.1) <= warp.r)
+                            .unwrap_or(false)
+                })
+            };
+            if near {
                 // Arrivée = point d'entrée du niveau DESTINATION (son propre
                 // `warp.entry`), repli : l'entrée du niveau courant.
                 let dest = self.resolve_level_def(&warp.to);
@@ -1914,8 +2420,11 @@ impl GameCore {
 
     fn follow_camera(&mut self) {
         // Absolute hero screen position (hero_screen() is viewport-relative).
+        // 3b : la caméra suit le slot verrouillé (`cam_slot` — SON héros chez
+        // chaque client online) ; hors bornes = slot 0 (historique).
         let map = self.map.as_ref().unwrap();
-        let h = *self.world.as_ref().unwrap().hero();
+        let world = self.world.as_ref().unwrap();
+        let h = *world.hero_slot_ent(self.cam_slot).unwrap_or_else(|| world.hero());
         let (sx, sy) = map.sub_to_screen(h.x, h.y);
         self.cam_x = (sx - self.vw as f32 / 2.0).clamp(0.0, (map.width - self.vw as usize) as f32);
         self.cam_y = (sy - self.vh as f32 / 2.0).clamp(0.0, (map.height - self.vh as usize) as f32);
@@ -1960,7 +2469,13 @@ impl GameCore {
         for (i, it) in world.items().iter().enumerate() {
             drawlist.push((it.y, DrawKind::Item(i)));
         }
-        drawlist.push((world.hero().y, DrawKind::Hero));
+        // 3b : TOUS les héros sont dessinés (slot 0 d'abord, ordre = slots —
+        // tri par y ensuite : le y-sort départage les superpositions).
+        for slot in 0..world.hero_count() {
+            if let Some(h) = world.hero_slot_ent(slot) {
+                drawlist.push((h.y, DrawKind::Hero(slot)));
+            }
+        }
 
         for (_, kind) in &drawlist {
             let (x, y) = self.entity_screen(*kind);
@@ -1970,9 +2485,13 @@ impl GameCore {
         drawlist.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
         for (_, kind) in &drawlist {
             match *kind {
-                DrawKind::Hero => {
-                    let h = *world.hero();
-                    self.blit_entity(&mut fb, vw, vh, "hero", &h, None);
+                DrawKind::Hero(slot) => {
+                    // clé du set : "hero" (slot 0) / "heroN" (cohéros, 3b)
+                    let key = if slot == 0 { "hero".to_string() } else { format!("hero{slot}") };
+                    if let Some(h) = world.hero_slot_ent(slot) {
+                        let h = *h;
+                        self.blit_entity(&mut fb, vw, vh, &key, &h, None);
+                    }
                 }
                 DrawKind::Monster(i) => {
                     let m = world.monsters()[i];
@@ -1992,6 +2511,22 @@ impl GameCore {
         // simplified Go renderer.go:231-358 passes 2/3: entities behind,
         // then tall walls; entities in front keep only the y-sort).
         blit_index_layer(&mut fb, vw, vh, self.cam_x, self.cam_y, &map.overlay, map.width, &lut);
+
+        // 3b : barre de vie de l'allié survolé (sur `setPointer`) — dessinée
+        // APRÈS l'overlay : c'est une UI, jamais masquée par un mur. Elle ne
+        // touche que le framebuffer (présentation) : ni la save ni le hash
+        // lockstep n'en dépendent.
+        if let Some((slot, sx, sy)) = self.hovered_ally() {
+            let world = self.world.as_ref().unwrap();
+            if let Some(stats) = world.hero_stats_slot(slot) {
+                let frac = if stats.max_life > 0 {
+                    (stats.life as f32 / stats.max_life as f32).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+                health_bar(&mut fb, vw, vh, sx, sy - ALLY_BAR_LIFT + ALLY_BAR_H, frac);
+            }
+        }
 
         self.fb = fb;
         &self.fb
@@ -2016,7 +2551,7 @@ impl GameCore {
         let world = self.world.as_ref().unwrap();
         let map = self.map.as_ref().unwrap();
         let e = match kind {
-            DrawKind::Hero => world.hero(),
+            DrawKind::Hero(slot) => world.hero_slot_ent(slot).unwrap_or_else(|| world.hero()),
             DrawKind::Monster(i) => &world.monsters()[i],
             DrawKind::Item(i) => {
                 let it = &world.items()[i];
@@ -2096,7 +2631,8 @@ fn monster_tint(kind: MonKind) -> Option<[f32; 3]> {
 
 #[derive(Debug, Clone, Copy)]
 enum DrawKind {
-    Hero,
+    /// Héros du slot `usize` (0 = historique "hero", 1.. = "heroN" — 3b coop).
+    Hero(usize),
     Monster(usize),
     Item(usize),
 }
@@ -2214,13 +2750,16 @@ fn patch_save_for_level(
     level_key: &str,
 ) -> Result<World, String> {
     let mut v: Value = serde_json::from_str(save_json).map_err(|e| format!("save: {e}"))?;
-    // v3 = format courant (clé de niveau) ; v2/v1 = rétro-compat (d2rules::save
-    // charge les trois). Les champs patchés ci-dessous existent dans les trois
-    // — seul le numéro de version fait barrière ici.
+    // v4 = format courant (players[], 3b-1) ; v3 = clé de niveau ; v1/v2 =
+    // rétro-compat (d2rules::save charge les quatre). Les champs patchés
+    // ci-dessous existent dans tous — v1-v3 sous `hero`, v4 sous
+    // `players[0]` (slot 0 = héros historique). Seul le numéro de version
+    // fait barrière ici.
     let ver = v.get("version").and_then(|x| x.as_u64());
-    if ver != Some(1) && ver != Some(2) && ver != Some(3) {
+    if ver != Some(1) && ver != Some(2) && ver != Some(3) && ver != Some(4) {
         return Err(format!("save: version inattendue {:?}", v.get("version")));
     }
+    // Racine des champs du héros : players[0] en v4, `hero` avant.
     // Grille : '1' marchable / '0' bloqué (convention save d2rules).
     let rows: Vec<String> = blocked
         .iter()
@@ -2231,21 +2770,26 @@ fn patch_save_for_level(
     v["items"] = Value::Array(Vec::new());
     // La sauvegarde suit le héros : le niveau patché devient LE niveau du save.
     v["level"] = serde_json::json!(level_key);
+    let hero_v = match ver {
+        Some(4) => v.pointer_mut("/players/0"),
+        _ => v.get_mut("hero"),
+    }
+    .ok_or_else(|| "save: héros slot 0 absent".to_string())?;
     if let Some((x, y)) = spawn {
-        v["hero"]["ent"]["x"] = serde_json::json!(x);
-        v["hero"]["ent"]["y"] = serde_json::json!(y);
-        v["hero"]["ent"]["facing"] = serde_json::json!(0);
-        v["hero"]["ent"]["anim"] = serde_json::json!("NU");
-        v["hero"]["ent"]["anim_frame"] = serde_json::json!(0);
-        v["hero"]["path"] = serde_json::json!([]);
-        v["hero"]["spawn"] = serde_json::json!([x, y]);
+        hero_v["ent"]["x"] = serde_json::json!(x);
+        hero_v["ent"]["y"] = serde_json::json!(y);
+        hero_v["ent"]["facing"] = serde_json::json!(0);
+        hero_v["ent"]["anim"] = serde_json::json!("NU");
+        hero_v["ent"]["anim_frame"] = serde_json::json!(0);
+        hero_v["path"] = serde_json::json!([]);
+        hero_v["spawn"] = serde_json::json!([x, y]);
     }
     // Mort en cours au moment du warp : le changement de niveau relève le
     // héros (pleine vie) — il renaît à l'entrée du niveau cible.
-    v["hero"]["dead_ms"] = serde_json::json!(0);
-    if v.pointer("/hero/stats/life").and_then(|l| l.as_u64()) == Some(0) {
-        let max = v.pointer("/hero/stats/max_life").cloned().unwrap_or(serde_json::json!(55));
-        v["hero"]["stats"]["life"] = max;
+    hero_v["dead_ms"] = serde_json::json!(0);
+    if hero_v.pointer("/stats/life").and_then(|l| l.as_u64()) == Some(0) {
+        let max = hero_v.pointer("/stats/max_life").cloned().unwrap_or(serde_json::json!(55));
+        hero_v["stats"]["life"] = max;
     }
     World::load(&v.to_string()).map_err(|()| "save patché rejeté par d2rules".to_string())
 }
@@ -2530,6 +3074,39 @@ fn item_marker(fb: &mut [u8], vw: usize, vh: usize, sx: f32, sy: f32) {
     }
 }
 
+/// 3b : barre de vie d'un allié (survol) — cadre noir 1 px, fond sombre,
+/// remplissage rouge proportionnel à la vie (`frac` 0..1), bord inférieur à
+/// `bottom`, centrée sur `cx`. Présentation seule : dessinée opaque par-dessus
+/// l'overlay, n'affecte ni la save ni le déterminisme lockstep.
+fn health_bar(fb: &mut [u8], vw: usize, vh: usize, cx: f32, bottom: f32, frac: f32) {
+    let w = ALLY_BAR_W.round() as i32;
+    let h = ALLY_BAR_H.round() as i32;
+    let x0 = (cx - ALLY_BAR_W / 2.0).round() as i32;
+    let y0 = (bottom - ALLY_BAR_H).round() as i32;
+    let fill = ((w as f32) * frac).round() as i32;
+    for yy in -1..=h {
+        for xx in -1..=w {
+            let (x, y) = (x0 + xx, y0 + yy);
+            if x < 0 || y < 0 || x as usize >= vw || y as usize >= vh {
+                continue;
+            }
+            let inside = (0..w).contains(&xx) && (0..h).contains(&yy);
+            let (r, g, b) = if !inside {
+                (0, 0, 0) // cadre
+            } else if xx < fill {
+                (200, 24, 24) // vie
+            } else {
+                (44, 12, 12) // fond
+            };
+            let di = (y as usize * vw + x as usize) * 4;
+            fb[di] = r;
+            fb[di + 1] = g;
+            fb[di + 2] = b;
+            fb[di + 3] = 255;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2760,6 +3337,427 @@ mod tests {
             provide_anim_block(&mut g, root, &mon["walk"]);
         }
         (g, m)
+    }
+
+    // =====================================================================
+    // 3b (coop multi-héros) — file d'entrées PAR SLOT, caméra par slot,
+    // rendu des cohéros + barre de vie allié, grand E2E 2 slots.
+    // =====================================================================
+
+    /// Fournit niveau + anims de marche des héros `codes` (un set par slot :
+    /// "hero", "hero1"…) et des monstres — pattern `full_ba_game` en coop.
+    fn full_coop_game(root: &str, heroes: &[&str]) -> GameCore {
+        let m: Value = serde_json::from_str(
+            &std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap(),
+        )
+        .unwrap();
+        let mut g = GameCore::with_level_coop(&m.to_string(), &serde_json::json!(heroes).to_string(), "town")
+            .unwrap();
+        g.provide(
+            m.pointer("/level/palette").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/palette").unwrap().as_str().unwrap())).unwrap(),
+        );
+        g.provide(
+            m.pointer("/level/ds1").unwrap().as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", m.pointer("/level/ds1").unwrap().as_str().unwrap())).unwrap(),
+        );
+        for p in m.pointer("/level/dt1").unwrap().as_array().unwrap() {
+            let p = p.as_str().unwrap();
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        for code in heroes {
+            let resolved = d2rules::resolve_hero_code(&m, code);
+            if let Some(walk) = m.pointer(&format!("/heroes/{resolved}/walk")) {
+                provide_anim_block(&mut g, root, walk);
+            }
+        }
+        for mon in m.get("monsters").unwrap().as_array().unwrap() {
+            provide_anim_block(&mut g, root, &mon["walk"]);
+        }
+        g
+    }
+
+    /// Position monde du héros `slot` (lecture directe du monde de test).
+    fn hero_pos(g: &GameCore, slot: usize) -> (f32, f32) {
+        let e = g.world.as_ref().unwrap().hero_slot_ent(slot).expect("slot existe");
+        (e.x, e.y)
+    }
+
+    #[test]
+    fn coop_queue_per_slot_moves_each_hero() {
+        // File PAR SLOT : chaque entrée empilée arrive à SON héros (au lieu
+        // du héros unique) — slot 0 va à l'est, slot 1 au sud.
+        let Some(root) = ws_root() else { return };
+        let mut g = full_coop_game(&root, &["BA", "SOR"]);
+        g.finalize().unwrap();
+        let codes: Vec<String> =
+            serde_json::from_str::<Vec<Value>>(&g.heroes_json()).unwrap().iter().map(|h| h["code"].as_str().unwrap().to_string()).collect();
+        assert_eq!(codes, vec!["BA".to_string(), "SOR".to_string()], "un héros par slot");
+        let p0 = hero_pos(&g, 0);
+        let p1 = hero_pos(&g, 1);
+        for _ in 0..30 {
+            let (x0, y0) = hero_pos(&g, 0);
+            let (x1, y1) = hero_pos(&g, 1);
+            g.queue_input(0, PlayerInput::MoveTo { x: x0 as i32 + 3, y: y0 as i32 });
+            g.queue_input(1, PlayerInput::MoveTo { x: x1 as i32, y: y1 as i32 + 3 });
+            assert_eq!(g.queued_inputs(), 2, "2 files en attente avant le tick");
+            g.tick_queued(50);
+        }
+        let q0 = hero_pos(&g, 0);
+        let q1 = hero_pos(&g, 1);
+        assert!(q0.0 - p0.0 > 2.0, "héros slot 0 déplacé à l'est : {p0:?} → {q0:?}");
+        assert!(q1.1 - p1.1 > 2.0, "héros slot 1 déplacé au sud : {p1:?} → {q1:?}");
+        assert_eq!(g.queued_inputs(), 0, "files consommées");
+    }
+
+    #[test]
+    fn coop_tick_queued_is_slot_order_insensitive() {
+        // Déterminisme lockstep : l'ordre d'ARRIVÉE des entrées (slot 1
+        // d'abord ou slot 0 d'abord) est sans incidence — le drain est
+        // toujours slots croissants ⇒ états finaux identiques bit-exact.
+        let Some(root) = ws_root() else { return };
+        let run = |reverse: bool| {
+            let mut g = full_coop_game(&root, &["BA", "SOR"]);
+            g.finalize().unwrap();
+            for t in 0..12 {
+                let (x0, y0) = hero_pos(&g, 0);
+                let (x1, y1) = hero_pos(&g, 1);
+                let inputs = [
+                    (0usize, PlayerInput::MoveTo { x: x0 as i32 + 2, y: y0 as i32 + (t % 3) }),
+                    (1usize, PlayerInput::MoveTo { x: x1 as i32 - (t % 2), y: y1 as i32 + 2 }),
+                ];
+                let ordered: Vec<(usize, PlayerInput)> =
+                    if reverse { inputs.iter().rev().copied().collect() } else { inputs.to_vec() };
+                for (slot, input) in ordered {
+                    g.queue_input(slot, input);
+                }
+                g.tick_queued(50);
+            }
+            g.save_world()
+        };
+        assert_eq!(run(false), run(true), "ordre d'arrivée inter-slots sans incidence");
+    }
+
+    #[test]
+    fn coop_queue_out_of_bounds_slot_ignored() {
+        // Un slot inconnu (jamais de panique réseau) : l'entrée est jetée au
+        // drain (contrat World::tick_inputs) — aucun effet sur les héros ;
+        // le slot 0 valide reste traité (SetRun pris en compte). NB : la
+        // comparaison de save brute n'est pas un bon oracle ici (les timers
+        // NPC/patrouilles évoluent à chaque tick, save v4 players[]), on
+        // asserte l'immobilité des héros.
+        let Some(root) = ws_root() else { return };
+        let mut g = full_coop_game(&root, &["BA", "SOR"]);
+        g.finalize().unwrap();
+        let p0 = hero_pos(&g, 0);
+        let p1 = hero_pos(&g, 1);
+        g.queue_input(7, PlayerInput::MoveTo { x: 10, y: 10 });
+        g.queue_input(0, PlayerInput::SetRun(true));
+        assert_eq!(g.queued_inputs(), 2);
+        g.tick_queued(50);
+        assert_eq!(g.queued_inputs(), 0, "files consommées");
+        assert_eq!(g.world.as_ref().unwrap().hero_count(), 2, "le monde est intact");
+        assert_eq!(hero_pos(&g, 0), p0, "SetRun ne déplace pas (slot 0 traité sans move)");
+        assert_eq!(hero_pos(&g, 1), p1, "slot 7 hors monde : aucune entrée appliquée");
+        assert!(g.world.as_ref().unwrap().hero_slot_running(0).unwrap_or(false), "SetRun du slot 0 pris en compte");
+    }
+
+    #[test]
+    fn coop_solo_equivalent_to_with_level() {
+        // Rétro-compat totale : with_level_coop à UN héros == with_level
+        // (même monde, même rendu, octet pour octet).
+        let Some(root) = ws_root() else { return };
+        let m: Value = serde_json::from_str(&std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap())
+            .unwrap();
+        let mut solo = GameCore::with_level(&m.to_string(), "BA", "town").unwrap();
+        let mut un = full_coop_game(&root, &["BA"]);
+        for g in [&mut solo, &mut un] {
+            g.provide(
+                m.pointer("/level/palette").unwrap().as_str().unwrap(),
+                std::fs::read(format!("{root}/{}", m.pointer("/level/palette").unwrap().as_str().unwrap())).unwrap(),
+            );
+            g.provide(
+                m.pointer("/level/ds1").unwrap().as_str().unwrap(),
+                std::fs::read(format!("{root}/{}", m.pointer("/level/ds1").unwrap().as_str().unwrap())).unwrap(),
+            );
+            for p in m.pointer("/level/dt1").unwrap().as_array().unwrap() {
+                let p = p.as_str().unwrap();
+                g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+            }
+            provide_anim_block(g, &root, &m["heroes"]["BA"]["walk"]);
+            for mon in m.get("monsters").unwrap().as_array().unwrap() {
+                provide_anim_block(g, &root, &mon["walk"]);
+            }
+            g.finalize().unwrap();
+        }
+        for t in 0..10 {
+            solo.queue_input(0, PlayerInput::MoveTo { x: 24 + (t % 5) as i32, y: 20 + (t % 3) as i32 });
+            un.queue_input(0, PlayerInput::MoveTo { x: 24 + (t % 5) as i32, y: 20 + (t % 3) as i32 });
+            solo.tick_queued(50);
+            un.tick_queued(50);
+        }
+        assert_eq!(solo.save_world(), un.save_world(), "1 slot coop == solo (save)");
+        assert_eq!(solo.render(), un.render(), "1 slot coop == solo (pixels)");
+    }
+
+    #[test]
+    fn e2e_coop_2_slots_mirror_worlds_pixel_exact() {
+        // LE grand E2E logique 2 slots : deux « clients » (A caméra slot 0,
+        // B caméra slot 1), DEUX files d'entrées → DEUX héros actifs, et
+        // des mondes identiques AU PIXEL des deux côtés (lockstep).
+        let Some(root) = ws_root() else { return };
+        let mut a = full_coop_game(&root, &["BA", "SOR"]);
+        let mut b = full_coop_game(&root, &["BA", "SOR"]);
+        a.finalize().unwrap();
+        b.finalize().unwrap();
+        // Chaque client suit le héros de SON slot (variable locale — la
+        // caméra n'a aucune incidence déterministe).
+        a.set_camera_slot(0);
+        b.set_camera_slot(1);
+        assert_eq!(a.camera_slot(), 0);
+        assert_eq!(b.camera_slot(), 1);
+        let start0 = hero_pos(&a, 0);
+        let start1 = hero_pos(&a, 1);
+        assert_eq!(hero_pos(&b, 0), start0, "mondes initiaux identiques");
+        assert_eq!(hero_pos(&b, 1), start1, "mondes initiaux identiques");
+
+        // Scénario lockstep : le MÊME bundle d'entrées chez les deux clients
+        // (slot 0 file vers l'est, slot 1 file vers le sud).
+        for t in 0..40i32 {
+            let (x0, y0) = hero_pos(&a, 0);
+            let (x1, y1) = hero_pos(&a, 1);
+            let inputs = [
+                (0usize, PlayerInput::MoveTo { x: x0 as i32 + 3, y: y0 as i32 + t % 2 }),
+                (1usize, PlayerInput::MoveTo { x: x1 as i32 + t % 2, y: y1 as i32 + 3 }),
+            ];
+            for (slot, input) in inputs {
+                a.queue_input(slot, input);
+                b.queue_input(slot, input);
+            }
+            let ea = a.tick_queued(50);
+            let eb = b.tick_queued(50);
+            assert_eq!(ea.len(), eb.len(), "mêmes événements des deux côtés");
+            assert_eq!(a.save_world(), b.save_world(), "mondes identiques au tick {t}");
+        }
+
+        // 2 héros actifs : CHACUN a bougé dans SA direction (files séparées).
+        let end0 = hero_pos(&a, 0);
+        let end1 = hero_pos(&a, 1);
+        assert!(end0.0 - start0.0 > 2.0, "héros slot 0 actif (est) : {start0:?} → {end0:?}");
+        assert!(end1.1 - start1.1 > 2.0, "héros slot 1 actif (sud) : {start1:?} → {end1:?}");
+
+        // Identique AU PIXEL : mêmes caméras ⇒ mêmes framebuffers (et même
+        // vue héros — heroes_view porte les coords ÉCRAN, locales à la
+        // caméra ; c'est justement pour ça que les clients suivent SON slot
+        // sans jamais désynchroniser le monde).
+        a.set_camera_slot(1);
+        assert_eq!(a.heroes_view_json(), b.heroes_view_json());
+        let fa = a.render().to_vec();
+        let fb = b.render().to_vec();
+        assert_eq!(fa.len(), fb.len());
+        assert_eq!(fa, fb, "rendu identique au pixel (même caméra slot 1)");
+        // Caméra locale : suivre SON slot donne une vue DIFFÉRENTE (aucun
+        // impact sur le monde — la save ci-dessus en est la preuve).
+        a.set_camera_slot(0);
+        assert_ne!(a.render().to_vec(), fa, "chaque client suit SON héros");
+    }
+
+    #[test]
+    fn e2e_coop_leave_in_game_removes_hero_and_stays_locked() {
+        // LE grand E2E logique 3c — mission : 2 slots salon → start → jeu
+        // avec 2 héros → un slot leave EN JEU → son héros est retiré
+        // PROPREMENT et le lockstep reste vert. Déroulé : deux « clients »
+        // simulent le même monde ; au tick 10 le relais injecte
+        // {type:"leave"} dans le flux du slot 1 (déconnexion) — les deux
+        // clients exécutent removePlayer(1) au MÊME tick (compaction) ;
+        // les ticks suivants prouvent que le monde reste identique bit-exact.
+        let Some(root) = ws_root() else { return };
+        let mut a = full_coop_game(&root, &["BA", "SOR"]);
+        let mut b = full_coop_game(&root, &["BA", "SOR"]);
+        a.finalize().unwrap();
+        b.finalize().unwrap();
+        a.set_camera_slot(0);
+        b.set_camera_slot(1);
+
+        // 10 ticks de jeu normal : 2 héros actifs, mondes identiques.
+        for t in 0..10i32 {
+            let (x0, y0) = hero_pos(&a, 0);
+            let (x1, y1) = hero_pos(&a, 1);
+            let inputs = [
+                (0usize, PlayerInput::MoveTo { x: x0 as i32 + 3, y: y0 as i32 }),
+                (1usize, PlayerInput::MoveTo { x: x1 as i32, y: y1 as i32 + 3 }),
+            ];
+            for (slot, input) in inputs {
+                a.queue_input(slot, input);
+                b.queue_input(slot, input);
+            }
+            a.tick_queued(50);
+            b.tick_queued(50);
+            assert_eq!(a.save_world(), b.save_world(), "mondes identiques avant le départ (tick {t})");
+        }
+        assert_eq!(a.world.as_ref().unwrap().hero_count(), 2, "2 héros en jeu");
+
+        // LE DÉPART : le relais transporte {type:"leave"} pour le slot 1 →
+        // chaque client met le retrait en file (removePlayer) et UN tick
+        // l'applique (compaction, event HeroLeft des deux côtés).
+        a.queue_leave(1);
+        b.queue_leave(1);
+        let ea = a.tick_queued(50);
+        let eb = b.tick_queued(50);
+        assert!(ea.iter().any(|e| matches!(e, CoreEvent::HeroLeft { slot: 1 })), "event HeroLeft côté A : {ea:?}");
+        assert!(eb.iter().any(|e| matches!(e, CoreEvent::HeroLeft { slot: 1 })), "event HeroLeft côté B : {eb:?}");
+        assert_eq!(a.world.as_ref().unwrap().hero_count(), 1, "le partant est retiré (A)");
+        assert_eq!(b.world.as_ref().unwrap().hero_count(), 1, "le partant est retiré (B)");
+        assert_eq!(
+            a.world.as_ref().unwrap().hero_code_slot(0).map(|s| s.to_string()),
+            Some("BA".into()),
+            "l'hôte (slot 0) reste"
+        );
+        assert_eq!(a.save_world(), b.save_world(), "mondes identiques au tick du départ");
+        assert!(a.hero_requests.len() == 1, "hero_requests compacté (pas de résurrection au prochain niveau)");
+
+        // APRÈS le départ : le jeu continue — le lockstep reste bit-exact.
+        for t in 0..10i32 {
+            let (x0, y0) = hero_pos(&a, 0);
+            let input = PlayerInput::MoveTo { x: x0 as i32 + 2, y: y0 as i32 + t % 2 };
+            a.queue_input(0, input);
+            b.queue_input(0, input); // le bundle de A est diffusé à B aussi
+            a.tick_queued(50);
+            b.tick_queued(50);
+            assert_eq!(a.save_world(), b.save_world(), "mondes identiques après le départ (tick {t})");
+        }
+        // Le set de sprites du partant est parti (pas de sprite fantôme).
+        assert!(!a.sprites.contains_key("hero1"), "set du partant retiré");
+    }
+
+    #[test]
+    fn coop_leave_compacts_slots_sprites_and_requests() {
+        // 3 héros (BA/SOR/PA), le slot 1 part : le PA (ex-slot 2) devient
+        // slot 1 — ses ENTRÉES suivent la compaction (un MoveTo au slot 1
+        // déplace le PA), son set de sprites aussi (hero2 → hero1), et
+        // hero_requests ne le ré-ajoutera pas au prochain niveau.
+        let Some(root) = ws_root() else { return };
+        let mut g = full_coop_game(&root, &["BA", "SOR", "PA"]);
+        g.finalize().unwrap();
+        assert_eq!(g.world.as_ref().unwrap().hero_count(), 3);
+        assert!(g.sprites.contains_key("hero2"), "set du slot 2 présent avant");
+        let codes: Vec<String> = serde_json::from_str::<Vec<Value>>(&g.heroes_json())
+            .unwrap()
+            .iter()
+            .map(|h| h["code"].as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(codes, vec!["BA".to_string(), "SOR".to_string(), "PA".to_string()]);
+
+        g.queue_leave(1);
+        let evs = g.tick_queued(50);
+        assert!(evs.iter().any(|e| matches!(e, CoreEvent::HeroLeft { slot: 1 })), "{evs:?}");
+        assert_eq!(g.world.as_ref().unwrap().hero_count(), 2);
+        let codes: Vec<String> = serde_json::from_str::<Vec<Value>>(&g.heroes_json())
+            .unwrap()
+            .iter()
+            .map(|h| h["code"].as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(codes, vec!["BA".to_string(), "PA".to_string()], "le PA a compacté au slot 1");
+        assert_eq!(g.hero_requests, vec!["BA".to_string(), "PA".to_string()], "demandes compactées");
+        assert!(g.sprites.contains_key("hero1"), "set décalé au slot 1");
+        assert!(!g.sprites.contains_key("hero2"), "plus de set au slot 2");
+
+        // La compaction ROUTE les entrées : un MoveTo au nouveau slot 1
+        // déplace le PA (ex-slot 2) — pas le BA resté au slot 0.
+        let p0 = hero_pos(&g, 0);
+        let p1 = hero_pos(&g, 1);
+        for _ in 0..30 {
+            let (x1, y1) = hero_pos(&g, 1);
+            g.queue_input(1, PlayerInput::MoveTo { x: x1 as i32, y: y1 as i32 + 3 });
+            g.tick_queued(50);
+        }
+        let q0 = hero_pos(&g, 0);
+        let q1 = hero_pos(&g, 1);
+        assert_eq!(q0, p0, "le BA (slot 0) n'a pas bougé");
+        assert!(q1.1 - p1.1 > 2.0, "le PA compacté (slot 1) suit SES entrées : {p1:?} → {q1:?}");
+    }
+
+    #[test]
+    fn coop_two_leaves_same_bundle_apply_cleanly() {
+        // Deux départs dans le MÊME bundle (slots 1 et 2) : application
+        // DÉCROISSANTE — chaque retrait part d'un monde où les slots sont
+        // encore valides (la compaction du premier n'écrase pas le second).
+        let Some(root) = ws_root() else { return };
+        let mut g = full_coop_game(&root, &["BA", "SOR", "PA"]);
+        g.finalize().unwrap();
+        g.queue_leave(1);
+        g.queue_leave(2);
+        g.queue_leave(1); // doublon : dédupliqué (un seul retrait par slot)
+        let evs = g.tick_queued(50);
+        let left: Vec<usize> = evs
+            .iter()
+            .filter_map(|e| match e {
+                CoreEvent::HeroLeft { slot } => Some(*slot),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(left.len(), 2, "deux HeroLeft (doublon ignoré) : {left:?}");
+        assert_eq!(g.world.as_ref().unwrap().hero_count(), 1, "il ne reste que l'hôte");
+        assert_eq!(hero_pos(&g, 0), hero_pos(&g, 0), "slot 0 intact");
+        assert!(g.world.as_ref().unwrap().hero_code_slot(0).is_some());
+        // Le monde reste jouable : encore 10 ticks sans panique.
+        for _ in 0..10 {
+            g.tick_queued(50);
+        }
+        assert_eq!(g.world.as_ref().unwrap().hero_count(), 1);
+    }
+
+    #[test]
+    fn coop_leave_slot0_refused_identically_everywhere() {
+        // Le slot 0 (socle historique) n'est pas retirable : remove_player
+        // refuse — le refus est IDENTIQUE chez tous les clients (aucune
+        // divergence possible sur un départ de l'hôte).
+        let Some(root) = ws_root() else { return };
+        let mut a = full_coop_game(&root, &["BA", "SOR"]);
+        let mut b = full_coop_game(&root, &["BA", "SOR"]);
+        a.finalize().unwrap();
+        b.finalize().unwrap();
+        a.queue_leave(0);
+        b.queue_leave(0);
+        let ea = a.tick_queued(50);
+        let eb = b.tick_queued(50);
+        assert!(!ea.iter().any(|e| matches!(e, CoreEvent::HeroLeft { .. })), "aucun HeroLeft (refus) : {ea:?}");
+        assert!(!eb.iter().any(|e| matches!(e, CoreEvent::HeroLeft { .. })));
+        assert_eq!(a.world.as_ref().unwrap().hero_count(), 2, "monde intact");
+        assert_eq!(b.world.as_ref().unwrap().hero_count(), 2, "monde intact");
+        assert_eq!(a.save_world(), b.save_world(), "refus identique ⇒ mondes identiques");
+        // Et une demande hors monde (slot fantôme) est tout aussi inerte.
+        a.queue_leave(9);
+        let e2 = a.tick_queued(50);
+        assert!(!e2.iter().any(|e| matches!(e, CoreEvent::HeroLeft { .. })));
+    }
+
+    #[test]
+    fn coop_ally_hover_bar_and_info() {
+        // Barre de vie allié au survol : le pointeur sur l'allié (slot 1)
+        // arme le rendu (barre dessinée) + ally_info ; hors survol → null,
+        // rendu inchangé. Le héros de la caméra (slot 0) n'est jamais la
+        // cible (ses globes HUD suffisent).
+        let Some(root) = ws_root() else { return };
+        let mut g = full_coop_game(&root, &["BA", "SOR"]);
+        g.finalize().unwrap();
+        let clean = g.render().to_vec();
+        let (sx, sy) = g.hero_screen_slot(1);
+        assert!(sx.is_finite(), "slot 1 projeté à l'écran");
+        g.set_pointer(sx, sy);
+        let info = g.ally_info_at_json();
+        assert!(info.contains("\"slot\":1"), "allié slot 1 visé : {info}");
+        assert!(info.contains("SOR"), "classe de l'allié : {info}");
+        assert!(info.contains("\"hp\"") && info.contains("\"maxHp\""), "vie de l'allié : {info}");
+        let hovered = g.render().to_vec();
+        assert_ne!(hovered, clean, "la barre de vie allié est dessinée");
+        g.clear_pointer();
+        assert_eq!(g.ally_info_at_json(), "null", "hors survol : pas d'allié");
+        assert_eq!(g.render().to_vec(), clean, "survol effacé : rendu d'origine");
+        // Survol du HÉROS caméra (slot 0) : PAS un allié — pas de barre.
+        let (hx, hy) = g.hero_screen_slot(0);
+        g.set_pointer(hx, hy);
+        assert_eq!(g.ally_info_at_json(), "null", "le héros suivi n'est pas un allié");
     }
 
     #[test]
@@ -3074,13 +4072,13 @@ mod tests {
     }
 
     #[test]
-    fn save_v3_keeps_level_key_across_switch_and_load_world() {
+    fn save_v4_keeps_level_key_across_switch_and_load_world() {
         let Some(root) = ws_root() else { return };
-        // --- town : save v3 portant la clé "town"
+        // --- town : save v4 (players[]) portant la clé "town"
         let mut g = full_game(MANIFEST, "town", &root);
         let save_town = g.save_world();
         let v: Value = serde_json::from_str(&save_town).unwrap();
-        assert_eq!(v["version"], serde_json::json!(3), "format courant v3");
+        assert_eq!(v["version"], serde_json::json!(4), "format courant v4 (players[], 3b-1)");
         assert_eq!(v["level"], serde_json::json!("town"));
 
         // --- bloodmoor : le save suit le héros (warp ⇒ patch_save_for_level)
@@ -3151,14 +4149,15 @@ mod tests {
     fn level_switch_carries_hero_stats_and_inventory() {
         let Some(root) = ws_root() else { return };
         let mut g = full_game(MANIFEST, "town", &root);
-        // état héros « vécu » : via un save patché (le save/load est public)
+        // état héros « vécu » : via un save patché (le save/load est public).
+        // v4 (players[]) : le héros slot 0 vit sous `players[0]`.
         let save: Value = serde_json::from_str(&g.save_world()).unwrap();
         let mut patched = save.clone();
-        patched["hero"]["stats"]["life"] = serde_json::json!(17);
-        patched["hero"]["stats"]["xp"] = serde_json::json!(650);
-        patched["hero"]["stats"]["level"] = serde_json::json!(2);
-        patched["hero"]["stats"]["gold"] = serde_json::json!(123);
-        patched["hero"]["inv"][5] = serde_json::json!({
+        patched["players"][0]["stats"]["life"] = serde_json::json!(17);
+        patched["players"][0]["stats"]["xp"] = serde_json::json!(650);
+        patched["players"][0]["stats"]["level"] = serde_json::json!(2);
+        patched["players"][0]["stats"]["gold"] = serde_json::json!(123);
+        patched["players"][0]["inv"][5] = serde_json::json!({
             "code": "hp1", "name": "Lesser Healing Potion", "kind": "Potion", "amount": 0
         });
         g.load_world(&patched.to_string()).unwrap();

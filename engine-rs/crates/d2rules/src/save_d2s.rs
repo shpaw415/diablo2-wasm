@@ -231,13 +231,13 @@ impl World {
     /// nom du personnage (assaini ASCII, 15 max — la save v3 ne porte pas
     /// de nom, la page passe le nom affiché du héros). `Err` = raison.
     pub fn export_d2s(&self, name: &str) -> Result<Vec<u8>, String> {
-        let class = class_of_hero(&self.hero_code);
+        let class = class_of_hero(&self.players[0].code);
         let mut save = SaveFile::default_v112();
 
         // --- en-tête : nom, classe, niveau, statut, difficulté -------------
         save.header.set_name(&sanitize_name(name, class));
         save.header.class = class;
-        save.header.level = self.hero.stats.level.clamp(1, 99) as u8;
+        save.header.level = self.players[0].data.stats.level.clamp(1, 99) as u8;
         // Port LOD v1.12 : personnage d'expansion (acte V, mercenaires…).
         save.header.status.expansion = true;
         let d_idx = self.difficulty.index();
@@ -265,8 +265,8 @@ impl World {
             format: d2d2s::StatsFormat::GfPrefixed110,
             entries: Vec::new(),
         };
-        let s = &self.hero.stats;
-        let (energy, vitality) = charstats_bases(&self.hero_code);
+        let s = &self.players[0].data.stats;
+        let (energy, vitality) = charstats_bases(&self.players[0].code);
         let mut set_stat = |id: u16, v: u32, force: bool| {
             if force || v != 0 {
                 save.stats.set(id, v.min(csv_bits_max(id)));
@@ -293,7 +293,7 @@ impl World {
         // --- compétences : codes → slots réels skills.txt (offset classe) --
         let base = Skills::class_slot_base(class) as u32;
         let tree = crate::skills_tree::SkillTreeData::global();
-        for skill in &self.hero.skills {
+        for skill in &self.players[0].data.skills {
             let Some(rec) = tree.get(&skill.code) else { continue };
             let slot = rec.id as i64 - base as i64;
             if (0..30).contains(&slot) {
@@ -326,7 +326,7 @@ impl World {
         // --- inventaire → items basiques identifiés ------------------------
         // L'or porté vit dans la stat 14 (ci-dessus) — pas d'item `gld`.
         let mut file_id = 0x00D2_0001_u32; // compteur déterministe (anti-dupe)
-        for (i, slot) in self.hero.inv.iter().enumerate() {
+        for (i, slot) in self.players[0].data.inv.iter().enumerate() {
             let Some(def) = slot else { continue };
             if def.kind == crate::ItemKind::Gold {
                 continue;
@@ -409,8 +409,8 @@ impl World {
 
         // --- classe (héros + gabarit manifest) -----------------------------
         let code = hero_code_of_class(save.header.class).to_string();
-        let class_changed = code != self.hero_code;
-        self.hero_code = code.clone();
+        let class_changed = code != self.players[0].code;
+        self.players[0].code = code.clone();
         self.hero_tpl = super::data::parse_hero_code(&self.manifest, &code);
 
         // --- stats mappées (÷256 pour hp/mana/stamina) ---------------------
@@ -432,20 +432,20 @@ impl World {
         // `world::max_level_of`) ; XP réalignée au seuil du niveau appliqué
         // (cohérence HUD/arbre) — l'XP brut du fichier n'est pas conservable
         // au-delà du plafond.
-        let max_level = max_level_of(&self.hero_code);
+        let max_level = max_level_of(&self.players[0].code);
         let level = (save.header.level.max(1) as u32).clamp(1, max_level);
-        let xp = xp_threshold(&self.hero_code, level);
+        let xp = xp_threshold(&self.players[0].code, level);
         let xp_to_next = if level >= max_level {
             0
         } else {
-            xp_threshold(&self.hero_code, level + 1) - xp
+            xp_threshold(&self.players[0].code, level + 1) - xp
         };
         // Stats dérivées au gabarit de la classe importée (formules
         // `init_hero`) ; vitesse/potion du gabarit.
         let tpl = &self.hero_tpl;
 
         {
-            let stats = &mut self.hero.stats;
+            let stats = &mut self.players[0].data.stats;
             stats.level = level;
             stats.xp = xp;
             stats.xp_to_next = xp_to_next;
@@ -465,7 +465,7 @@ impl World {
             stats.walk_speed = tpl.walk_speed;
             stats.potion_heal = super::world::POTION_HEAL;
         }
-        self.hero.stamina_milli = (self.hero.stats.stamina as i64) * 1000; // EXP-H2
+        self.players[0].data.stamina_milli = (self.players[0].data.stats.stamina as i64) * 1000; // EXP-H2
 
         // --- compétences : slots → codes (offset classe) -------------------
         let base = Skills::class_slot_base(save.header.class) as u32;
@@ -488,17 +488,17 @@ impl World {
         }
         // Fichier sans compétence de classe ⇒ skills de départ de la classe
         // importée (jamais un héros sans attaque ; coins : vecteurs minimaux).
-        self.hero.skills = if skills.is_empty() {
+        self.players[0].data.skills = if skills.is_empty() {
             crate::skills::starting_skills(&code)
         } else {
             skills
         };
-        let n_skills = self.hero.skills.len();
-        self.hero.active_skill = crate::skills::default_active(&code);
-        if let Some(sk) = self.hero.skills.get(self.hero.active_skill) {
+        let n_skills = self.players[0].data.skills.len();
+        self.players[0].data.active_skill = crate::skills::default_active(&code);
+        if let Some(sk) = self.players[0].data.skills.get(self.players[0].data.active_skill) {
             let (c, l) = (sk.code.clone(), sk.level);
-            self.hero.stats.skill = c;
-            self.hero.stats.skill_level = l;
+            self.players[0].data.stats.skill = c;
+            self.players[0].data.stats.skill_level = l;
         }
 
         // --- waypoints (bits 0..=38 de la difficulté active) ----------------
@@ -593,23 +593,23 @@ impl World {
                 ignored += 1;
             }
         }
-        self.hero.inv = inv;
+        self.players[0].data.inv = inv;
 
         // --- héros vivant (un import relève) — position/monde inchangés ----
-        self.hero.dead_ms = 0;
-        self.hero.swing_ms = 0;
-        self.hero.path.clear();
-        self.hero_ent.anim = crate::AnimState::NU;
-        self.hero_ent.anim_frame = 0;
+        self.players[0].data.dead_ms = 0;
+        self.players[0].data.swing_ms = 0;
+        self.players[0].data.path.clear();
+        self.players[0].ent.anim = crate::AnimState::NU;
+        self.players[0].ent.anim_frame = 0;
 
         Ok(D2sImportReport {
             name: save.header.name(),
             class: code,
             class_changed,
-            level: self.hero.stats.level,
-            strength: self.hero.stats.strength,
-            dexterity: self.hero.stats.dexterity,
-            gold: self.hero.stats.gold,
+            level: self.players[0].data.stats.level,
+            strength: self.players[0].data.stats.strength,
+            dexterity: self.players[0].data.stats.dexterity,
+            gold: self.players[0].data.stats.gold,
             skills: n_skills,
             waypoints: n_wp,
             difficulty: self.difficulty.as_str().to_string(),
@@ -642,32 +642,32 @@ mod tests {
     }
 
     fn tweak(w: &mut World) {
-        w.hero.stats.level = 3;
-        w.hero.stats.xp = xp_threshold("SOR", 3);
-        w.hero.stats.xp_to_next = xp_threshold("SOR", 4) - xp_threshold("SOR", 3);
-        w.hero.stats.strength = 40;
-        w.hero.stats.dexterity = 25;
-        w.hero.stats.life = 44;
-        w.hero.stats.max_life = 61;
-        w.hero.stats.mana = 9;
-        w.hero.stats.max_mana = 17;
-        w.hero.stats.gold = 123;
-        w.hero.stats.skill_points = 2;
-        w.hero.skills = vec![crate::HeroSkill {
+        w.players[0].data.stats.level = 3;
+        w.players[0].data.stats.xp = xp_threshold("SOR", 3);
+        w.players[0].data.stats.xp_to_next = xp_threshold("SOR", 4) - xp_threshold("SOR", 3);
+        w.players[0].data.stats.strength = 40;
+        w.players[0].data.stats.dexterity = 25;
+        w.players[0].data.stats.life = 44;
+        w.players[0].data.stats.max_life = 61;
+        w.players[0].data.stats.mana = 9;
+        w.players[0].data.stats.max_mana = 17;
+        w.players[0].data.stats.gold = 123;
+        w.players[0].data.stats.skill_points = 2;
+        w.players[0].data.skills = vec![crate::HeroSkill {
             code: "Fire Bolt".into(),
             level: 2,
             missile: Some("firebolt".into()),
         }];
-        w.hero.active_skill = 0;
+        w.players[0].data.active_skill = 0;
         w.activate_waypoint(0); // Rogue Encampment (retail)
         w.activate_waypoint(39); // Blood Moor (MVP — non exportable)
-        w.hero.inv[12] = Some(crate::ItemDef {
+        w.players[0].data.inv[12] = Some(crate::ItemDef {
             code: "hp1".into(),
             name: "Lesser Healing Potion".into(),
             kind: crate::ItemKind::Potion,
             amount: 0,
         });
-        w.hero.inv[23] = Some(crate::ItemDef {
+        w.players[0].data.inv[23] = Some(crate::ItemDef {
             code: "hax".into(),
             name: "Hand Axe".into(),
             kind: crate::ItemKind::Weapon,
@@ -733,9 +733,9 @@ mod tests {
         // (non mappé), niveau plafonné au `MaxLvl` de la table (99 — le
         // vecteur 12 passe tel quel).
         assert_eq!(report.name, "Testchar");
-        assert_eq!(w.hero.stats.strength, 20);
-        assert_eq!(w.hero.stats.gold, 1000);
-        assert_eq!(w.hero.stats.level, max_level_of("SOR").min(12), "plafonné au MaxLvl");
+        assert_eq!(w.players[0].data.stats.strength, 20);
+        assert_eq!(w.players[0].data.stats.gold, 1000);
+        assert_eq!(w.players[0].data.stats.level, max_level_of("SOR").min(12), "plafonné au MaxLvl");
         assert_eq!(report.items_loaded, 0);
         // Le rapport reflète la classe appliquée (cohérence header).
         let class = SaveFile::parse(VECTOR_MINIMAL).unwrap().header.class;
@@ -796,7 +796,7 @@ mod tests {
         assert_eq!(b2, b1, "import→export stable octet pour octet");
         let mut c = world("SOR");
         c.import_d2s(&b2).unwrap();
-        assert_eq!(c.hero_code(), b.hero_code());
+        assert_eq!(c.players[0].code(), b.players[0].code());
         assert_eq!(format!("{:?}", c.hero_stats()), format!("{:?}", b.hero_stats()));
         assert_eq!(c.active_waypoints(), b.active_waypoints());
         assert_eq!(c.hero_skills(), b.hero_skills());
@@ -810,16 +810,16 @@ mod tests {
         // classe ET le gabarit manifest suivent, les skills se mappent par
         // Id skills.txt.
         let mut src = world("BA");
-        src.hero.skills = vec![crate::HeroSkill { code: "Bash".into(), level: 4, missile: None }];
-        src.hero.stats.level = 5;
-        src.hero.stats.xp = xp_threshold("BA", 5);
+        src.players[0].data.skills = vec![crate::HeroSkill { code: "Bash".into(), level: 4, missile: None }];
+        src.players[0].data.stats.level = 5;
+        src.players[0].data.stats.xp = xp_threshold("BA", 5);
         let bytes = src.export_d2s("Barbu").unwrap();
 
         let mut dst = world("SOR"); // sorcière à l'origine
         let report = dst.import_d2s(&bytes).unwrap();
         assert!(report.class_changed);
         assert_eq!(report.class, "BA");
-        assert_eq!(dst.hero_code(), "BA");
+        assert_eq!(dst.players[0].code(), "BA");
         assert_eq!(dst.hero_tpl.strength, 30, "gabarit barbare du manifest");
         assert_eq!(
             dst.hero_skills(),
@@ -902,8 +902,8 @@ mod tests {
     fn import_revives_dead_hero() {
         let bytes = world("SOR").export_d2s("Reviens").unwrap();
         let mut w2 = world("SOR");
-        w2.hero.dead_ms = 900;
-        w2.hero_ent.anim = crate::AnimState::DD;
+        w2.players[0].data.dead_ms = 900;
+        w2.players[0].ent.anim = crate::AnimState::DD;
         w2.import_d2s(&bytes).unwrap();
         assert_eq!(w2.hero().anim, crate::AnimState::NU, "héros relevé");
         assert_eq!(w2.hero_stats().life, w2.hero_stats().max_life.max(1));

@@ -35,9 +35,10 @@
 
 mod data;
 mod loot;
-/// Pont `.d2s` ⇄ save v3 (étape 6b) — format d'échange OPTIONNEL par bouton
-/// (export monde → fichier v1.12 valide, import fichier → héros) ; le save
-/// JSON v3 reste le défaut. Pur : octets seuls, zéro IO.
+/// Pont `.d2s` ⇄ save (étape 6b ; 3b-1 : le héros du fichier = slot 0) —
+/// format d'échange OPTIONNEL par bouton (export monde → fichier v1.12
+/// valide, import fichier → héros) ; le save JSON (v4 depuis 3b-1) reste le
+/// défaut. Pur : octets seuls, zéro IO.
 pub mod save_d2s;
 
 /// Étape 7a « loot D2 réel » : contrat `RolledItem` (Affixes/Équipement) +
@@ -116,12 +117,16 @@ pub mod quests;
 /// Roster réel Acte I (monstats + PATH TownN1.ds1), spawn, patrouilles,
 /// rôles (soin/forge/mercenaires/gamble/caravane/érudit), clic → NpcTalked.
 pub mod npc;
-// --- Dialogues PNJ 22a (arbres × phase de quête, TBL fr réelles, 2026-10-25) ---
+// --- Dialogues des PNJ 3c-b (coop multi-joueurs, port 22a du corps maître) ---
+/// Sessions de dialogue TBL fr réelles : verrou coop (1 session, slot
+/// teneur), gel du monde GLOBAL pour tous les slots, choix réservé au
+/// teneur — contrat demo/dialogue-ui.js (pont d2game/dialogue_bridge.rs).
 pub mod dialogue;
 // --- Mercenaires H (hireling.txt v1.12, 2026-10-23) ---
 /// Mercenaires : embauche/combat/KO/résurrection data-driven (tables réelles
 /// `assets/patch_hireling.txt`), état porté par `World`, save additive.
 pub mod mercenary;
+pub mod players_coop; // 3c-a : état coop par slot (mercs + corps des slots ≥ 1, embarqué dans World.merc)
 // --- Corps au sol J1 (mort : corps + équipement, or, récup, 2026-10-23) ---
 /// État `Corpse` + règles officielles (péage d'or, respawn nu, un seul
 /// corps actif) — sources citées dans l'en-tête du fichier.
@@ -233,11 +238,17 @@ pub use skills::HeroSkill;
 /// consommées par d2game (learnSkill) et affichables telles quelles en UI.
 pub use skills_tree::SkillTreeError;
 pub use world::World;
+/// 3b-1 (coop multi-héros) : UN joueur = un héros (`World::players[slot]`) +
+/// ses données [`HeroData`] — consommés par d2game (HUD par slot, salon).
+pub use world::{HeroData, Player};
 /// Corps au sol (J1) — consommé par d2game (exposition UI) et la save.
 pub use corpse::Corpse;
 /// Rang de monstre + règle de spawn data-driven (impl-monstres-boss) —
 /// consommés par d2game (tables réelles → spawn_monster_rule).
 pub use world::{MonKind, SpawnRule};
+/// 3b (coop) : plafond de héros par monde (slot 0 + 7 coéquipiers) —
+/// calé sur MAX_PLAYERS = 8 du salon (serveur/rooms.ts).
+pub use world::MAX_HEROES;
 /// Mercenaires H — types/records/erreurs consommés par d2game (fiche HUD
 /// wasm `mercInfo`) et par la save.
 pub use mercenary::{
@@ -284,6 +295,12 @@ pub use consumables::{ConsumError, ConsumState, ConsumUse};
 pub use npc::{
     MercenaryResurrect, NpcDef, NpcInteraction, NpcRepair, NpcRole, NpcState, NpcTalkError,
     NpcTravel, NPCS,
+};
+
+// -- Dialogues PNJ 3c-b (coop : verrou + gel global) — consommés par d2game --
+pub use dialogue::{
+    DialogueAction, DialogueCond, DialogueNode, DialogueOption, DialoguePhase,
+    DialogueSession,
 };
 
 // -- IA P1 monstres + quêtes Acte I spec (étape 4 RE d2w-re) — consommés par d2game --
@@ -433,7 +450,8 @@ pub enum GameEvent {
 }
 
 /// État d'animation (code mode COF D2 : NU=neutral, WL=walk, RN=run, A1=attack1, DD=death).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// `Hash` : hash d'état lockstep 3b-1.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AnimState {
     /// Neutre (idle).
     NU,

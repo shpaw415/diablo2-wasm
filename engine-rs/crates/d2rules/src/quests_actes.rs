@@ -630,16 +630,16 @@ impl World {
                     self.pending_events.extend(leveled);
                 }
                 ActReward::Gold(n) => {
-                    self.hero.stats.gold = self.hero.stats.gold.saturating_add(n);
+                    self.players[0].data.stats.gold = self.players[0].data.stats.gold.saturating_add(n);
                     self.pending_events.push(crate::GameEvent::GoldGained { amount: n });
                 }
                 ActReward::SkillPoint(n) => self.grant_skill_points(n),
                 ActReward::Item(code) => {
                     let def = quest_item_def(code);
-                    if let Some(slot) = self.hero.inv.iter().position(|s| s.is_none()) {
-                        self.hero.inv[slot] = Some(def);
+                    if let Some(slot) = self.players[0].data.inv.iter().position(|s| s.is_none()) {
+                        self.players[0].data.inv[slot] = Some(def);
                     } else {
-                        let (x, y) = (self.hero_ent.x, self.hero_ent.y);
+                        let (x, y) = (self.players[0].ent.x, self.players[0].ent.y);
                         self.items.push(crate::ItemOnGround { def, x, y });
                     }
                 }

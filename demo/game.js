@@ -10,8 +10,7 @@
 
 const $ = (id) => document.getElementById(id);
 import './automap.js'; // 9d monde vivant : mini-carte (window.D2Automap, Tab / bouton Carte)
-import './dialogue-ui.js'; // 22c PNJ & dialogues : bandeau D2 (window.D2Dialogue — pause monde, Échap)
-import './cine-ui.js'; // 23b cinématiques d'acte : window.D2Cine (events ActUnlocked/GameWon → .bik→webm, Échap = passer)
+import './dialogue-ui.js'; // 3c-b coop : dialogues multi (verrou+bandeaux, gel) + party-ui importé par ce module
 const status = $('status');
 const canvas = $('game');
 const ctx = canvas.getContext('2d');
@@ -90,6 +89,34 @@ if (CONTINUE_SAVE) {
     const hc = JSON.parse(CONTINUE_SAVE).hero_code;
     if (typeof hc === 'string' && hc) HERO_REQ = hc.toUpperCase();
   } catch { CONTINUE_SAVE = null; }
+}
+
+// --- 3a/3b : mode online (?online=CODE[&token=], siège sessionStorage) -------
+// Le siège (code + token) vient de l'URL (harnais/E2E) ou de sessionStorage
+// (posé par online-ui.js à la création/jonction du salon). Le rôle (hôte ou
+// invité), le SLOT et la liste des héros PAR SLOT sont tranchés par le
+// serveur via /api/rooms/:code/meta — jamais par le client. Chaque client
+// construit le MÊME monde multi-héros (withLevelCoop), verrouille sa caméra
+// sur SON slot et pilote SON héros (bundles lockstep routés par slot).
+const ONLINE_CODE = (PARAMS.get('online') || '').trim().toUpperCase();
+const ONLINE = !!ONLINE_CODE;
+let ONLINE_TOKEN = PARAMS.get('token') || '';
+let ONLINE_META = null; // { state, host, slot, heroes:[{slot,hero}|…], seed? }
+if (ONLINE && !ONLINE_TOKEN) {
+  try {
+    const seat = JSON.parse(sessionStorage.getItem('d2online.v1') || 'null');
+    if (seat && seat.code === ONLINE_CODE && seat.token) ONLINE_TOKEN = seat.token;
+  } catch { /* siège absent : la voie URL (token=) reste la seule */ }
+}
+/** Codes de classe par slot pour withLevelCoop : la liste /meta (héros
+ *  publiés au hello WS), MON slot remplacé par ?hero= (connu dès l'URL),
+ *  inconnus ⇒ "BA" (fallback gracieux, hash détecterait toute divergence). */
+function roomHeroCodes(meta) {
+  const list = [...(meta.heroes || [])].sort((a, b) => a.slot - b.slot);
+  const codes = list.map((h) => String(h.hero || '').toUpperCase());
+  while (codes.length <= meta.slot) codes.push('');
+  codes[meta.slot] = HERO_REQ;
+  return codes.map((c) => c || 'BA');
 }
 
 // Niveau de boot : ?level=bloodmoor… ; sinon le niveau de la sauvegarde
@@ -770,6 +797,18 @@ async function main() {
     LEVEL_REQ = 'town';
   }
 
+  // 3a/3b online : rôle/slot/héros du salon — vérité serveur (/meta).
+  if (ONLINE) {
+    $('loadmsg').textContent = `Salon ${ONLINE_CODE} — rôle…`;
+    const r = await fetch(`/api/rooms/${encodeURIComponent(ONLINE_CODE)}/meta?token=${encodeURIComponent(ONLINE_TOKEN)}`);
+    if (!r.ok) throw new Error(`salon ${ONLINE_CODE} inaccessible (HTTP ${r.status})`);
+    ONLINE_META = await r.json();
+    if (!ONLINE_META.host) CONTINUE_SAVE = null; // l'invité suivra le snapshot de l'hôte
+  }
+  const MY_SLOT = ONLINE ? ONLINE_META.slot : 0;
+  window.__d2.slot = MY_SLOT;
+  window.__d2.online = ONLINE ? { code: ONLINE_CODE, host: !!ONLINE_META.host, slot: MY_SLOT } : null;
+
   const hero = resolveHero(manifest, HERO_REQ);
   HERO_NAME = hero.def.name || hero.code;
   window.__d2.hero = hero.code;
@@ -777,8 +816,21 @@ async function main() {
     flash(`Classe ${HERO_REQ} absente du manifest — partie lancée en ${HERO_NAME}.`);
   }
 
-  const game = D2Game.withLevel(manifestText, HERO_REQ, LEVEL_REQ);
+  // 3b : en online, le monde porte UN HÉROS PAR SLOT (liste /meta) — chaque
+  // client construit exactement le même monde multi-héros. Hors online :
+  // constructeur historique (withLevel, un seul héros).
+  const game = ONLINE
+    ? D2Game.withLevelCoop(manifestText, JSON.stringify(roomHeroCodes(ONLINE_META)), LEVEL_REQ)
+    : D2Game.withLevel(manifestText, HERO_REQ, LEVEL_REQ);
   window.__d2.game = game;
+  if (ONLINE) {
+    // même graine de partie chez tous (cartes identiques avant snapshot) —
+    // u64 wasm-bindgen : passage en BigInt (JS Number sinon rejeté > 2^31).
+    if (typeof ONLINE_META.seed === 'number' && typeof BigInt === 'function') {
+      try { game.setGameSeed(BigInt(Math.trunc(ONLINE_META.seed))); } catch (e) { note(`graine salon refusée (${e && e.message}) — cartes par défaut.`); }
+    }
+    game.setCameraSlot(MY_SLOT); // caméra verrouillée sur SON héros
+  }
 
   // Difficulté (W08/K, impl-difficultes) : ?diff=nm|hell — appliquée AVANT
   // finalize : le niveau de boot instancie ses monstres avec les facteurs
@@ -789,8 +841,18 @@ async function main() {
   }
 
   // Sanité : le moteur Rust doit résoudre le héros comme le JS (même règle).
+  // 3b online : le slot 0 du monde est l'hôte du salon — MON héros vit à
+  // MON slot (vérifié via la liste heroes() du moteur).
   const hcRust = JSON.parse(game.heroClass());
-  if (hcRust.code !== hero.code) {
+  if (ONLINE) {
+    try {
+      const list = JSON.parse(game.heroes());
+      const mine = list.find((h) => h.slot === MY_SLOT);
+      if (!mine || mine.code !== hero.code) {
+        logErr(`désaccord héros slot ${MY_SLOT} JS/Rust : ${hero.code} vs ${mine ? mine.code : 'absent'}`);
+      }
+    } catch { /* cosmétique */ }
+  } else if (hcRust.code !== hero.code) {
     logErr(`désaccord résolution héros JS/Rust : ${hero.code} vs ${hcRust.code}`);
   }
 
@@ -880,26 +942,37 @@ async function main() {
   window.__d2.mode = 'wasm';
 
   const imgData = ctx.createImageData(canvas.width, canvas.height);
+  // 3a/3b : en online, le monde n'avance QUE par les ticks lockstep
+  // (D2Net.pump — entrées de tous les slots, clôture déterministe). Les
+  // entrées locales sont poussées dans loop.queue et captées par pump.
+  const netActive = () => !!(window.D2Net && D2Net.active());
   function frame(now) {
     const dt = Math.min(now - loop.last, 100);
     loop.last = now;
     try {
-      const inputJson = loop.queue.length ? JSON.stringify(loop.queue.shift()) : null;
-      const events = JSON.parse(game.tick(dt, inputJson));
+      let events;
+      if (netActive()) {
+        const pumped = D2Net.pump();
+        events = pumped || []; // null = aucun tick dû : on rend l'état courant
+      } else {
+        const inputJson = loop.queue.length ? JSON.stringify(loop.queue.shift()) : null;
+        events = JSON.parse(game.tick(dt, inputJson));
+      }
       handleEvents(events, manifest);
       if (window.D2HUD) window.D2HUD.events(events); // EXP-H7 : dégâts flottants
-      const stats = JSON.parse(game.heroStats());
+      // 3b : HUD de SON héros (slot propre) — hors online : slot 0 historique.
+      const stats = JSON.parse(game.heroStatsSlot ? game.heroStatsSlot(MY_SLOT) : game.heroStats());
       updateHud(stats);
       if (window.D2HUD) window.D2HUD.update(stats); // EXP-H2 : barre d'endurance
-      window.__d2.invCache = JSON.parse(game.inventory());
+      window.__d2.invCache = JSON.parse(game.inventorySlot ? game.inventorySlot(MY_SLOT) : game.inventory());
       window.__d2.monCodes = JSON.parse(game.monsterCodes());
-      const hs = JSON.parse(game.heroState());
+      const hs = JSON.parse(game.heroStateSlot ? game.heroStateSlot(MY_SLOT) : game.heroState());
       hud.run.style.display = hs.run && hs.moving ? 'block' : 'none';
       imgData.data.set(game.render());
       ctx.putImageData(imgData, 0, 0);
       drawGlobes(stats);
       if (inv.open) drawInventory();
-      const [hsx, hsy] = game.heroScreen();
+      const [hsx, hsy] = game.heroScreen(); // 3b : pieds du héros de la caméra (MON slot)
       const [hwx, hwy] = game.screenToWorld(hsx, hsy);
       if (loop.lastClick && now - loop.lastClick.t < 450) {
         drawClickRing(loop.lastClick.sx, loop.lastClick.sy, 1 - (now - loop.lastClick.t) / 450);
@@ -912,7 +985,20 @@ async function main() {
         if (window.D2Merc) window.D2Merc.frame(game); // H : carte mercenaire (même throttle)
       }
       if (window.D2Npc) window.D2Npc.frame(canvas, game); // W16 : marqueurs NPC + bulles de dialogue
-      fpsTick(loop.statusBase, ` · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
+      // 3b : preuve E2E dans la barre d'état — position de TOUS les héros.
+      let coopExtra = '';
+      if (game.heroesView) {
+        try {
+          const hv = JSON.parse(game.heroesView());
+          if (hv.length > 1) {
+            coopExtra = ' · coop ' + hv.map((h) => `S${h.slot} ${h.x | 0},${h.y | 0}`).join(' · ');
+          }
+        } catch { /* cosmétique */ }
+      }
+      const netInfo = netActive() && D2Net.status
+        ? (() => { const s = D2Net.status(); return ` · tick ${s.tick} (exec ${s.exec}/cible ${s.target}/buf ${s.bundles}${s.desynced ? ' DÉSYNC' : ''})`; })()
+        : '';
+      fpsTick(loop.statusBase, `${coopExtra}${netInfo} · héros ${hwx | 0},${hwy | 0} (${hs.anim})`);
       requestAnimationFrame(frame);
     } catch (err) {
       fail('tick', err);
@@ -948,6 +1034,30 @@ async function main() {
   // moteur WASM encode/décode via d2rules::save_d2s) ; on ne branche que
   // les boutons et les aides d'affichage.
   if (window.D2sIO) window.D2sIO.init({ getGame: () => window.__d2.game, note, flash });
+
+  // 3a/3b : connexion lockstep APRÈS le boot (finalize + save) — l'hôte
+  // démarre le tick 20 Hz du salon, l'invité reçoit un snapshot de son monde
+  // (loadGame : tous les héros voyagent dans la save). Les entrées locales
+  // partent ensuite par bundles (slot du siège) et reviennent appliquées.
+  if (ONLINE && window.D2Net) {
+    D2Net.connect({
+      code: ONLINE_CODE,
+      token: ONLINE_TOKEN,
+      host: !!ONLINE_META.host,
+      hero: HERO_REQ,
+      name: '',
+      queue: loop.queue,
+      getGame: () => window.__d2.game,
+      onFlash: (msg) => flash(msg),
+      onStatus: (msg) => { window.__d2.netTick = msg; },
+    });
+    window.__d2.coopHeroes = () => { try { return JSON.parse(game.heroesView()); } catch { return []; } };
+    flash(
+      ONLINE_META.host
+        ? `Salon ${ONLINE_CODE} — vous êtes l'hôte (slot ${MY_SLOT}, ${HERO_NAME}). Tick 20 Hz démarré.`
+        : `Salon ${ONLINE_CODE} — slot ${MY_SLOT} (${HERO_NAME}), synchronisation avec l'hôte…`
+    );
+  }
   requestAnimationFrame(frame);
 }
 

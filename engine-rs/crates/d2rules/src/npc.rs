@@ -444,29 +444,51 @@ impl World {
         let Some(npc) = self.npcs.get(index) else {
             return Err(NpcTalkError::OutOfRange); // hors roster : même erreur que « trop loin »
         };
-        if self.hero.dead_ms > 0 {
+        // 3b-1 (coop) : le PARLEUR est le héros vivant le plus proche du NPC
+        // (quêtes partagées ; solo : identique, le slot 0 est le seul héros).
+        // 3c-b (dialogue.rs) : chemin historique — l'UI coop route elle-même
+        // SON slot via `talk_to_npc_slot`.
+        let talker = self.nearest_living_hero_slot(npc.ent.x, npc.ent.y);
+        self.talk_to_npc_slot(talker, index)
+    }
+
+    /// 3c-b (coop) : clic NPC routé au héros du SLOT `slot` — portée/mort
+    /// vérifiées pour CE slot, face-à-face, soin (Akara : vie ET mana DU
+    /// PARLEUR), `NpcTalked` et journal de quêtes identiques au chemin
+    /// historique. Slot hors monde : `OutOfRange` (jamais de panique).
+    pub fn talk_to_npc_slot(&mut self, slot: usize, index: usize) -> Result<NpcInteraction, NpcTalkError> {
+        let Some(npc) = self.npcs.get(index) else {
+            return Err(NpcTalkError::OutOfRange); // hors roster : même erreur que « trop loin »
+        };
+        if slot >= self.hero_count() {
+            return Err(NpcTalkError::OutOfRange); // slot inconnu : pas de parleur
+        }
+        if self.hero_slot_dead(slot).unwrap_or(true) {
             return Err(NpcTalkError::HeroDead);
         }
-        let d = ((npc.ent.x - self.hero_ent.x).powi(2) + (npc.ent.y - self.hero_ent.y).powi(2)).sqrt();
+        let (hx, hy) = self.hero_slot_pos(slot).expect("parleur vivant a une position");
+        let d = ((npc.ent.x - hx).powi(2) + (npc.ent.y - hy).powi(2)).sqrt();
         if d > NPC_TALK_RANGE {
             return Err(NpcTalkError::OutOfRange);
         }
         let def = NPCS[npc.def];
         // Face-à-face (comme le retail : les deux se tournent vers l'autre).
-        let (dx, dy) = (self.hero_ent.x - npc.ent.x, self.hero_ent.y - npc.ent.y);
+        let (dx, dy) = (hx - npc.ent.x, hy - npc.ent.y);
         self.npcs[index].ent.facing = crate::world::facing_from(dx, dy);
-        self.hero_ent.facing = crate::world::facing_from(-dx, -dy);
+        self.players[slot].ent.facing = crate::world::facing_from(-dx, -dy);
         self.npcs[index].talked += 1;
 
-        // Rôle : soin gratuit (Akara) — vie ET mana pleins ; malédictions :
-        // aucun système au MVP, rien à purger (assumé, doc du module).
+        // Rôle : soin gratuit (Akara) — vie ET mana pleins DU PARLEUR ;
+        // malédictions : aucun système au MVP, rien à purger (assumé, doc du
+        // module).
         let mut healed = false;
         if def.role == NpcRole::Healer {
-            let (life, max_life) = (self.hero.stats.life, self.hero.stats.max_life);
-            let (mana, max_mana) = (self.hero.stats.mana, self.hero.stats.max_mana);
+            let stats = &mut self.players[slot].data.stats;
+            let (life, max_life) = (stats.life, stats.max_life);
+            let (mana, max_mana) = (stats.mana, stats.max_mana);
             if life < max_life || mana < max_mana {
-                self.hero.stats.life = max_life;
-                self.hero.stats.mana = max_mana;
+                stats.life = max_life;
+                stats.mana = max_mana;
                 healed = true;
             }
         }
@@ -507,13 +529,19 @@ impl World {
                     self.pending_events.extend(ev);
                 }
                 QuestReward::Item { code } => {
+                    // 3b-1 (coop) : bénéficiaire = héros vivant le plus
+                    // proche du slot 0 (déterministe ; solo : slot 0).
+                    let ben = self.nearest_living_hero_slot(
+                        self.players[0].ent.x,
+                        self.players[0].ent.y,
+                    );
                     let def = quest_item_def(code);
-                    if let Some(slot) = self.hero.inv.iter().position(|s| s.is_none()) {
-                        self.hero.inv[slot] = Some(def);
+                    if let Some(slot) = self.players[ben].data.inv.iter().position(|s| s.is_none()) {
+                        self.players[ben].data.inv[slot] = Some(def);
                     } else {
                         // Inventaire plein : au sol au pied du héros (même
                         // convention que le ramassage).
-                        let (x, y) = (self.hero_ent.x, self.hero_ent.y);
+                        let (x, y) = (self.players[ben].ent.x, self.players[ben].ent.y);
                         self.items.push(crate::ItemOnGround { def, x, y });
                     }
                 }
@@ -786,13 +814,13 @@ mod tests {
         let akara_ix = w.town_npcs().iter().position(|n| n.def == 0).unwrap();
         // Le héros marche à côté d'Akara (position du spawn du roster).
         let (a_x, a_y) = { let e = &w.town_npcs()[akara_ix].ent; (e.x, e.y) };
-        w.hero_ent.x = a_x + 1.0;
-        w.hero_ent.y = a_y;
+        w.players[0].ent.x = a_x + 1.0;
+        w.players[0].ent.y = a_y;
         // Hors ordre : parler à Cain maintenant ne fait rien (q3 étape 0).
         let cain_ix = w.town_npcs().iter().position(|n| n.def == 5).unwrap();
         let cain_pos = (w.town_npcs()[cain_ix].ent.x, w.town_npcs()[cain_ix].ent.y);
-        w.hero_ent.x = cain_pos.0 + 1.0;
-        w.hero_ent.y = cain_pos.1;
+        w.players[0].ent.x = cain_pos.0 + 1.0;
+        w.players[0].ent.y = cain_pos.1;
         assert!(w.talk_to_npc(cain_ix).is_ok());
         assert_eq!(w.quest_log().unwrap().state("a1q3"), Some(QuestState::NotStarted));
         // Étape 1 : l'écorce d'Inifuss (bks) — via le journal (câblage
@@ -803,8 +831,8 @@ mod tests {
         assert_eq!(w.quest_log().unwrap().progress("a1q3").unwrap().step, 1);
         // Clic sur Akara : interaction ok + étape 1 franchie (NpcTalked).
         let (a_x, a_y) = { let e = &w.town_npcs()[akara_ix].ent; (e.x, e.y) };
-        w.hero_ent.x = a_x - 1.0;
-        w.hero_ent.y = a_y;
+        w.players[0].ent.x = a_x - 1.0;
+        w.players[0].ent.y = a_y;
         let talk = w.talk_to_npc(akara_ix).expect("interaction Akara");
         assert_eq!(talk.id, "akara");
         assert_eq!(talk.role, "healer");
@@ -819,8 +847,8 @@ mod tests {
         w.quest_log_mut()
             .unwrap()
             .on_event(&crate::quests::QuestEvent::ZoneEntered { level_id: 38 });
-        w.hero_ent.x = cain_pos.0 - 1.0;
-        w.hero_ent.y = cain_pos.1;
+        w.players[0].ent.x = cain_pos.0 - 1.0;
+        w.players[0].ent.y = cain_pos.1;
         let talk = w.talk_to_npc(cain_ix).expect("interaction Cain");
         assert_eq!(talk.id, "cain1", "la bonne fiche NPC (pas de mélange d'indices)");
         assert_eq!(
@@ -844,14 +872,14 @@ mod tests {
         log.on_event(&crate::quests::QuestEvent::ItemPickedUp { code: "hamm".into() });
         assert_eq!(w.quest_log().unwrap().progress("a1q4").unwrap().step, 2);
         // Charsi est loin : interaction hors de portée refusée SANS avancement.
-        w.hero_ent.x = 1.0;
-        w.hero_ent.y = 1.0;
+        w.players[0].ent.x = 1.0;
+        w.players[0].ent.y = 1.0;
         assert_eq!(w.talk_to_npc(2), Err(NpcTalkError::OutOfRange));
         assert_eq!(w.quest_log().unwrap().state("a1q4"), Some(QuestState::InProgress));
         // Le héros se téléporte à la forge : clic → q4 Done + charsi_imbue.
         let (c_x, c_y) = { let e = &w.town_npcs()[2].ent; (e.x, e.y) };
-        w.hero_ent.x = c_x + 1.5;
-        w.hero_ent.y = c_y;
+        w.players[0].ent.x = c_x + 1.5;
+        w.players[0].ent.y = c_y;
         let talk = w.talk_to_npc(2).expect("interaction Charsi");
         assert_eq!(w.quest_log().unwrap().state("a1q4"), Some(QuestState::Done));
         assert_eq!(
@@ -871,9 +899,9 @@ mod tests {
         assert!(w.tick(16, None).iter().all(|e| !matches!(e, GameEvent::NpcTalked { .. })));
         // Héros mort : HeroDead même à côté.
         let (a_x, a_y) = { let e = &w.town_npcs()[0].ent; (e.x, e.y) };
-        w.hero_ent.x = a_x + 1.0;
-        w.hero_ent.y = a_y;
-        w.hero.dead_ms = 1;
+        w.players[0].ent.x = a_x + 1.0;
+        w.players[0].ent.y = a_y;
+        w.players[0].data.dead_ms = 1;
         assert_eq!(w.talk_to_npc(0), Err(NpcTalkError::HeroDead));
         // Index hors bornes : jamais de panique.
         assert_eq!(w.talk_to_npc(999), Err(NpcTalkError::OutOfRange));
@@ -888,11 +916,14 @@ mod tests {
         // Héros blessé à côté d'Akara : via save/edit/load (pas de setter
         // public — le save porte hero.stats).
         let (a_x, a_y) = { let e = &w.town_npcs()[0].ent; (e.x, e.y) };
-        w.hero_ent.x = a_x + 1.0;
-        w.hero_ent.y = a_y;
+        w.players[0].ent.x = a_x + 1.0;
+        w.players[0].ent.y = a_y;
         let mut v: serde_json::Value = serde_json::from_str(&w.save()).unwrap();
         v["hero"]["stats"]["life"] = json!(5);
         v["hero"]["stats"]["mana"] = json!(0);
+        // 3b-1 : l'édition vise les champs de tête (rétro-compat) — sans
+        // `players` le champ v4 prioritaire masquerait le hack de test.
+        v.as_object_mut().unwrap().remove("players");
         let mut w = World::load(&v.to_string()).expect("reload blessé");
         let (max_life, max_mana) = {
             let s = w.hero_stats();
@@ -929,8 +960,8 @@ mod tests {
         assert_eq!(w.town_npc_def(3).unwrap().vendor, Some(VendorId::Gheed));
         // Interaction : actions affichables par rôle (héros téléporté à côté).
         let (wv_x, wv_y) = { let e = &w.town_npcs()[4].ent; (e.x, e.y) };
-        w.hero_ent.x = wv_x + 1.5;
-        w.hero_ent.y = wv_y;
+        w.players[0].ent.x = wv_x + 1.5;
+        w.players[0].ent.y = wv_y;
         let talk = w.talk_to_npc(4).unwrap();
         assert!(talk.actions.iter().any(|a| a.contains("Lut Gholein")));
     }
@@ -943,8 +974,8 @@ mod tests {
         w.spawn_town_npcs();
         // Dialogue (compteur) + déplacement réel (patrouille) à figer.
         let (a_x, a_y) = { let e = &w.town_npcs()[0].ent; (e.x, e.y) };
-        w.hero_ent.x = a_x + 1.0;
-        w.hero_ent.y = a_y;
+        w.players[0].ent.x = a_x + 1.0;
+        w.players[0].ent.y = a_y;
         w.talk_to_npc(0).unwrap();
         w.talk_to_npc(0).unwrap();
         for _ in 0..40 {

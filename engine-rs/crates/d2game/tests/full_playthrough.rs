@@ -474,18 +474,19 @@ fn e2e_traversee_complete_ba_actes_1_a_5() {
     let ev = flush(&mut w);
     assert!(ev.iter().any(|e| matches!(e, GameEvent::ActUnlocked { act: 2 })), "ActUnlocked(2)");
 
-    // --- SAVE/LOAD n°1 : v3 round-trip idempotent + rétro-compat v1 -------
+    // --- SAVE/LOAD n°1 : v4 round-trip idempotent + rétro-compat v1 -------
+    // (3b-1 d2rules : save v4 `players[]`, champs de tête en miroir du slot 0)
     let s1 = w.save();
     let v1: Value = serde_json::from_str(&s1).unwrap();
-    assert_eq!(v1["version"], 3);
-    let w1b = World::load(&s1).expect("load v3");
+    assert_eq!(v1["version"], 4);
+    let w1b = World::load(&s1).expect("load v4");
     assert_eq!(w1b.save(), s1, "round-trip save non idempotent");
     assert_eq!(w1b.hero_code(), "BA");
     assert!(w1b.quest_act1().unwrap().access_act(2), "journal a1 survit au save/load");
     assert!(w1b.waypoint_activated(39), "waypoints survivent au save/load");
     // Rétro-compat v1 : retrait des champs additifs ⇒ chargement (défauts).
     let mut legacy = v1.clone();
-    for k in ["hero_code", "level", "missiles", "skills", "waypoints", "difficulty", "npcs", "quests", "mercenary", "corpse", "quest_act1", "quest_actes2", "gold_stash", "consumables", "quest_actes45", "quest_finale"] {
+    for k in ["hero_code", "level", "missiles", "skills", "waypoints", "difficulty", "npcs", "quests", "mercenary", "corpse", "quest_act1", "quest_actes2", "gold_stash", "consumables", "quest_actes45", "quest_finale", "players"] {
         legacy.as_object_mut().unwrap().remove(k);
     }
     let w_legacy = World::load(&legacy.to_string()).expect("save v1 rétro-compatible");

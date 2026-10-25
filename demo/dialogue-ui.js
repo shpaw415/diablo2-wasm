@@ -1,58 +1,70 @@
-// 22c PNJ & DIALOGUES — demo/dialogue-ui.js (NOUVEAU).
+// 3c-b COOP — demo/dialogue-ui.js (port du corps maître 22c, touches multi).
 //
-// Bandeau de dialogue fidèle D2 en bas d'écran, branché sur le moteur du
-// coéquipier Dialogue (d2rules/src/dialogue.rs — API World::open_dialogue /
-// choose_dialogue / close_dialogue, endpoints wasm `openDialogue(index)` /
-// `chooseDialogue(i)` / `closeDialogue()`). Les lignes fr RÉELLES viennent
-// du Rust (TBL v1.12 résolues côté moteur) — ici : rendu + routage, ZÉRO
-// texte de jeu.
+// Bandeau de dialogue fidèle D2 en bas d'écran, branché sur le moteur coop
+// (d2rules/src/dialogue.rs — port 22a adapté multi-joueurs ; endpoints wasm
+// `openDialogueSlot(slot,index)` / `chooseDialogueSlot(slot,i)` /
+// `closeDialogueSlot(slot)` / `dialogueSession()` / `dialogueLock()`).
+// Les lignes fr RÉELLES viennent du Rust (TBL v1.12 résolues côté moteur) —
+// ici : rendu + routage, ZÉRO texte de jeu.
 //
 // Schéma session (DialogueSession serde du moteur, champ par champ) :
-//   { npc_index, npc, npc_name, quest, phase,
+//   { slot, npc_index, npc, npc_name, quest, phase,
 //     node: { id, line_keys, lignes:[fr], options:[{ label_key, label,
 //             next, cond:{kind:always|quest_done,quest}, action:
-//             {kind:say|close|travel|open_shop|hire_mercenary|repair, vendor?} }] },
-//     visible: [indices bruts visibles] }   ← facultatif (pont d2game)
+//             {kind:say|close|travel|open_shop|hire_mercenary|repair,
+//              vendor?} }] },
+//     visible: [indices bruts visibles],   ← pont d2game (dialogue_bridge)
+//     player, playerName }                 ← teneur (identité classe)
 //
 // Contrat UI :
-//   * PANNEAU : bandeau bas (nom du NPC en or, texte fr en blanc, options de
-//     choix cliquables — soulignées au survol, style D2) ; le monde est
-//     PAUSED pendant le dialogue — GEL MOTEUR (World::tick ne simule plus
-//     rien, cf. dialogue.rs) DOUBLÉ d'un gel UI (tick(0, null) tant que la
-//     session est ouverte — couvre un pkg wasm antérieur) ; Échap = fermer.
-//   * WIRE : clic NPC → npc-ui.js doTalk → D2Dialogue.tryOpen(index) →
-//     openDialogue → rendu de la session (lignes + options) ; clic option →
-//     chooseDialogue(INDEX BRUT) → rafraîchit (ragots « dites-m'en plus ») ;
-//     les actions des options déclenchent l'existant : open_shop → panneau
-//     Marchands, travel → panneau waypoints, quête → events du moteur
-//     (NpcTalked/ActQuestChanged flushés même monde gelé), close → partir.
-//   * PROCHE DU RETAIL : monde gelé — la caméra reste sur le NPC (le héros
-//     ne bouge pas, pas de patrouille, pas de monstre).
+//   * PANNEAU (teneur) : bandeau bas (nom du NPC en or, texte fr en blanc,
+//     options cliquables — style D2) ; le monde est GELÉ pendant le
+//     dialogue — gel MOTEUR GLOBAL (World::tick_inputs ne simule plus rien
+//     pour AUCUN slot, décision style retail cf. dialogue.rs § coop) DOUBLÉ
+//     d'un gel UI local (tick(0,null) tant que MA session est ouverte) ;
+//     Échap = fermer (« partir »).
+//   * VERROU (les AUTRES joueurs) : dialogueLock() pollé — quand un AUTRE
+//     slot tient une session, bandeau haut « <NPC> discute avec <joueur> »
+//     et TOUS les clics/touches jeu sont bloqués (phase capture) : le monde
+//     gelé est partagé, personne ne joue pendant une conversation. Le clic
+//     sur un NPC est consommé (jamais de bulle W16 par-dessus le verrou) ;
+//     le moteur refuse de toute façon (DialogueError::Busy).
+//   * BOUTIQUE (mission (3)) : l'action open_shop n'ouvre le panneau
+//     Marchands QUE sur le client du TENEUR (lui seul clique les options ;
+//     le moteur refuse les autres slots — chooseDialogueSlot → null).
+//   * WIRE : clic NPC → wrapper D2Npc.clickAt (posé ici) → tryOpen(index)
+//     via openDialogueSlot(MON slot) ; « trop loin » retombe sur l'approche
+//     W16 de npc-ui.js (marche puis re-clic). Slot LOCAL = window.D2Net
+//     status().slot (LECTURE seule — net-client.js reste 3c-c ; repli 0).
+//
+// NOTE COOP (documentée) : la session vit dans le monde LOCAL du client
+// (comme talkNpc W16, déjà hors lockstep dans ce prototype). La propagation
+// inter-clients du verrou passera par le relais (3c-c) — l'UI poll DÉJÀ
+// dialogueLock() toutes les 250 ms : dès que l'état sera relayé, le bandeau
+// s'allumera chez tous sans changement d'UI.
 //
 // Défensif (même pattern que npc-ui.js) : si le pkg wasm n'expose pas encore
 // les endpoints de dialogue (build antérieur), le module reste inerte — la
 // page reste jouable et la bulle W16 de npc-ui.js prend le relais.
 //
-// 23a — VOIX (d2speech.mpq fr-FR v1.12) : à l'affichage de chaque ligne, la
-// voix réelle du NPC joue (index assets/sfx/speech/index.json — clé TBL ->
-// wav, généré par tools/extract_speech.py ; 91/91 clés du moteur couvertes,
-// golden test d2rules/tests/speech_golden.rs). Musique DUCKÉE pendant la
-// voix (API publique D2Audio.setVolume('music')), rendue à la fin/fermeture.
-// Tout est défensif : index/wav absent ou mute global = silence propre, pas
-// une seule erreur JS (garde-fou E2E, même contrat que game-sfx.js).
-//
 // Branchement (game.js, 1 ligne) : `import './dialogue-ui.js';` — le module
-// s'auto-accroche au moteur dès `window.__d2.game` est finalisé.
+// importe lui-même party-ui.js (panneau du groupe) et s'auto-accroche au
+// moteur dès window.__d2.game est finalisé.
+
+import './party-ui.js'; // 3c-b : panneau des membres (mission (2)) — zéro autre ligne game.js
 
 (function () {
   'use strict';
   if (typeof window !== 'undefined' && window.D2Dialogue) return; // anti double-chargement
 
-  var POLL_MS = 300;
-  var hooked = null;   // instance D2Game dont `tick` est wrappé (pause monde)
+  var POLL_MS = 250;
+  var hooked = null;   // instance D2Game dont `tick` est wrappé (pause monde locale)
   var realTick = null; // tick d'origine (prototype wasm-bindgen)
-  var session = null;  // session moteur parsée {index,name,role,lines,options}
+  var origClickAt = null; // D2Npc.clickAt d'origine (approche W16 préservée)
+  var session = null;  // session moteur parsée {slot,name,lines,options,…}
+  var lock = null;     // dernier dialogueLock() {active,npc,npcName,slot,player,playerName}
   var panel = null, elName = null, elText = null, elOpts = null;
+  var banner = null, elBanner = null;
   var pollIv = null;
 
   // --- petits utilitaires (même famille que vendor.js : pas de hooks requis) -
@@ -60,8 +72,8 @@
     return (typeof window !== 'undefined' && window.__d2 && window.__d2.game) || null;
   }
   function available(g) {
-    return !!g && typeof g.openDialogue === 'function' &&
-      typeof g.chooseDialogue === 'function';
+    return !!g && typeof g.openDialogueSlot === 'function' &&
+      typeof g.chooseDialogueSlot === 'function';
   }
   function emsg(e) { return e && e.message ? e.message : String(e); }
   function status(msg) {
@@ -80,9 +92,15 @@
     }
   }
 
+  /** Slot LOCAL (lecture seule — net-client.js reste la propriété 3c-c). */
+  function mySlot() {
+    try {
+      var st = window.D2Net && typeof window.D2Net.status === 'function' ? window.D2Net.status() : null;
+      return st && typeof st.slot === 'number' ? st.slot : 0;
+    } catch (e) { return 0; }
+  }
+
   // --- session moteur → modèle UI (DialogueSession serde de dialogue.rs) -----
-  // `DialogueAction` : {kind:say|close|travel|open_shop|hire_mercenary|repair,
-  //  vendor?} ; `DialogueCond` : {kind:always|quest_done, quest?}.
   function actionOf(a) {
     if (a == null) return null;
     if (typeof a === 'string') return { kind: a.toLowerCase(), arg: null };
@@ -116,9 +134,9 @@
       var o = optOf(opts[i], i);
       if (o) options.push(o);
     }
-    // Options VISIBLES : le pont peut porter `visible` (indices bruts issus
-    // de World::dialogue_visible_options) ; sinon tout le nœud s'affiche —
-    // un choix caché serait de toute façon refusé par le moteur (None).
+    // Options VISIBLES : le pont porte `visible` (indices bruts issus de
+    // World::dialogue_visible_options) ; sinon tout le nœud s'affiche — un
+    // choix caché serait de toute façon refusé par le moteur (null).
     var vis = s.visible || s.visibleOptions || node.visible || null;
     if (vis && vis.length !== undefined) {
       var keep = {};
@@ -127,178 +145,217 @@
     }
     var lines = node.lignes || s.lignes || s.lines || s.text || s.dialogue || '';
     if (typeof lines === 'string') lines = lines ? [lines] : [];
-    // 23a : clés TBL des lignes (line_keys du moteur) — consommées par
-    // l'index vocal assets/sfx/speech/index.json (une voix par ligne affichée).
-    var keys = node.line_keys || s.line_keys || [];
     return {
+      slot: typeof s.slot === 'number' ? s.slot : 0,
       index: s.npc_index != null ? s.npc_index : (s.index != null ? s.index : null),
       name: s.npc_name || s.name || s.npc || 'PNJ',
       role: s.npc || s.role || '',
       lines: lines.map(String),
-      keys: keys.map(String),
       options: options,
       done: !!(s.done || s.closed || s.end),
     };
   }
   function hasContent(s) { return s && (s.lines.length > 0 || s.options.length > 0); }
-  // Session à jour après un choose (le moteur avance le nœud : ragots).
-  // Contrat attendu du pont : chooseDialogue renvoie la session à jour ;
-  // sinon un getter `dialogueSession()` ; sinon (action seule) échec doux.
-  function fetchSession(g) {
-    if (typeof g.dialogueSession === 'function') {
-      try { return parseSession(g.dialogueSession()); } catch (e) { return null; }
-    }
-    return null;
-  }
-
-  // --- 23a : voix des PNJ (d2speech.mpq fr-FR v1.12) ---------------------------
-  // Une voix RÉELLE par ligne affichée : index assets/sfx/speech/index.json
-  // (clé TBL -> wav, généré par tools/extract_speech.py depuis les tables du
-  // moteur — 91/91 clés, golden test tests/speech_golden.rs). DEFENSIF (même
-  // famille que game-sfx.js) : index/wav absent = silence + note info, JAMAIS
-  // d'erreur JS. Ducking de la musique via l'API publique D2Audio (bus musique
-  // baissé pendant la voix, rendu à la fin) ; mute GLOBAL respecté (clé
-  // partagée music.js) ; autoplay au premier geste (politique navigateur).
-  var SPEECH_BASE = 'assets/sfx/speech/';
-  var MUTE_KEY = 'd2wasm.musicMuted'; // clé partagée music.js / game-sfx.js
-  var VOICE_VOLUME = 0.9;             // bus voix (la musique duck à 0.12)
-  var DUCK_TARGET = 0.12;             // volume musique pendant la voix
-  var speechIndex = null;             // { clé TBL -> wav basename }
-  var speechIndexPromise = null;
-  var speechBufs = new Map();         // wav -> Promise<AudioBuffer|null>
-  var spActx = null, spBus = null;    // contexte audio voix (unlock 1er geste)
-  var voiceSrc = null;                // source de la voix en cours
-  var duckSaved = null;               // volume musique avant duck
-
-  function mutedNow() {
-    try { return localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { return false; }
-  }
-
-  function unlockVoice() {
+  function parseLock(raw) {
     try {
-      if (!spActx) {
-        var AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        spActx = new AC();
-        spBus = spActx.createGain();
-        spBus.gain.value = VOICE_VOLUME;
-        spBus.connect(spActx.destination);
-      }
-      if (spActx.state === 'suspended') spActx.resume().catch(function () {});
-    } catch (e) { spActx = null; } // WebAudio indisponible : voix muettes
-  }
-  if (typeof window !== 'undefined') {
-    window.addEventListener('pointerdown', unlockVoice, { passive: true });
-    window.addEventListener('keydown', unlockVoice);
+      var v = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return v && typeof v === 'object' ? v : { active: false };
+    } catch (e) { return { active: false }; }
   }
 
-  function speechIndexOf() {
-    if (speechIndex) return Promise.resolve(speechIndex);
-    if (!speechIndexPromise) {
-      speechIndexPromise = fetch(SPEECH_BASE + 'index.json')
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .catch(function () { return null; })
-        .then(function (j) {
-          speechIndex = j && j.lines && typeof j.lines === 'object' ? j.lines : {};
-          if (!Object.keys(speechIndex).length) {
-            console.info('[dialogue] index vocal indisponible — voix muettes (silence).');
-          }
-          return speechIndex;
-        });
-    }
-    return speechIndexPromise;
+  /** Verrou tenu par un AUTRE que le client local ? */
+  function lockedByOther() {
+    return !!(lock && lock.active && lock.slot !== mySlot());
   }
 
-  function speechBuffer(file) {
-    if (!speechBufs.has(file)) {
-      speechBufs.set(file,
-        fetch(SPEECH_BASE + file)
-          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
-          .then(function (b) { return spActx.decodeAudioData(b); })
-          .catch(function (e) {
-            console.info('[dialogue] ' + file + ' indisponible (' +
-              (e && e.message ? e.message : e) + ') — silence.');
-            speechBufs.delete(file); // fichier revenu plus tard : on retentera
-            return null;
-          }));
-    }
-    return speechBufs.get(file);
-  }
-
-  /** Ducking : musique baissée pendant la voix (API publique D2Audio). */
-  function duckMusic(on) {
-    try {
-      if (typeof window === 'undefined' || !window.D2Audio ||
-          typeof window.D2Audio.setVolume !== 'function') return; // pas de mixage : la voix joue quand même
-      if (on) {
-        if (duckSaved == null) duckSaved = window.D2Audio.volume('music');
-        window.D2Audio.setVolume('music', Math.min(duckSaved, DUCK_TARGET));
-      } else if (duckSaved != null) {
-        window.D2Audio.setVolume('music', duckSaved);
-        duckSaved = null;
-      }
-    } catch (e) { /* cosmétique : jamais bloquer la voix */ }
-  }
-
-  function stopVoice() {
-    if (voiceSrc) {
-      try { voiceSrc.onended = null; voiceSrc.stop(); } catch (e) { /* déjà finie */ }
-      voiceSrc = null;
-    }
-    duckMusic(false);
-  }
-
-  /** Joue la voix de la ligne affichée (première clé TBL connue de l'index). */
-  function playVoice(keys) {
-    stopVoice();
-    if (!spActx || mutedNow() || !keys || !keys.length) return;
-    var wanted = keys.slice();
-    void (async function () {
-      var idx = await speechIndexOf();
-      var file = null;
-      for (var i = 0; i < wanted.length && !file; i++) file = idx[wanted[i]] || null;
-      if (!file || !spActx) return; // clé sans voix (TBD…) : silence propre
-      var buf = await speechBuffer(file);
-      if (!buf || mutedNow()) return;
-      try {
-        var src = spActx.createBufferSource();
-        src.buffer = buf;
-        var g = spActx.createGain();
-        g.gain.value = 1; // le bus voix porte VOICE_VOLUME
-        src.connect(g); g.connect(spBus);
-        src.onended = function () {
-          if (voiceSrc === src) { voiceSrc = null; duckMusic(false); }
-        };
-        voiceSrc = src;
-        duckMusic(true);
-        src.start();
-      } catch (e) {
-        console.info('[dialogue] lecture impossible — silence.');
-      }
-    })();
-  }
-
-  // --- accroche moteur : wrapper de tick (pause) + panneau + gardes d'input --
+  // --- accroche moteur : wrapper de tick (pause) + wrapers + panneau --------
   function hook() {
     var g = game();
     if (hooked || !g || typeof g.isFinalized !== 'function' || !g.isFinalized()) return false;
-    // PAUSE MONDE : tant qu'une session est ouverte, tick(0, null) — le
-    // moteur gèle (héros, NPC, monstres, missiles) MAIS les events en attente
-    // (NpcTalked, quêtes…) continuent de couler : world.tick prend
-    // `pending_events` avant le pas dt (d2rules/src/world.rs).
+    // PAUSE MONDE LOCALE : tant que MA session est ouverte, tick(0, null) —
+    // le moteur gèle DÉJÀ tout seul (World::tick_inputs, gel global tous
+    // slots) ; ce wrap ne couvre qu'un pkg intermédiaire. Les events en
+    // attente (NpcTalked, quêtes…) continuent de couler côté moteur.
     realTick = g.tick;
     g.tick = function (dt, inputJson) {
       if (session) return realTick.call(g, 0, null);
       return realTick.call(g, dt, inputJson);
     };
+    // PRIORITÉ DE CLIC : le clic NPC ouvre la SESSION (pas la bulle W16).
+    // « trop loin » retombe sur l'approche W16 (npc-ui marche, re-clic).
+    if (window.D2Npc && typeof window.D2Npc.clickAt === 'function' && !origClickAt) {
+      origClickAt = window.D2Npc.clickAt;
+      window.D2Npc.clickAt = function (px, py) {
+        if (!available(g)) return origClickAt.call(window.D2Npc, px, py);
+        if (session) return true; // panneau ouvert : le monde est en pause
+        if (lockedByOther()) { pulseBanner(); return true; } // verrou : consommé
+        var opened = tryOpenAt(px, py);
+        if (opened != null) return opened; // true = session ouverte (consommé)
+        return origClickAt.call(window.D2Npc, px, py); // sinon : W16 inchangé
+      };
+    }
     hooked = g;
     if (pollIv) { clearInterval(pollIv); pollIv = null; }
-    buildPanel();
+    buildDom();
     installGuards();
+    pollIv = setInterval(poll, POLL_MS);
+    poll();
     return true;
   }
 
-  function buildPanel() {
+  // Hit-test NPC (même projection que npc-ui.js : [(dx-dy)*16, (dx+dy)*8]
+  // ancrée sur le héros de la caméra = MON slot côté client).
+  function hitNpcAt(g, px, py) {
+    var npcs;
+    try { npcs = JSON.parse(g.npcs()); } catch (e) { return null; }
+    if (!npcs || !npcs.length || typeof g.heroScreen !== 'function') return null;
+    var hs, hw;
+    try {
+      hs = g.heroScreen();
+      hw = g.screenToWorld(hs[0], hs[1]);
+    } catch (e) { return null; }
+    var best = null, bd = 22; // CLICK_RADIUS_PX = npc-ui (marqueur visé)
+    for (var i = 0; i < npcs.length; i++) {
+      var n = npcs[i];
+      var dx = n.x - hw[0], dy = n.y - hw[1];
+      var sx = hs[0] + (dx - dy) * 16, sy = hs[1] + (dx + dy) * 8;
+      var d = Math.hypot(px - sx, py - (sy - 10));
+      if (d <= bd) { bd = d; best = n; }
+    }
+    return best ? best.index : null;
+  }
+
+  /** Clic canvas → session moteur. `true` session ouverte, `false` consommé
+   *  (erreur verrou/mort affichée), `null` = pas un NPC / trop loin (W16). */
+  function tryOpenAt(px, py) {
+    var g = hooked || game();
+    if (!g || !available(g)) return null;
+    var ix = hitNpcAt(g, px, py);
+    if (ix == null) return null;
+    return tryOpen(ix);
+  }
+
+  /** Ouvre la session du NPC `index` pour MON slot. Renvoie true (ouverte),
+   *  false (clic consommé — verrou/mort), null (trop loin → approche W16). */
+  function tryOpen(npcIndex) {
+    var g = hooked || game();
+    if (!g || !available(g) || session) return null;
+    var raw;
+    try {
+      raw = g.openDialogueSlot(mySlot(), npcIndex);
+    } catch (e) {
+      var m = emsg(e);
+      if (m.indexOf('trop loin') >= 0) return null; // npc-ui approche (W16)
+      if (m.indexOf('discute') >= 0) { poll(); pulseBanner(); return false; }
+      note('Dialogue : ' + m);
+      return false;
+    }
+    var s = parseSession(raw);
+    if (!s || (!hasContent(s) && !s.done)) return null;
+    session = s.done ? null : s;
+    render();
+    if (session) status('Dialogue avec ' + session.name + ' — monde en pause (Échap = fermer).');
+    return true;
+  }
+
+  function choose(o) {
+    var g = hooked || game();
+    if (!g || !session) return;
+    var raw;
+    try { raw = g.chooseDialogueSlot(mySlot(), o.index); } // INDEX BRUT (contrat moteur)
+    catch (e) { note('Dialogue : ' + emsg(e)); return; }
+    var parsed, okParse = false;
+    try { parsed = typeof raw === 'string' ? JSON.parse(raw) : raw; okParse = true; } catch (e) { parsed = null; }
+    // `null` moteur = choix refusé (condition non remplie) ou session perdue.
+    if (okParse && parsed == null) { poll(); return; }
+    // Action produite ?
+    var kind = okParse && parsed && typeof parsed === 'object' && !parsed.node ? String(parsed.kind || '') : '';
+    if (kind === 'close') {
+      session = null;
+      render();
+      status('Monde repris.');
+      return;
+    }
+    if (kind === 'open_shop') {
+      // Mission (3) : la boutique s'ouvre pour LE teneur — ce code ne
+      // tourne que sur SON client (lui seul clique ; moteur refuse les
+      // autres slots). npc-ui.js openVendorTab : bouton + onglet par nom.
+      openVendorTab(parsed.vendor || session.role);
+      session = null;
+      render();
+      status('Monde repris — boutique ouverte.');
+      return;
+    }
+    if (kind === 'travel') {
+      note('Voyage : la caravane part (panneau waypoints).');
+      session = null;
+      render();
+      status('Monde repris.');
+      return;
+    }
+    if (kind === 'hire_mercenary' || kind === 'repair') {
+      note('Action ' + (kind === 'hire_mercenary' ? "engagement (Kashya)" : 'réparation (Charsi)') + ' : panneau à venir.');
+      session = null;
+      render();
+      status('Monde repris.');
+      return;
+    }
+    // Say (ragots « dites-m'en plus ») : le pont renvoie la session à jour.
+    var s = parseSession(raw);
+    if (s) session = (!hasContent(s) || s.done) ? null : s;
+    else { poll(); return; }
+    render();
+  }
+
+  /** Fermeture (Échap / bouton) — réservée au teneur côté moteur. */
+  function close(fromUi) {
+    var g = hooked || game();
+    if (!g || !session) return;
+    try { g.closeDialogueSlot(mySlot()); } catch (e) { /* session déjà fermée */ }
+    session = null;
+    render();
+    if (fromUi) status('Monde repris.');
+  }
+
+  // --- poll : session fermée côté moteur / bandeau verrou --------------------
+  var lastBanner = '';
+  function poll() {
+    var g = hooked || game();
+    if (!g || !available(g)) return;
+    // Session : fermée côté moteur (partir d'un autre chemin) → sync.
+    if (session) {
+      var raw = null;
+      try { raw = g.dialogueSession(); } catch (e) { raw = null; }
+      if (raw == null || raw === 'null') {
+        session = null;
+        render();
+        status('Monde repris.');
+      } else {
+        lock = parseLock((function () { try { return g.dialogueLock(); } catch (e) { return '{"active":false}'; } })());
+        renderBanner();
+        return;
+      }
+    }
+    // Verrou : bandeau des NON-teneurs (poll 250 ms — prêt pour le relais).
+    var lraw = '{"active":false}';
+    try { lraw = g.dialogueLock(); } catch (e) { /* pkg ancien */ }
+    lock = parseLock(lraw);
+    renderBanner();
+    // Si C'EST ma session (ex. re-render après travel), resynchroniser.
+    if (lock.active && lock.slot === mySlot() && !session) {
+      var sraw = null;
+      try { sraw = g.dialogueSession(); } catch (e) { sraw = null; }
+      var s = sraw && sraw !== 'null' ? parseSession(sraw) : null;
+      if (s && hasContent(s)) { session = s; render(); }
+    }
+    if (typeof window !== 'undefined' && window.D2Party && typeof window.D2Party.render === 'function') {
+      window.D2Party.render(); // marqueur « discute » du panneau groupe
+    }
+  }
+
+  // --- DOM : panneau (teneur) + bandeau verrou (autres) -----------------------
+  function buildDom() {
+    if (panel || typeof document === 'undefined') return;
     var stage = document.getElementById('stage') || document.body;
     panel = document.createElement('div');
     panel.id = 'd2dlg';
@@ -314,6 +371,11 @@
     elName = panel.querySelector('.d2dlg-name');
     elText = panel.querySelector('.d2dlg-text');
     elOpts = panel.querySelector('.d2dlg-opts');
+    banner = document.createElement('div');
+    banner.id = 'd2dlglock';
+    banner.style.display = 'none';
+    stage.appendChild(banner);
+    elBanner = banner;
     var css = document.createElement('style');
     css.textContent =
       '#d2dlg{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);' +
@@ -333,34 +395,16 @@
       'text-shadow:0 1px 2px #000;}' +
       '#d2dlg .d2dlg-opt:hover{text-decoration:underline;color:#ffe9ad;}' +
       '#d2dlg .d2dlg-pause{position:absolute;right:10px;top:8px;color:#8f8676;' +
-      'font:italic 10px system-ui;letter-spacing:.04em;}';
+      'font:italic 10px system-ui;letter-spacing:.04em;}' +
+      '#d2dlglock{position:absolute;left:50%;top:12px;transform:translateX(-50%);' +
+      'z-index:7;background:rgba(16,12,6,.92);border:2px solid #5a4a2a;' +
+      'outline:1px solid #000;padding:6px 18px;color:#ffe9ad;font:600 12.5px system-ui;' +
+      'letter-spacing:.05em;text-shadow:0 1px 2px #000;box-shadow:0 4px 18px #000d;' +
+      'transition:transform .15s;pointer-events:none;}' +
+      '#d2dlglock.pulse{transform:translateX(-50%) scale(1.06);}';
     document.head.appendChild(css);
   }
 
-  // Gardes d'input (phase capture sur document → avant game.js/hud.js) :
-  // pendant la session, AUCUNE touche ni clic ne traverse vers le jeu —
-  // sauf les clics DANS le panneau (options) et Échap (fermeture).
-  function installGuards() {
-    document.addEventListener('keydown', function (e) {
-      if (!session) return;
-      e.stopImmediatePropagation();
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        close(true);
-      }
-    }, true);
-    var swallow = function (e) {
-      if (!session) return;
-      if (panel && panel.contains(e.target)) return; // le panneau reste cliquable
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    };
-    ['mousedown', 'mouseup', 'click', 'dblclick', 'contextmenu'].forEach(function (t) {
-      document.addEventListener(t, swallow, true);
-    });
-  }
-
-  // --- rendu -------------------------------------------------------------------
   function render() {
     if (!panel) return;
     if (!session || !hasContent(session)) {
@@ -387,161 +431,94 @@
       b.addEventListener('click', function () { choose(o); });
       elOpts.appendChild(b);
     });
-    // 23a : voix du NPC à l'affichage de la ligne (skip silencieux si le
-    // fichier est absent — jamais d'erreur), musique duckée pendant.
-    playVoice(session.keys);
   }
 
-  // --- wire : ouverture / choix / fermeture ------------------------------------
-  // Clic NPC (npc-ui.js doTalk) → openDialogue → rendu. Renvoie true si la
-  // session est ouverte (le clic NPC est consommé), false sinon (npc-ui.js
-  // garde son chemin W16 : bulle + approche).
-  function tryOpen(npcIndex) {
-    var g = hooked || game();
-    if (!g || !available(g) || session) return false;
-    var raw;
-    try { raw = g.openDialogue(npcIndex); } catch (e) { return false; } // « trop loin » : npc-ui note + marche
-    var s = parseSession(raw);
-    if (!s || (!hasContent(s) && !s.done)) return false;
-    session = s.done ? null : s;
-    render();
-    if (session) status('Dialogue avec ' + session.name + ' — monde en pause (Échap = fermer).');
-    return true;
+  /** Bandeau verrou : « <NPC> discute avec <joueur> » pour les AUTRES. */
+  function renderBanner() {
+    if (!elBanner) return;
+    var mine = !!(lock && lock.active && lock.slot === mySlot());
+    var show = lock && lock.active && !mine; // le teneur a SON panneau
+    if (!show) {
+      elBanner.style.display = 'none';
+      lastBanner = '';
+      return;
+    }
+    var txt = (lock.npcName || lock.npc || 'PNJ') + ' discute avec ' +
+      (lock.playerName || lock.player || 'un joueur') +
+      ' (J' + ((lock.slot | 0) + 1) + ') — monde en pause';
+    if (txt !== lastBanner) {
+      elBanner.textContent = txt;
+      lastBanner = txt;
+    }
+    elBanner.style.display = 'block';
   }
 
-  function choose(o) {
-    var g = hooked || game();
-    if (!g || !session) return;
-    var raw;
-    try { raw = g.chooseDialogue(o.index); } // INDEX BRUT dans node.options (contrat moteur)
-    catch (e) { note('Dialogue : ' + emsg(e)); return; }
-    var parsed, okParse = false;
-    try { parsed = typeof raw === 'string' ? JSON.parse(raw) : raw; okParse = true; } catch (e) { parsed = null; }
-    // `null` moteur = choix refusé (condition quête non remplie) ou session
-    // absente — on reste sur le nœud courant, sans fermer.
-    if (okParse && parsed == null) return;
-    var act = parsed && typeof parsed === 'object'
-      ? actionOf(parsed.action || parsed) : null; // {action:{kind…}} ou {kind…}
-    var k = act ? act.kind : '';
-    // Actions → UI existante (mission 22c §2). open_shop/travel FERMENT la
-    // session (comme le retail : choisir de commercer quitte le dialogue).
-    if (/(open_shop|shop|vendor|trade|store|gamble)/.test(k)) {
-      openVendor(act.arg);
-      close(true);
+  function pulseBanner() {
+    if (!elBanner || elBanner.style.display === 'none') {
+      note((lock && lock.npcName ? lock.npcName : 'Un PNJ') + ' discute déjà avec ' +
+        (lock && lock.playerName ? lock.playerName : 'un joueur') + ' — patientez.');
       return;
     }
-    if (/(travel|waypoint|voyage)/.test(k)) {
-      openWaypoints();
-      close(true);
-      return;
-    }
-    if (/(hire_mercenary|hire)/.test(k)) {
-      note('Engagement de recrue : l’API moteur est prête (écran d’embauche à venir).');
-      return; // nœud inchangé — le dialogue reste ouvert
-    }
-    if (/(repair|reparer)/.test(k)) {
-      note('Rien à réparer pour l’instant (durabilité à venir).');
-      return;
-    }
-    if (/(close|bye|leave|farewell|end|partir)/.test(k)) {
-      close(true);
-      return;
-    }
-    // say (ragots « dites-m'en plus ») ou action inconnue : le moteur a
-    // avancé le nœud — rafraîchir (choose renvoie la session à jour, sinon
-    // le getter `dialogueSession()`).
-    var next = (parsed && typeof parsed === 'object' && parsed.node)
-      ? parseSession(parsed)
-      : fetchSession(g);
-    if (next && !next.done && hasContent(next)) {
-      session = next;
-      render();
-    }
+    elBanner.classList.add('pulse');
+    setTimeout(function () { if (elBanner) elBanner.classList.remove('pulse'); }, 180);
   }
 
-  function openVendor(vendor) {
-    // Panneau Marchands existant (demo/vendor.js, bouton #btn-vendors).
-    if (typeof window !== 'undefined' && window.D2Npc &&
-        typeof window.D2Npc.openVendorTab === 'function') {
-      window.D2Npc.openVendorTab(vendor);
-      return;
-    }
-    if (typeof document === 'undefined') return;
+  // Gardes d'input (phase capture sur document → avant game.js/hud.js) :
+  // pendant MA session ou un verrou TENU PAR UN AUTRE, AUCUNE touche ni clic
+  // ne traverse vers le jeu (monde gelé partagé — décision style retail)
+  // sauf les clics DANS le panneau (options) et Échap (fermeture teneur).
+  function blockedNow() {
+    return !!session || lockedByOther();
+  }
+  function installGuards() {
+    document.addEventListener('keydown', function (e) {
+      if (!blockedNow()) return;
+      e.stopImmediatePropagation();
+      if (e.key === 'Escape' && session) {
+        e.preventDefault();
+        close(true);
+      }
+    }, true);
+    var swallow = function (e) {
+      if (!blockedNow()) return;
+      if (panel && panel.contains(e.target)) return; // le panneau reste cliquable
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (lockedByOther() && (e.type === 'mousedown' || e.type === 'click')) pulseBanner();
+    };
+    ['mousedown', 'mouseup', 'click', 'dblclick', 'contextmenu'].forEach(function (t) {
+      document.addEventListener(t, swallow, true);
+    });
+  }
+
+  // Panneau Marchands (même DOM que npc-ui.js openVendorTab — mission (3)).
+  function openVendorTab(vendor) {
     var btn = document.getElementById('btn-vendors');
     var p = document.getElementById('d2vendor');
-    if (!btn || !p) { note('Panneau Marchands indisponible.'); return; }
+    if (!btn || !p) return;
     if (p.style.display !== 'block') btn.click();
-    if (vendor) {
-      var want = vendor === 'Gheed' ? 'Gamble (Gheed)' : vendor;
-      var tabs = p.querySelectorAll('.tabs button');
-      for (var i = 0; i < tabs.length; i++) {
-        if (tabs[i].textContent.indexOf(want) === 0) { tabs[i].click(); break; }
-      }
+    var want = vendor === 'Gheed' ? 'Gamble (Gheed)' : vendor;
+    var tabs = p.querySelectorAll('.tabs button');
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].textContent.indexOf(want) === 0) { tabs[i].click(); break; }
     }
   }
 
-  function openWaypoints() {
-    // Panneau waypoints existant (demo/waypoints.js).
-    if (typeof window !== 'undefined' && window.D2Waypoints &&
-        typeof window.D2Waypoints.setOpen === 'function') {
-      window.D2Waypoints.setOpen(true);
-      return;
-    }
-    if (typeof document === 'undefined') return;
-    var b = document.getElementById('btn-waypoints');
-    if (b) b.click();
-    else note('Panneau waypoints indisponible.');
+  // Auto-accroche : le jeu est prêt quand window.__d2.game est finalisé
+  // (même contrat que les autres modules UI — aucun hook game.js requis).
+  if (typeof window !== 'undefined') {
+    var tries = 0;
+    var boot = setInterval(function () {
+      tries++;
+      if (hook() || tries > 600) clearInterval(boot);
+    }, 100);
   }
 
-  // Échap / option de fin : ferme (session + endpoint moteur), reprend le
-  // monde (le wrapper de tick re-passe dt réel dès `session === null`).
-  function close(withEngine) {
-    if (!session) return;
-    session = null;
-    stopVoice(); // 23a : voix coupée + musique dé-duckée à la fermeture
-    render();
-    var g = hooked || game();
-    if (withEngine && g && typeof g.closeDialogue === 'function') {
-      try { g.closeDialogue(); } catch (e) { /* déjà fermée côté moteur */ }
-    }
-  }
-
-  // --- capture-texte du panneau (recette + node --check hors navigateur) ------
-  function panelTextLines(s) {
-    var out = [String(s.name || 'PNJ').toUpperCase()];
-    s.lines.forEach(function (l) {
-      String(l).split('\n').forEach(function (x) { out.push(x); });
-    });
-    s.options.forEach(function (o) { out.push(o.text); });
-    out.push('monde en pause · Échap = fermer');
-    return out;
-  }
-
-  var api = {
+  // API publique (sondes E2E + party-ui marqueur « discute »).
+  window.D2Dialogue = {
     tryOpen: tryOpen,
-    close: function () { close(true); },
-    isOpen: function () { return !!session; },
-    _choose: choose, // interne (harnais de test node — même flux qu'un clic)
-    // Capture-texte du panneau (contenu EXACT rendu) — tests/recette.
-    _debugText: function () { return session ? panelTextLines(session).join('\n') : ''; },
-    _capture: function (sessionJson) {
-      var s = parseSession(sessionJson); // tolère JSON string ET objet déjà parsé
-      return s ? panelTextLines(s).join('\n') : '';
-    },
-    _parse: parseSession,
-    _state: function () { return { hooked: !!hooked, session: session }; },
-    // 23a : état voix (recette + harnais node) — index chargé, voix en
-    // cours, musique duckée.
-    _voiceState: function () {
-      return { loaded: !!speechIndex, playing: !!voiceSrc, ducked: duckSaved != null };
-    },
-    _stopVoice: stopVoice, // interne (fermeture forcée des harnais)
+    close: close,
+    lockView: function () { return lock || { active: false }; },
+    sessionView: function () { return session; },
   };
-  if (typeof window !== 'undefined') window.D2Dialogue = api;
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-
-  // Auto-accroche (game.js ne fait qu'importer le module — 1 ligne).
-  if (typeof document !== 'undefined') {
-    if (!hook()) pollIv = setInterval(hook, POLL_MS);
-  }
 })();

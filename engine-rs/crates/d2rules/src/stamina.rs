@@ -156,7 +156,7 @@ mod tests {
 
         // mort → respawn : endurance pleine à nouveau (hero est pub(crate),
         // accessible dans le crate pour tester la réinitialisation).
-        w.hero.dead_ms = crate::world::RESPAWN_MS - 1;
+        w.players[0].data.dead_ms = crate::world::RESPAWN_MS - 1;
         w.tick(100, None);
         assert_eq!(w.hero_stats().stamina, tpl_max, "respawn = pleine endurance");
     }

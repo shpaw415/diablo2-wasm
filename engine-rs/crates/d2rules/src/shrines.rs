@@ -335,7 +335,7 @@ impl World {
     /// Effet instantané Recharge (code 1) : vie et mana au maximum.
     /// Renvoie `(soin rendu, mana rendu)` (0 si déjà pleine).
     pub fn apply_shrine_recharge(&mut self) -> (u32, u32) {
-        let s = &mut self.hero.stats;
+        let s = &mut self.players[0].data.stats;
         let healed = s.max_life.saturating_sub(s.life);
         let mana = s.max_mana.saturating_sub(s.mana);
         s.life = s.max_life;
@@ -484,13 +484,13 @@ mod tests {
     #[test]
     fn world_recharge_refills_life_and_mana() {
         let mut w = world();
-        w.hero.stats.life = 10;
-        w.hero.stats.mana = 5;
-        let (max_life, max_mana) = (w.hero.stats.max_life, w.hero.stats.max_mana);
+        w.players[0].data.stats.life = 10;
+        w.players[0].data.stats.mana = 5;
+        let (max_life, max_mana) = (w.players[0].data.stats.max_life, w.players[0].data.stats.max_mana);
         let (healed, mana) = w.apply_shrine_recharge();
         assert_eq!(healed, max_life - 10);
         assert_eq!(mana, max_mana - 5);
-        assert_eq!(w.hero.stats.life, max_life);
+        assert_eq!(w.players[0].data.stats.life, max_life);
         assert_eq!(w.hero_stats().mana, max_mana, "accesseur public en phase");
         // Pleine vie : no-op propre.
         assert_eq!(w.apply_shrine_recharge(), (0, 0));

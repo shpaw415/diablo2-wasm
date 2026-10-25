@@ -127,6 +127,84 @@ struct Save {
     /// Err (contrat quests_finale.rs : tout écart = pas d'état incohérent).
     #[serde(default)]
     quest_finale: Option<serde_json::Value>,
+    /// 3b-1 : LES JOUEURS (save v4 — `version: 4`) — TOUS les slots
+    /// (index = slot, 0 inclus ; le slot 0 est DOUBLÉ dans les champs v3 de
+    /// tête `hero`/`skills`/… en miroir pour la lisibilité/outils). Source
+    /// de vérité au chargement v4. Absent des sauvegardes v1/v2/v3
+    /// (rétro-compat : un seul joueur reconstruit depuis les champs de tête)
+    /// et des v3 intermédiaires `coheroes` (rechargées opportunément).
+    #[serde(default)]
+    players: Option<Vec<PlayerSave>>,
+    /// 3b-transition (RETRAIT) : champ de l'arbre de dev 3b antérieur —
+    /// accepté AU CHARGEMENT seul (mappé vers players[1..]), jamais écrit.
+    #[serde(default, skip_serializing)]
+    coheroes: Option<Vec<CoHeroSave>>,
+}
+
+/// 3b-1 : état complet d'UN joueur (save v4, `players[slot]`) — même contenu
+/// que [`HeroSave`] + code de classe + état du flux RNG INDÉPENDANT du joueur
+/// (déterminisme par slot après rechargement).
+#[derive(Serialize, Deserialize)]
+struct PlayerSave {
+    /// Code héros effectif ("BA"|"SOR"…).
+    code: String,
+    /// Entité (position, facing, anim).
+    ent: Entity,
+    /// Stats (life = PV courants).
+    stats: HeroStats,
+    /// Chemin restant.
+    path: Vec<(f32, f32)>,
+    /// Swing / cooldown restant.
+    swing_ms: u32,
+    /// Compteur de mort (0 = vivant).
+    dead_ms: u32,
+    /// Horloge d'animation.
+    anim_ms: u32,
+    /// Point d'apparition.
+    spawn: (f32, f32),
+    /// Inventaire 40 slots.
+    inv: Vec<Option<ItemDef>>,
+    /// Compétences connues.
+    #[serde(default)]
+    skills: Option<Vec<HeroSkill>>,
+    /// Index du skill actif.
+    #[serde(default)]
+    active_skill: Option<usize>,
+    /// État du flux RNG du joueur (déterminisme par slot).
+    #[serde(default)]
+    rng: Option<u64>,
+}
+
+/// État complet d'un coéquipier (3b intermédiaire) — même contenu que
+/// [`HeroSave`] + le code de classe (le gabarit est reconstruit au
+/// chargement). `Clone` : rechargé (jamais écrit) depuis les saves 3b
+/// intermédiaires.
+#[derive(Serialize, Deserialize, Clone)]
+struct CoHeroSave {
+    /// Code héros effectif ("BA"|"SOR"…).
+    code: String,
+    /// Entité (position, facing, anim).
+    ent: Entity,
+    /// Stats (life = PV courants).
+    stats: HeroStats,
+    /// Chemin restant.
+    path: Vec<(f32, f32)>,
+    /// Swing / cooldown restant.
+    swing_ms: u32,
+    /// Compteur de mort (0 = vivant).
+    dead_ms: u32,
+    /// Horloge d'animation.
+    anim_ms: u32,
+    /// Point d'apparition.
+    spawn: (f32, f32),
+    /// Inventaire 40 slots.
+    inv: Vec<Option<ItemDef>>,
+    /// Compétences connues.
+    #[serde(default)]
+    skills: Option<Vec<HeroSkill>>,
+    /// Index du skill actif.
+    #[serde(default)]
+    active_skill: Option<usize>,
 }
 
 /// État complet du héros.
@@ -224,20 +302,22 @@ pub(crate) fn save_json(w: &World) -> String {
         now_ms: w.now_ms,
         collision: grid_to_strings(&w.grid),
         manifest: w.manifest.clone(),
-        hero_code: Some(w.hero_code.clone()),
+        // miroir du slot 0 dans les champs v3 de tête (lisibilité/outils ;
+        // la source de vérité v4 est `players`).
+        hero_code: Some(w.players[0].code.clone()),
         level: Some(w.level_key.clone()),
         hero: HeroSave {
-            ent: w.hero_ent,
-            stats: w.hero.stats.clone(),
-            path: w.hero.path.clone(),
-            swing_ms: w.hero.swing_ms,
-            dead_ms: w.hero.dead_ms,
-            anim_ms: w.hero.anim_ms,
-            spawn: w.hero.spawn,
-            inv: w.hero.inv.clone(),
+            ent: w.players[0].ent,
+            stats: w.players[0].data.stats.clone(),
+            path: w.players[0].data.path.clone(),
+            swing_ms: w.players[0].data.swing_ms,
+            dead_ms: w.players[0].data.dead_ms,
+            anim_ms: w.players[0].data.anim_ms,
+            spawn: w.players[0].data.spawn,
+            inv: w.players[0].data.inv.clone(),
         },
-        skills: Some(w.hero.skills.clone()),
-        active_skill: Some(w.hero.active_skill),
+        skills: Some(w.players[0].data.skills.clone()),
+        active_skill: Some(w.players[0].data.active_skill),
         difficulty: Some(w.difficulty),
         monsters: w
             .mon_ent
@@ -286,10 +366,33 @@ pub(crate) fn save_json(w: &World) -> String {
         missiles: Some(serde_json::to_value(&w.missiles).expect("d2rules: sérialisation missiles")),
         waypoints: Some(w.wp.active.clone()),
         npcs: Some(w.npcs.clone()),
+        // 3b-1 : TOUS les joueurs (save v4) ; `coheroes` n'est plus écrit
+        // (rechargé seul au chargement des saves intermédiaires).
+        players: Some(
+            w.players
+                .iter()
+                .map(|p| PlayerSave {
+                    code: p.code.clone(),
+                    ent: p.ent,
+                    stats: p.data.stats.clone(),
+                    path: p.data.path.clone(),
+                    swing_ms: p.data.swing_ms,
+                    dead_ms: p.data.dead_ms,
+                    anim_ms: p.data.anim_ms,
+                    spawn: p.data.spawn,
+                    inv: p.data.inv.clone(),
+                    skills: Some(p.data.skills.clone()),
+                    active_skill: Some(p.data.active_skill),
+                    rng: Some(p.rng.s),
+                })
+                .collect(),
+        ),
         quests: w.quests.as_ref().map(|log| {
             serde_json::from_str(&log.to_json()).expect("d2rules: sérialisation journal quêtes")
         }),
         mercenary: w.merc.as_ref().map(crate::mercenary::MercSave::of),
+        // 3b-transition : plus jamais écrit (rechargé seul) — skip_serializing.
+        coheroes: None,
     };
     serde_json::to_string(&save).expect("d2rules: sérialisation save")
 }
@@ -340,44 +443,160 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         Some(i) if i < skills.len() => i,
         _ => crate::skills::default_active(&hero_code),
     };
+    // 3b-1 : construction de TOUS les joueurs. v4 (`players` présent) :
+    // chaque slot est rechargé tel quel. v1/v2/v3 : un seul joueur depuis
+    // les champs de tête (`hero`/`skills`/`active_skill`) — zéro perte —
+    // plus, opportunément, les `coheroes` des saves intermédiaires 3b.
+    let players: Vec<super::world::Player> = match &s.players {
+        Some(list) => {
+            if list.is_empty() || list.len() > super::world::MAX_HEROES {
+                return Err(());
+            }
+            list.iter()
+                .enumerate()
+                .map(|(slot, ps)| {
+                    let skills = match &ps.skills {
+                        Some(v) => v.clone(),
+                        None => crate::skills::starting_skills(&ps.code),
+                    };
+                    let active_skill = match ps.active_skill {
+                        Some(i) if i < skills.len() => i,
+                        _ => crate::skills::default_active(&ps.code),
+                    };
+                    let mut stats = ps.stats.clone();
+                    // EXP-H2 : même reconcile stamina que les saves v3.
+                    let tpl = super::data::parse_hero_code(&s.manifest, &ps.code);
+                    if stats.max_stamina == 0 {
+                        stats.max_stamina = tpl.stamina;
+                        stats.stamina = stats.max_stamina;
+                    }
+                    let stamina_milli = (stats.stamina as i64) * 1000;
+                    super::world::Player {
+                        slot,
+                        ent: ps.ent,
+                        code: ps.code.clone(),
+                        tpl,
+                        data: super::world::HeroData {
+                            stats,
+                            path: ps.path.clone(),
+                            swing_ms: ps.swing_ms,
+                            dead_ms: ps.dead_ms,
+                            anim_ms: ps.anim_ms,
+                            run: false,
+                            swing_cast: false,
+                            spawn: ps.spawn,
+                            inv: ps.inv.clone(),
+                            skills,
+                            active_skill,
+                            stamina_milli,
+                            mods: super::combat_mods::HitMods::default(),
+                        },
+                        rng: Rng::new(ps.rng.unwrap_or(
+                            s.rng ^ (super::world::GOLDEN_MIX.wrapping_mul(slot as u64 + 1)),
+                        )),
+                    }
+                })
+                .collect()
+        }
+        None => {
+            let mut list = vec![super::world::Player {
+                slot: 0,
+                ent: s.hero.ent,
+                code: hero_code.clone(),
+                tpl: super::data::parse_hero_code(&s.manifest, &hero_code),
+                data: super::world::HeroData {
+                    stats: {
+                        let mut stats = s.hero.stats.clone();
+                        if stats.max_stamina == 0 {
+                            stats.max_stamina =
+                                super::data::parse_hero_code(&s.manifest, &hero_code).stamina;
+                            stats.stamina = stats.max_stamina;
+                        }
+                        stats
+                    },
+                    path: s.hero.path.clone(),
+                    swing_ms: s.hero.swing_ms,
+                    dead_ms: s.hero.dead_ms,
+                    anim_ms: s.hero.anim_ms,
+                    run: false,
+                    swing_cast: false,
+                    spawn: s.hero.spawn,
+                    inv,
+                    skills,
+                    active_skill,
+                    stamina_milli: (s.hero.stats.stamina as i64) * 1000,
+                    mods: super::combat_mods::HitMods::default(),
+                },
+                rng: Rng::new(s.rng),
+            }];
+            // saves 3b intermédiaires (champ `coheroes`) : mappées slots 1..
+            for (i, cs) in s.coheroes.clone().unwrap_or_default().into_iter().enumerate() {
+                let slot = i + 1;
+                let skills = match cs.skills {
+                    Some(v) => v,
+                    None => crate::skills::starting_skills(&cs.code),
+                };
+                let active_skill = match cs.active_skill {
+                    Some(i) if i < skills.len() => i,
+                    _ => crate::skills::default_active(&cs.code),
+                };
+                let mut stats = cs.stats;
+                let tpl = super::data::parse_hero_code(&s.manifest, &cs.code);
+                if stats.max_stamina == 0 {
+                    stats.max_stamina = tpl.stamina;
+                    stats.stamina = stats.max_stamina;
+                }
+                let stamina_milli = (stats.stamina as i64) * 1000;
+                list.push(super::world::Player {
+                    slot,
+                    ent: cs.ent,
+                    code: cs.code,
+                    tpl,
+                    data: super::world::HeroData {
+                        stats,
+                        path: cs.path,
+                        swing_ms: cs.swing_ms,
+                        dead_ms: cs.dead_ms,
+                        anim_ms: cs.anim_ms,
+                        run: false,
+                        swing_cast: false,
+                        spawn: cs.spawn,
+                        inv: cs.inv,
+                        skills,
+                        active_skill,
+                        stamina_milli,
+                        mods: super::combat_mods::HitMods::default(),
+                    },
+                    rng: Rng::new(s.rng ^ (super::world::GOLDEN_MIX.wrapping_mul(slot as u64 + 1))),
+                });
+            }
+            list
+        }
+    };
+    let players_capacity = players.len();
     let world = World {
+        // 3c-b : session de dialogue TRANSITOIRE — jamais persistée (l'UI
+        // rouvre le dialogue d'un clic après un load, cf. dialogue.rs).
+        dialogue: None,
         w,
         h,
         grid,
         manifest: s.manifest.clone(),
-        hero_code: hero_code.clone(),
         level_key,
         hero_tpl: super::data::parse_hero_code(&s.manifest, &hero_code),
         mon_tpls: super::data::parse_monsters(&s.manifest),
         // Tables de loot statiques (embarquées) — pas d'état à recharger.
         loot: super::loot::build(),
-        hero_ent: s.hero.ent,
-        hero: {
-            let mut stats = s.hero.stats;
-            // EXP-H2 (stamina) : les saves antérieures au champ chargent
-            // `stamina = max_stamina = 0` (serde default) — reconcile au
-            // gabarit du manifest et aligne l'accumulateur (transitoire).
-            if stats.max_stamina == 0 {
-                stats.max_stamina = super::data::parse_hero_code(&s.manifest, &hero_code).stamina;
-                stats.stamina = stats.max_stamina;
+        // 3b-1 : les joueurs sont construits PLUS HAUT (v4 `players` ou
+        // rétro-compat v1/v2/v3 depuis les champs de tête).
+        players,
+        local_slot: 0,
+        input_queues: {
+            let mut q = Vec::new();
+            for _ in 0..players_capacity {
+                q.push(std::collections::VecDeque::new());
             }
-            let stamina_milli = (stats.stamina as i64) * 1000;
-            HeroData {
-                stats,
-                path: s.hero.path,
-                swing_ms: s.hero.swing_ms,
-                dead_ms: s.hero.dead_ms,
-                anim_ms: s.hero.anim_ms,
-                run: false, // transient (touche Maj) — jamais persisté
-                swing_cast: false, // 15b : transitoire (jamais persisté)
-                spawn: s.hero.spawn,
-                inv,
-                skills,
-                active_skill,
-                stamina_milli, // EXP-H2 : transitoire, recalé à la valeur chargée
-                // 12c : mods de coup transitoires (jamais persistés) — vides.
-                mods: super::combat_mods::HitMods::default(),
-            }
+            q
         },
         mon_ent: s.monsters.iter().map(|m| m.ent).collect(),
         mon_dat: s
@@ -408,6 +627,8 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 wounds: None,
                 poison: None,
                 chill_ms: 0,
+                // 3b : toucheur transitoire (jamais persisté) — slot 0.
+                last_hit_by: 0,
                 // 16a : malédiction transitoire (jamais persistée) — vide.
                 curse: None,
             })
@@ -427,9 +648,6 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         // est transitoire — jamais persisté.
         corpse: s.corpse,
         corpse_pending: false,
-        // 22a : session de dialogue transitoire (dialogue.rs) — jamais
-        // persistée : après un load, l'UI rouvre le dialogue d'un clic.
-        dialogue: None,
         // 11c : stash (saves antérieures = vide 6×4, Stash::default).
         gold_stash: s.gold_stash.unwrap_or_default(),
         consum: s.consumables.unwrap_or_default(), // 11b : additif (ceinture vide)
@@ -511,12 +729,31 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         // 16a : aura active transitoire (jamais persistée) — vide au
         // chargement, comme `corpse_pending`/`HitMods`.
         auras: crate::auras::AuraState::default(),
+        // 3b-1 : propriété des missiles transitoire (jamais persistée) — vide.
+        missile_owner: Vec::new(),
     };
     let mut world = world;
     // sanité minimale : gabarits connus, entités dans les bornes
     for d in &world.mon_dat {
         if d.tpl >= world.mon_tpls.len() {
             return Err(());
+        }
+    }
+    // 3b-1 : cohérence des joueurs — au moins 1, plafond de slots,
+    // inventaires complets, entités dans les bornes, anim DD ↔ compte de
+    // mort. Tout écart ⇒ Err (jamais d'état incohérent, contrat save).
+    if world.players.is_empty() || world.players.len() > super::world::MAX_HEROES {
+        return Err(());
+    }
+    for p in &world.players {
+        if p.data.inv.len() != INV_SLOTS {
+            return Err(());
+        }
+        if p.ent.x < 0.0 || p.ent.y < 0.0 || p.ent.x >= w as f32 || p.ent.y >= h as f32 {
+            return Err(());
+        }
+        if p.ent.anim == AnimState::DD && p.data.dead_ms == 0 {
+            return Err(()); // anim DD sans compte de mort : état incohérent
         }
     }
     // IA P1 : reconstruit les archétypes depuis les codes gabarits chargés —
@@ -527,7 +764,7 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         .mon_ent
         .iter()
         .chain(world.npcs.iter().map(|n| &n.ent))
-        .chain(std::iter::once(&world.hero_ent))
+        .chain(world.players.iter().map(|p| &p.ent))
     {
         if e.x < 0.0 || e.y < 0.0 || e.x >= w as f32 || e.y >= h as f32 {
             return Err(());
@@ -544,7 +781,7 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
     }) {
         return Err(()); // missile hors carte : état incohérent
     }
-    if world.hero_ent.anim == AnimState::DD && world.hero.dead_ms == 0 {
+    if world.players.iter().any(|p| p.ent.anim == AnimState::DD && p.data.dead_ms == 0) {
         return Err(()); // anim DD héros sans compte de mort : état incohérent
     }
     // mercenaire H : entité et missiles dans les bornes (symétrique héros)

@@ -4,6 +4,8 @@
 use serde_json::Value;
 
 /// Gabarit héros (colonnes `patch_charstats.txt`, ligne Barbarian).
+/// 3b : `Clone` — les coéquipiers copient leur gabarit de classe.
+#[derive(Clone)]
 pub(crate) struct HeroTpl {
     /// Vie niveau 1 (`hpadd` + `vit` = 55).
     pub life: u32,
@@ -91,10 +93,22 @@ pub(crate) fn resolve_hero(v: &Value, requested: &str) -> String {
         .to_string()
 }
 
+/// 3b-1 : comme [`parse_hero_code`] mais renvoie `None` si la classe
+/// résolue est inconnue du manifest — connu = `heroes[CODE]` existe, ou le
+/// manifest n'a PAS d'objet `heroes` (le bloc unique `hero` fait alors foi
+/// pour l'unique classe du monde). Utilisé par `add_player`/`add_cohero_near`
+/// (refus propre, sans muter l'état).
+pub(crate) fn parse_hero_code_checked(v: &Value, resolved: &str) -> Option<HeroTpl> {
+    match v.get("heroes").and_then(|h| h.as_object()) {
+        Some(heroes) if heroes.contains_key(resolved) => Some(parse_hero_code(v, resolved)),
+        Some(_) => None, // objet heroes présent mais code absent : classe inconnue
+        None => Some(parse_hero_code(v, resolved)), // monde à héros unique
+    }
+}
+
 /// Parse les stats du héros `code` : `heroes[code]/stats` si présent, sinon le
 /// bloc `hero/stats` (rétro-compat). Champs absents ⇒ défauts barbare niv 1.
-pub(crate) fn parse_hero_code(v: &Value, code: &str) -> HeroTpl {
-    let has = v
+pub(crate) fn parse_hero_code(v: &Value, code: &str) -> HeroTpl {    let has = v
         .get("heroes")
         .and_then(|h| h.as_object())
         .is_some_and(|h| h.contains_key(code));

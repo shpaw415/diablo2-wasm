@@ -485,8 +485,8 @@ impl World {
     /// Renvoie l'or stash après dépôt ; rien ne bouge en cas d'erreur.
     pub fn stash_deposit_gold(&mut self, amount: u32) -> Result<u32, EconError> {
         let (hero, stash) =
-            self.gold_stash.deposit_gold(amount, self.hero.stats.gold, self.hero.stats.level, self.difficulty)?;
-        self.hero.stats.gold = hero;
+            self.gold_stash.deposit_gold(amount, self.players[0].data.stats.gold, self.players[0].data.stats.level, self.difficulty)?;
+        self.players[0].data.stats.gold = hero;
         Ok(stash)
     }
 
@@ -494,8 +494,8 @@ impl World {
     /// niveau). Renvoie l'or porté après retrait ; rien ne bouge sinon.
     pub fn stash_withdraw_gold(&mut self, amount: u32) -> Result<u32, EconError> {
         let (hero, stash) =
-            self.gold_stash.withdraw_gold(amount, self.hero.stats.gold, self.hero.stats.level)?;
-        self.hero.stats.gold = hero;
+            self.gold_stash.withdraw_gold(amount, self.players[0].data.stats.gold, self.players[0].data.stats.level)?;
+        self.players[0].data.stats.gold = hero;
         Ok(stash)
     }
 }
@@ -504,13 +504,49 @@ impl World {
 /// d'or dans [`PICKUP_RANGE`] ramassées dans l'ordre du sol, sous plafond ;
 /// le reliquat reste au sol (bourse pleine). Déterministe (ordre d'index).
 pub(crate) fn world_auto_pickup(w: &mut World, ev: &mut Vec<GameEvent>) {
-    let (hx, hy) = (w.hero_ent.x, w.hero_ent.y);
+    let (hx, hy) = (w.players[0].ent.x, w.players[0].ent.y);
     let mut kept: Vec<crate::ItemOnGround> = Vec::with_capacity(w.items.len());
     for mut it in w.items.drain(..) {
         if it.def.kind == ItemKind::Gold && dist(it.x - hx, it.y - hy) <= PICKUP_RANGE {
-            let g = gain_carry(w.hero.stats.gold, w.hero.stats.level, it.def.amount);
+            let g = gain_carry(w.players[0].data.stats.gold, w.players[0].data.stats.level, it.def.amount);
             if g.gained > 0 {
-                w.hero.stats.gold += g.gained;
+                w.players[0].data.stats.gold += g.gained;
+                ev.push(GameEvent::GoldGained { amount: g.gained });
+            }
+            it.def.amount = g.refused;
+            if g.refused > 0 {
+                kept.push(it); // bourse pleine : le reliquat reste au sol
+            }
+            continue;
+        }
+        kept.push(it);
+    }
+    w.items = kept;
+}
+
+/// 3b (coop multi-héros) : auto-pickup MONDE pour le héros `slot` — même
+/// contrat que [`world_auto_pickup`] (slot 0), or crédité à SA bourse sous
+/// le même plafond porté. Ordre du sol inchangé (déterminisme).
+pub(crate) fn world_auto_pickup_slot(w: &mut World, slot: usize, ev: &mut Vec<GameEvent>) {
+    let (hx, hy) = match w.hero_slot_ent(slot) {
+        Some(e) => (e.x, e.y),
+        None => return,
+    };
+    let (gold, level) = match w.hero_stats_slot(slot) {
+        Some(s) => (s.gold, s.level),
+        None => return,
+    };
+    let mut carried = gold;
+    let mut kept: Vec<crate::ItemOnGround> = Vec::with_capacity(w.items.len());
+    let piles: Vec<crate::ItemOnGround> = w.items.drain(..).collect();
+    for mut it in piles {
+        if it.def.kind == ItemKind::Gold && dist(it.x - hx, it.y - hy) <= PICKUP_RANGE {
+            let g = gain_carry(carried, level, it.def.amount);
+            if g.gained > 0 {
+                carried += g.gained;
+                if let Some(s) = w.hero_stats_slot_mut(slot) {
+                    s.gold += g.gained;
+                }
                 ev.push(GameEvent::GoldGained { amount: g.gained });
             }
             it.def.amount = g.refused;
@@ -783,9 +819,9 @@ mod tests {
     #[test]
     fn world_stash_save_roundtrip_and_retro_compat() {
         let mut w = mk_world();
-        w.hero.stats.gold = 5_000;
+        w.players[0].data.stats.gold = 5_000;
         assert_eq!(w.stash_deposit_gold(1_234).unwrap(), 1_234, "stash après dépôt");
-        assert_eq!(w.hero.stats.gold, 3_766, "bourse débitée réellement");
+        assert_eq!(w.players[0].data.stats.gold, 3_766, "bourse débitée réellement");
         // Un item riche dans le stash.
         let idx = w.stash_mut().deposit_item(equip("hax", 1, 3, 28)).unwrap();
         assert_eq!(idx, 0);
@@ -806,7 +842,7 @@ mod tests {
 
         // API retrait : plafond porté (niveau 1 = 10 000).
         let mut w2 = mk_world();
-        w2.hero.stats.gold = 9_900;
+        w2.players[0].data.stats.gold = 9_900;
         w2.stash_mut().gold = 500;
         assert_eq!(w2.stash_withdraw_gold(500), Err(EconError::CarryGoldFull { cap: 10_000 }));
         assert_eq!(w2.stash_withdraw_gold(50).unwrap(), 450, "stash après retrait");
@@ -818,9 +854,9 @@ mod tests {
     #[test]
     fn world_pickup_caps_and_auto_pickup_needs_movement() {
         let mut w = mk_world();
-        w.hero.stats.level = 1;
-        w.hero.stats.gold = 9_900;
-        let (hx, hy) = (w.hero_ent.x, w.hero_ent.y);
+        w.players[0].data.stats.level = 1;
+        w.players[0].data.stats.gold = 9_900;
+        let (hx, hy) = (w.players[0].ent.x, w.players[0].ent.y);
         w.items.push(ItemOnGround {
             def: crate::ItemDef::gold(500),
             x: hx + 1.0,
@@ -860,8 +896,8 @@ mod tests {
     #[test]
     fn world_auto_pickup_gains_while_walking_under_cap() {
         let mut w = mk_world();
-        w.hero.stats.level = 1;
-        let (hx, hy) = (w.hero_ent.x, w.hero_ent.y);
+        w.players[0].data.stats.level = 1;
+        let (hx, hy) = (w.players[0].ent.x, w.players[0].ent.y);
         w.items.push(ItemOnGround { def: crate::ItemDef::gold(250), x: hx + 2.0, y: hy });
         let ev = w.tick(0, Some(crate::PlayerInput::MoveTo {
             x: hx as i32 + 4,

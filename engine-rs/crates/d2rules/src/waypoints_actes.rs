@@ -306,8 +306,8 @@ mod tests {
         let mut w = world20();
         // Slot 9 (Lut Gholein, A2) attaché, héros dessus → contact → event.
         assert!(w.attach_level_waypoint_table(40, 10.5, 10.5));
-        w.hero_ent.x = 11.0;
-        w.hero_ent.y = 10.5;
+        w.players[0].ent.x = 11.0;
+        w.players[0].ent.y = 10.5;
         let ev = w.tick(100, None);
         assert!(ev.contains(&crate::GameEvent::WaypointActivated { slot: 9 }), "{ev:?}");
         assert!(w.waypoint_activated(9));

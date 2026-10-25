@@ -747,7 +747,7 @@ impl World {
         if let Some(a) = &self.auras.active {
             if a.is_enemy_aura() {
                 let e = &self.mon_ent[index];
-                if crate::world::dist(e.x - self.hero_ent.x, e.y - self.hero_ent.y) <= a.radius() {
+                if crate::world::dist(e.x - self.players[0].ent.x, e.y - self.players[0].ent.y) <= a.radius() {
                     for (name, v) in a.stat_pairs(&NoLevels) {
                         add_res_stat(&mut res, &name, v);
                     }
@@ -766,7 +766,7 @@ impl World {
         if let Some(a) = &self.auras.active {
             if a.is_enemy_aura() {
                 let e = &self.mon_ent[index];
-                if crate::world::dist(e.x - self.hero_ent.x, e.y - self.hero_ent.y) <= a.radius() {
+                if crate::world::dist(e.x - self.players[0].ent.x, e.y - self.players[0].ent.y) <= a.radius() {
                     ac += a.stat_sum("skill_armor_percent", &NoLevels);
                 }
             }
@@ -794,7 +794,8 @@ impl World {
     /// vient d'être coupée ; état inchangé sur `Err`.
     pub fn toggle_aura(&mut self, code: &str) -> Result<bool, AuraError> {
         let level = self
-            .hero
+            .players[self.local_slot]
+            .data
             .skills
             .iter()
             .find(|s| s.code.eq_ignore_ascii_case(code) && s.level > 0)
@@ -818,10 +819,10 @@ impl World {
         }
         // Coût mana réel de la table (Prayer 16 + 3/niv, Sanctuary 1, autres 0).
         let cost = SkillTreeData::global().mana_cost_at(aura.rec(), level).max(0) as u32;
-        if self.hero.stats.mana < cost {
-            return Err(AuraError::NotEnoughMana { cost, have: self.hero.stats.mana });
+        if self.players[0].data.stats.mana < cost {
+            return Err(AuraError::NotEnoughMana { cost, have: self.players[0].data.stats.mana });
         }
-        self.hero.stats.mana -= cost;
+        self.players[0].data.stats.mana -= cost;
         self.auras.active = Some(aura); // swap implicite (l'ancienne est remplacée)
         Ok(true)
     }
@@ -834,7 +835,8 @@ impl World {
     /// table interne, déterministe).
     pub fn cast_curse(&mut self, x: f32, y: f32, code: &str) -> Result<Vec<usize>, AuraError> {
         let level = self
-            .hero
+            .players[self.local_slot]
+            .data
             .skills
             .iter()
             .find(|s| s.code.eq_ignore_ascii_case(code) && s.level > 0)
@@ -851,11 +853,11 @@ impl World {
         }
         let rec = SkillTreeData::global().get(code).expect("malédiction validée = record");
         let cost = SkillTreeData::global().mana_cost_at(rec, level).max(0) as u32;
-        if self.hero.stats.mana < cost {
-            return Err(AuraError::NotEnoughMana { cost, have: self.hero.stats.mana });
+        if self.players[0].data.stats.mana < cost {
+            return Err(AuraError::NotEnoughMana { cost, have: self.players[0].data.stats.mana });
         }
         let curse = ActiveCurse::new(code, level).expect("malédiction validée");
-        self.hero.stats.mana -= cost;
+        self.players[0].data.stats.mana -= cost;
         let radius = curse.radius;
         let mut hit = Vec::new();
         for i in 0..self.mon_dat.len() {
@@ -936,7 +938,7 @@ impl World {
 /// indices ne bougent pas : les pulses n'émettent AUCUN event, même contrat
 /// silencieux que les DoT 12c).
 pub(crate) fn tick(w: &mut World, dt: u32, _ev: &mut Vec<GameEvent>) {
-    if w.hero.dead_ms > 0 {
+    if w.players[0].data.dead_ms > 0 {
         return;
     }
     let Some(aura) = w.auras.active.clone() else { return };
@@ -945,7 +947,7 @@ pub(crate) fn tick(w: &mut World, dt: u32, _ev: &mut Vec<GameEvent>) {
         return;
     }
     w.auras.pulse_acc %= AURA_PULSE_MS;
-    let levels = HeroLevels::new(&w.hero.skills, w.hero.stats.level);
+    let levels = HeroLevels::new(&w.players[0].data.skills, w.players[0].data.stats.level);
 
     // Valeurs dépendant des niveaux du héros, calculées AVANT toute mutation
     // (le boucle de dégâts mute `w` — le prêt immuable de `levels` finit ici).
@@ -961,7 +963,7 @@ pub(crate) fn tick(w: &mut World, dt: u32, _ev: &mut Vec<GameEvent>) {
     //    immuns (res ≥ 100) sont sautés SANS tirage RNG (déterminisme).
     if let Some((elem, emin, emax)) = aura.pulse_damage() {
         let radius = aura.radius();
-        let (hx, hy) = (w.hero_ent.x, w.hero_ent.y);
+        let (hx, hy) = (w.players[0].ent.x, w.players[0].ent.y);
         for i in 0..w.mon_dat.len() {
             if w.mon_dat[i].state == MonState::Dying || w.mon_dat[i].hp == 0 {
                 continue;
@@ -993,7 +995,7 @@ pub(crate) fn tick(w: &mut World, dt: u32, _ev: &mut Vec<GameEvent>) {
     if let Some(heal) = aura.heal_per_pulse() {
         let heal = heal as u32;
         if heal > 0 {
-            let s = &mut w.hero.stats;
+            let s = &mut w.players[0].data.stats;
             s.life = (s.life + heal).min(s.max_life);
         }
     }
@@ -1001,8 +1003,8 @@ pub(crate) fn tick(w: &mut World, dt: u32, _ev: &mut Vec<GameEvent>) {
     // 3) Meditation (L122) : régén mana MVP (`max(1, max_mana × ln34/40 000)`
     //    par pulse — cf. doc module) ; plafonné à max_mana.
     if med_bonus > 0 {
-        let regen = ((w.hero.stats.max_mana as u64 * med_bonus) / 40_000).max(1) as u32;
-        let s = &mut w.hero.stats;
+        let regen = ((w.players[0].data.stats.max_mana as u64 * med_bonus) / 40_000).max(1) as u32;
+        let s = &mut w.players[0].data.stats;
         s.mana = (s.mana + regen).min(s.max_mana);
     }
 }
@@ -1066,7 +1068,7 @@ fn flee(w: &mut World, i: usize, dt: u32) {
     w.mon_dat[i].repath_ms = w.mon_dat[i].repath_ms.saturating_sub(dt);
     if w.mon_dat[i].path.is_empty() || w.mon_dat[i].repath_ms == 0 {
         let (mx, my) = (w.mon_ent[i].x, w.mon_ent[i].y);
-        let (dx, dy) = (mx - w.hero_ent.x, my - w.hero_ent.y);
+        let (dx, dy) = (mx - w.players[0].ent.x, my - w.players[0].ent.y);
         let d = crate::world::dist(dx, dy).max(0.001);
         let tile = ((mx + dx / d * 3.0).floor() as i32, (my + dy / d * 3.0).floor() as i32);
         if let Some(p) = w.path_between((mx.floor() as i32, my.floor() as i32), tile) {
@@ -1231,8 +1233,8 @@ mod tests {
     /// `mains` appris (chaînes de prérequis résolues automatiquement).
     fn hero_with(hero: &str, mains: &[(&str, u32)]) -> World {
         let mut w = world(hero);
-        w.hero.stats.level = 30;
-        w.hero.stats.skill_points = 90;
+        w.players[0].data.stats.level = 30;
+        w.players[0].data.stats.skill_points = 90;
         for (c, l) in mains {
             learn_chain(&mut w, c, *l);
         }
@@ -1606,7 +1608,7 @@ mod tests {
         // Aura pal non apprise.
         assert_eq!(w.toggle_aura("Might"), Err(AuraError::NotKnown("Might".into())));
         // Apprise mais mana insuffisant (Prayer = 16, PA démarre à 15).
-        w.hero.stats.skill_points = 5;
+        w.players[0].data.stats.skill_points = 5;
         w.learn_skill("Prayer").unwrap();
         assert_eq!(w.toggle_aura("Prayer"), Err(AuraError::NotEnoughMana { cost: 16, have: 15 }));
         assert!(w.active_aura().is_none(), "état inchangé sur refus");
@@ -1627,7 +1629,7 @@ mod tests {
         assert_eq!(w.toggle_aura("Might"), Ok(false));
         assert!(w.active_aura().is_none());
         // Prayer charge 16 mana (coût réel de la table L101).
-        w.hero.stats.mana = 50;
+        w.players[0].data.stats.mana = 50;
         assert_eq!(w.toggle_aura("Prayer"), Ok(true));
         assert_eq!(w.hero_stats().mana, 50 - 16);
     }
@@ -1743,11 +1745,11 @@ mod tests {
     #[test]
     fn prayer_soigne_par_pulse_et_plafonne() {
         let mut w = world("PA");
-        w.hero.stats.level = 30;
-        w.hero.stats.skill_points = 5;
+        w.players[0].data.stats.level = 30;
+        w.players[0].data.stats.skill_points = 5;
         w.learn_skill("Prayer").unwrap();
-        w.hero.stats.mana = 50;
-        w.hero.stats.life = 10;
+        w.players[0].data.stats.mana = 50;
+        w.players[0].data.stats.life = 10;
         w.clear_monsters(); // aucun monstre : le soin est mesuré à l'isolé
         assert_eq!(w.toggle_aura("Prayer"), Ok(true));
         assert_eq!(w.hero_stats().mana, 50 - 16, "cast = 16 mana (table L101)");
@@ -1760,18 +1762,18 @@ mod tests {
         }
         assert_eq!(w.hero_stats().life, 30, "10 pulses × +2");
         // Plafond : jamais au-dessus de max_life (pas de sur-soin).
-        w.hero.stats.life = w.hero_stats().max_life - 1;
+        w.players[0].data.stats.life = w.hero_stats().max_life - 1;
         for _ in 0..10 {
             w.tick(100, None);
         }
         assert_eq!(w.hero_stats().life, w.hero_stats().max_life);
         // Niveau 8 : +9 par pulse (2 + 7×1 — courbe [1,1,2,2,3] L101).
         let mut w8 = world("PA");
-        w8.hero.stats.level = 30;
-        w8.hero.stats.skill_points = 30;
+        w8.players[0].data.stats.level = 30;
+        w8.players[0].data.stats.skill_points = 30;
         learn_chain(&mut w8, "Prayer", 8);
-        w8.hero.stats.mana = 200;
-        w8.hero.stats.life = 10;
+        w8.players[0].data.stats.mana = 200;
+        w8.players[0].data.stats.life = 10;
         w8.clear_monsters();
         w8.toggle_aura("Prayer").unwrap();
         for _ in 0..10 {
@@ -1783,7 +1785,7 @@ mod tests {
     #[test]
     fn meditation_regen_mana_par_pulse() {
         let mut w = hero_with("PA", &[("Meditation", 1)]);
-        w.hero.stats.mana = 0;
+        w.players[0].data.stats.mana = 0;
         assert_eq!(w.toggle_aura("Meditation"), Ok(true), "coût 0 (table L122)");
         for _ in 0..10 {
             w.tick(100, None);
@@ -1964,7 +1966,7 @@ mod tests {
             w.cast_curse(0.0, 0.0, "Raise Skeleton"),
             Err(AuraError::NotAnAura("Raise Skeleton".into()))
         );
-        w.hero.stats.mana = 0;
+        w.players[0].data.stats.mana = 0;
         assert_eq!(
             w.cast_curse(0.0, 0.0, "Dim Vision"),
             Err(AuraError::NotEnoughMana { cost: 9, have: 0 })
@@ -2130,7 +2132,7 @@ mod tests {
         let (htx, hty) = (sx.floor() as i32, sy.floor() as i32);
         w.clear_monsters();
         spawn_tank(&mut w, htx + 1, hty);
-        w.hero.stats.life = 1;
+        w.players[0].data.stats.life = 1;
         let mut died = false;
         for _ in 0..100 {
             if w.tick(50, None).iter().any(|e| matches!(e, GameEvent::HeroDied)) {

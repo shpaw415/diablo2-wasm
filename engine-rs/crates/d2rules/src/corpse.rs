@@ -89,7 +89,7 @@ impl World {
     pub(crate) fn drop_corpse(&mut self, ev: &mut Vec<GameEvent>) {
         // Plus de course auto en cours vers un ancien corps (transitoire).
         self.corpse_pending = false;
-        let (x, y) = (self.hero_ent.x, self.hero_ent.y);
+        let (x, y) = (self.players[0].ent.x, self.players[0].ent.y);
 
         // (1) Ancien corps non récupéré : il se vide au sol à SA position
         // (simplification mission J1 ; retail Basin « Equipped items » §3 :
@@ -108,11 +108,11 @@ impl World {
         // (2) Or porté : péage officiel min(clvl, 20) % au-delà de
         // l'exonération Solo 500×clvl ; le reliquat tombe au sol, à
         // récupérer comme n'importe quelle pile d'or (Pickup).
-        let carried = self.hero.stats.gold;
+        let carried = self.players[0].data.stats.gold;
         let mut dropped = carried;
         if carried > 0 {
-            let toll_pct = self.hero.stats.level.min(GOLD_TOLL_CAP_PCT);
-            let exempt = GOLD_SP_EXEMPT_PER_LEVEL * self.hero.stats.level;
+            let toll_pct = self.players[0].data.stats.level.min(GOLD_TOLL_CAP_PCT);
+            let exempt = GOLD_SP_EXEMPT_PER_LEVEL * self.players[0].data.stats.level;
             let tollable = carried.saturating_sub(exempt);
             let lost = tollable * toll_pct / 100;
             dropped = carried - lost;
@@ -126,11 +126,11 @@ impl World {
                 self.items.push(ItemOnGround { def, x, y });
             }
         }
-        self.hero.stats.gold = 0;
+        self.players[0].data.stats.gold = 0;
 
         // (3) Le corps emporte TOUT l'inventaire (le respawn se fera nu) ;
         // le héros repart avec une grille vide toute neuve.
-        let inv = std::mem::replace(&mut self.hero.inv, vec![None; INV_SLOTS]);
+        let inv = std::mem::replace(&mut self.players[0].data.inv, vec![None; INV_SLOTS]);
         self.corpse = Some(Corpse { x, y, inv });
 
         ev.push(GameEvent::CorpseDropped {
@@ -148,18 +148,18 @@ impl World {
     /// [`GameEvent::CorpseRecovered`] si au moins un objet est repris.
     /// Renvoie true si au moins un objet a été récupéré.
     pub fn recover_corpse(&mut self, ev: &mut Vec<GameEvent>) -> bool {
-        if self.hero.dead_ms > 0 {
+        if self.players[0].data.dead_ms > 0 {
             return false; // mort : pas de récup (tick ne livre l'input de toute façon pas)
         }
         let Some(c) = self.corpse.clone() else { return false };
-        if dist(c.x - self.hero_ent.x, c.y - self.hero_ent.y) > PICKUP_RANGE {
+        if dist(c.x - self.players[0].ent.x, c.y - self.players[0].ent.y) > PICKUP_RANGE {
             return false;
         }
         let mut taken = 0usize;
         let mut leftovers: Vec<Option<ItemDef>> = Vec::new();
         for def in c.inv.into_iter().flatten() {
-            if let Some(slot) = self.hero.inv.iter().position(|s| s.is_none()) {
-                self.hero.inv[slot] = Some(def);
+            if let Some(slot) = self.players[0].data.inv.iter().position(|s| s.is_none()) {
+                self.players[0].data.inv[slot] = Some(def);
                 taken += 1;
             } else {
                 leftovers.push(Some(def)); // inventaire plein : reste au corps
@@ -191,7 +191,7 @@ impl World {
 /// (jamais sauvegardé : après un load, il suffit de recliquer).
 pub(crate) fn handle_recover_corpse(w: &mut World, ev: &mut Vec<GameEvent>) {
     let Some(c) = w.corpse().cloned() else { return };
-    if dist(c.x - w.hero_ent.x, c.y - w.hero_ent.y) <= PICKUP_RANGE {
+    if dist(c.x - w.players[0].ent.x, c.y - w.players[0].ent.y) <= PICKUP_RANGE {
         w.recover_corpse(ev);
         return;
     }
@@ -201,7 +201,7 @@ pub(crate) fn handle_recover_corpse(w: &mut World, ev: &mut Vec<GameEvent>) {
     if let Some(path) = w.find_path_from_hero(ct) {
         w.corpse_pending = true;
         if !path.is_empty() {
-            w.hero.path = path;
+            w.players[0].data.path = path;
         }
     }
 }
@@ -253,10 +253,10 @@ mod tests {
     #[test]
     fn mort_pose_le_corps_avec_linventaire() {
         let mut w = mk_world();
-        let (dx, dy) = (w.hero_ent.x, w.hero_ent.y);
-        w.hero.inv[3] = Some(ItemDef::potion());
-        w.hero.inv[12] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
-        w.hero.stats.gold = 0;
+        let (dx, dy) = (w.players[0].ent.x, w.players[0].ent.y);
+        w.players[0].data.inv[3] = Some(ItemDef::potion());
+        w.players[0].data.inv[12] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
+        w.players[0].data.stats.gold = 0;
 
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
@@ -267,7 +267,7 @@ mod tests {
         assert_eq!(c.inv[3].as_ref().unwrap().code, "hp1");
         assert_eq!(c.inv[12].as_ref().unwrap().code, "hax");
         assert_eq!(c.inv.iter().filter(|s| s.is_some()).count(), 2);
-        assert!(w.hero.inv.iter().all(|s| s.is_none()), "le héros repart nu");
+        assert!(w.players[0].data.inv.iter().all(|s| s.is_none()), "le héros repart nu");
         assert!(
             ev_kind(&ev, |e| matches!(e, GameEvent::CorpseDropped { x, y, .. }
                 if *x == dx.floor() as i32 && *y == dy.floor() as i32)),
@@ -282,13 +282,13 @@ mod tests {
     #[test]
     fn or_porte_peage_officiel_et_pile_au_sol() {
         let mut w = mk_world();
-        w.hero.stats.level = 10;
-        w.hero.stats.gold = 25_000;
-        let (dx, dy) = (w.hero_ent.x, w.hero_ent.y);
+        w.players[0].data.stats.level = 10;
+        w.players[0].data.stats.gold = 25_000;
+        let (dx, dy) = (w.players[0].ent.x, w.players[0].ent.y);
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
 
-        assert_eq!(w.hero.stats.gold, 0, "la bourse est vidée");
+        assert_eq!(w.players[0].data.stats.gold, 0, "la bourse est vidée");
         let pile = w
             .items
             .iter()
@@ -304,8 +304,8 @@ mod tests {
 
         // clvl 30 : péage plafonné à 20 % (exonérés 15 000).
         let mut w2 = mk_world();
-        w2.hero.stats.level = 30;
-        w2.hero.stats.gold = 25_000;
+        w2.players[0].data.stats.level = 30;
+        w2.players[0].data.stats.gold = 25_000;
         let mut ev2 = Vec::new();
         w2.drop_corpse(&mut ev2);
         let pile2 = w2.items.iter().find(|it| it.def.kind == crate::ItemKind::Gold).unwrap();
@@ -313,8 +313,8 @@ mod tests {
 
         // clvl 3, 1 000 or : exonération 1 500 ⇒ tout tombe, rien de perdu.
         let mut w3 = mk_world();
-        w3.hero.stats.level = 3;
-        w3.hero.stats.gold = 1_000;
+        w3.players[0].data.stats.level = 3;
+        w3.players[0].data.stats.gold = 1_000;
         let mut ev3 = Vec::new();
         w3.drop_corpse(&mut ev3);
         let pile3 = w3.items.iter().find(|it| it.def.kind == crate::ItemKind::Gold).unwrap();
@@ -328,27 +328,27 @@ mod tests {
     #[test]
     fn respawn_au_camp_nu_plein_vie() {
         let mut w = mk_world();
-        w.hero.inv[0] = Some(ItemDef::potion());
-        w.hero.stats.gold = 500;
-        let (sx, sy) = (w.hero.spawn.0.floor() as i32, w.hero.spawn.1.floor() as i32);
+        w.players[0].data.inv[0] = Some(ItemDef::potion());
+        w.players[0].data.stats.gold = 500;
+        let (sx, sy) = (w.players[0].data.spawn.0.floor() as i32, w.players[0].data.spawn.1.floor() as i32);
         // Éloigne le héros du spawn pour vérifier le retour au camp.
-        w.hero_ent.x = 3.5;
-        w.hero_ent.y = 3.5;
+        w.players[0].ent.x = 3.5;
+        w.players[0].ent.y = 3.5;
 
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
-        assert_eq!(w.hero.stats.gold, 0, "l'or porté est tombé au sol");
+        assert_eq!(w.players[0].data.stats.gold, 0, "l'or porté est tombé au sol");
         assert!(w.items.iter().any(|it| it.def.kind == crate::ItemKind::Gold));
         // Appel direct : émule le compte à rebours posé par monster_strike
         // (dead_ms = 1) pour déclencher le respawn dans update_hero.
-        w.hero.dead_ms = 1;
+        w.players[0].data.dead_ms = 1;
 
         let ev2 = run(&mut w, crate::world::RESPAWN_MS + 100);
         assert!(ev2.iter().any(|e| matches!(e, GameEvent::HeroRespawned { .. })));
-        assert_eq!(w.hero_ent.x.floor() as i32, sx, "respawn au camp (x)");
-        assert_eq!(w.hero_ent.y.floor() as i32, sy, "respawn au camp (y)");
-        assert_eq!(w.hero.stats.life, w.hero.stats.max_life, "pleine vie");
-        assert!(w.hero.inv.iter().all(|s| s.is_none()), "respawn nu");
+        assert_eq!(w.players[0].ent.x.floor() as i32, sx, "respawn au camp (x)");
+        assert_eq!(w.players[0].ent.y.floor() as i32, sy, "respawn au camp (y)");
+        assert_eq!(w.players[0].data.stats.life, w.players[0].data.stats.max_life, "pleine vie");
+        assert!(w.players[0].data.inv.iter().all(|s| s.is_none()), "respawn nu");
         assert!(w.corpse().is_some(), "le corps attend toujours au sol");
     }
 
@@ -357,26 +357,26 @@ mod tests {
     #[test]
     fn recuperation_corps_re_equipe_tout() {
         let mut w = mk_world();
-        w.hero.inv[0] = Some(ItemDef::potion());
-        w.hero.inv[39] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
+        w.players[0].data.inv[0] = Some(ItemDef::potion());
+        w.players[0].data.inv[39] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
 
         // Téléporte le héros à côté du corps (post-respawn retour au corps).
         let c = w.corpse().cloned().unwrap();
-        w.hero_ent.x = c.x + 1.0;
-        w.hero_ent.y = c.y;
+        w.players[0].ent.x = c.x + 1.0;
+        w.players[0].ent.y = c.y;
         let ev2 = w.tick(16, Some(PlayerInput::RecoverCorpse));
 
-        assert_eq!(w.hero.inv[0].as_ref().unwrap().code, "hp1", "slot 0 ré-équipé");
+        assert_eq!(w.players[0].data.inv[0].as_ref().unwrap().code, "hp1", "slot 0 ré-équipé");
         assert!(
-            w.hero.inv.iter().any(|s| s.as_ref().map(|d| d.code.as_str()) == Some("hax")),
+            w.players[0].data.inv.iter().any(|s| s.as_ref().map(|d| d.code.as_str()) == Some("hax")),
             "hache ré-équipée quelque part (la récup remplit les slots libres \
              dans l'ordre, comme D2 ré-équipe dans l'ordre du corps) : {ev2:?}"
         );
         assert!(w.corpse().is_none(), "corps vide = disparu");
         assert!(ev2.iter().any(|e| matches!(e, GameEvent::CorpseRecovered)));
-        assert!(w.hero.stats.gold == 0 && w.items.iter().all(|i| i.def.kind != crate::ItemKind::Gold));
+        assert!(w.players[0].data.stats.gold == 0 && w.items.iter().all(|i| i.def.kind != crate::ItemKind::Gold));
     }
 
     /// (5) Récupération à distance : un clic loin du corps fait MARCHER le
@@ -384,29 +384,29 @@ mod tests {
     #[test]
     fn clic_loin_marche_vers_le_corps_et_recupere_a_larrivee() {
         let mut w = mk_world();
-        w.hero.inv[5] = Some(ItemDef::potion());
+        w.players[0].data.inv[5] = Some(ItemDef::potion());
         // Meurt LOIN du spawn : le respawn au camp sera hors de portée.
-        w.hero_ent.x = 3.5;
-        w.hero_ent.y = 3.5;
+        w.players[0].ent.x = 3.5;
+        w.players[0].ent.y = 3.5;
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
         // Appel direct : émule le compte à rebours de monster_strike.
-        w.hero.dead_ms = 1;
+        w.players[0].data.dead_ms = 1;
         // Respawn camp (éloigné du corps).
         run(&mut w, crate::world::RESPAWN_MS + 100);
         let c = w.corpse().cloned().unwrap();
         assert!(
-            (c.x - w.hero_ent.x).abs() + (c.y - w.hero_ent.y).abs() > PICKUP_RANGE,
+            (c.x - w.players[0].ent.x).abs() + (c.y - w.players[0].ent.y).abs() > PICKUP_RANGE,
             "héros loin du corps après respawn : corps=({},{}) héros=({},{})",
             c.x,
             c.y,
-            w.hero_ent.x,
-            w.hero_ent.y
+            w.players[0].ent.x,
+            w.players[0].ent.y
         );
 
         let ev2 = w.tick(16, Some(PlayerInput::RecoverCorpse));
         assert!(w.corpse_pending, "intention posée : le héros marche vers le corps");
-        assert!(!w.hero.path.is_empty(), "chemin A* vers le corps");
+        assert!(!w.players[0].data.path.is_empty(), "chemin A* vers le corps");
 
         // Avance jusqu'à l'arrivée (budget 8 s pour une grande carte).
         let mut got = false;
@@ -419,7 +419,7 @@ mod tests {
         }
         assert!(got, "CorpseRecovered émis à l'arrivée : {ev2:?}");
         assert!(
-            w.hero.inv.iter().any(|s| s.as_ref().map(|d| d.code.as_str()) == Some("hp1")),
+            w.players[0].data.inv.iter().any(|s| s.as_ref().map(|d| d.code.as_str()) == Some("hp1")),
             "potion ré-équipée (premier slot libre)"
         );
         assert!(!w.corpse_pending, "intention consommée");
@@ -432,17 +432,17 @@ mod tests {
     fn seconde_mort_ancien_corps_se_vide_au_sol() {
         let mut w = mk_world();
         // Mort 1 : deux objets au corps A.
-        w.hero.inv[1] = Some(ItemDef::potion());
-        w.hero.inv[2] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
+        w.players[0].data.inv[1] = Some(ItemDef::potion());
+        w.players[0].data.inv[2] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
         let corpse_a = w.corpse().cloned().unwrap();
 
         // Respawn nu, puis le héros ramasse une potion et remporte.
         run(&mut w, crate::world::RESPAWN_MS + 100);
-        w.hero.inv[0] = Some(ItemDef::potion());
-        w.hero_ent.x = corpse_a.x + 10.5; // meurt AILLEURS
-        w.hero_ent.y = corpse_a.y;
+        w.players[0].data.inv[0] = Some(ItemDef::potion());
+        w.players[0].ent.x = corpse_a.x + 10.5; // meurt AILLEURS
+        w.players[0].ent.y = corpse_a.y;
         let mut ev2 = Vec::new();
         w.drop_corpse(&mut ev2);
 
@@ -469,7 +469,7 @@ mod tests {
     #[test]
     fn save_load_corps_et_retro_compat() {
         let mut w = mk_world();
-        w.hero.inv[7] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
+        w.players[0].data.inv[7] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
 
@@ -494,21 +494,21 @@ mod tests {
     fn inventaire_pleins_recup_partielle_surplus_au_corps() {
         let mut w = mk_world();
         // Deux objets au corps, mais UN SEUL slot libre à la récup.
-        w.hero.inv[0] = Some(ItemDef::potion());
-        w.hero.inv[1] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
+        w.players[0].data.inv[0] = Some(ItemDef::potion());
+        w.players[0].data.inv[1] = Some(ItemDef { code: "hax".into(), name: "Hache".into(), ..Default::default() });
         let mut ev = Vec::new();
         w.drop_corpse(&mut ev);
         let c = w.corpse().cloned().unwrap();
 
         // Héros à côté, inventaire rempli sauf UN slot (le 0).
-        w.hero_ent.x = c.x + 0.5;
-        w.hero_ent.y = c.y;
+        w.players[0].ent.x = c.x + 0.5;
+        w.players[0].ent.y = c.y;
         for i in 1..INV_SLOTS {
-            w.hero.inv[i] = Some(ItemDef::potion());
+            w.players[0].data.inv[i] = Some(ItemDef::potion());
         }
         assert!(w.recover_corpse(&mut ev), "au moins un objet repris");
         assert_eq!(
-            w.hero.inv.iter().filter(|s| s.is_some()).count(),
+            w.players[0].data.inv.iter().filter(|s| s.is_some()).count(),
             INV_SLOTS,
             "grille pleine après récup"
         );
@@ -530,17 +530,17 @@ mod tests {
         ]);
         let mut w = World::with_seed(open_grid(24, 24), m, 0xD2C0_0002);
         assert!(!w.mon_ent.is_empty(), "monstre auto-spawné");
-        w.hero.stats.life = 1; // un seul coup suffit
-        w.hero.inv[0] = Some(ItemDef::potion());
+        w.players[0].data.stats.life = 1; // un seul coup suffit
+        w.players[0].data.inv[0] = Some(ItemDef::potion());
         // Pénalité XP officielle sur le chemin RÉEL : Nightmare = 5 %
         // (`patch_difficultylevels.txt` col DeathExpPenalty — 0/5/10).
         w.set_difficulty(Difficulty::Nightmare);
-        w.hero.stats.level = 2;
-        w.hero.stats.xp = 1_600; // > seuil niveau 2 (500, table xp.rs) : plancher non contraignant
+        w.players[0].data.stats.level = 2;
+        w.players[0].data.stats.xp = 1_600; // > seuil niveau 2 (500, table xp.rs) : plancher non contraignant
 
         // Colle le monstre au héros : FSM Idle→Chase→Attack→frappe.
-        w.mon_ent[0].x = w.hero_ent.x + 1.0;
-        w.mon_ent[0].y = w.hero_ent.y;
+        w.mon_ent[0].x = w.players[0].ent.x + 1.0;
+        w.mon_ent[0].y = w.players[0].ent.y;
         let mut died = false;
         for _ in 0..120 {
             let e = w.tick(50, None);
@@ -550,14 +550,14 @@ mod tests {
             }
         }
         assert!(died, "le coup de monstre pose le corps (event CorpseDropped)");
-        assert!(w.hero.dead_ms > 0 || w.hero_ent.anim == AnimState::DD);
+        assert!(w.players[0].data.dead_ms > 0 || w.players[0].ent.anim == AnimState::DD);
         // Pénalité XP NM sur le chemin réel : 5 % perdus, niveau gardé.
-        assert_eq!(w.hero.stats.xp, 1_600 - 1_600 * 5 / 100, "DeathExpPenalty NM 5 %");
-        assert_eq!(w.hero.stats.level, 2, "un niveau gagné ne se perd jamais");
+        assert_eq!(w.players[0].data.stats.xp, 1_600 - 1_600 * 5 / 100, "DeathExpPenalty NM 5 %");
+        assert_eq!(w.players[0].data.stats.level, 2, "un niveau gagné ne se perd jamais");
         let c = w.corpse().expect("corps posé");
-        assert_eq!(c.x, w.hero_ent.x, "corps à la position du héros");
+        assert_eq!(c.x, w.players[0].ent.x, "corps à la position du héros");
         assert_eq!(c.inv[0].as_ref().unwrap().code, "hp1");
-        assert!(w.hero.inv.iter().all(|s| s.is_none()));
+        assert!(w.players[0].data.inv.iter().all(|s| s.is_none()));
     }
 
 }

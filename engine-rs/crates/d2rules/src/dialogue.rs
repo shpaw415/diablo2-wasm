@@ -1,5 +1,7 @@
-//! `dialogue` — arbres de dialogue des PNJ de ville (étape 22a, PLAN-COMPLET
-//! §22), textes fr RÉELS des tables TBL v1.12 embarquées — AUCUN texte inventé.
+//! `dialogue` — arbres de dialogue des PNJ de ville (étape 22a du corps
+//! maître, PLAN-COMPLET §22), textes fr RÉELS des tables TBL v1.12
+//! embarquées — AUCUN texte inventé. PORT 3c-b (coop `d2w-coop`) : sessions
+//! MULTI-JOUEURS — verrou par slot, gel du monde GLOBAL (cf. § coop bas).
 //!
 //! # Modèle (mission 22a)
 //! * [`DialogueNode`] `{ id, lignes (fr réel), options }` ;
@@ -45,6 +47,40 @@
 //! ([`World::close_dialogue`]) rend le tick au monde. La session est
 //! TRANSITOIRE (jamais persistée — comme `corpse_pending`) : après un
 //! load, l'UI rouvre le dialogue d'un clic.
+//!
+//! # COOP 3c-b — sessions multi-joueurs (verrou + gel global)
+//! Port du corps maître adapté au monde `players[]` (3b-1, 1 slot = 1
+//! héros) — DÉCISIONS documentées (contrat UI demo/dialogue-ui.js) :
+//! * **TENEUR** : [`DialogueSession`] porte `slot` — le joueur qui tient la
+//!   conversation. Ouverture via [`World::open_dialogue_slot`] (portée/mort
+//!   vérifiées pour CE slot via `talk_to_npc_slot`) ; le chemin historique
+//!   [`World::open_dialogue`] route au héros le plus proche (solo : slot 0,
+//!   strictement identique).
+//! * **VERROU** : le monde est partagé — UNE SEULE session à la fois. Un
+//!   slot AUTRE que le teneur qui ouvre reçoit
+//!   [`DialogueError::Busy`] (NPC + slot teneur ; l'UI affiche le bandeau
+//!   « <NPC> discute avec <joueur> » et bloque le clic). Le brief « ne
+//!   peuvent pas ouvrir le même NPC » est couvert A FORTIORI : le gel
+//!   global rend toute autre conversation (même NPC ou pas) impossible —
+//!   un verrou plus fin n'aurait aucun effet observable. Le TENEUR peut
+//!   rouvrir (clic UI = remplacement, sémantique 22a conservée).
+//! * **GEL GLOBAL** (vérifié, décision style retail) : la session gèle
+//!   `World::tick_inputs` ENTIER — donc `tick`, `tick_slot` et
+//!   `tick_queued` du pont d2game — pour TOUS les slots à la fois : ni
+//!   déplacement, ni monstre, ni missile, ni horloge ; seuls les événements
+//!   en attente (le `NpcTalked` de l'ouverture, quêtes) continuent de
+//!   couler. C'est le comportement du corps maître (22a, mission 4) étendu
+//!   aux slots : un gel par slot casserait le determinisme lockstep (le
+//!   temps de monde divergerait entre clients) — testé par
+//!   `coop_gel_global_tous_les_slots`.
+//! * **CHOIX/FERMETURE** : seul le teneur choisit
+//!   ([`World::choose_dialogue_slot`]) et referme
+//!   ([`World::close_dialogue_slot`]) ; les chemins historiques
+//!   `choose_dialogue`/`close_dialogue` restent la vue sans garde (tests +
+//!   UI solo).
+//! * **VOIX 23a NON PORTÉE** : ce corps n'a pas d'assets `sfx/speech` — la
+//!   section vocale du maître (voice_file_for/all_line_keys) n'est pas
+//!   reprise ; à ré-extraire si les wavs arrivent.
 
 use std::sync::OnceLock;
 
@@ -150,6 +186,9 @@ pub struct DialogueNode {
 /// Session de dialogue ouverte (TRANSITOIRE — jamais persistée).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DialogueSession {
+    /// 3c-b (coop) : slot du JOUEUR qui tient la conversation (0..8). Le
+    /// monde gelé s'applique à tous ; lui seul choisit/referme (verrou).
+    pub slot: usize,
     /// Index du NPC dans [`World::town_npcs`].
     pub npc_index: usize,
     /// Code quête (`"akara"`… — clé des tables de ce module).
@@ -164,6 +203,41 @@ pub struct DialogueSession {
     pub phase: DialoguePhase,
     /// Nœud courant (résolu — lignes fr réelles + options).
     pub node: DialogueNode,
+}
+
+/// 3c-b (coop) : erreur d'ouverture de dialogue — le VERROU (`Busy`) porte
+/// la session en cours (NPC + slot teneur) pour le bandeau des autres
+/// clients ; les autres variantes reflètent `NpcTalkError` + slot inconnu.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum DialogueError {
+    /// Une session est déjà ouverte par le slot `slot` (le monde gelé est
+    /// partagé — une seule conversation à la fois, cf. § coop).
+    Busy { npc: String, npc_name: String, slot: usize },
+    /// NPC hors de portée du héros du slot demandé (2.5 cellules).
+    OutOfRange,
+    /// Le héros du slot demandé est mort.
+    HeroDead,
+    /// Slot hors monde (`>= hero_count()`).
+    BadSlot,
+    /// Index hors roster.
+    BadIndex,
+}
+
+impl DialogueError {
+    /// Message lisible UI (même famille que `NpcTalkError::as_str`).
+    pub fn as_str(&self) -> String {
+        match self {
+            DialogueError::Busy { npc: _, npc_name, slot } => format!(
+                "{npc_name} discute avec le joueur {} (slot {slot}) — patientez",
+                slot + 1
+            ),
+            DialogueError::OutOfRange => "trop loin — approchez-vous du NPC".into(),
+            DialogueError::HeroDead => "impossible de parler : vous êtes mort".into(),
+            DialogueError::BadSlot => "slot joueur inconnu".into(),
+            DialogueError::BadIndex => "NPC inconnu".into(),
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -493,29 +567,57 @@ fn gossip_index(id: &str) -> Option<usize> {
 
 // ---------------------------------------------------------------------------
 // API World (bloc impl ADDITIF — session transitoire, monde gelé)
+// 3c-b coop : variantes _slot (verrou, teneur) + chemins historiques solo.
 // ---------------------------------------------------------------------------
 
 impl World {
-    /// Ouvre le dialogue du NPC `index` (mission 22a §4) : même contrat que
-    /// [`World::talk_to_npc`] (portée 2.5, héros vivant, soin Akara,
-    /// `GameEvent::NpcTalked` flushé au tick suivant) PLUS le journal spec :
-    /// le `ActEvent::NpcTalked` avance `quest_act1` (remises NPC — la
-    /// remise Warriv complète a1q6 et débloque l'acte II). La phase/le nœud
-    /// `root` sont capturés AVANT l'avancement (la réplique `Successful`
-    /// s'affiche), les CONDITIONS d'options restent évaluées en vivant.
-    /// `None` : index hors bornes, héros mort ou hors de portée. Ouvrir
-    /// pendant une session la remplace (clic UI).
-    pub fn open_dialogue(&mut self, npc_index: usize) -> Option<DialogueSession> {
-        let def = *self.town_npc_def(npc_index)?; // Copy — borrow rendu
+    /// Ouvre le dialogue du NPC `index` pour le JOUEUR `slot` (3c-b coop) :
+    /// même contrat que [`World::talk_to_npc_slot`] (portée 2.5, héros du
+    /// slot vivant, soin Akara, `GameEvent::NpcTalked` flushé au tick
+    /// suivant) PLUS le journal spec : le `ActEvent::NpcTalked` avance
+    /// `quest_act1` (remises NPC — la remise Warriv complète a1q6 et
+    /// débloque l'acte II). La phase/le nœud `root` sont capturés AVANT
+    /// l'avancement (la réplique `Successful` s'affiche), les CONDITIONS
+    /// d'options restent évaluées en vivant.
+    ///
+    /// VERROU (3c-b) : une session ouverte par un AUTRE slot ⇒
+    /// [`DialogueError::Busy`] (monde gelé partagé — une seule conversation
+    /// à la fois, cf. § coop en tête) ; le TENEUR peut rouvrir (clic UI =
+    /// remplacement, sémantique 22a). `Err` : slot inconnu, index hors
+    /// bornes, héros du slot mort ou hors de portée.
+    pub fn open_dialogue_slot(
+        &mut self,
+        slot: usize,
+        npc_index: usize,
+    ) -> Result<DialogueSession, DialogueError> {
+        if slot >= self.hero_count() {
+            return Err(DialogueError::BadSlot);
+        }
+        // VERROU : le teneur remplace SA session (clic UI), les autres slots
+        // sont refusés avec la session en cours (bandeau UI).
+        if let Some(s) = &self.dialogue {
+            if s.slot != slot {
+                return Err(DialogueError::Busy {
+                    npc: s.npc.clone(),
+                    npc_name: s.npc_name.clone(),
+                    slot: s.slot,
+                });
+            }
+        }
+        let def = *self.town_npc_def(npc_index).ok_or(DialogueError::BadIndex)?; // Copy — borrow rendu
         let npc = def.quest_code;
         // Phase AVANT le journal (remise affichée, cf. doc).
         let (quest, phase) = dialogue_phase_for(npc, self.quests_act1.as_ref());
-        // Interaction réelle (portée/mort/soin + NpcTalked journal W13).
-        let _talk = self.talk_to_npc(npc_index).ok()?;
+        // Interaction réelle DU SLOT (portée/mort/soin + NpcTalked journal).
+        let _talk = self.talk_to_npc_slot(slot, npc_index).map_err(|e| match e {
+            crate::npc::NpcTalkError::OutOfRange => DialogueError::OutOfRange,
+            crate::npc::NpcTalkError::HeroDead => DialogueError::HeroDead,
+        })?;
         // Journal spec (récompenses appliquées + events ActQuestChanged /
         // ActUnlocked en attente). Sans journal branché : no-op.
         let _rewards = self.quest_act1_event(&ActEvent::NpcTalked { npc: npc.to_string() });
         let sess = DialogueSession {
+            slot,
             npc_index,
             npc: npc.to_string(),
             npc_name: def.name.to_string(),
@@ -524,7 +626,22 @@ impl World {
             node: build_root(npc, quest, phase),
         };
         self.dialogue = Some(sess.clone());
-        Some(sess)
+        Ok(sess)
+    }
+
+    /// Chemin historique (solo / UI sans slot) : le PARLEUR est le héros
+    /// vivant le plus proche du NPC (solo = slot 0, strictement identique ;
+    /// 3b-1 coop : routage `talk_to_npc` d'origine). Sous verrou : refusé
+    /// comme [`World::open_dialogue_slot`] quand un AUTRE slot tient une
+    /// session (le monde gelé s'applique à tous). `None` : idem `Err` du
+    /// chemin slot (API 22a à `Option`, conservée pour les tests maître).
+    pub fn open_dialogue(&mut self, npc_index: usize) -> Option<DialogueSession> {
+        let (nx, ny) = {
+            let npc = self.npcs.get(npc_index)?;
+            (npc.ent.x, npc.ent.y)
+        };
+        let talker = self.nearest_living_hero_slot(nx, ny);
+        self.open_dialogue_slot(talker, npc_index).ok()
     }
 
     /// Session ouverte (lecture) — `None` = pas de dialogue (monde actif).
@@ -532,9 +649,17 @@ impl World {
         self.dialogue.as_ref()
     }
 
-    /// Monde gelé ? (contrat « pause » — cf. `tick`)
+    /// Monde gelé ? (contrat « pause » — cf. `tick_inputs` : gel GLOBAL
+    /// pour tous les slots).
     pub fn dialogue_active(&self) -> bool {
         self.dialogue.is_some()
+    }
+
+    /// La session ouverte appartient-elle au slot `slot` ? (garde UI —
+    /// seul le teneur voit le panneau de choix ; les autres voient le
+    /// bandeau « discute avec »).
+    pub fn dialogue_owned_by(&self, slot: usize) -> bool {
+        self.dialogue.as_ref().map_or(false, |s| s.slot == slot)
     }
 
     /// Indices des options VISIBLES du nœud courant (conditions évaluées en
@@ -556,7 +681,9 @@ impl World {
     /// UI choisit dans `dialogue_visible_options`) : applique l'action
     /// (`Close` referme, `Travel` appelle `npc_travel`), avance au nœud
     /// `next` (ragots). `None` : pas de session, option inconnue ou
-    /// condition NON remplie (session inchangée).
+    /// condition NON remplie (session inchangée). Chemin historique (sans
+    /// garde de slot — tests + UI solo) ; le pont coop passe par
+    /// [`World::choose_dialogue_slot`].
     pub fn choose_dialogue(&mut self, option_ix: usize) -> Option<DialogueAction> {
         let (npc, opt) = {
             let sess = self.dialogue.as_ref()?;
@@ -574,7 +701,9 @@ impl World {
             }
             // OpenShop/HireMercenary/Repair : consommés par l'UI via les
             // API déjà branchées (vendor.rs / hire_merc / npc_repair) —
-            // aucun effet moteur ici (documenté).
+            // aucun effet moteur ici (documenté). 3c-b : l'UI n'ouvre le
+            // panneau vendeur que sur le CLIENT du teneur (slot vérifié
+            // côté pont + page).
             DialogueAction::Say | DialogueAction::OpenShop { .. } | DialogueAction::HireMercenary
             | DialogueAction::Repair => {}
         }
@@ -586,28 +715,35 @@ impl World {
         Some(opt.action)
     }
 
+    /// 3c-b (coop) : choix réservé au TENEUR de la session — un autre slot
+    /// (ou sans session) reçoit `None`, session inchangée.
+    pub fn choose_dialogue_slot(&mut self, slot: usize, option_ix: usize) -> Option<DialogueAction> {
+        if !self.dialogue_owned_by(slot) {
+            return None; // verrou : seul le teneur choisit
+        }
+        self.choose_dialogue(option_ix)
+    }
+
     /// Referme la session (« partir » / Échap UI) — `true` si une session
-    /// a été fermée. Le monde reprend son tick.
+    /// a été fermée. Le monde reprend son tick. Chemin historique (sans
+    /// garde — tests + UI solo).
     pub fn close_dialogue(&mut self) -> bool {
         self.dialogue.take().is_some()
+    }
+
+    /// 3c-b (coop) : fermeture réservée au TENEUR — `false` sans session
+    /// ou si la session appartient à un autre slot (session inchangée).
+    pub fn close_dialogue_slot(&mut self, slot: usize) -> bool {
+        if !self.dialogue_owned_by(slot) {
+            return false;
+        }
+        self.close_dialogue()
     }
 }
 
 // ---------------------------------------------------------------------------
-// Voix des NPC (23a) — nommage réel d2speech.mpq (release fr-FR v1.12)
+// Tests — chaînes complètes × phases, clés TBL citées, monde gelé
 // ---------------------------------------------------------------------------
-
-/// Préfixe de fichier vocal par NPC — nommage RÉEL du listfile d2speech.mpq
-/// (`data\local\sfx\Act1\Akara\Aka_act1_…`, `Cain\Cain_act1_…`, énuméré par
-/// SFileFindFirstFile à l'étape 23a).
-static VOICE_PREFIX: &[(&str, &str)] = &[
-    ("Akara", "aka"),
-    ("Kashya", "kas"),
-    ("Charsi", "cha"),
-    ("Gheed", "ghe"),
-    ("Warriv", "war"),
-    ("Cain", "cain"),
-];
 
 /// Fichier vocal (basename minuscule, relatif à `demo/assets/sfx/speech/`)
 /// attendu pour une clé TBL parlée — règle dérivée du listfile réel :
@@ -621,6 +757,20 @@ static VOICE_PREFIX: &[(&str, &str)] = &[
 /// étrangères). Miroir EXACT de `tools/extract_speech.py::voice_file_for`
 /// (le script génère `index.json` depuis CES tables ; le golden test
 /// `tests/speech_golden.rs` croise moteur × index × wavs sur disque).
+/// Préfixe de fichier vocal par NPC — nommage RÉEL du listfile d2speech.mpq
+/// (`data\local\sfx\Act1\Akara\Aka_act1_…`, `Cain\Cain_act1_…`, énuméré par
+/// SFileFindFirstFile à l'étape 23a).
+
+/// Préfixe de fichier vocal par NPC — nommage RÉEL du listfile d2speech.mpq
+/// (`data\local\sfx\Act1\Akara\Aka_act1_…`, `Cain\Cain_act1_…`, énuméré par
+/// SFileFindFirstFile à l'étape 23a).
+
+/// Préfixe de fichier vocal par NPC — nommage RÉEL du listfile d2speech.mpq
+/// (`data\local\sfx\Act1\Akara\Aka_act1_…`, `Cain\Cain_act1_…`, énuméré par
+/// SFileFindFirstFile à l'étape 23a).
+
+static VOICE_PREFIX: &[(&str,&str)] = &[];
+
 pub fn voice_file_for(key: &str) -> Option<String> {
     // Ragots : le nom du NPC est préfixe (AkaraIntroGossip1, CainGossip2…).
     for (name, p) in VOICE_PREFIX {
@@ -689,10 +839,6 @@ pub fn all_line_keys() -> Vec<&'static str> {
     }
     out
 }
-
-// ---------------------------------------------------------------------------
-// Tests — chaînes complètes × phases, clés TBL citées, monde gelé
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -1087,45 +1233,163 @@ mod tests {
         assert!(j.contains("A1Q1InitAkara"), "clé TBL citée dans le JSON");
     }
 
-    // --- 23a : règle de nommage vocal (miroir extract_speech.py) -----------
+    // --- 3c-b COOP : verrou, gel global, teneur seul ------------------------
 
-    #[test]
-    fn voice_file_for_nommage_reel_listfile() {
-        // Une sonde par branche de la règle (nommage réel d2speech.mpq).
-        assert_eq!(voice_file_for("A1Q1InitAkara").as_deref(), Some("aka_act1_q1_init.wav"));
-        assert_eq!(voice_file_for("A1Q6InitCain").as_deref(), Some("cain_act1_q6_init.wav"));
-        assert_eq!(voice_file_for("A1Q1EarlyReturnAkara").as_deref(), Some("aka_act1_q1_early.wav"));
-        assert_eq!(voice_file_for("A1Q2AfterInitCharsi").as_deref(), Some("cha_act1_q2_after.wav"));
-        // variant retail a1q1 Charsi (AfterInitCharsiMain) :
-        assert_eq!(voice_file_for("A1Q1AfterInitCharsiMain").as_deref(), Some("cha_act1_q1_after_main.wav"));
-        assert_eq!(voice_file_for("A1Q4AfterInitScrollWarriv").as_deref(), Some("war_act1_q4_after_scroll.wav"));
-        assert_eq!(voice_file_for("A1Q3SuccessfulCain").as_deref(), Some("cain_act1_q3_successful.wav"));
-        // a1q4 : nommage retail distinct (QuestSuccessful) — même wav :
-        assert_eq!(voice_file_for("A1Q4QuestSuccessfulCain").as_deref(), Some("cain_act1_q4_successful.wav"));
-        // ragots + intros (Warriv : clé retail préfixée `Act1`) :
-        assert_eq!(voice_file_for("AkaraGossip3").as_deref(), Some("aka_act1_gossip_03.wav"));
-        assert_eq!(voice_file_for("CainGossip1").as_deref(), Some("cain_act1_gossip_01.wav"));
-        assert_eq!(voice_file_for("AkaraIntroGossip1").as_deref(), Some("aka_act1_intro.wav"));
-        assert_eq!(voice_file_for("WarrivAct1IntroGossip1").as_deref(), Some("war_act1_intro.wav"));
-        // hors périmètre parlé : menus, TBD, clés étrangères, formats exotiques.
-        assert_eq!(voice_file_for("NPCMenuTrade"), None);
-        assert_eq!(voice_file_for("Rogue Encampment"), None);
-        assert_eq!(voice_file_for("TBD — aucune clé"), None);
-        assert_eq!(voice_file_for("A1QXInitAkara"), None);
-        assert_eq!(voice_file_for("AkaraGossipZ"), None);
+    /// Monde 2 slots (BA + SOR), les DEUX héros à côté d'Akara (portée
+    /// 2.5), journal spec branché — socle des tests coop de ce module.
+    fn world2() -> World {
+        let mut w = World::with_seed(vec![vec![false; 300]; 300], json!({}), 0xD1A7);
+        w.spawn_town_npcs();
+        w.set_quest_act1(ActQuests::new());
+        assert!(w.add_player(1, "SOR"), "slot 1 ajouté");
+        let (ax, ay) = { let e = &w.town_npcs()[0].ent; (e.x, e.y) };
+        for slot in 0..2 {
+            w.players[slot].ent.x = ax + 1.0 + slot as f32;
+            w.players[slot].ent.y = ay;
+        }
+        w
     }
 
     #[test]
-    fn all_line_keys_inventaire_complet() {
-        let keys = all_line_keys();
-        // 5 init + 33 pendant + 34 remise + 19 ragots (6 NPC) = 91 clés v1.12.
-        assert_eq!(keys.len(), 91, "inventaire parlé des tables de dialogue.rs");
-        assert_eq!(keys.iter().filter(|k| voice_file_for(k).is_none()).count(), 0,
-            "toute clé du moteur a une règle vocale");
-        // ordre stable + déduplication : pas de doublon entre tables.
-        let mut sorted = keys.clone();
-        sorted.sort_unstable();
-        sorted.dedup();
-        assert_eq!(sorted.len(), keys.len(), "clés uniques");
+    fn coop_verrou_une_seule_session_le_teneur_peut_rouvrir() {
+        let mut w = world2();
+        let a = ix(&w, "akara");
+        let s1 = w.open_dialogue_slot(1, a).expect("slot 1 ouvre Akara");
+        assert_eq!(s1.slot, 1, "la session porte son teneur");
+        // VERROU : le slot 0 ne peut ouvrir NI le même NPC NI un autre —
+        // le monde gelé est partagé ; Busy porte la session en cours
+        // (bandeau « <NPC> discute avec <joueur> ») AVANT tout test de
+        // portée (le bandeau s'affiche même de loin).
+        for target in [a, ix(&w, "gheed")] {
+            match w.open_dialogue_slot(0, target) {
+                Err(DialogueError::Busy { npc, slot, .. }) => {
+                    assert_eq!(npc, "akara");
+                    assert_eq!(slot, 1);
+                }
+                other => panic!("verrou attendu, obtenu : {:?}", other.map(|s| s.npc)),
+            }
+        }
+        // Chemin historique (solo/nearest) : même verrou.
+        assert!(w.open_dialogue(ix(&w, "gheed")).is_none(), "verrou via open_dialogue");
+        // Le TENEUR rouvre (clic UI) : remplacement, pas d'erreur.
+        assert!(w.open_dialogue_slot(1, a).is_ok(), "le teneur remplace sa session");
+        // Fermeture par un autre slot : refusée ; par le teneur : ok.
+        assert!(!w.close_dialogue_slot(0));
+        assert!(w.close_dialogue_slot(1));
+        assert!(!w.dialogue_active(), "verrou levé");
+        // Le slot 0 ouvre à son tour (présenté près du NPC visé).
+        let (gx, gy) = { let e = &w.town_npcs()[ix(&w, "gheed")].ent; (e.x, e.y) };
+        w.players[0].ent.x = gx + 1.0;
+        w.players[0].ent.y = gy;
+        assert!(w.open_dialogue_slot(0, ix(&w, "gheed")).is_ok(), "après « partir », le verrou passe au slot 0");
+    }
+
+    #[test]
+    fn coop_gel_global_tous_les_slots() {
+        let mut w = world2();
+        let a = ix(&w, "akara");
+        w.open_dialogue_slot(1, a).expect("session slot 1");
+        let avant: Vec<(f32, f32)> =
+            (0..2).map(|s| { let e = w.hero_slot_ent(s).unwrap(); (e.x, e.y) }).collect();
+        let now0 = w.now_ms;
+        // Entrées des DEUX slots pendant la session : RIEN ne bouge, ni
+        // l'horloge ; seuls les events en attente sortent (NpcTalked).
+        let ev = w.tick_inputs(
+            100,
+            &[
+                (0, crate::PlayerInput::MoveTo { x: 250, y: 250 }),
+                (1, crate::PlayerInput::MoveTo { x: 5, y: 5 }),
+            ],
+        );
+        assert!(
+            ev.iter().any(|e| matches!(e, crate::GameEvent::NpcTalked { .. })),
+            "events de l'ouverture flushés même monde gelé"
+        );
+        for (s, (x0, y0)) in avant.iter().enumerate() {
+            let e = w.hero_slot_ent(s).unwrap();
+            assert_eq!((e.x, e.y), (*x0, *y0), "héros du slot {s} gelé (gel GLOBAL)");
+        }
+        assert_eq!(w.now_ms, now0, "horloge gelée pour tous les slots");
+        assert!(w.tick_inputs(100, &[]).is_empty(), "plus rien à flusher, monde gelé");
+        // « partir » du TENEUR : le monde reprend pour TOUS les slots.
+        assert!(w.close_dialogue_slot(1));
+        for _ in 0..2 {
+            w.tick_inputs(
+                100,
+                &[
+                    (0, crate::PlayerInput::MoveTo { x: 250, y: 250 }),
+                    (1, crate::PlayerInput::MoveTo { x: 5, y: 5 }),
+                ],
+            );
+        }
+        for (s, (x0, y0)) in avant.iter().enumerate() {
+            let e = w.hero_slot_ent(s).unwrap();
+            assert_ne!((e.x, e.y), (*x0, *y0), "slot {s} redémarre après la fermeture");
+        }
+        assert!(w.now_ms > now0, "horloge rendue au monde");
+    }
+
+    #[test]
+    fn coop_seul_le_teneur_choisit_et_le_soin_va_au_parleur() {
+        let mut w = world2();
+        let a = ix(&w, "akara");
+        // Les DEUX blessés : le soin d'Akara doit aller au PARLEUR (slot 1)
+        // et à lui seul (point (3) mission — le panneau/effet est celui du
+        // joueur qui parle, jamais celui des autres).
+        w.players[0].data.stats.life = 10;
+        w.players[1].data.stats.life = 20;
+        let s = w.open_dialogue_slot(1, a).expect("slot 1 parle à Akara");
+        assert_eq!(s.slot, 1);
+        assert_eq!(w.town_npcs()[a].talked, 1);
+        assert_eq!(
+            w.players[1].data.stats.life,
+            w.players[1].data.stats.max_life,
+            "le parleur est soigné"
+        );
+        assert_eq!(w.players[0].data.stats.life, 10, "l'autre joueur n'est PAS soigné");
+        // Choix/fermeture par le mauvais slot : refusés, session intacte.
+        assert_eq!(w.choose_dialogue_slot(0, 0), None, "seul le teneur choisit");
+        assert!(w.dialogue_active());
+        assert!(!w.close_dialogue_slot(0));
+        // Choix du teneur (« partir », dernière option visible) : ok.
+        let last = w.dialogue_visible_options().len() - 1;
+        assert_eq!(w.choose_dialogue_slot(1, last), Some(DialogueAction::Close));
+        assert!(!w.dialogue_active());
+        // Slot hors monde : jamais accepté (jamais de panique réseau).
+        match w.open_dialogue_slot(9, a) {
+            Err(DialogueError::BadSlot) => {}
+            other => panic!("BadSlot attendu, obtenu : {:?}", other.map(|s| s.npc)),
+        }
+    }
+
+    #[test]
+    fn coop_remove_player_referme_ou_decale_la_session() {
+        // Compaction des slots (3c-c removePlayer) × session de dialogue :
+        // le teneur partant ⇒ session refermée (verrou orphelin impossible)
+        // ; un teneur AU-DELÀ du slot retiré ⇒ décalage -1 (même joueur).
+        let mut w = World::with_seed(vec![vec![false; 300]; 300], json!({}), 0xD1A7);
+        w.spawn_town_npcs();
+        w.set_quest_act1(ActQuests::new());
+        assert!(w.add_player(1, "SOR"));
+        assert!(w.add_player(2, "PA"));
+        let a = ix(&w, "akara");
+        let (ax, ay) = { let e = &w.town_npcs()[a].ent; (e.x, e.y) };
+        for slot in 0..3 {
+            w.players[slot].ent.x = ax + 0.8 + slot as f32 * 0.7;
+            w.players[slot].ent.y = ay;
+        }
+        // Cas 1 : le teneur (slot 2) reste, le slot 1 part → session -1.
+        let s = w.open_dialogue_slot(2, a).expect("session slot 2");
+        assert_eq!(s.slot, 2);
+        assert!(w.remove_player(1), "slot 1 retiré");
+        assert_eq!(w.dialogue_session().unwrap().slot, 1, "teneur décalé avec sa session");
+        assert!(w.close_dialogue_slot(1), "le MÊME joueur ferme sous son nouveau slot");
+        // Cas 2 : le teneur part lui-même → session refermée, verrou levé.
+        let s = w.open_dialogue_slot(1, a).expect("session slot 1 (ex-slot 2)");
+        assert_eq!(s.slot, 1);
+        assert!(w.remove_player(1), "le teneur part");
+        assert!(!w.dialogue_active(), "pas de verrou orphelin");
+        // Le slot restant ouvre à nouveau (monde rendu à tous).
+        assert!(w.open_dialogue_slot(0, a).is_ok());
     }
 }

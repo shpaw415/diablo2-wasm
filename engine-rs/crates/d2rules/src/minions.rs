@@ -584,7 +584,7 @@ pub(crate) fn monster_strikes_minion(w: &mut World, i: usize, _ev: &mut Vec<Game
         return false;
     }
     let (mx, my) = (w.mon_ent[i].x, w.mon_ent[i].y);
-    let dh = dist(w.hero_ent.x - mx, w.hero_ent.y - my);
+    let dh = dist(w.players[0].ent.x - mx, w.players[0].ent.y - my);
     let mut best: Option<usize> = None;
     let mut bd = dh; // strict : à égalité le héros garde le coup (flux sûr)
     for (k, m) in w.minions.list.iter().enumerate() {
@@ -630,7 +630,7 @@ pub(crate) fn tick_minions(w: &mut World, dt: u32, _ev: &mut Vec<GameEvent>) {
         return; // sans invocation : zéro coût, zéro RNG — flux bit-identique
     }
     // Mort du héros : le lien pet meurt avec le maître (retail).
-    if w.hero.dead_ms > 0 {
+    if w.players[0].data.dead_ms > 0 {
         w.minions.clear();
         return;
     }
@@ -661,8 +661,8 @@ pub(crate) fn tick_minions(w: &mut World, dt: u32, _ev: &mut Vec<GameEvent>) {
         i += 1;
     }
 
-    let hero_moving = !w.hero.path.is_empty();
-    let (hx, hy) = (w.hero_ent.x, w.hero_ent.y);
+    let hero_moving = !w.players[0].data.path.is_empty();
+    let (hx, hy) = (w.players[0].ent.x, w.players[0].ent.y);
 
     // --- décision + application par invocation ---
     enum Act {
@@ -917,7 +917,7 @@ fn tick_minion_missiles(w: &mut World, dt: u32) {
 /// tuile marchable de la spirale déterministe (rayons 2 puis 3 autour du
 /// héros, ordre [`DIRS`]), atteinte par A*.
 fn sidestep_path(w: &mut World, k: usize) -> Option<Vec<(f32, f32)>> {
-    let (hx, hy) = (w.hero_ent.x.floor() as i32, w.hero_ent.y.floor() as i32);
+    let (hx, hy) = (w.players[0].ent.x.floor() as i32, w.players[0].ent.y.floor() as i32);
     for r in [2i32, 3] {
         for &(dx, dy) in DIRS.iter() {
             let (tx, ty) = (hx + dx * r, hy + dy * r);
@@ -957,7 +957,8 @@ fn start_mon_death(w: &mut World, t: usize) {
 
 /// Niveau d'un skill du héros (0 = non appris).
 fn hero_level_of(w: &World, code: &str) -> u32 {
-    w.hero
+    w.players[0]
+        .data
         .skills
         .iter()
         .find(|s| s.code.eq_ignore_ascii_case(code))
@@ -969,10 +970,11 @@ fn hero_level_of(w: &World, code: &str) -> u32 {
 /// reste `learn_skill`). `pub(crate)` : même crate uniquement.
 #[cfg(test)]
 pub(crate) fn grant_hero_skill(w: &mut World, code: &str, level: u32) {
-    match w.hero.skills.iter_mut().find(|s| s.code.eq_ignore_ascii_case(code)) {
+    match w.players[0].data.skills.iter_mut().find(|s| s.code.eq_ignore_ascii_case(code)) {
         Some(s) => s.level = level,
         None => w
-            .hero
+            .players[0]
+            .data
             .skills
             .push(crate::HeroSkill { code: code.to_string(), level, missile: None }),
     }
@@ -1052,12 +1054,12 @@ impl World {
             l => l,
         };
         let cost = def.mana + def.lvlmana * (lvl - 1);
-        if self.hero.stats.mana < cost {
-            return Err(SummonError::NotEnoughMana { cost, have: self.hero.stats.mana });
+        if self.players[0].data.stats.mana < cost {
+            return Err(SummonError::NotEnoughMana { cost, have: self.players[0].data.stats.mana });
         }
 
         // --- résolution de la position (+ consommation du cadavre) ---
-        let (hx, hy) = (self.hero_ent.x, self.hero_ent.y);
+        let (hx, hy) = (self.players[0].ent.x, self.players[0].ent.y);
         let corpse_based = matches!(
             def.kind,
             MinionKind::Skeleton | MinionKind::SkeletalMage | MinionKind::Revive
@@ -1109,7 +1111,7 @@ impl World {
         }
 
         self.minions.list.push(minion);
-        self.hero.stats.mana -= cost;
+        self.players[0].data.stats.mana -= cost;
         Ok(count_of(self))
     }
 
@@ -1317,7 +1319,7 @@ mod tests {
             hero,
         );
         w.clear_monsters();
-        w.hero.stats.mana = 1000;
+        w.players[0].data.stats.mana = 1000;
         w
     }
 
@@ -1363,9 +1365,9 @@ mod tests {
     }
 
     fn teleport_hero(w: &mut World, x: f32, y: f32) {
-        w.hero_ent.x = x;
-        w.hero_ent.y = y;
-        w.hero.path.clear();
+        w.players[0].ent.x = x;
+        w.players[0].ent.y = y;
+        w.players[0].data.path.clear();
     }
 
     // -- golden : tables patch_skills.txt / patch_monstats.txt ---------------
@@ -1493,7 +1495,7 @@ mod tests {
         assert_eq!(m.speed, 13.0, "Velocity");
         assert!((m.ent.x - 6.5).abs() < 0.01, "levé sur le cadavre");
         assert_eq!(w.raisable_corpses().len(), 0, "le cadavre est CONSOMMÉ");
-        assert_eq!(w.hero.stats.mana, 994, "coût mana 6 débité");
+        assert_eq!(w.players[0].data.stats.mana, 994, "coût mana 6 débité");
         // plus de cadavre : refus net, état inchangé
         assert_eq!(w.cast_summon("Raise Skeleton"), Err(SummonError::NoCorpse));
         assert_eq!(w.minions().len(), 1);
@@ -1597,7 +1599,7 @@ mod tests {
         assert_eq!(w.minions()[0].max_hp, 281, "201×(100+ln12(2)=40)/100");
         // FireGolem : mana insuffisant (50 requis)
         grant(&mut w, "FireGolem", 1);
-        w.hero.stats.mana = 10;
+        w.players[0].data.stats.mana = 10;
         assert_eq!(
             w.cast_summon("FireGolem"),
             Err(SummonError::NotEnoughMana { cost: 50, have: 10 })
@@ -1735,9 +1737,9 @@ mod tests {
         w.cast_summon("Summon Spirit Wolf").unwrap();
         // suivi : le héros part, le loup le rattrape
         teleport_hero(&mut w, 20.0, 20.0);
-        let d0 = dist(w.hero_ent.x - w.minions()[0].ent.x, w.hero_ent.y - w.minions()[0].ent.y);
+        let d0 = dist(w.players[0].ent.x - w.minions()[0].ent.x, w.players[0].ent.y - w.minions()[0].ent.y);
         run(&mut w, 2000);
-        let d1 = dist(w.hero_ent.x - w.minions()[0].ent.x, w.hero_ent.y - w.minions()[0].ent.y);
+        let d1 = dist(w.players[0].ent.x - w.minions()[0].ent.x, w.players[0].ent.y - w.minions()[0].ent.y);
         assert!(d1 < d0, "le compagnon suit le héros ({} → {})", d0, d1);
         // attaque LA CIBLE DU HÉROS (merc_target), pas le plus proche
         assert!(w.spawn_monster("ZM", 10, 20)); // HORS rayon d'aggro du loup (témoin)
@@ -1785,9 +1787,9 @@ mod tests {
         w.mon_dat[zm].hp = 2;
         w.minions.list[0].th = 1000;
         teleport_hero(&mut w, 28.0, 20.0);
-        let before = w.hero.stats.xp;
+        let before = w.players[0].data.stats.xp;
         run(&mut w, 8000);
-        assert!(w.hero.stats.xp > before, "XP du kill par le minion (flux DD inchangé)");
+        assert!(w.players[0].data.stats.xp > before, "XP du kill par le minion (flux DD inchangé)");
     }
 
     #[test]
@@ -1797,12 +1799,12 @@ mod tests {
         w.cast_summon("Summon Spirit Wolf").unwrap();
         assert_eq!(w.minions().len(), 1);
         // mort du héros : le compagnon disparaît
-        w.hero.dead_ms = 1;
+        w.players[0].data.dead_ms = 1;
         w.tick(100, None);
         assert!(w.minions().is_empty(), "les invocations meurent avec le héros");
         // changement de niveau : despawn (les pets ne traversent pas les warps)
-        w.hero.dead_ms = 0;
-        w.hero.stats.mana = 1000;
+        w.players[0].data.dead_ms = 0;
+        w.players[0].data.stats.mana = 1000;
         w.cast_summon("Summon Spirit Wolf").unwrap();
         assert_eq!(w.minions().len(), 1);
         w.set_level_key("bloodmoor");

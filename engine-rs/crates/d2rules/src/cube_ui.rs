@@ -716,7 +716,7 @@ pub fn world_cube_transmute_slots(
     if outcome.portal.is_some() {
         for &i in &outcome.consumed {
             let slot = slots[i];
-            w.hero.inv[slot] = None;
+            w.players[0].data.inv[slot] = None;
         }
         let portal = outcome.portal.clone().unwrap_or_default();
         return Ok(serde_json::json!({
@@ -740,7 +740,7 @@ pub fn world_cube_transmute_slots(
     // 5. Consomme les slots consommés, pose le produit (nom fr).
     for &i in &outcome.consumed {
         let slot = slots[i];
-        w.hero.inv[slot] = None;
+        w.players[0].data.inv[slot] = None;
     }
     let name_fr = product_name_fr(produced);
     let def = ItemDef {
@@ -749,7 +749,7 @@ pub fn world_cube_transmute_slots(
         kind: kind_of(&produced.code),
         amount: produced.gold,
     };
-    w.hero.inv[free] = Some(def);
+    w.players[0].data.inv[free] = Some(def);
     let full = tooltip_item_from_rolled(produced);
     let full_json: serde_json::Value =
         serde_json::from_str(&tooltip_json(&full)).unwrap_or_default();
@@ -823,7 +823,7 @@ mod tests {
     }
 
     fn put(w: &mut World, slot: usize, code: &str) {
-        w.hero.inv[slot] = Some(ItemDef {
+        w.players[0].data.inv[slot] = Some(ItemDef {
             code: code.to_string(),
             name: code.to_string(),
             kind: kind_of(code),

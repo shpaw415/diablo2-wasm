@@ -103,7 +103,7 @@ fn mirror_world(p: &Profile) -> World {
     let grid = vec![vec![false; 20]; 20];
     let mut w = World::with_seed_and_hero(grid, manifest, 42, "BA");
     {
-        let s = &mut w.hero.stats;
+        let s = &mut w.players[0].data.stats;
         s.level = p.level;
         s.xp = p.xp;
         s.xp_to_next = 0;
@@ -119,8 +119,8 @@ fn mirror_world(p: &Profile) -> World {
         s.skill_points = p.skill_points;
         s.stat_points = p.stat_points;
     }
-    w.hero.skills.clear();
-    w.hero.inv = vec![None; INV_SLOTS];
+    w.players[0].data.skills.clear();
+    w.players[0].data.inv = vec![None; INV_SLOTS];
     w.set_difficulty(p.difficulty);
     w
 }
@@ -260,13 +260,13 @@ fn exported_items_are_starter_gear_identified() {
     // Mission 19c : « items avec starter gear identified » — un inventaire
     // non vide exporte des items identifiés au bit starter (33) posé.
     let mut w = mirror_world(&PROFILES[0]);
-    w.hero.inv[0] = Some(crate::ItemDef {
+    w.players[0].data.inv[0] = Some(crate::ItemDef {
         code: "hax".into(),
         name: "Hand Axe".into(),
         kind: crate::ItemKind::Weapon,
         amount: 0,
     });
-    w.hero.inv[10] = Some(crate::ItemDef {
+    w.players[0].data.inv[10] = Some(crate::ItemDef {
         code: "hp1".into(),
         name: "Lesser Healing Potion".into(),
         kind: crate::ItemKind::Potion,
@@ -287,14 +287,14 @@ fn exported_items_are_starter_gear_identified() {
 fn zero_stats_are_omitted_like_retail_but_gold_survives() {
     // Retail : or 0 → stat 14 absente ; or > 0 → présente (or porté).
     let mut w = mirror_world(&PROFILES[0]);
-    w.hero.stats.gold = 0;
+    w.players[0].data.stats.gold = 0;
     let bytes = w.export_d2s("Testba").unwrap();
     let save = SaveFile::parse(&bytes).unwrap();
     assert!(save.stats.value(14).is_none(), "or 0 omis");
     assert!(save.stats.value(5).is_none(), "newskills 0 omis");
 
-    w.hero.stats.gold = 123;
-    w.hero.stats.skill_points = 2;
+    w.players[0].data.stats.gold = 123;
+    w.players[0].data.stats.skill_points = 2;
     let bytes = w.export_d2s("Testba").unwrap();
     let save = SaveFile::parse(&bytes).unwrap();
     assert_eq!(save.stats.value(14), Some(123), "or présent si > 0");

@@ -205,12 +205,16 @@ impl World {
     pub(crate) fn update_waypoints(&mut self, ev: &mut Vec<GameEvent>) {
         use super::AnimState;
         let Some((slot, x, y, r)) = self.wp.here else { return };
-        // Pas d'activation en plein swing DD (héros mort) — cohérent avec
-        // le reste des inputs du tick.
-        if self.hero_ent.anim == AnimState::DD || self.hero.dead_ms > 0 {
+        // 3b-1 (coop) : N'IMPORTE QUEL héros vivant active le waypoint au
+        // contact (le plus proche — quêtes partagées ; solo : identique, le
+        // slot 0 est le seul héros). Anim DD/mort du héros visé ⇒ pas
+        // d'activation (cohérent avec le reste des inputs du tick).
+        let s = self.nearest_living_hero_slot(x, y);
+        let Some((hx, hy)) = self.hero_slot_pos(s) else { return };
+        if self.hero_slot_ent(s).map(|e| e.anim == AnimState::DD).unwrap_or(true) {
             return;
         }
-        let d = (self.hero_ent.x - x).hypot(self.hero_ent.y - y);
+        let d = (hx - x).hypot(hy - y);
         if d <= r && self.activate_waypoint(slot) {
             ev.push(GameEvent::WaypointActivated { slot });
         }
@@ -283,8 +287,8 @@ mod tests {
     fn activation_on_contact_emits_once() {
         let mut w = world20();
         w.set_level_waypoint(0, 5.5, 5.5, 3.0);
-        w.hero_ent.x = 8.0; // à 2.5 cellules du waypoint (rayon 3)
-        w.hero_ent.y = 5.5;
+        w.players[0].ent.x = 8.0; // à 2.5 cellules du waypoint (rayon 3)
+        w.players[0].ent.y = 5.5;
         let ev = w.tick(100, None);
         assert!(ev.contains(&GameEvent::WaypointActivated { slot: 0 }), "event attendu : {ev:?}");
         assert!(w.waypoint_activated(0));
@@ -298,8 +302,8 @@ mod tests {
     fn no_activation_outside_radius_or_without_attached_wp() {
         let mut w = world20();
         w.set_level_waypoint(0, 5.5, 5.5, 3.0);
-        w.hero_ent.x = 10.0; // loin (> rayon 3)
-        w.hero_ent.y = 10.0;
+        w.players[0].ent.x = 10.0; // loin (> rayon 3)
+        w.players[0].ent.y = 10.0;
         assert!(!w.tick(100, None).iter().any(|e| matches!(e, GameEvent::WaypointActivated { .. })));
         assert!(w.active_waypoints().is_empty());
         // Sans waypoint attaché : rien, même sur place.
@@ -312,13 +316,13 @@ mod tests {
         // Town (slot 0) et Blood Moor (slot 39) s'activent indépendamment.
         let mut w = world20();
         w.set_level_waypoint(39, 10.5, 10.5, 4.0);
-        w.hero_ent.x = 11.0;
-        w.hero_ent.y = 11.0;
+        w.players[0].ent.x = 11.0;
+        w.players[0].ent.y = 11.0;
         w.tick(100, None);
         assert!(w.waypoint_activated(39));
         w.set_level_waypoint(0, 2.5, 2.5, 4.0); // changement de niveau : ré-attach
-        w.hero_ent.x = 3.0;
-        w.hero_ent.y = 3.0;
+        w.players[0].ent.x = 3.0;
+        w.players[0].ent.y = 3.0;
         w.tick(100, None);
         assert_eq!(w.active_waypoints(), &[0, 39]);
     }
@@ -341,8 +345,8 @@ mod tests {
     fn save_load_round_trip_preserves_active_slots() {
         let mut w = world20();
         w.set_level_waypoint(0, 5.5, 5.5, 3.0);
-        w.hero_ent.x = 5.5;
-        w.hero_ent.y = 5.5;
+        w.players[0].ent.x = 5.5;
+        w.players[0].ent.y = 5.5;
         w.tick(50, None);
         w.activate_waypoint(39);
         let json = w.save();

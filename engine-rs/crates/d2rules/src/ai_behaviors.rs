@@ -253,9 +253,11 @@ pub(crate) fn tick(w: &mut World, i: usize, dt: u32, ev: &mut Vec<GameEvent>) ->
         if w.ai.ext[i].rez_cd_ms > 0 {
             w.ai.ext[i].rez_cd_ms = w.ai.ext[i].rez_cd_ms.saturating_sub(dt);
         } else if w.mon_dat[i].state == MonState::Idle {
-            let (hx, hy) = (w.hero_ent.x, w.hero_ent.y);
+            // 3b-1 (coop) : le héros de référence est le vivant le plus
+            // proche (déterministe ; solo : slot 0, identique).
+            let near = w.nearest_living_hero_pos(w.mon_ent[i].x, w.mon_ent[i].y);
             let hero_far =
-                dist(w.mon_ent[i].x - hx, w.mon_ent[i].y - hy) > AGGRO_RADIUS;
+                dist(w.mon_ent[i].x - near.0, w.mon_ent[i].y - near.1) > AGGRO_RADIUS;
             if hero_far {
                 w.ai.ext[i].think_ms += dt;
                 if w.ai.ext[i].think_ms >= AIDEL_MS {
@@ -401,9 +403,9 @@ mod tests {
 
     /// Téléporte le héros (tests : simule un déplacement hors aggro).
     fn teleport_hero(w: &mut World, x: f32, y: f32) {
-        w.hero_ent.x = x;
-        w.hero_ent.y = y;
-        w.hero.path.clear();
+        w.players[0].ent.x = x;
+        w.players[0].ent.y = y;
+        w.players[0].data.path.clear();
     }
 
     // -- golden : valeurs réelles des tables (patch_monstats §8) -------------

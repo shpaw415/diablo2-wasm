@@ -74,8 +74,13 @@ fn stash(gc: &GameCore) -> Value {
 
 /// Force l'or porté via le save moteur (levier de test, save v3 `hero.stats.gold`).
 fn set_gold(gc: &mut GameCore, gold: u64) {
+    // 3b-1 d2rules : save v4, `players[]` fait foi (champs de tête en miroir
+    // du slot 0) — patcher LES DEUX pour rester robuste.
     let mut save: Value = serde_json::from_str(&gc.save_world()).expect("save JSON");
     save["hero"]["stats"]["gold"] = gold.into();
+    if let Some(p0) = save.get_mut("players").and_then(|p| p.get_mut(0)) {
+        p0["stats"]["gold"] = gold.into(); // PlayerSave est PLAT (pas de "data")
+    }
     gc.load_world(&save.to_string()).expect("load world");
 }
 

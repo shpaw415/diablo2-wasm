@@ -65,6 +65,24 @@
 //! niveau/xp/hp/entité/missiles en vol. Les stats effectives sont
 //! recalculées au chargement depuis la table (pas de double source).
 //!
+//! # 3c-a — MERCENAIRES PAR JOUEUR (coop)
+//! Chaque SLOT embauche SON mercenaire (type indépendant, bourse et niveau
+//! du joueur propriétaire), suit SON joueur, et meurt/ressuscite chez le NPC
+//! de sa ville ([`World::hire_merc_slot`]/[`World::resurrect_merc_slot`]).
+//! Le merc du SLOT 0 reste l'objet RACINE `World.merc` (bit-exact solo) et
+//! porte en `MercData::coop` l'état des slots ≥ 1 (`players_coop.rs` — aucun
+//! champ World disponible : world.rs gelé 3c) ; quand le slot 0 n'a pas de
+//! merc, la racine est une COQUILLE invisible (`slot == usize::MAX`).
+//! Les mercenaires frappent les monstres et ENCAISSENT via le hook documenté
+//! `monster_strikes_nearest_merc` (le merc le plus PROCHE de tous les slots).
+//! ÉCARTS documentés : (1) la cible du joueur n'existe que pour le slot 0
+//! (`merc_target` historique) — les mercs des slots ≥ 1 visent le monstre
+//! vivant le plus proche ; (2) tous les mercs consomment le flux RNG MONDE
+//! (comme le merc slot 0 historique) — déterministe lockstep, mais sans
+//! l'indépendance stricte par joueur des héros (3b) ; (3) `state_hash` ne
+//! couvre que la racine (world.rs gelé) — les mercs coop sont couverts par
+//! les tests double-exécution et le round-trip save bit-exact.
+//!
 //! Zéro IO, zéro rendu : pareil que `vendor.rs` (tables embarquées
 //! compile-time), état runtime porté par `World` (blocs `impl World`
 //! additifs ici, comme `waypoints.rs`).
@@ -448,6 +466,9 @@ pub enum HireError {
     /// Aucun record de table pour ce type (impossible avec la table embarquée
     /// — garde pour une future table personnalisée).
     NoHireling,
+    /// 3c-a : slot hors monde (≥ `hero_count`) — pas de joueur à qui
+    /// adosser le mercenaire.
+    NoSlot,
 }
 
 /// Échec de résurrection ([`World::resurrect_merc`]).
@@ -505,12 +526,21 @@ pub struct MercData {
     /// système séparé de celui du héros : zéro changement dans d2missiles,
     /// collisions et jets résolus ici avec l'AR du mercenaire.
     pub(crate) missiles: MissileSystem,
+    /// 3c-a : slot propriétaire (index dans `World.players`). 0 = mercenaire
+    /// du héros historique (racine) ; ≥ 1 = mercenaire coop (porté par la
+    /// racine en `coop`) ; `usize::MAX` = COQUILLE porte-état coop (aucun
+    /// mercenaire slot 0 — invisible : `mercenary()` → None, jamais tickée).
+    pub(crate) slot: usize,
+    /// 3c-a : état coop embarqué (mercs des slots ≥ 1 + corps par slot) —
+    /// significatif UNIQUEMENT sur la racine ; vide sur un merc coop.
+    /// Cf. `players_coop.rs` (world.rs gelé : aucun champ World disponible).
+    pub(crate) coop: crate::players_coop::CoopState,
 }
 
 impl MercData {
     /// Construit depuis un record offert (embauche) — position posée par
     /// l'appelant ([`World::hire_merc`] la snap près du héros).
-    pub(crate) fn from_rec(rec: &MercRec, rng_seed: u64) -> MercData {
+    pub(crate) fn from_rec(rec: &MercRec, rng_seed: u64, slot: usize) -> MercData {
         let mut m = MercData {
             kind: rec.kind,
             subtype: rec.subtype.clone(),
@@ -533,9 +563,32 @@ impl MercData {
             swing_ms: 0,
             anim_ms: 0,
             missiles: MissileSystem::with_seed(rng_seed ^ MERC_MISSILE_SEED_XOR),
+            slot,
+            coop: crate::players_coop::CoopState::default(),
         };
         m.recompute(rec);
         m.hp = m.max_hp;
+        m
+    }
+
+    /// 3c-a : COQUILLE porte-état coop — un « mercenaire » factice (jamais
+    /// tickée, jamais visible, jamais résolue comme cible) qui porte l'état
+    /// des slots ≥ 1 quand le slot 0 n'a pas de mercenaire. Reconstruite au
+    /// rechargement SANS lookup de table (stable quelle que soit la
+    /// difficulté sauvegardée).
+    pub(crate) fn shell() -> MercData {
+        MercData::shell_with(crate::players_coop::CoopState::default())
+    }
+
+    /// Coquille avec état coop pré-rempli (rechargement de save).
+    pub(crate) fn shell_with(coop: crate::players_coop::CoopState) -> MercData {
+        let rec = offer_record(MercKind::RogueScout, None, Difficulty::Normal, 1)
+            .expect("record rogue (coquille)");
+        let mut m = MercData::from_rec(rec, 0, usize::MAX);
+        m.coop = coop;
+        m.alive = false;
+        m.hp = 0;
+        m.path.clear();
         m
     }
 
@@ -616,6 +669,16 @@ pub struct MercSave {
     pub anim_ms: u32,
     /// Missiles du mercenaire en vol.
     pub missiles: MissileSystem,
+    /// 3c-a : slot propriétaire (0 = héros historique ; `usize::MAX` =
+    /// coquille porte-état coop). `#[serde(default)]` : absent des saves
+    /// antérieures à la 3c ⇒ 0 (rétro-compat totale).
+    #[serde(default)]
+    pub slot: usize,
+    /// 3c-a : état coop embarqué (mercs slots ≥ 1 + corps par slot, cf.
+    /// `players_coop.rs`). `#[serde(default)]` : absent des saves
+    /// antérieures ⇒ vide.
+    #[serde(default)]
+    pub coop: crate::players_coop::CoopSave,
 }
 
 impl MercSave {
@@ -634,6 +697,8 @@ impl MercSave {
             swing_ms: m.swing_ms,
             anim_ms: m.anim_ms,
             missiles: m.missiles.clone(),
+            slot: m.slot,
+            coop: crate::players_coop::CoopSave::of(&m.coop),
         }
     }
 
@@ -641,7 +706,12 @@ impl MercSave {
     /// recalculées au niveau courant ; hp clampé). `Err(())` = record
     /// introuvable dans la table (save d'une autre version de données) —
     /// l'appelant IGNORE alors le mercenaire (jamais un save invalide).
+    /// La COQUILLE (`slot == usize::MAX`) se reconstruit SANS lookup de
+    /// table (stable quelle que soit la difficulté — cf. `MercData::shell`).
     pub(crate) fn rebuild(self, diff: Difficulty) -> Result<MercData, ()> {
+        if self.slot == usize::MAX {
+            return Ok(MercData::shell_with(self.coop.rebuild(diff)));
+        }
         let rec = record_of(self.kind, &self.subtype, diff).ok_or(())?;
         let mut m = MercData {
             kind: self.kind,
@@ -665,6 +735,8 @@ impl MercSave {
             swing_ms: self.swing_ms,
             anim_ms: self.anim_ms,
             missiles: self.missiles,
+            slot: self.slot,
+            coop: self.coop.rebuild(diff),
         };
         m.recompute(rec);
         m.hp = m.hp.min(m.max_hp).max(if m.alive { 1 } else { 0 });
@@ -690,23 +762,48 @@ impl World {
     /// L'événement `MercHired` est livré au TICK SUIVANT (file différée —
     /// l'API renvoie déjà le niveau embauché). Renvoie `Ok(niveau embauché)`
     /// ou l'erreur (état inchangé).
+    /// 3c-a : mercenaire du SLOT 0 — délègue à [`World::hire_merc_slot`].
     pub fn hire_merc(&mut self, kind: MercKind) -> Result<u32, HireError> {
-        if self.merc.as_ref().map(|m| m.alive).unwrap_or(false) {
+        self.hire_merc_slot(0, kind)
+    }
+
+    /// 3c-a : embauche PAR JOUEUR — le slot `slot` embauche SON mercenaire
+    /// (type indépendant, palier offert par SON niveau, or débité de SA
+    /// bourse) ; le merc suit SON joueur, meurt et ressuscite chez le NPC de
+    /// sa ville ([`World::resurrect_merc_slot`]). Règle D2 par slot : un
+    /// seul hireling vivant par joueur ; KO ⇒ le nouveau remplace.
+    /// Graine missiles : slot 0 = flux MONDE (bit-exact) ; slots ≥ 1 = flux
+    /// RNG du joueur (aucun tirage consommé dans les deux cas). L'événement
+    /// `MercHired` est commun (pas de slot — file différée, cf. docs module).
+    pub fn hire_merc_slot(&mut self, slot: usize, kind: MercKind) -> Result<u32, HireError> {
+        if slot >= self.players.len() {
+            return Err(HireError::NoSlot);
+        }
+        if self.mercenary_slot(slot).map(|m| m.alive).unwrap_or(false) {
             return Err(HireError::AlreadyAlive);
         }
-        let rec = match offer_record(kind, None, self.difficulty, self.hero.stats.level) {
+        let rec = match offer_record(kind, None, self.difficulty, self.players[slot].data.stats.level)
+        {
             Some(r) => r,
             None => return Err(HireError::NoHireling),
         };
         let cost = rec.gold;
-        if self.hero.stats.gold < cost {
-            return Err(HireError::InsufficientGold { cost, have: self.hero.stats.gold });
+        if self.players[slot].data.stats.gold < cost {
+            return Err(HireError::InsufficientGold {
+                cost,
+                have: self.players[slot].data.stats.gold,
+            });
         }
-        self.hero.stats.gold -= cost;
-        let seed = self.rng.s;
-        let mut m = MercData::from_rec(rec, seed);
-        // apparition : tuile marchable près du héros (spirale 2, sinon sur lui)
-        let (hx, hy) = (self.hero_ent.x, self.hero_ent.y);
+        self.players[slot].data.stats.gold -= cost;
+        let seed = if slot == 0 {
+            self.rng.s
+        } else {
+            self.players[slot].rng.s ^ (MERC_MISSILE_SEED_XOR.wrapping_mul(slot as u64 + 1))
+        };
+        let mut m = MercData::from_rec(rec, seed, slot);
+        // apparition : tuile marchable près de SON joueur (spirale 2, sinon
+        // sur lui)
+        let (hx, hy) = (self.players[slot].ent.x, self.players[slot].ent.y);
         let (tx, ty) = (hx.floor() as i32, hy.floor() as i32);
         let g = crate::path::Grid { w: self.w, h: self.h, blocked: &self.grid };
         let spot = crate::path::snap_near(&g, (tx, ty), 2).unwrap_or((tx, ty));
@@ -720,8 +817,19 @@ impl World {
             level,
             cost,
         };
-        self.merc = Some(m);
-        self.merc_target = None;
+        if slot == 0 {
+            // la racine DEVIENT le merc du slot 0 — l'état coop embarqué suit
+            let mut old = self.merc.take();
+            if let Some(o) = old.as_mut() {
+                m.coop = std::mem::take(&mut o.coop);
+            }
+            self.merc = Some(m);
+            self.merc_target = None;
+        } else {
+            let root = crate::players_coop::ensure_root(self);
+            root.coop.mercs.retain(|mm| mm.slot != slot); // KO remplacé
+            root.coop.mercs.push(m);
+        }
         self.deferred.push(ev);
         Ok(level)
     }
@@ -731,12 +839,30 @@ impl World {
     /// de résurrection (formule client par niveau — restant) ; la valeur
     /// renvoyée est ce coût (0 aujourd'hui). L'événement `MercResurrected`
     /// est livré au tick suivant (file différée).
+    /// 3c-a : mercenaire du SLOT 0 — délègue à [`World::resurrect_merc_slot`].
     pub fn resurrect_merc(&mut self) -> Result<u32, ResurrectError> {
-        let alive = self.merc.as_ref().map(|m| m.alive).unwrap_or(false);
-        if self.merc.is_none() || alive {
+        self.resurrect_merc_slot(0)
+    }
+
+    /// 3c-a : résurrection PAR JOUEUR — le merc KO du slot `slot` revient
+    /// pleine vie auprès de SON joueur (la résurrection se fait en ville,
+    /// chez le NPC vendeur de SON type : kashya/greiz/asheara/qual-kehk,
+    /// col `Seller` — l'UI d2game branche le clic NPC sur cette API).
+    pub fn resurrect_merc_slot(&mut self, slot: usize) -> Result<u32, ResurrectError> {
+        if self.mercenary_slot(slot).map(|m| m.alive).unwrap_or(true) {
             return Err(ResurrectError::NoCorpse);
         }
-        let m = self.merc.as_mut().expect("merc connu");
+        // ramène le cadavre près de SON joueur (la résurrection se fait en
+        // ville) — position calculée AVANT l'emprunt mutable du mercenaire
+        let (hx, hy) = (self.players[slot].ent.x, self.players[slot].ent.y);
+        let g = crate::path::Grid { w: self.w, h: self.h, blocked: &self.grid };
+        let spot = crate::path::snap_near(
+            &g,
+            (hx.floor() as i32, hy.floor() as i32),
+            2,
+        )
+        .unwrap_or((hx.floor() as i32, hy.floor() as i32));
+        let m = self.mercenary_slot_mut(slot).expect("merc KO connu");
         m.alive = true;
         m.hp = m.max_hp;
         m.path.clear();
@@ -745,15 +871,6 @@ impl World {
         m.ent.anim = AnimState::NU;
         m.ent.anim_frame = 0;
         m.anim_ms = 0;
-        // ramène le cadavre près du héros (la résurrection se fait en ville)
-        let (hx, hy) = (self.hero_ent.x, self.hero_ent.y);
-        let g = crate::path::Grid { w: self.w, h: self.h, blocked: &self.grid };
-        let spot = crate::path::snap_near(
-            &g,
-            (hx.floor() as i32, hy.floor() as i32),
-            2,
-        )
-        .unwrap_or((hx.floor() as i32, hy.floor() as i32));
         m.ent.x = spot.0 as f32 + 0.5;
         m.ent.y = spot.1 as f32 + 0.5;
         let cost = 0; // colonne absente de hireling.txt v1.12 (MVP gratuit)
@@ -761,36 +878,86 @@ impl World {
         Ok(cost)
     }
 
-    /// Mercenaire courant (lecture) — état complet.
+    /// Mercenaire courant (lecture) — état complet. 3c-a : vue du SLOT 0
+    /// (la coquille porte-état n'est jamais visible : `None`).
     pub fn mercenary(&self) -> Option<&MercData> {
-        self.merc.as_ref()
+        self.mercenary_slot(0)
+    }
+
+    /// 3c-a : mercenaire du slot `slot` (lecture) — 0 = racine historique,
+    /// ≥ 1 = merc coop. `None` = pas de merc pour ce slot (ou coquille).
+    pub fn mercenary_slot(&self, slot: usize) -> Option<&MercData> {
+        match slot {
+            0 => self.merc.as_ref().filter(|m| m.slot == 0),
+            s => self.merc.as_ref().and_then(|r| r.coop.merc(s)),
+        }
     }
 
     /// Mercenaire courant (écriture — tests/chantiers parallèles, même crate).
+    /// 3c-a : vue du SLOT 0 (coquille → `None`).
     pub(crate) fn mercenary_mut(&mut self) -> Option<&mut MercData> {
-        self.merc.as_mut()
+        self.mercenary_slot_mut(0)
+    }
+
+    /// 3c-a : mercenaire du slot (écriture).
+    pub(crate) fn mercenary_slot_mut(&mut self, slot: usize) -> Option<&mut MercData> {
+        match slot {
+            0 => self.merc.as_mut().filter(|m| m.slot == 0),
+            s => self.merc.as_mut().and_then(|r| r.coop.merc_mut(s)),
+        }
+    }
+
+    /// 3c-a : slots ayant UN mercenaire (lecture UI) — 0 en tête s'il
+    /// existe, puis coop triés (déterministe). La coquille n'y figure jamais.
+    pub fn mercenary_slots(&self) -> Vec<usize> {
+        let mut v = Vec::new();
+        if let Some(r) = &self.merc {
+            if r.slot == 0 {
+                v.push(0);
+            }
+            let mut coop: Vec<usize> = r.coop.mercs.iter().map(|m| m.slot).collect();
+            coop.sort_unstable();
+            v.extend(coop);
+        }
+        v
     }
 
     /// Stats du héros (écriture — tests : doter l'or d'embauche).
     pub(crate) fn hero_stats_mut(&mut self) -> &mut crate::HeroStats {
-        &mut self.hero.stats
+        &mut self.players[0].data.stats
     }
 
-    /// Entité du mercenaire (lecture — rendu d2game).
+    /// Entité du mercenaire (lecture — rendu d2game). 3c-a : vue du SLOT 0.
     pub fn merc_entity(&self) -> Option<&Entity> {
-        self.merc.as_ref().map(|m| &m.ent)
+        self.mercenary_slot(0).map(|m| &m.ent)
+    }
+
+    /// 3c-a : entité du mercenaire du slot (rendu des mercs coop).
+    pub fn merc_entity_slot(&self, slot: usize) -> Option<&Entity> {
+        self.mercenary_slot(slot).map(|m| &m.ent)
     }
 
     /// Missiles du mercenaire en vol (lecture — rendu d2game, flèches/sorts).
+    /// 3c-a : vue du SLOT 0.
     pub fn merc_missiles(&self) -> &[d2missiles::Missile] {
-        self.merc.as_ref().map(|m| m.missiles.missiles()).unwrap_or(&[])
+        self.mercenary_slot(0).map(|m| m.missiles.missiles()).unwrap_or(&[])
+    }
+
+    /// 3c-a : missiles du mercenaire du slot (rendu coop).
+    pub fn merc_missiles_slot(&self, slot: usize) -> &[d2missiles::Missile] {
+        self.mercenary_slot(slot).map(|m| m.missiles.missiles()).unwrap_or(&[])
     }
 
     /// Offre d'embauche visible (lecture — UI NPC du membre VILLES) :
     /// `(sous-type, niveau offert, coût)` pour le type demandé, à la
-    /// difficulté et au niveau de héros courants.
+    /// difficulté et au niveau de héros courants. 3c-a : vue du SLOT 0.
     pub fn merc_offer(&self, kind: MercKind) -> Option<(String, u32, u32)> {
-        offer_record(kind, None, self.difficulty, self.hero.stats.level)
+        self.merc_offer_slot(0, kind)
+    }
+
+    /// 3c-a : offre d'embauche POUR LE SLOT (palier offert par SON niveau).
+    pub fn merc_offer_slot(&self, slot: usize, kind: MercKind) -> Option<(String, u32, u32)> {
+        offer_record(kind, None, self.difficulty, self.players.get(slot)?.data.stats.level)
             .map(|r| (r.subtype.clone(), r.level, r.gold))
     }
 }
@@ -799,29 +966,37 @@ impl World {
 // Tick (appelé par `World::tick`, après `update_missiles`)
 // ---------------------------------------------------------------------------
 
-/// FSM du mercenaire : follow → attaque de la cible du héros → KO.
+/// 3c-a : FSM de TOUS les mercenaires (par joueur) — le slot 0 d'abord (flux
+/// historique bit-exact), puis les mercs coop triés par slot ; et le tick
+/// coop « corps par joueur » (players_coop.rs) AVANT, chaque tick, même sans
+/// mercenaire (zéro coût solo).
 pub(crate) fn tick_mercenary(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>) {
+    crate::players_coop::tick_corpses(w, dt, ev); // 3c-a : corps par slot
     let dt = dt.min(MAX_DT_MS);
-    if w.merc.is_none() {
-        return;
+    for slot in w.mercenary_slots() {
+        tick_one_merc(w, slot, dt, ev);
     }
-    let alive = w.merc.as_ref().map(|m| m.alive).unwrap_or(false);
-    if !alive {
-        // cadavre : joue l'anim DD une fois puis reste au sol (résurrectible)
-        let m = w.merc.as_mut().expect("merc connu");
-        crate::world::set_anim(&mut m.ent, AnimState::DD, &mut m.anim_ms);
-        crate::world::advance_anim(&mut m.ent, &mut m.anim_ms, dt, false);
-        return;
-    }
-    // cooldowns
+}
+
+/// FSM d'UN mercenaire (celui du slot `slot`) : follow de SON joueur →
+/// attaque de la cible de son joueur (slot 0 seulement, cf. écart 3c-a) →
+/// KO. Même ordre d'opérations que le flux historique slot 0 (bit-exact).
+pub(crate) fn tick_one_merc(w: &mut World, slot: usize, dt: u32, ev: &mut Vec<GameEvent>) {
     {
-        let m = w.merc.as_mut().expect("merc connu");
+        let Some(m) = w.mercenary_slot_mut(slot) else { return };
+        if !m.alive {
+            // cadavre : joue l'anim DD une fois puis reste au sol (résurrectible)
+            crate::world::set_anim(&mut m.ent, AnimState::DD, &mut m.anim_ms);
+            crate::world::advance_anim(&mut m.ent, &mut m.anim_ms, dt, false);
+            return;
+        }
+        // cooldowns
         m.swing_ms = m.swing_ms.saturating_sub(dt);
         m.repath_ms = m.repath_ms.saturating_sub(dt);
     }
 
-    let hero_dead = w.hero.dead_ms > 0;
-    let (hx, hy) = (w.hero_ent.x, w.hero_ent.y);
+    let hero_dead = w.hero_slot_dead(slot).unwrap_or(true);
+    let Some((hx, hy)) = w.hero_slot_pos(slot) else { return };
 
     // --- décision (lectures immuables) ---
     enum Act {
@@ -831,12 +1006,17 @@ pub(crate) fn tick_mercenary(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>) {
         Idle,
     }
     let act = {
-        let m = w.merc.as_ref().expect("merc connu");
-        // cible : LA CIBLE DU HÉROS d'abord (brief H), sinon le monstre vivant
-        // le plus proche DU MERCENAIRE (rayon d'aggro propre)
-        let mut target: Option<usize> = w
-            .merc_target
-            .filter(|&i| i < w.mon_ent.len() && w.mon_dat[i].state != crate::world::MonState::Dying);
+        let Some(m) = w.mercenary_slot(slot) else { return };
+        // cible : LA CIBLE DU JOUEUR propriétaire d'abord (brief H ; slot 0 =
+        // `merc_target` historique — slots ≥ 1 : pas de cible par slot au
+        // moteur, ÉCART documenté 3c-a : repli sur la proximité), sinon le
+        // monstre vivant le plus proche DU MERCENAIRE (rayon d'aggro propre)
+        let mut target: Option<usize> = if slot == 0 {
+            w.merc_target
+                .filter(|&i| i < w.mon_ent.len() && w.mon_dat[i].state != crate::world::MonState::Dying)
+        } else {
+            None
+        };
         if target.is_none() && !hero_dead {
             let mut bd = MERC_AGGRO_RADIUS;
             for (i, (e, d)) in w.mon_ent.iter().zip(w.mon_dat.iter()).enumerate() {
@@ -872,7 +1052,7 @@ pub(crate) fn tick_mercenary(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>) {
                 }
             }
             _ => {
-                // pas de cible : suit le héros (rayon de suivi)
+                // pas de cible : suit SON joueur (rayon de suivi)
                 if dist(hx - m.ent.x, hy - m.ent.y) > MERC_FOLLOW_RADIUS {
                     Act::Walk(hx, hy)
                 } else {
@@ -884,11 +1064,11 @@ pub(crate) fn tick_mercenary(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>) {
 
     // --- application ---
     match act {
-        Act::Melee(t) => merc_melee_attack(w, t, ev),
-        Act::Shoot(t) => merc_shoot(w, t, ev),
+        Act::Melee(t) => merc_melee_attack_slot(w, slot, t, ev),
+        Act::Shoot(t) => merc_shoot_slot(w, slot, t, ev),
         Act::Walk(wx, wy) => {
             let (mt, needs) = {
-                let m = w.merc.as_ref().expect("merc connu");
+                let m = w.mercenary_slot(slot).expect("merc connu");
                 (
                     (m.ent.x.floor() as i32, m.ent.y.floor() as i32),
                     m.path.is_empty() || m.repath_ms == 0,
@@ -897,24 +1077,21 @@ pub(crate) fn tick_mercenary(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>) {
             if needs {
                 // re-path périodique (ou chemin vide) — A* partagé du monde
                 if let Some(p) = w.path_between(mt, (wx.floor() as i32, wy.floor() as i32)) {
-                    let m = w.merc.as_mut().expect("merc connu");
-                    m.path = p;
+                    w.mercenary_slot_mut(slot).expect("merc connu").path = p;
                 }
-                let m = w.merc.as_mut().expect("merc connu");
-                m.repath_ms = MERC_REPATH_MS;
+                w.mercenary_slot_mut(slot).expect("merc connu").repath_ms = MERC_REPATH_MS;
             }
         }
         Act::Idle => {
-            let m = w.merc.as_mut().expect("merc connu");
-            m.path.clear();
+            w.mercenary_slot_mut(slot).expect("merc connu").path.clear();
         }
     }
 
     // --- déplacement + anim ---
-    // vitesse : celle du HÉROS (le mercenaire garde le pas — MVP ; le walkSpeed
-    // hireling réel viendrait de monstats, restant)
-    let speed = w.hero.stats.walk_speed.max(1.0);
-    let m = w.merc.as_mut().expect("merc connu");
+    // vitesse : celle de SON joueur (le mercenaire garde le pas — MVP ; le
+    // walkSpeed hireling réel viendrait de monstats, restant)
+    let speed = w.hero_stats_slot(slot).map(|s| s.walk_speed).unwrap_or(1.0).max(1.0);
+    let m = w.mercenary_slot_mut(slot).expect("merc connu");
     if !m.path.is_empty() {
         crate::world::advance_along_path(&mut m.ent, &mut m.path, speed, dt);
     }
@@ -936,10 +1113,10 @@ pub(crate) fn tick_mercenary(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>) {
 
 /// Mêlée mercenaire : jet de toucher `200×AR/(AR+AC)` [5,95] (§3 GAME-DATA),
 /// dégâts `Dmg-Min..Dmg-Max` scalés, résist physique du monstre (ResDm, W08).
-fn merc_melee_attack(w: &mut World, t: usize, ev: &mut Vec<GameEvent>) {
+fn merc_melee_attack_slot(w: &mut World, slot: usize, t: usize, ev: &mut Vec<GameEvent>) {
     let (mx, my) = (w.mon_ent[t].x, w.mon_ent[t].y);
     {
-        let m = w.merc.as_mut().expect("merc connu");
+        let m = w.mercenary_slot_mut(slot).expect("merc connu");
         if m.swing_ms > 0 {
             return; // cooldown
         }
@@ -948,7 +1125,7 @@ fn merc_melee_attack(w: &mut World, t: usize, ev: &mut Vec<GameEvent>) {
         m.anim_ms = 0;
     }
     let (ar, dmin, dmax) = {
-        let m = w.merc.as_ref().expect("merc connu");
+        let m = w.mercenary_slot(slot).expect("merc connu");
         (m.ar, m.dmg_min, m.dmg_max)
     };
     let ac = w.mon_dat[t].ac;
@@ -959,7 +1136,7 @@ fn merc_melee_attack(w: &mut World, t: usize, ev: &mut Vec<GameEvent>) {
         ev.push(GameEvent::MercAttacked { target: t, dmg });
         if w.mon_dat[t].hp == 0 {
             start_mon_death(w, t);
-            merc_kill_credit(w, t, ev);
+            merc_kill_credit_slot(w, slot, t, ev);
         }
     } else {
         ev.push(GameEvent::MercMissed { target: t });
@@ -969,17 +1146,17 @@ fn merc_melee_attack(w: &mut World, t: usize, ev: &mut Vec<GameEvent>) {
 /// Tir mercenaire : flèche porteuse d'ARME (rogue — dégâts du mercenaire
 /// résolus au tir, règle D2 « la flèche sait ») ou missile de SORT (sorceror
 /// — dégâts officiels de la table d2missiles embarquée).
-fn merc_shoot(w: &mut World, t: usize, ev: &mut Vec<GameEvent>) {
+fn merc_shoot_slot(w: &mut World, slot: usize, t: usize, ev: &mut Vec<GameEvent>) {
     let (tx, ty) = (w.mon_ent[t].x, w.mon_ent[t].y);
     let (kind, code) = {
-        let m = w.merc.as_ref().expect("merc connu");
+        let m = w.mercenary_slot(slot).expect("merc connu");
         if m.swing_ms > 0 {
             return;
         }
         m.attack(w.difficulty)
     };
     let Some(code) = code else { return };
-    let m = w.merc.as_mut().expect("merc connu");
+    let m = w.mercenary_slot_mut(slot).expect("merc connu");
     m.ent.facing = crate::world::facing_from(tx - m.ent.x, ty - m.ent.y);
     m.swing_ms = MERC_SWING_MS;
     m.anim_ms = 0;
@@ -999,10 +1176,15 @@ fn merc_shoot(w: &mut World, t: usize, ev: &mut Vec<GameEvent>) {
 /// toucher avec l'AR du mercenaire, résist élémentaire du monstre (W08),
 /// crédit XP mercenaire sur kill. Séparé de `update_missiles` (héros) :
 /// aucun changement dans d2missiles ni dans le flux héros.
+/// 3c-a : chaque mercenaire (par slot) résout SES missiles, slot 0 d'abord.
 pub(crate) fn tick_merc_missiles(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>) {
-    if w.merc.is_none() {
-        return;
+    for slot in w.mercenary_slots() {
+        tick_merc_missiles_slot(w, slot, dt, ev);
     }
+}
+
+/// Missiles du mercenaire du slot `slot` (flux historique slot 0 bit-exact).
+fn tick_merc_missiles_slot(w: &mut World, slot: usize, dt: u32, ev: &mut Vec<GameEvent>) {
     // snapshot des cibles (comme update_missiles : monstres figés au tick)
     let targets: Vec<(f32, f32, bool)> = w
         .mon_ent
@@ -1012,7 +1194,13 @@ pub(crate) fn tick_merc_missiles(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>
         .collect();
     let (grid, gw, gh) = (&w.grid, w.w, w.h);
     let events = {
-        let m = w.merc.as_mut().expect("merc connu");
+        // accès CHAMP direct (emprunts disjoints grid/merc — une fonction
+        // intermédiaire re-emprunterait tout `w` et casserait le split)
+        let m = match slot {
+            0 => w.merc.as_mut().filter(|m| m.slot == 0),
+            _ => w.merc.as_mut().and_then(|r| r.coop.merc_mut(slot)),
+        };
+        let Some(m) = m else { return };
         if m.missiles.is_empty() {
             return;
         }
@@ -1039,7 +1227,7 @@ pub(crate) fn tick_merc_missiles(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>
         match me {
             d2missiles::MissileEvent::Hit { id, target, dmg, .. } => {
                 let (ar, elem) = {
-                    let m = w.merc.as_ref().expect("merc connu");
+                    let m = w.mercenary_slot(slot).expect("merc connu");
                     let elem = m
                         .missiles
                         .missiles()
@@ -1062,7 +1250,7 @@ pub(crate) fn tick_merc_missiles(w: &mut World, dt: u32, ev: &mut Vec<GameEvent>
                     ev.push(GameEvent::MercAttacked { target, dmg });
                     if w.mon_dat[target].hp == 0 {
                         start_mon_death(w, target);
-                        merc_kill_credit(w, target, ev);
+                        merc_kill_credit_slot(w, slot, target, ev);
                     }
                 } else {
                     ev.push(GameEvent::MercMissed { target });
@@ -1085,34 +1273,84 @@ fn start_mon_death(w: &mut World, t: usize) {
     ent.anim_frame = 0;
 }
 
-/// Crédit XP du mercenaire pour le kill du monstre `t` (le JOUEUR reçoit
-/// toujours son XP via `MonsterDied` → `apply_xp`, flux inchangé).
-fn merc_kill_credit(w: &mut World, t: usize, ev: &mut Vec<GameEvent>) {
+/// Crédit XP du mercenaire du slot `slot` pour le kill du monstre `t` (les
+/// JOUEURS reçoivent toujours leur XP partagée via `MonsterDied` →
+/// `apply_xp_slot`, flux 3b inchangé).
+fn merc_kill_credit_slot(w: &mut World, slot: usize, t: usize, ev: &mut Vec<GameEvent>) {
     let xp = w.mon_dat[t].xp;
     if xp == 0 {
         return;
     }
     let diff = w.difficulty;
-    let rec = w.merc.as_ref().and_then(|m| m.rec(diff));
+    let rec = w.mercenary_slot(slot).and_then(|m| m.rec(diff));
     if let Some(rec) = rec {
-        let m = w.merc.as_mut().expect("merc connu");
+        let m = w.mercenary_slot_mut(slot).expect("merc connu");
         m.gain_xp(rec, xp, ev);
     }
 }
 
-/// Frappe d'un monstre SUR le mercenaire (retarget additif : le monstre
-/// frappe la cible la plus proche — cf. `monster_strike` dans world.rs).
-/// Jet de toucher vs défense du mercenaire, KO à hp 0 (cadavre résurrectible).
-pub(crate) fn monster_strike_merc(w: &mut World, i: usize, ev: &mut Vec<GameEvent>) {
+/// 3c-a (HOOK documenté — remplace, à sémantique identique, le bloc merc du
+/// slot 0 que `world.rs::monster_strike` exécutait en ligne) : le monstre `i`
+/// frappe le mercenaire le plus PROCHE parmi TOUS les slots (0 = racine,
+/// ≥ 1 = coop) s'il est plus proche que le héros vivant le plus proche
+/// (`hero_dist`, calculé par l'appelant). Renvoie true si le mercenaire
+/// encaisse (alors AUCUN héros n'est frappé ce tick). SANS mercenaire vivant
+/// plus proche : false et AUCUN tirage RNG (flux historique inchangé).
+/// Égalité de distance → mercenaire : le merc spawn collé au héros,
+/// l'arbitrer sur un strict < ferait du héros la cible permanente (le merc
+/// ne servirait jamais d'encaisseur, son rôle D2). Égalité entre mercs →
+/// slot le plus bas (déterminisme).
+pub(crate) fn monster_strikes_nearest_merc(
+    w: &mut World,
+    i: usize,
+    hero_dist: f32,
+    ev: &mut Vec<GameEvent>,
+) -> bool {
+    let (mx, my) = (w.mon_ent[i].x, w.mon_ent[i].y);
+    let Some((slot, dm)) = nearest_alive_merc(w, mx, my) else { return false };
+    if dm > hero_dist {
+        return false;
+    }
+    monster_strike_merc_slot(w, slot, i, ev);
+    true
+}
+
+/// Mercenaire vivant le plus proche de `(x, y)` — `(slot, distance)` ;
+/// égalité ⇒ slot le plus bas (déterministe). `None` sans merc vivant.
+fn nearest_alive_merc(w: &World, x: f32, y: f32) -> Option<(usize, f32)> {
+    let root = w.merc.as_ref()?;
+    let mut cand: Vec<(usize, f32, f32)> = Vec::new();
+    if root.slot == 0 && root.alive {
+        cand.push((0, root.ent.x, root.ent.y));
+    }
+    let mut coop: Vec<&MercData> = root.coop.mercs.iter().collect();
+    coop.sort_by_key(|m| m.slot);
+    for m in coop {
+        if m.alive {
+            cand.push((m.slot, m.ent.x, m.ent.y));
+        }
+    }
+    cand
+        .into_iter()
+        .map(|(s, mx, my)| (s, dist(mx - x, my - y)))
+        .min_by(|a, b| {
+            a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.cmp(&b.0))
+        })
+}
+
+/// Frappe d'un monstre SUR le mercenaire du slot `slot` (jet de toucher vs
+/// défense du mercenaire, KO à hp 0 — cadavre résurrectible chez le NPC de
+/// sa ville). Flux historique du merc slot 0, généralisé par slot.
+pub(crate) fn monster_strike_merc_slot(w: &mut World, slot: usize, i: usize, ev: &mut Vec<GameEvent>) {
     let (dmin, dmax, th) = {
         let d = &w.mon_dat[i];
         (d.dmg_min, d.dmg_max, d.th)
     };
-    let def = w.merc.as_ref().map(|m| m.defense).unwrap_or(0);
+    let def = w.mercenary_slot(slot).map(|m| m.defense).unwrap_or(0);
     let chance = hit_chance(th, def);
     if (w.rng.below(100)) < chance {
         let dmg = w.rng.range_u32(dmin, dmax).max(1);
-        let m = w.merc.as_mut().expect("merc connu");
+        let m = w.mercenary_slot_mut(slot).expect("merc connu");
         m.hp = m.hp.saturating_sub(dmg);
         ev.push(GameEvent::MercHit { dmg });
         if m.hp == 0 {
@@ -1536,5 +1774,247 @@ mod tests {
         assert_eq!(m.level, 4, "100 atteint → niveau 4");
         assert_eq!(m.max_hp, 53, "HP 45 + 8/lvl (colonnes HP, HP/Lvl)");
         assert!(evs.iter().any(|e| matches!(e, GameEvent::MercLeveled { level: 4 })));
+    }
+
+    // =======================================================================
+    // 3c-a — MERCENAIRES PAR JOUEUR (coop) : indépendance par slot, suivi du
+    // bon joueur, frappe du merc le plus proche, résurrection par slot,
+    // déterminisme (double exécution ⇒ mêmes hash global et par slot).
+    // =======================================================================
+
+    /// Monde coop 2 joueurs sans monstres (slot 0 ouest, slot 1 est).
+    fn coop_world_mercs(seed: u64) -> World {
+        let m = manifest_no_monsters();
+        let mut w = World::with_seed(open_grid(48, 48), m, seed);
+        w.place_hero_at(8.5, 24.5);
+        w.add_cohero_near("SOR", 40.0, 24.0).expect("cohéros");
+        assert!(w.place_hero_slot_at(1, 40.5, 24.5), "slot 1 posé");
+        give_gold(&mut w, 1_000_000);
+        w.hero_stats_slot_mut(1).unwrap().gold = 1_000_000;
+        w
+    }
+
+    #[test]
+    fn coop_deux_slots_embauchent_des_mercs_independants() {
+        let mut w = coop_world_mercs(0x3C_A1);
+        // types INDÉPENDANTS : slot 0 = rogue (palier 3 = 100 or, bourse slot 0),
+        // slot 1 = desert (bourse SLOT 1)
+        let lvl0 = w.hire_merc_slot(0, MercKind::RogueScout).expect("merc slot 0");
+        assert_eq!(lvl0, 3);
+        let lvl1 = w.hire_merc_slot(1, MercKind::DesertMercenary).expect("merc slot 1");
+        assert!(lvl1 >= 3, "palier offert au niveau du slot 1");
+        assert_eq!(w.mercenary().unwrap().kind, MercKind::RogueScout, "mercenary() = vue slot 0");
+        assert_eq!(w.mercenary_slot(0).unwrap().kind, MercKind::RogueScout);
+        assert_eq!(w.mercenary_slot(1).unwrap().kind, MercKind::DesertMercenary);
+        assert_eq!(w.mercenary_slots(), vec![0, 1]);
+        // bourses débitées DU BON JOUEUR (rogue 100 ; desert = coût réel ≥ 100)
+        let c1 = w.mercenary_slot(1).unwrap().hire_cost;
+        assert_eq!(w.hero_stats().gold, 1_000_000 - 100, "or du slot 0 débité (100)");
+        assert_eq!(w.hero_stats_slot(1).unwrap().gold, 1_000_000 - c1, "or du SLOT 1 débité");
+        // chacun apparaît près de SON joueur
+        let m0 = w.mercenary_slot(0).unwrap().ent;
+        let m1 = w.mercenary_slot(1).unwrap().ent;
+        let d0 = dist(m0.x - 8.5, m0.y - 24.5);
+        let d1 = dist(m1.x - 40.5, m1.y - 24.5);
+        assert!(d0 <= MERC_FOLLOW_RADIUS + 1.0, "merc slot 0 loin de SON joueur : {d0}");
+        assert!(d1 <= MERC_FOLLOW_RADIUS + 1.0, "merc slot 1 loin de SON joueur : {d1}");
+        // règle D2 PAR SLOT : un seul hireling vivant par joueur
+        assert_eq!(w.hire_merc_slot(0, MercKind::Barbarian), Err(HireError::AlreadyAlive));
+        assert_eq!(w.hire_merc_slot(1, MercKind::Barbarian), Err(HireError::AlreadyAlive));
+        // slot hors monde refusé
+        assert_eq!(w.hire_merc_slot(9, MercKind::Barbarian), Err(HireError::NoSlot));
+    }
+
+    #[test]
+    fn coop_merc_suit_son_joueur_pas_celui_des_autres() {
+        let mut w = coop_world_mercs(0x3C_A2);
+        w.hire_merc_slot(0, MercKind::RogueScout).expect("merc slot 0");
+        w.hire_merc_slot(1, MercKind::DesertMercenary).expect("merc slot 1");
+        // le SLOT 1 part vers l'est ; le slot 0 reste à l'ouest
+        w.tick_inputs(50, &[(1usize, PlayerInput::MoveTo { x: 46, y: 24 })]);
+        run(&mut w, 4000, None);
+        let (p0, p1) = (w.hero_slot_pos(0).unwrap(), w.hero_slot_pos(1).unwrap());
+        let m0 = w.mercenary_slot(0).unwrap().ent;
+        let m1 = w.mercenary_slot(1).unwrap().ent;
+        let d0 = dist(m0.x - p0.0, m0.y - p0.1);
+        let d1 = dist(m1.x - p1.0, m1.y - p1.1);
+        assert!(d0 <= MERC_FOLLOW_RADIUS + 1.0, "merc slot 0 suit SON joueur : {d0}");
+        assert!(d1 <= MERC_FOLLOW_RADIUS + 1.0, "merc slot 1 suit SON joueur : {d1}");
+        assert!(dist(m1.x - p0.0, m1.y - p0.1) > 10.0, "le merc du slot 1 est resté à l'est");
+    }
+
+    #[test]
+    fn coop_ko_et_resurrection_par_slot_independants() {
+        let mut w = coop_world_mercs(0x3C_A3);
+        w.hire_merc_slot(0, MercKind::RogueScout).expect("merc slot 0");
+        w.hire_merc_slot(1, MercKind::DesertMercenary).expect("merc slot 1");
+        // KO des DEUX mercs
+        for s in 0..2 {
+            let m = w.mercenary_slot_mut(s).unwrap();
+            m.hp = 0;
+            m.alive = false;
+        }
+        // résurrection du SEUL slot 1 : le slot 0 reste KO
+        let cost = w.resurrect_merc_slot(1).expect("résurrection slot 1");
+        assert_eq!(cost, 0, "coût MVP (colonne absente de hireling.txt)");
+        let m1 = w.mercenary_slot(1).unwrap();
+        assert!(m1.alive && m1.hp == m1.max_hp);
+        assert_eq!(m1.ent.anim, AnimState::NU);
+        assert!(!w.mercenary_slot(0).unwrap().alive, "merc slot 0 toujours KO");
+        // ... puis celui du slot 0 ; vivant ⇒ refus
+        w.resurrect_merc_slot(0).expect("résurrection slot 0");
+        assert!(w.mercenary_slot(0).unwrap().alive);
+        assert_eq!(w.resurrect_merc_slot(0), Err(ResurrectError::NoCorpse));
+        assert_eq!(w.resurrect_merc_slot(1), Err(ResurrectError::NoCorpse));
+        assert_eq!(w.resurrect_merc(), Err(ResurrectError::NoCorpse), "vue slot 0");
+        // et l'embauche reste bloquée par slot tant que SON merc vit
+        assert_eq!(w.hire_merc_slot(0, MercKind::Barbarian), Err(HireError::AlreadyAlive));
+        assert_eq!(w.hire_merc_slot(1, MercKind::Barbarian), Err(HireError::AlreadyAlive));
+    }
+
+    #[test]
+    fn coop_monstre_frappe_le_merc_le_plus_proche() {
+        // FA collé au merc du SLOT 1 (est), slot 0 + son merc loin à l'ouest :
+        // le monstre encaisse/rend les coups avec le merc COOP le plus proche
+        // (hook `monster_strikes_nearest_merc` — le merc slot 0 n'est jamais
+        // touché).
+        let full: serde_json::Value = serde_json::from_str(MANIFEST_JSON).unwrap();
+        let fa = full["monsters"]
+            .as_array()
+            .and_then(|arr| arr.iter().find(|mm| mm.get("code").and_then(|c| c.as_str()) == Some("FA")).cloned())
+            .expect("FA dans le manifest réel");
+        let mut m: serde_json::Value = full;
+        m["monsters"] = serde_json::json!([fa]);
+        let mut w = World::with_seed(open_grid(48, 48), m, 0x3C_A4);
+        w.clear_monsters();
+        w.place_hero_at(5.5, 5.5);
+        w.add_cohero_near("SOR", 40.0, 24.0).expect("cohéros");
+        assert!(w.place_hero_slot_at(1, 40.5, 24.5), "slot 1 posé");
+        give_gold(&mut w, 1_000_000);
+        w.hero_stats_slot_mut(1).unwrap().gold = 1_000_000;
+        w.hire_merc_slot(0, MercKind::RogueScout).expect("merc slot 0");
+        w.hire_merc_slot(1, MercKind::DesertMercenary).expect("merc slot 1");
+        // scénario déterministe : le merc coop ENCAISSE entre le FA et son
+        // joueur (rôle D2 du tank) — FA PV gonflés (la mêlée du merc ne le
+        // tue pas pendant la fenêtre), merc prédrainé pour un coup visible
+        let m1x = w.mercenary_slot(1).unwrap().ent.x.floor() as i32;
+        let m1y = w.mercenary_slot(1).unwrap().ent.y.floor() as i32;
+        assert!(w.spawn_monster("FA", m1x - 3, m1y), "spawn FA à l'ouest du merc coop");
+        w.mon_dat[0].hp = 5_000;
+        w.mon_dat[0].max_hp = 5_000;
+        w.mercenary_slot_mut(1).unwrap().hp = 3;
+        // le merc se place SUR le segment FA→joueur (entre les deux, à 1 tuile
+        // de son joueur) — rayon de suivi respecté, il n'en bouge plus
+        {
+            let (p1x, p1y) = w.hero_slot_pos(1).unwrap();
+            let m = w.mercenary_slot_mut(1).unwrap();
+            m.ent.x = p1x - 1.0;
+            m.ent.y = p1y;
+            m.path.clear();
+        }
+        let hp0 = w.mercenary_slot(0).unwrap().hp;
+        let mut struck = false;
+        for _ in 0..400 {
+            let ev = w.tick(50, None);
+            if ev.iter().any(|e| matches!(e, GameEvent::MercHit { .. })) {
+                struck = true;
+            }
+            if struck && w.mercenary_slot(1).map(|mm| mm.hp < 3).unwrap_or(false) {
+                break;
+            }
+        }
+        assert!(struck, "le merc coop n'a rien encaissé (hook de frappe inactif ?)");
+        let m1 = w.mercenary_slot(1).unwrap();
+        assert!(m1.hp < m1.max_hp, "PV du merc SLOT 1 entamés");
+        assert_eq!(w.mercenary_slot(0).unwrap().hp, hp0, "merc SLOT 0 (loin) jamais touché");
+    }
+
+    #[test]
+    fn coop_determinisme_mercs_par_slot_double_execution() {
+        // DEUX mondes, MÊMES entrées (script lockstep), mercs embauchés dans
+        // les deux : hash GLOBAL et PAR SLOT identiques à chaque contrôle —
+        // les mercenaires coop ne désynchronisent pas et ne déstabilisent pas
+        // le hash par slot (3b).
+        let build = || {
+            let mut w = coop_world_mercs(0x3C_A5);
+            w.hire_merc_slot(0, MercKind::RogueScout).expect("merc slot 0");
+            w.hire_merc_slot(1, MercKind::DesertMercenary).expect("merc slot 1");
+            w
+        };
+        let mut a = build();
+        let mut b = build();
+        for i in 0..90u32 {
+            let batch: Vec<(usize, PlayerInput)> = match i % 3 {
+                0 => vec![
+                    (0usize, PlayerInput::MoveTo { x: 10 + (i as i32) % 6, y: 24 }),
+                    (1usize, PlayerInput::MoveTo { x: 44 - (i as i32) % 6, y: 26 }),
+                ],
+                1 => vec![
+                    (0usize, PlayerInput::RangedAttack { x: 20, y: 24 }),
+                    (1usize, PlayerInput::Attack { x: 30, y: 24 }),
+                ],
+                _ => vec![(0usize, PlayerInput::SetRun(true)), (1usize, PlayerInput::SetRun(false))],
+            };
+            a.tick_inputs(50, &batch);
+            b.tick_inputs(50, &batch);
+            if i % 17 == 0 {
+                assert_eq!(a.state_hash(), b.state_hash(), "hash global divergent au tick {i}");
+                for s in 0..2 {
+                    assert_eq!(
+                        a.state_hash_slot(s),
+                        b.state_hash_slot(s),
+                        "hash par slot {s} divergent au tick {i}"
+                    );
+                }
+            }
+        }
+        assert_eq!(a.state_hash(), b.state_hash(), "hash final identique");
+        for s in 0..2 {
+            assert_eq!(a.state_hash_slot(s), b.state_hash_slot(s), "hash slot {s} final");
+        }
+    }
+
+    #[test]
+    fn coop_save_roundtrip_mercs_par_slot() {
+        let mut w = coop_world_mercs(0x3C_A6);
+        w.hire_merc_slot(0, MercKind::RogueScout).expect("merc slot 0");
+        w.hire_merc_slot(1, MercKind::EasternSorceror).expect("merc slot 1");
+        // merc slot 1 blessé + XP partielle (niveau > palier record : le
+        // sorcier normal embauché au palier 15, niveau courant 16)
+        {
+            let diff = w.difficulty();
+            let m = w.mercenary_slot_mut(1).unwrap();
+            m.level = 16;
+            let rec = record_of(m.kind, &m.subtype, diff).unwrap();
+            m.recompute(rec);
+            m.hp = m.max_hp - 5;
+            m.xp = 33;
+        }
+        let json = w.save();
+        let w2 = World::load(&json).expect("reload");
+        let save2 = w2.save();
+        assert_eq!(json, save2, "round-trip bit-exact (mercs par slot)");
+        let a = w.mercenary_slot(1).unwrap();
+        let b = w2.mercenary_slot(1).expect("merc slot 1 perdu à la save");
+        assert_eq!(a.kind, b.kind);
+        assert_eq!(a.subtype, b.subtype);
+        assert_eq!(a.level, b.level);
+        assert_eq!(a.xp, b.xp);
+        assert_eq!(a.hp, b.hp, "PV clampés/recalculés identiques");
+        assert_eq!(a.ent.x, b.ent.x);
+        // et la vue slot 0 traverse aussi
+        assert_eq!(
+            w.mercenary().unwrap().kind,
+            w2.mercenary().expect("merc slot 0").kind
+        );
+        // rétro-compat : une save SANS mercenaire charge (aucun merc, pas de
+        // coquille orpheline)
+        let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let mut old = v.clone();
+        old.as_object_mut().unwrap().remove("mercenary");
+        let w3 = World::load(&old.to_string()).expect("save sans mercenaire");
+        assert!(w3.mercenary().is_none());
+        assert!(w3.mercenary_slot(1).is_none());
+        assert!(w3.mercenary_slots().is_empty());
     }
 }

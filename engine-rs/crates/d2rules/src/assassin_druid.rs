@@ -412,18 +412,18 @@ pub enum AdError {
 
 /// Niveaux du héros courant (vue [`HeroLevels`] — consommée par les formules).
 fn hero_levels(w: &World) -> HeroLevels<'_> {
-    HeroLevels::new(&w.hero.skills, w.hero.stats.level)
+    HeroLevels::new(&w.players[0].data.skills, w.players[0].data.stats.level)
 }
 
 /// Arbre temporaire (contexte complet des formules `skill('X'.ln12)`).
 fn hero_tree(w: &World) -> SkillTree<'static> {
     let data = SkillTreeData::global();
-    let class = skills_hero::class_code(&w.hero_code);
+    let class = skills_hero::class_code(&w.players[0].code);
     let mut tree = SkillTree::with_data(&class, data);
-    for s in &w.hero.skills {
+    for s in &w.players[0].data.skills {
         tree.set_level(&s.code, s.level);
     }
-    tree.set_char_level(w.hero.stats.level);
+    tree.set_char_level(w.players[0].data.stats.level);
     tree
 }
 
@@ -509,17 +509,17 @@ fn apply_elem_hit(w: &mut World, target: usize, dmg: u32, elem: DamageType, cold
         elemental: dmg,
         element: elem,
         mods: combat_mods::HitMods { cold_len_frames, ..Default::default() },
-        clvl: w.hero.stats.level,
+        clvl: w.players[0].data.stats.level,
         difficulty: w.difficulty,
         victim: Victim {
             kind: VictimKind::from_mon_kind(&w.mon_dat[target].kind),
             cur_hp: w.mon_dat[target].hp,
             res: w.mon_dat[target].res,
         },
-        wearer_life: w.hero.stats.life,
-        wearer_max_life: w.hero.stats.max_life,
-        wearer_mana: w.hero.stats.mana,
-        wearer_max_mana: w.hero.stats.max_mana,
+        wearer_life: w.players[0].data.stats.life,
+        wearer_max_life: w.players[0].data.stats.max_life,
+        wearer_mana: w.players[0].data.stats.mana,
+        wearer_max_mana: w.players[0].data.stats.max_mana,
         melee: false,
         roll_deadly: 0,
         roll_wounds: 0,
@@ -570,7 +570,7 @@ fn targets_in_radius(w: &World, x: f32, y: f32, radius: f32, exclude: Option<usi
 
 /// Niveau du skill `code` chez le héros (0 si inconnu).
 fn rec_level(w: &World, code: &str) -> u32 {
-    w.hero.skills.iter().find(|s| s.code.eq_ignore_ascii_case(code)).map(|s| s.level).unwrap_or(0)
+    w.players[0].data.skills.iter().find(|s| s.code.eq_ignore_ascii_case(code)).map(|s| s.level).unwrap_or(0)
 }
 
 // ---------------------------------------------------------------------------
@@ -639,7 +639,7 @@ fn tick_traps(w: &mut World, dt: u32) {
     }
     // 2. Résolution des tirs (jet de toucher + pipeline combat_mods).
     for s in planned {
-        let chance = hit_chance(w.hero.stats.to_hit, w.mon_dat[s.target].ac);
+        let chance = hit_chance(w.players[0].data.stats.to_hit, w.mon_dat[s.target].ac);
         if (w.rng.below(100)) < chance {
             let dmg = w.rng.range_u32(s.dmg_min, s.dmg_max).max(1);
             let dealt = apply_elem_hit(w, s.target, dmg, s.elem, 0);
@@ -689,8 +689,8 @@ fn tick_form(w: &mut World, dt: u32) {
 /// Retour en forme humaine : retire EXACTEMENT le bonus de vie appliqué.
 fn revert_form(w: &mut World) {
     let Some(state) = w.ad.form.take() else { return };
-    w.hero.stats.max_life = w.hero.stats.max_life.saturating_sub(state.life_bonus_applied);
-    w.hero.stats.life = w.hero.stats.life.min(w.hero.stats.max_life);
+    w.players[0].data.stats.max_life = w.players[0].data.stats.max_life.saturating_sub(state.life_bonus_applied);
+    w.players[0].data.stats.life = w.players[0].data.stats.life.min(w.players[0].data.stats.max_life);
     w.ad.events.push(AdEvent::TransformEnded { form: state.form });
 }
 
@@ -767,7 +767,7 @@ pub(crate) fn scaled_hero_melee(w: &World, scaled: u32, base: u32) -> u32 {
 /// Werebear. Appelé APRÈS l'application des dégâts (touches additives de
 /// `hero_attack`).
 pub(crate) fn note_hero_melee_hit(w: &mut World, target: usize, dealt: u32, base: u32) {
-    let Some(active) = w.hero.skills.get(w.hero.active_skill) else { return };
+    let Some(active) = w.players[0].data.skills.get(w.players[0].data.active_skill) else { return };
     let active_code = active.code.clone();
     let Some(cols) = raw_cols(&active_code) else { return };
     if cols.finishing {
@@ -961,15 +961,15 @@ fn release_combos(w: &mut World, target: usize, dealt: u32, base: u32) {
         let life = combat_mods::cap_leech(
             (dealt as u64 * cobra_leech_pct as u64 / 100
                 / row.life_steal_divisor.max(1) as u64) as u32,
-            w.hero.stats.max_life - w.hero.stats.life,
+            w.players[0].data.stats.max_life - w.players[0].data.stats.life,
         );
         let mana = combat_mods::cap_leech(
             (dealt as u64 * cobra_leech_pct as u64 / 100
                 / row.mana_steal_divisor.max(1) as u64) as u32,
-            w.hero.stats.max_mana - w.hero.stats.mana,
+            w.players[0].data.stats.max_mana - w.players[0].data.stats.mana,
         );
-        w.hero.stats.life += life;
-        w.hero.stats.mana += mana;
+        w.players[0].data.stats.life += life;
+        w.players[0].data.stats.mana += mana;
     }
     // Consommation des piles (règle retail : le finisher libère tout) +
     // événements par pile (dmg/hits propres ; Tiger porte son %-bonus).
@@ -987,7 +987,7 @@ fn release_combos(w: &mut World, target: usize, dealt: u32, base: u32) {
 /// Knockback Werebear : repousse d'1 tuile à l'opposé du héros (tuile
 /// marchable requise, sinon le monstre reste sur place — MVP déterministe).
 fn knockback_away_from_hero(w: &mut World, target: usize) {
-    let (dx, dy) = (w.mon_ent[target].x - w.hero_ent.x, w.mon_ent[target].y - w.hero_ent.y);
+    let (dx, dy) = (w.mon_ent[target].x - w.players[0].ent.x, w.mon_ent[target].y - w.players[0].ent.y);
     let d = dist(dx, dy);
     if d <= f32::EPSILON {
         return;
@@ -1026,16 +1026,16 @@ pub fn cast(w: &mut World, code: &str, aim: Option<(i32, i32)>) -> Result<AdCast
     if !is_trap && !is_web && !is_form {
         return Err(AdError::NotCastable);
     }
-    let class = skills_hero::class_code(&w.hero_code);
+    let class = skills_hero::class_code(&w.players[0].code);
     let expected = if is_form { "dru" } else { "ass" };
     if class != expected {
         return Err(AdError::WrongClass);
     }
     let cost = data.mana_cost_at(rec, level).max(0) as u32;
-    if (w.hero.stats.mana as u32) < cost {
+    if (w.players[0].data.stats.mana as u32) < cost {
         return Err(AdError::NotEnoughMana { cost });
     }
-    w.hero.stats.mana -= cost;
+    w.players[0].data.stats.mana -= cost;
 
     if let Some(form) = form {
         return cast_form(w, form, level);
@@ -1050,8 +1050,8 @@ pub fn cast(w: &mut World, code: &str, aim: Option<(i32, i32)>) -> Result<AdCast
         skill,
         summon: cols.summon.clone().unwrap_or_default(),
         level,
-        x: w.hero_ent.x,
-        y: w.hero_ent.y,
+        x: w.players[0].ent.x,
+        y: w.players[0].ent.y,
         shots_left: if blade { u32::MAX } else { trap_shots(w, rec) }, // Blade : durée seule
         fire_cd_ms: 0,
         expire_ms: if blade { blade_sentinel_duration_ms(level) } else { u32::MAX },
@@ -1095,9 +1095,9 @@ fn cast_form(w: &mut World, form: AdForm, level: u32) -> Result<AdCast, AdError>
     let hp_pct = cols
         .and_then(|c| c.stat_calc("item_maxhp_percent").map(|f| eval_formula(w, rec, f)))
         .unwrap_or(0);
-    let bonus = ((w.hero.stats.max_life as i64 * hp_pct.max(0) / 100) as u32);
-    w.hero.stats.max_life += bonus;
-    w.hero.stats.life += bonus;
+    let bonus = ((w.players[0].data.stats.max_life as i64 * hp_pct.max(0) / 100) as u32);
+    w.players[0].data.stats.max_life += bonus;
+    w.players[0].data.stats.life += bonus;
     w.ad.form = Some(AdFormState { form, level, ttl_ms: duration_ms, life_bonus_applied: bonus });
     w.ad.events.push(AdEvent::Transform { form, duration_ms });
     Ok(AdCast::Transform { form, duration_ms })
@@ -1125,9 +1125,9 @@ fn cast_shock_field(
     };
     let (ax, ay) = match aim {
         Some((tx, ty)) => (tx as f32 + 0.5, ty as f32 + 0.5),
-        None => match nearest_target(w, w.hero_ent.x, w.hero_ent.y, AGGRO_RADIUS, None) {
+        None => match nearest_target(w, w.players[0].ent.x, w.players[0].ent.y, AGGRO_RADIUS, None) {
             Some(j) => (w.mon_ent[j].x, w.mon_ent[j].y),
-            None => (w.hero_ent.x, w.hero_ent.y),
+            None => (w.players[0].ent.x, w.players[0].ent.y),
         },
     };
     let (dmin, dmax) = elem_curve(w, rec, level);
@@ -1139,7 +1139,7 @@ fn cast_shock_field(
     });
     let mut hits = 0_usize;
     for j in victims.into_iter().take(bolts as usize) {
-        let chance = hit_chance(w.hero.stats.to_hit, w.mon_dat[j].ac);
+        let chance = hit_chance(w.players[0].data.stats.to_hit, w.mon_dat[j].ac);
         if (w.rng.below(100)) < chance {
             let dmg = w.rng.range_u32(dmin, dmax).max(1);
             apply_elem_hit(w, j, dmg, elem, 0);
@@ -1186,7 +1186,7 @@ mod tests {
     /// Monte le héros au niveau `lvl` (XP table réelle) et accorde `pts`
     /// points de skill.
     fn level_up(w: &mut World, lvl: u32, pts: u32) {
-        let need = crate::world::xp_threshold(&w.hero_code.clone(), lvl);
+        let need = crate::world::xp_threshold(&w.players[0].code.clone(), lvl);
         w.grant_xp(need);
         w.grant_skill_points(pts);
     }
@@ -1394,7 +1394,7 @@ mod tests {
     fn max_five_traps_oldest_replaced() {
         let mut w = world_ass(0xD2A5_5004);
         level_up(&mut w, 12, 4);
-        w.hero.stats.mana = 1_000; // 6 casts : le mana n'est pas l'objet du test
+        w.players[0].data.stats.mana = 1_000; // 6 casts : le mana n'est pas l'objet du test
         w.learn_skill("Fire Trauma").unwrap();
         w.learn_skill("Shock Field").unwrap();
         w.learn_skill("Charged Bolt Sentry").unwrap();
@@ -1551,17 +1551,17 @@ mod tests {
         w.learn_skill("Dragon Talon").unwrap();
         assert!(w.spawn_monster("FA", 30, 20));
         // Héros blessé + mana entamé pour mesurer le vol.
-        w.hero.stats.life -= 30;
-        w.hero.stats.mana -= 10;
+        w.players[0].data.stats.life -= 30;
+        w.players[0].data.stats.mana -= 10;
         let cobra_idx = w.hero_skills().iter().position(|s| s.code == "Cobra Strike").unwrap();
         let dt_idx = w.hero_skills().iter().position(|s| s.code == "Dragon Talon").unwrap();
         w.select_skill(cobra_idx);
         melee_hit(&mut w, 0); // 1 charge (par1=40 %)
         w.select_skill(dt_idx);
-        let (life0, mana0) = (w.hero.stats.life, w.hero.stats.mana);
+        let (life0, mana0) = (w.players[0].data.stats.life, w.players[0].data.stats.mana);
         melee_hit(&mut w, 0); // finisher : vol 40 % de dealt=10 → 4 (div N=1)
-        assert_eq!(w.hero.stats.life - life0, 4, "40 % × dealt 10 (Normal : div=1)");
-        assert_eq!(w.hero.stats.mana - mana0, 4, "Cobra vole vie ET mana");
+        assert_eq!(w.players[0].data.stats.life - life0, 4, "40 % × dealt 10 (Normal : div=1)");
+        assert_eq!(w.players[0].data.stats.mana - mana0, 4, "Cobra vole vie ET mana");
     }
 
     #[test]
@@ -1673,7 +1673,7 @@ mod tests {
         w2.learn_skill("Shock Field").unwrap();
         w2.learn_skill("Charged Bolt Sentry").unwrap();
         w2.learn_skill("Lightning Sentry").unwrap();
-        w2.hero.stats.mana = 5;
+        w2.players[0].data.stats.mana = 5;
         assert_eq!(
             w2.cast_ad_skill("Lightning Sentry", None),
             Err(AdError::NotEnoughMana { cost: 20 })
@@ -1769,8 +1769,8 @@ mod tests {
         assert_eq!(hero_defense_bonus(&w, 40), 10);
         // Knockback : le monstre à 1 tuile Est est repoussé d'1 tuile.
         assert!(w.spawn_monster("FA", 31, 25));
-        w.hero_ent.x = 30.5;
-        w.hero_ent.y = 25.5;
+        w.players[0].ent.x = 30.5;
+        w.players[0].ent.y = 25.5;
         w.mon_ent[0].x = 31.5;
         w.mon_ent[0].y = 25.5;
         crate::assassin_druid::note_hero_melee_hit(&mut w, 0, 10, 10);

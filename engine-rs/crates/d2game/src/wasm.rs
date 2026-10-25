@@ -39,6 +39,53 @@ impl D2Game {
         })
     }
 
+    /// 3b (coop multi-héros) : comme [`D2Game::withLevel`] mais avec UN héros
+    /// PAR SLOT — `heroes_json` = tableau JSON de codes de classe
+    /// (`'["BA","SOR"]'`, index = slot, 1..=8, slot 0 = héros historique).
+    /// Chaque slot reçoit son personnage complet (d2rules) et son set de
+    /// sprites "heroN" (d2game) ; la page verrouille la caméra sur SON slot
+    /// (`setCameraSlot`) et route ses entrées via `tickSlot`.
+    #[wasm_bindgen(js_name = withLevelCoop)]
+    pub fn with_level_coop(manifest_json: &str, heroes_json: &str, level: &str) -> Result<D2Game, JsValue> {
+        console_error_panic_lite();
+        Ok(D2Game {
+            core: GameCore::with_level_coop(manifest_json, heroes_json, level).map_err(js_err)?,
+        })
+    }
+
+    /// 3b : graine de partie (mêmes cartes chez tous les clients du salon —
+    /// l'hôte publie la seed du salon via `/meta`).
+    #[wasm_bindgen(js_name = setGameSeed)]
+    pub fn set_game_seed(&mut self, seed: u64) {
+        self.core.set_game_seed(seed);
+    }
+
+    /// 3b : verrouille la caméra (et `heroScreen()`) sur le héros `slot`.
+    #[wasm_bindgen(js_name = setCameraSlot)]
+    pub fn set_camera_slot(&mut self, slot: usize) {
+        self.core.set_camera_slot(slot);
+    }
+
+    /// 3b : slot suivi par la caméra (lecture — E2E/probe).
+    #[wasm_bindgen(js_name = cameraSlot)]
+    pub fn camera_slot(&self) -> usize {
+        self.core.camera_slot()
+    }
+
+    /// 3b : codes de héros par slot — JSON
+    /// `[{"slot":0,"code":"BA","name":"Barbare"},…]`.
+    #[wasm_bindgen(js_name = heroes)]
+    pub fn heroes(&self) -> String {
+        self.core.heroes_json()
+    }
+
+    /// 3b : vue d'ensemble des héros (positions projetées + anims) — JSON
+    /// `[{slot,code,name,anim,frame,facing,x,y,sx,sy},…]` (E2E coop, UI salon).
+    #[wasm_bindgen(js_name = heroesView)]
+    pub fn heroes_view(&self) -> String {
+        self.core.heroes_view_json()
+    }
+
     /// Resolved hero class as JSON `{"code":"BA","name":"Barbare"}` — HUD
     /// display + E2E probe. Valid before `finalize` too.
     #[wasm_bindgen(js_name = heroClass)]
@@ -133,6 +180,45 @@ impl D2Game {
         self.core.hero_state_json()
     }
 
+    /// 3b : état d'animation du héros `slot` — même JSON que `heroState`
+    /// (+ `slot`/`x`/`y`). `{}` hors bornes.
+    #[wasm_bindgen(js_name = heroStateSlot)]
+    pub fn hero_state_slot(&self, slot: usize) -> String {
+        self.core.hero_state_slot_json(slot)
+    }
+
+    /// 3b : stats HUD du héros `slot` — même JSON que `heroStats`.
+    #[wasm_bindgen(js_name = heroStatsSlot)]
+    pub fn hero_stats_slot(&self, slot: usize) -> String {
+        self.core.hero_stats_slot_json(slot)
+    }
+
+    /// 3b : inventaire du héros `slot` — même JSON que `inventory`.
+    #[wasm_bindgen(js_name = inventorySlot)]
+    pub fn inventory_slot(&self, slot: usize) -> String {
+        self.core.inventory_slot_json(slot)
+    }
+
+    /// 3b : compétences du héros `slot` — même JSON que `heroSkills`.
+    #[wasm_bindgen(js_name = heroSkillsSlot)]
+    pub fn hero_skills_slot(&self, slot: usize) -> String {
+        self.core.hero_skills_slot_json(slot)
+    }
+
+    /// 3b : sélection du skill actif du héros `slot` — false si hors bornes.
+    #[wasm_bindgen(js_name = selectSkillSlot)]
+    pub fn select_skill_slot(&mut self, slot: usize, index: usize) -> bool {
+        self.core.select_skill_slot(slot, index)
+    }
+
+    /// 3b : position écran (pieds) du héros `slot` — `[x, y]` px viewport
+    /// (`NaN` hors bornes).
+    #[wasm_bindgen(js_name = heroScreenSlot)]
+    pub fn hero_screen_slot(&self, slot: usize) -> Vec<f32> {
+        let (x, y) = self.core.hero_screen_slot(slot);
+        vec![x, y]
+    }
+
     /// Animation modes listed in the manifest but skipped (missing files),
     /// as a JSON array of strings — the page logs them, the game still runs.
     #[wasm_bindgen(js_name = spriteNotes)]
@@ -181,6 +267,81 @@ impl D2Game {
         let events = self.core.tick(dt_ms, input);
         let json: Vec<serde_json::Value> = events.iter().map(|e| e.to_json()).collect();
         serde_json::to_string(&json).unwrap_or_else(|_| "[]".into())
+    }
+
+    /// 3b (coop lockstep) : un pas de simulation avec l'entrée `input_json`
+    /// (même contrat que `tick`) routée au héros `slot` — le relais diffuse
+    /// les bundles PAR SLOT, la page exécute chaque entrée sur SON héros.
+    /// Retour : mêmes événements JSON que `tick`.
+    #[wasm_bindgen(js_name = tickSlot)]
+    pub fn tick_slot(&mut self, dt_ms: u32, slot: usize, input_json: Option<String>) -> String {
+        let input = input_json.as_deref().and_then(parse_input);
+        let events = self.core.tick_slot(dt_ms, slot, input);
+        let json: Vec<serde_json::Value> = events.iter().map(|e| e.to_json()).collect();
+        serde_json::to_string(&json).unwrap_or_else(|_| "[]".into())
+    }
+
+    /// 3b (coop lockstep, file PAR SLOT) : empile l'entrée `input_json`
+    /// (même contrat que `tick`) pour le héros `slot` — la page empile tout
+    /// le bundle courant, puis UN `tickQueued` consomme tout (slots
+    /// croissants, FIFO par slot — déterministe). Sans effet de bord tant
+    /// que `tickQueued` n'est pas appelé.
+    #[wasm_bindgen(js_name = queueInput)]
+    pub fn queue_input(&mut self, slot: usize, input_json: Option<String>) {
+        if let Some(input) = input_json.as_deref().and_then(parse_input) {
+            self.core.queue_input(slot, input);
+        }
+    }
+
+    /// 3b : entrées empilées non consommées (tous slots) — diagnostic/E2E.
+    #[wasm_bindgen(js_name = queuedInputs)]
+    pub fn queued_inputs(&self) -> usize {
+        self.core.queued_inputs()
+    }
+
+    /// 3c (coop lockstep) : demande le DÉPART du héros `slot` — mise en
+    /// file (relais : entrée synthétique `{type:"leave"}` du joueur qui
+    /// se déconnecte), appliquée au prochain tick par `World::remove_player`
+    /// (compaction déterministe des slots — tous les clients lockstep
+    /// retirent le même slot au même tick, mondes identiques bit-exact).
+    /// Événement `HeroLeft` au tick d'application ; sans effet (identique
+    /// chez tous) si le slot est hors monde.
+    #[wasm_bindgen(js_name = removePlayer)]
+    pub fn remove_player(&mut self, slot: usize) {
+        self.core.queue_leave(slot);
+    }
+
+    /// 3b (coop lockstep, file PAR SLOT) : un pas de simulation consommant
+    /// TOUTES les files (`queueInput`), slots croissants / FIFO par slot,
+    /// avec UN SEUL dt. Chaque client passe le même bundle ⇒ le même tableau
+    /// `(slot, entrée)` chez tous (déterminisme lockstep). Retour : mêmes
+    /// événements JSON que `tick`.
+    #[wasm_bindgen(js_name = tickQueued)]
+    pub fn tick_queued(&mut self, dt_ms: u32) -> String {
+        let events = self.core.tick_queued(dt_ms);
+        let json: Vec<serde_json::Value> = events.iter().map(|e| e.to_json()).collect();
+        serde_json::to_string(&json).unwrap_or_else(|_| "[]".into())
+    }
+
+    /// 3b : survol page (px viewport) — arme la barre de vie allié du rendu
+    /// et la cible d'`allyInfoAt`. Présentation seule (jamais dans la save).
+    #[wasm_bindgen(js_name = setPointer)]
+    pub fn set_pointer(&mut self, x: f32, y: f32) {
+        self.core.set_pointer(x, y);
+    }
+
+    /// 3b : efface le survol (pointeur sorti du canvas).
+    #[wasm_bindgen(js_name = clearPointer)]
+    pub fn clear_pointer(&mut self) {
+        self.core.clear_pointer();
+    }
+
+    /// 3b : fiche de l'allié sous le pointeur (px viewport) — JSON
+    /// `{slot,code,name,hp,maxHp,level,x,y,sx,sy}` ou `null`. La barre de
+    /// vie elle-même est dessinée par le moteur dans le framebuffer.
+    #[wasm_bindgen(js_name = allyInfoAt)]
+    pub fn ally_info_at(&self) -> String {
+        self.core.ally_info_at_json()
     }
 
     /// RGBA framebuffer (`viewport_width * viewport_height * 4`) for
@@ -399,47 +560,65 @@ impl D2Game {
     }
 
     // ------------------------------------------------------------------
-    // 22c PNJ & DIALOGUES (d2rules::dialogue, moteur étape 22a) — endpoints
-    // additifs consommés par demo/dialogue-ui.js (window.D2Dialogue).
-    // Append-only. Contrat complet : crates/d2game/src/dialogue_bridge.rs.
+    // Dialogues PNJ 3c-b (coop multi-joueurs) — endpoints additifs
+    // consommés par demo/dialogue-ui.js (window.D2Dialogue). Append-only.
     // ------------------------------------------------------------------
 
-    /// Ouvre le dialogue du NPC `index` (clic NPC) — JSON
-    /// `DialogueSession` serde du moteur (npc_index/npc/npc_name/quest/
-    /// phase/node{lignes fr, options}) AUGMENTÉ de `visible` (indices bruts
-    /// des options visibles — conditions `quest_done` évaluées en vivant).
-    /// `Err` descriptif (`"trop loin — approchez-vous du NPC"`). L'ouverture
-    /// GÈLE le monde (World::tick ne simule plus rien tant que la session
-    /// est ouverte — cf. dialogue.rs) ; les events (NpcTalked, quêtes)
-    /// continuent de couler via tick.
-    #[wasm_bindgen(js_name = openDialogue)]
-    pub fn open_dialogue(&mut self, npc_index: usize) -> Result<String, JsValue> {
-        self.core.open_dialogue_json(npc_index).map_err(js_err)
+    /// Ouvre le dialogue du NPC `index` pour le joueur `slot` — JSON
+    /// `DialogueSession` + `visible` (indices bruts des options visibles) +
+    /// `player`/`playerName` (teneur), ou `Err` descriptif (« X discute avec
+    /// le joueur N — patientez » sous verrou, « trop loin — … », « … mort »).
+    /// L'ouverture GÈLE le monde pour TOUS les slots (décision style retail,
+    /// cf. d2rules/dialogue.rs § coop).
+    #[wasm_bindgen(js_name = openDialogueSlot)]
+    pub fn open_dialogue_slot(&mut self, slot: usize, index: usize) -> Result<String, JsValue> {
+        self.core.open_dialogue_slot_json(slot, index).map_err(js_err)
     }
 
-    /// Choisit l'option `option_ix` — INDEX BRUT dans `node.options` (l'UI
-    /// affiche la sous-liste `visible`, elle choisit l'indice d'origine).
-    /// JSON : la session À JOUR si le nœud a avancé (ragots « dites-m'en
-    /// plus »), sinon l'action produite (`{"kind":"open_shop","vendor":…}`,
-    /// `{"kind":"close"}`…), `null` si le choix est refusé (condition non
-    /// remplie / hors bornes).
-    #[wasm_bindgen(js_name = chooseDialogue)]
-    pub fn choose_dialogue(&mut self, option_ix: usize) -> Result<String, JsValue> {
-        self.core.choose_dialogue_json(option_ix).map_err(js_err)
+    /// Choix de l'option `index` (INDEX BRUT dans `node.options`) par le
+    /// TENEUR `slot` — JSON session à jour (nœud avancé) ou action produite
+    /// (`{"kind":"open_shop","vendor":…}`, `{"kind":"close"}`…), `null` si
+    /// refusé (verrou autre slot / condition quête / index).
+    #[wasm_bindgen(js_name = chooseDialogueSlot)]
+    pub fn choose_dialogue_slot(&mut self, slot: usize, index: usize) -> Result<String, JsValue> {
+        self.core.choose_dialogue_slot_json(slot, index).map_err(js_err)
     }
 
-    /// Referme la session (« partir » / Échap UI) — JSON `true/false`. Le
-    /// tick du monde reprend.
-    #[wasm_bindgen(js_name = closeDialogue)]
-    pub fn close_dialogue(&mut self) -> String {
-        self.core.close_dialogue_json().to_string()
+    /// Referme la session si `slot` en est le teneur (« partir » / Échap) —
+    /// `false` sinon (session inchangée). Le tick du monde reprend pour tous.
+    #[wasm_bindgen(js_name = closeDialogueSlot)]
+    pub fn close_dialogue_slot(&mut self, slot: usize) -> bool {
+        self.core.close_dialogue_slot_json(slot)
     }
 
-    /// Session de dialogue ouverte (lecture) — JSON `DialogueSession` +
-    /// `visible`, ou `null` (getter de secours pour l'UI).
+    /// Session de dialogue courante (JSON, + `visible` + teneur) — `null`
+    /// sans dialogue. Poll de secours/refresh de l'UI.
     #[wasm_bindgen(js_name = dialogueSession)]
     pub fn dialogue_session(&self) -> String {
         self.core.dialogue_session_json()
+    }
+
+    /// VERROU de dialogue (3c-b) — JSON `{"active":true,"npc","npcName",
+    /// "slot","player","playerName"}` quand `slot` discute avec le NPC :
+    /// les AUTRES clients affichent « <NPC> discute avec <joueur> » et
+    /// bloquent l'ouverture ; `{"active":false}` sinon.
+    #[wasm_bindgen(js_name = dialogueLock)]
+    pub fn dialogue_lock(&self) -> String {
+        self.core.dialogue_lock_json()
+    }
+
+    // ------------------------------------------------------------------
+    // Party UI 3c-b (coop) — endpoint additif consommé par
+    // demo/party-ui.js (window.D2Party). Append-only.
+    // ------------------------------------------------------------------
+
+    /// État du groupe (JSON) — `[{slot, code, class, level, life, maxLife,
+    /// mana, maxMana, dead, gold}, …]` (ordre des slots). Pollé par le
+    /// panneau latéral (visible en coop uniquement) ; compaction des slots
+    /// (removePlayer 3c-c) suivie automatiquement.
+    #[wasm_bindgen(js_name = partyView)]
+    pub fn party_view(&self) -> String {
+        self.core.party_view_json()
     }
 }
 

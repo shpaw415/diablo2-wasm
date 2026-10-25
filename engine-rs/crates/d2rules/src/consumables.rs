@@ -508,7 +508,7 @@ fn apply(w: &mut World, def: &ItemDef) -> Result<ConsumUse, ConsumError> {
     };
     match c.kind {
         ConsumableKind::Healing => {
-            let s = &mut w.hero.stats;
+            let s = &mut w.players[0].data.stats;
             use1.heal = c.power.min(s.max_life.saturating_sub(s.life));
             s.life += use1.heal;
             use1.family = "healing".into();
@@ -516,14 +516,14 @@ fn apply(w: &mut World, def: &ItemDef) -> Result<ConsumUse, ConsumError> {
             w.pending_events.push(GameEvent::PotionUsed { heal: use1.heal });
         }
         ConsumableKind::Mana => {
-            let s = &mut w.hero.stats;
+            let s = &mut w.players[0].data.stats;
             use1.mana = c.power.min(s.max_mana.saturating_sub(s.mana));
             s.mana += use1.mana;
             use1.family = "mana".into();
         }
         ConsumableKind::Rejuvenation => {
             // floor(max × pct / 100), plafonné au manquant (D2 floor).
-            let s = &mut w.hero.stats;
+            let s = &mut w.players[0].data.stats;
             let pct_life = (s.max_life as u64 * c.rejuv_pct as u64 / 100) as u32;
             let pct_mana = (s.max_mana as u64 * c.rejuv_pct as u64 / 100) as u32;
             use1.heal = pct_life.min(s.max_life.saturating_sub(s.life));
@@ -575,10 +575,10 @@ fn spend_book(w: &mut World, slot: usize, def: &ItemDef) -> Option<u32> {
     }
     let charges = book_charges(def);
     if charges <= 1 {
-        w.hero.inv[slot] = None;
+        w.players[0].data.inv[slot] = None;
         Some(0)
     } else {
-        w.hero.inv[slot] = Some(ItemDef { amount: charges - 1, ..def.clone() });
+        w.players[0].data.inv[slot] = Some(ItemDef { amount: charges - 1, ..def.clone() });
         Some(charges - 1)
     }
 }
@@ -596,7 +596,7 @@ impl World {
     /// En erreur (rien à identifier, tome vide, objet non utilisable) :
     /// état inchangé.
     pub fn use_consumable(&mut self, slot: usize) -> Result<ConsumUse, ConsumError> {
-        let Some(def) = self.hero.inv.get(slot).cloned().flatten() else {
+        let Some(def) = self.players[0].data.inv.get(slot).cloned().flatten() else {
             return Err(ConsumError::SlotEmpty);
         };
         if book_charges(&def) == 0 && by_code(&def.code).is_some_and(|c| c.is_book()) {
@@ -606,7 +606,7 @@ impl World {
         match spend_book(self, slot, &def) {
             Some(left) => Ok(ConsumUse { charges_left: Some(left), ..use1 }),
             None => {
-                self.hero.inv[slot] = None;
+                self.players[0].data.inv[slot] = None;
                 Ok(use1)
             }
         }
@@ -656,8 +656,8 @@ impl World {
     /// colonne). Renvoie le nombre d'objets rangés. Idempotent.
     pub fn belt_auto_store(&mut self) -> usize {
         let mut moved = 0;
-        for slot in 0..self.hero.inv.len() {
-            let Some(def) = self.hero.inv[slot].clone() else { continue };
+        for slot in 0..self.players[0].data.inv.len() {
+            let Some(def) = self.players[0].data.inv[slot].clone() else { continue };
             let Some(c) = by_code(&def.code) else { continue };
             if !c.autobelt {
                 continue;
@@ -669,7 +669,7 @@ impl World {
                 break; // ceinture pleine : les potions restent en inventaire
             };
             self.consum.belt[col][row] = Some(def);
-            self.hero.inv[slot] = None;
+            self.players[0].data.inv[slot] = None;
             moved += 1;
         }
         moved
@@ -806,8 +806,8 @@ mod tests {
         w.clear_monsters();
         // vie max portée à 500 pour lire les valeurs PLEINES de la table
         // (le barbare niv 1 plafonne à 55 pv)
-        w.hero.stats.max_life = 500;
-        w.hero.stats.life = 0; // blessé au maximum : soin = valeur pleine
+        w.players[0].data.stats.max_life = 500;
+        w.players[0].data.stats.life = 0; // blessé au maximum : soin = valeur pleine
         put(&mut w, 0, "hp1");
         let u = w.use_consumable(0).expect("hp1");
         assert_eq!((u.family.as_str(), u.heal), ("healing", 30));
@@ -817,7 +817,7 @@ mod tests {
         let ev = w.tick(0, None);
         assert!(ev.iter().any(|e| matches!(e, GameEvent::PotionUsed { heal: 30 })));
         // plafond : pleine vie ⇒ heal 0, potion quand même bue (retail)
-        w.hero.stats.life = w.hero.stats.max_life;
+        w.players[0].data.stats.life = w.players[0].data.stats.max_life;
         put(&mut w, 1, "hp5");
         let u = w.use_consumable(1).unwrap();
         assert_eq!(u.heal, 0, "pleine vie");
@@ -829,11 +829,11 @@ mod tests {
         // plafonnerait sinon à son manquant, ce qui masque la table.
         let mut w2 = world(7);
         w2.clear_monsters();
-        w2.hero.stats.max_life = 500;
+        w2.players[0].data.stats.max_life = 500;
         let vals: Vec<u32> = ["hp1", "hp2", "hp3", "hp4", "hp5"]
             .iter()
             .map(|&c| {
-                w2.hero.stats.life = 0;
+                w2.players[0].data.stats.life = 0;
                 put(&mut w2, 5, c);
                 w2.use_consumable(5).unwrap().heal
             })
@@ -848,8 +848,8 @@ mod tests {
         let mut w = world(7);
         w.clear_monsters();
         // mana max porté à 300 pour voir les valeurs table entières
-        w.hero.stats.max_mana = 300;
-        w.hero.stats.mana = 0;
+        w.players[0].data.stats.max_mana = 300;
+        w.players[0].data.stats.mana = 0;
         put(&mut w, 2, "mp3");
         let u = w.use_consumable(2).expect("mp3");
         assert_eq!((u.family.as_str(), u.mana), ("mana", 80));
@@ -863,11 +863,11 @@ mod tests {
         // échelle croissante mp1..mp5
         let mut w2 = world(7);
         w2.clear_monsters();
-        w2.hero.stats.max_mana = 300;
+        w2.players[0].data.stats.max_mana = 300;
         let vals: Vec<u32> = ["mp1", "mp2", "mp3", "mp4", "mp5"]
             .iter()
             .map(|&c| {
-                w2.hero.stats.mana = 0;
+                w2.players[0].data.stats.mana = 0;
                 put(&mut w2, 6, c);
                 w2.use_consumable(6).unwrap().mana
             })
@@ -882,8 +882,8 @@ mod tests {
         let mut w = world(7);
         w.clear_monsters();
         let (max_life, max_mana) = (w.hero_stats().max_life, w.hero_stats().max_mana);
-        w.hero.stats.life = 0;
-        w.hero.stats.mana = 0;
+        w.players[0].data.stats.life = 0;
+        w.players[0].data.stats.mana = 0;
         put(&mut w, 4, "rvs");
         let u = w.use_consumable(4).expect("rvs");
         let exp_heal = (max_life as u64 * 35 / 100) as u32;
@@ -892,8 +892,8 @@ mod tests {
         assert_eq!(w.hero_stats().life, exp_heal);
         // rvl = 100 % (full)
         put(&mut w, 5, "rvl");
-        w.hero.stats.life = 0;
-        w.hero.stats.mana = 0;
+        w.players[0].data.stats.life = 0;
+        w.players[0].data.stats.mana = 0;
         let u = w.use_consumable(5).expect("rvl");
         assert_eq!((u.heal, u.mana), (max_life, max_mana), "100 % vie+mana");
         assert_eq!((w.hero_stats().life, w.hero_stats().mana), (max_life, max_mana));
@@ -1040,8 +1040,8 @@ mod tests {
         w.clear_monsters();
         // vie max 500 : le plafond 55 pv du barbare niv 1 masquerait les
         // valeurs table (hp3 = 100 > 55)
-        w.hero.stats.max_life = 500;
-        w.hero.stats.life = 0;
+        w.players[0].data.stats.max_life = 500;
+        w.players[0].data.stats.life = 0;
         put(&mut w, 0, "hp1");
         put(&mut w, 1, "hp3");
         w.belt_auto_store();
@@ -1050,12 +1050,12 @@ mod tests {
         let u = w.use_belt_key(1).expect("touche 1");
         assert_eq!(u.code, "hp1");
         assert_eq!(u.heal, 30);
-        w.hero.stats.life = 0;
+        w.players[0].data.stats.life = 0;
         let u = w.use_belt_key(2).expect("touche 2");
         assert_eq!(u.code, "hp3");
         assert_eq!(u.heal, 100);
         // pile : deux hp5 → rangée 0 des touches 1 puis 2 (libres)
-        w.hero.stats.life = 0;
+        w.players[0].data.stats.life = 0;
         w.debug_set_slot(10, item_def("hp5"));
         w.debug_set_slot(11, item_def("hp5"));
         w.belt_auto_store();
@@ -1113,8 +1113,8 @@ mod tests {
                 seed,
             );
             w.clear_monsters();
-            w.hero.stats.life = 0;
-            w.hero.stats.mana = 0;
+            w.players[0].data.stats.life = 0;
+            w.players[0].data.stats.mana = 0;
             for (s, c) in [0usize, 1, 2, 3].iter().zip(["hp2", "mp2", "rvs", "yps"]) {
                 put(&mut w, *s, c);
             }

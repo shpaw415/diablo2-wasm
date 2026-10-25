@@ -312,3 +312,76 @@ qui re-mente rend son test rouge.
 Note arbre : la passe 21b parallèle a posé un stub `fidelity_gaps.rs` le
 2026-10-25 (compilation restaurée pendant l'écriture 21a) — remplacé par ce
 corps complet, contrats inchangés.
+<<<<<<< master
+=======
+
+---
+
+## 3b-1 — Multi-héros moteur : `World.players` (coop, 2026-10-25)
+
+Arbre `d2w-coop` (seul propriétaire : `crates/d2rules/**`). Contrat API complet
+pour le coéquipier d2game : **`docs/contrat-api-3b1-d2rules.md`** (racine
+`d2w-coop`).
+
+### Le refactor
+1. **`Player` + `World.players: Vec<Player>`** : UN joueur = un héros (entité,
+   code, gabarit, `HeroData` complet, **flux RNG propre**). Plus AUCUNE branche
+   spéciale slot 0 dans le stockage — `players[i].slot == i` (invariant,
+   `renumber_slots`). Solo = `players.len() == 1` : rétro-compat totale, les
+   1048 tests préexistants restent la preuve.
+2. **`World.local_slot`** : vue du joueur « local » pour TOUTE l'API legacy
+   (`hero()`, `hero_stats()`, `inventory()`, `select_skill()`, `grant_xp()`,
+   `learn_skill()`, `place_hero_at()`… — signatures inchangées). NON persisté,
+   NON hashé, JAMAIS lu par la simulation (aucun désync lockstep possible).
+3. **API nouvelle** : `add_player(slot, hero_code)` (insertion, tuile libre
+   près du joueur précédent, refus classe inconnue SANS muter l'état),
+   `remove_player(slot)` (≥ 1 ; compaction + remappage déterministe de
+   `missile_owner` et `last_hit_by`), `players()/player(slot)`, `Player::{ent,
+   code, stats, inventory, skills, active_skill, is_dead, is_moving,
+   is_running, spawn}`, `queue_player_input(slot, input)` + `tick_queued(dt)`
+   (files FIFO drainées slot croissant — style lockstep alternatif à
+   `tick_inputs`), `add_cohero_near` conservée (wrapper positionnel).
+4. **Save v4 ADDITIVE** (`SAVE_VERSION = 4`) : champ `players[]` (TOUS les
+   slots : code, ent, stats, path, swing, dead, anim, spawn, inv, skills,
+   active_skill, **état RNG**). Les champs v3 de tête restent ÉCRITS en
+   miroir du slot 0 (lisibilité/outils). Chargement : v4 `players` prioritaire ;
+   v3 solo = 1 joueur, zéro perte ; v3 intermédiaire `coheroes` (arbre 3b
+   antérieur) encore acceptée au chargement ; v1/v2 inchangés. Validation
+   stricte (`1..=MAX_HEROES`, inv 40, entités bornées, DD↔dead_ms).
+5. **Déterminisme** : `state_hash()` global + `state_hash_slot(i)` par joueur
+   (DefaultHasher à clés fixes, f32 via `to_bits()` ; couvre joueurs, monstres,
+   items, missiles, propriétés, merc, RNG, horloge). **Graines indépendantes
+   par joueur** : `Player.rng = seed ^ GOLDEN_MIX×(slot+1)` (état persisté v4)
+   — les jets de toucher/dégâts d'un joueur (slots ≥ 1 ; slot 0 = flux MONDE
+   historique bit-exact) ne dépendent que de SES actions.
+6. **XP PARTAGÉE** entre les joueurs VIVANTS : part égale (`xp / n`), reliquat
+   au tueur (`last_hit_by`) s'il vivant, sinon au premier vivant ; tout le
+   monde mort ⇒ XP perdue. Ensemble des vivants figé en début de tick
+   (déterminisme). Solo : n = 1 ⇒ flux historique bit-exact.
+
+### Décisions de fidélité (écart retail documenté)
+| Sujet | Décision 3b-1 | Écart retail |
+|---|---|---|
+| Quêtes | PARTAGÉES — journaux = états MONDE uniques, tout kill avance pour tous | (conforme à l'esprit party retail) |
+| XP | divisée entre VIVANTS (reliquat au tueur) | D2 : partage entre membres PROCHE du kill ; MVP : tous les vivants, sans distance |
+| Drops | PARTAGÉS visibles par tous, ramassables par quiconque | D2 : loots indépendants par joueur — délicats en lockstep MVP |
+| IA | ciblage = vivant le plus proche (égalité → slot bas), généralisé (frappes, waypoints, NPC, ancre boss, panique fallen) | aggro « par menace » non fait (3c+) |
+| Mort/respawn | PAR joueur : 2 s, pleine vie, à SON spawn ; monstres décrochent | corps au sol J1 = slot 0 seulement (corps coop en 3c) ; coéquipiers respawnent AVEC l'inventaire |
+| Potions/ceinture | inventaire 10×4 + UseItem PAR joueur | ceinture 4×4 (`consumables.rs`) encore MONDE (slot 0) — 3c si trivial |
+| Mercenaires | merc = compagnon du slot 0 (inchangé) | merc par joueur prévu 3c (« le pattern merc existe ») |
+| Auras/16c/invocations | mécaniques du slot 0 (documenté — paladin du salon) | par joueur en 3c+ |
+| `.d2s` | interop = héros du slot 0 | — |
+
+### Tests (d2rules lib : 669 verts, dont 24 coop 3b-1)
+Nouveaux : XP partagée (part/reliquat/solo-identité/mort-exclu), missile partagé,
+`add_player` insertion+plafond+refus classe inconnue, `remove_player`
+compaction+remappage missile/crédit, `local_slot` vue-sans-désync, files
+`tick_queued`, **double exécution → hash global ET par slot identiques**,
+**indépendance RNG par joueur** (les actions du slot 1 ne décalent pas les jets
+du slot 0), quêtes partagées (journal unique, kills de slots différents),
+respawn par joueur à SON spawn. Save : round-trip 3 héros bit-exact, v3 solo →
+1 joueur sans perte, v4 sans `players` → champs de tête, v3 `coheroes`
+(intermediaire) → players[1..]. Les tests XP « tueur-seul » de la passe 3b
+précédente ont été MIS À JOUR vers la décision partagée (décision de fidélité
+tranchée, cf. plan-coop-3b-suite.md §3b-1.2).
+>>>>>>> coop

@@ -853,8 +853,10 @@ mod tests {
         let mut w = d2rules::World::with_seed(vec![vec![false; 32]; 32], manifest, 7);
         let save = w.save();
         let mut sv: Value = serde_json::from_str(&save).unwrap();
-        sv["hero"]["inv"][0] = json!({ "code": "leg", "name": "Wirt's Leg", "kind": "Weapon", "amount": 0 });
-        sv["hero"]["inv"][1] = json!({ "code": "tbk", "name": "Town Portal Book", "kind": "Misc", "amount": 0 });
+        // 3b-1 : la source de vérité v4 est `players` (le champ `hero` en
+        // tête n'est qu'un miroir de lisibilité) — patcher players[0].inv.
+        sv["players"][0]["inv"][0] = json!({ "code": "leg", "name": "Wirt's Leg", "kind": "Weapon", "amount": 0 });
+        sv["players"][0]["inv"][1] = json!({ "code": "tbk", "name": "Town Portal Book", "kind": "Misc", "amount": 0 });
         w = d2rules::World::load(&sv.to_string())
             .map_err(|_| "world : save patchée illisible".to_string())
             .unwrap();
@@ -1165,10 +1167,12 @@ mod tests {
         //    tables réelles, prouvés par cow_recipe_items_are_real_table_codes).
         let save = g.world.as_ref().unwrap().save();
         let mut save_v: Value = serde_json::from_str(&save).unwrap();
-        save_v["hero"]["inv"][0] = json!({
+        // 3b-1 : la source de vérité v4 est `players` (le champ `hero` en
+        // tête n'est qu'un miroir de lisibilité).
+        save_v["players"][0]["inv"][0] = json!({
             "code": "leg", "name": "Wirt's Leg", "kind": "Weapon", "amount": 0
         });
-        save_v["hero"]["inv"][1] = json!({
+        save_v["players"][0]["inv"][1] = json!({
             "code": "tbk", "name": "Town Portal Book", "kind": "Misc", "amount": 0
         });
         g.load_world(&save_v.to_string()).expect("save patchée rechargée");

@@ -1,69 +1,115 @@
-//! 22c PNJ & DIALOGUES — pont d2game/wasm de `d2rules::dialogue` (moteur du
-//! coéquipier, étape 22a) vers la démo (étape 22c, `demo/dialogue-ui.js`).
+//! 3c-b COOP — pont d2game/wasm de `d2rules::dialogue` (port 22a du corps
+//! maître, adapté multi-joueurs) vers la démo (demo/dialogue-ui.js).
 //!
 //! Tout est ADDITIF, même pattern que `npc_bridge.rs` : un `impl GameCore`
-//! séparé + trois endpoints wasm append-only dans `wasm.rs` + une ligne
-//! `pub mod` dans `lib.rs`. AUCUNE écriture hors de `d2w-pnj`.
+//! séparé + endpoints wasm append-only dans `wasm.rs` + une ligne `pub mod`
+//! dans `lib.rs`. AUCUNE écriture hors de l'étape 3c-b.
 //!
 //! # Contrat UI (demo/dialogue-ui.js, `window.D2Dialogue`)
-//! * `openDialogue(index)` — JSON [`d2rules::dialogue::DialogueSession`]
-//!   (serde du moteur, champ par champ : `npc_index/npc/npc_name/quest/
-//!   phase/node{...}`) AUGMENTÉ de `visible` : indices BRUTS des options
-//!   visibles ([`World::dialogue_visible_options`] — conditions `quest_done`
-//!   évaluées en vivant, ex. voyage Warriv ⇔ a1q6 Done). `Err` descriptif si
-//!   hors de portée / héros mort / index invalide (mêmes messages que
-//!   `talkNpc`). L'ouverture GÈLE le monde ([`World::tick`] ne simule plus
-//!   rien tant que la session est ouverte — cf. `dialogue.rs`).
-//! * `chooseDialogue(option_ix)` — INDEX BRUT dans `node.options` (l'UI
-//!   affiche la sous-liste `visible`, elle choisit l'indice d'origine).
-//!   JSON : la session À JOUR si le nœud a avancé (ragots « dites-m'en
-//!   plus »), sinon l'[`d2rules::dialogue::DialogueAction`] produite
-//!   (`{"kind":"open_shop","vendor":"Akara"}`, `{"kind":"close"}`…),
-//!   `null` si le choix est refusé (condition non remplie / hors bornes).
-//! * `closeDialogue()` — referme la session (« partir » / Échap UI),
-//!   JSON `true/false`. Le tick du monde reprend.
+//! * `openDialogueSlot(slot, index)` — JSON [`d2rules::dialogue::
+//!   DialogueSession`] (serde du moteur : `slot/npc_index/npc/npc_name/
+//!   quest/phase/node{...}`) AUGMENTÉ de `visible` (indices BRUTS des
+//!   options visibles — conditions `quest_done` évaluées en vivant) et de
+//!   `player`/`playerName` (le teneur, pour l'UI). `Err` descriptif si
+//!   VERROU (autre slot discute déjà — le message porte NPC + teneur),
+//!   hors de portée, héros mort, slot/index inconnu. L'ouverture GÈLE le
+//!   monde pour TOUS les slots ([`d2rules::World::tick_inputs`] ne simule
+//!   plus rien — décision style retail, cf. dialogue.rs § coop).
+//! * `chooseDialogueSlot(slot, option_ix)` — INDEX BRUT dans
+//!   `node.options`, réservé au TENEUR (`null` sinon). JSON : la session à
+//!   jour si le nœud a avancé (ragots « dites-m'en plus »), sinon
+//!   l'action produite (`{"kind":"open_shop","vendor":"Akara"}`,
+//!   `{"kind":"close"}`…) — l'UI n'ouvre le panneau vendeur QUE sur le
+//!   client du teneur (point (3) mission).
+//! * `closeDialogueSlot(slot)` — « partir »/Échap, `false` si le slot n'est
+//!   pas le teneur. Le tick du monde reprend pour tous.
+//! * `dialogueSession()` — session JSON courante (poll bandeau/refresh),
+//!   `null` sans dialogue.
+//! * `dialogueLock()` — `{"active":true,npc,npcName,slot,player,playerName}`
+//!   quand une session est tenue par `slot` (les AUTRES clients affichent
+//!   « <NPC> discute avec <joueur> » et bloquent le clic), `{"active":false}`
+//!   sinon.
+//!
+//! # Verrou + gel (décisions 3c-b, cf. dialogue.rs § coop)
+//! Le monde est partagé : UNE seule session à la fois, gel GLOBAL (tous
+//! slots) pendant qu'elle est ouverte — le brief « ne pas ouvrir le même
+//! NPC » est couvert a fortiori. Les chemins historiques sans slot
+//! (`openDialogue` solo maître) ne sont PAS exposés ici : l'UI coop passe
+//! toujours par les variantes `_slot` (chaque client connaît son slot).
 
 use crate::game::GameCore;
-use d2rules::dialogue::DialogueSession;
 use serde_json::{json, Value};
 
 impl GameCore {
+    /// Code de classe du héros `slot` (public World — `players[slot].code`).
+    fn slot_hero_code(&self, slot: usize) -> Option<String> {
+        self.world.as_ref()?.player(slot).map(|p| p.code().to_string())
+    }
+
+    /// Nom affichable de la classe `code` (manifest `heroes[code].name`).
+    fn slot_hero_name(&self, code: &str) -> String {
+        self.manifest
+            .pointer(&format!("/heroes/{code}/name"))
+            .and_then(|n| n.as_str())
+            .unwrap_or(code)
+            .to_string()
+    }
+
     /// Session JSON pour l'UI : DialogueSession serde + `visible` (indices
-    /// bruts des options visibles — évaluation vive des conditions).
+    /// bruts des options visibles) + identité du teneur (`player`).
     fn session_ui_json(&self) -> Option<Value> {
-        let sess = self.world.as_ref()?.dialogue_session()?.clone();
+        let w = self.world.as_ref()?;
+        let sess = w.dialogue_session()?.clone();
         let mut v = serde_json::to_value(&sess).ok()?;
-        v["visible"] = json!(self.world.as_ref().unwrap().dialogue_visible_options());
+        v["visible"] = json!(w.dialogue_visible_options());
+        let code = self.slot_hero_code(sess.slot).unwrap_or_default();
+        v["player"] = json!(code);
+        v["playerName"] = json!(self.slot_hero_name(&code));
         Some(v)
     }
 
-    /// Ouvre le dialogue du NPC `index` (clic NPC → npc-ui.js →
-    /// dialogue-ui.js) — JSON session + `visible`, ou `Err` lisible.
-    pub fn open_dialogue_json(&mut self, npc_index: usize) -> Result<String, String> {
-        let w = self.world.as_mut().ok_or_else(|| "moteur non initialisé".to_string())?;
-        w.open_dialogue(npc_index)
-            .ok_or_else(|| "trop loin — approchez-vous du NPC".to_string())?;
-        let v = self.session_ui_json().ok_or_else(|| "session introuvable".to_string())?;
+    /// Ouvre le dialogue du NPC `index` pour le joueur `slot` (clic NPC →
+    /// dialogue-ui.js `tryOpen`) — JSON session + `visible` + teneur, ou
+    /// `Err` lisible (verrou « X discute avec le joueur N », portée…).
+    pub fn open_dialogue_slot_json(&mut self, slot: usize, npc_index: usize) -> Result<String, String> {
+        let w = self
+            .world
+            .as_mut()
+            .ok_or_else(|| "moteur non initialisé".to_string())?;
+        w.open_dialogue_slot(slot, npc_index)
+            .map_err(|e| e.as_str())?;
+        let v = self
+            .session_ui_json()
+            .ok_or_else(|| "session introuvable".to_string())?;
         serde_json::to_string(&v).map_err(|e| format!("sérialisation session : {e}"))
     }
 
-    /// Choix de l'option `option_ix` (index brut) — JSON session à jour
-    /// (nœud avancé), sinon action produite, `null` si refusé.
-    pub fn choose_dialogue_json(&mut self, option_ix: usize) -> Result<String, String> {
+    /// Choix de l'option `option_ix` (index brut) par le TENEUR `slot` —
+    /// JSON session à jour (nœud avancé), sinon action produite, `null`
+    /// si refusé (verrou autre slot / condition non remplie / index).
+    pub fn choose_dialogue_slot_json(&mut self, slot: usize, option_ix: usize) -> Result<String, String> {
         {
-            let w = self.world.as_mut().ok_or_else(|| "moteur non initialisé".to_string())?;
+            let w = self
+                .world
+                .as_mut()
+                .ok_or_else(|| "moteur non initialisé".to_string())?;
             if w.dialogue_session().is_none() {
                 return Err("aucun dialogue ouvert".to_string());
             }
         }
-        let Some(action) = self.world.as_mut().unwrap().choose_dialogue(option_ix) else {
-            return Ok("null".into()); // condition quête non remplie / index invalide
+        let Some(action) = self
+            .world
+            .as_mut()
+            .unwrap()
+            .choose_dialogue_slot(slot, option_ix)
+        else {
+            return Ok("null".into()); // verrou / condition quête / index invalide
         };
         // Say (ragots « dites-m'en plus ») : le nœud a (peut-être) avancé —
         // l'UI re-rend la session à jour. Toute AUTRE action (OpenShop/
-        // Travel/Close/Hire/Repair) est renvoyée TELLE QUELLE : l'UI ouvre
-        // le panneau correspondant et referme la session via closeDialogue
-        // (le moteur ne referme lui-même que sur `Close` — cf. dialogue.rs).
+        // Travel/Close/Hire/Repair) est renvoyée TELLE QUELLE : l'UI du
+        // TENEUR ouvre le panneau correspondant et referme via
+        // closeDialogueSlot (le moteur ne referme lui-même que sur `Close`).
         if matches!(action, d2rules::dialogue::DialogueAction::Say) {
             if let Some(v) = self.session_ui_json() {
                 return serde_json::to_string(&v)
@@ -73,18 +119,43 @@ impl GameCore {
         serde_json::to_string(&action).map_err(|e| format!("sérialisation action : {e}"))
     }
 
-    /// Referme la session (« partir », Échap UI) — `true` si une session
-    /// a été fermée. Le monde reprend son tick.
-    pub fn close_dialogue_json(&mut self) -> bool {
-        self.world.as_mut().map(|w| w.close_dialogue()).unwrap_or(false)
+    /// Referme la session si `slot` en est le teneur (« partir », Échap
+    /// UI) — `false` sinon (session inchangée). Le monde reprend.
+    pub fn close_dialogue_slot_json(&mut self, slot: usize) -> bool {
+        self.world.as_mut().map(|w| w.close_dialogue_slot(slot)).unwrap_or(false)
     }
 
-    /// Session ouverte (lecture, JSON) — `null` sans dialogue. (Getter de
-    /// secours pour l'UI si un `choose` ne renvoyait que l'action.)
+    /// Session ouverte (lecture, JSON + `visible` + teneur) — `null` sans
+    /// dialogue. (Getter de secours pour l'UI si un `choose` ne renvoyait
+    /// que l'action ; pollé aussi pour le refresh bandeau.)
     pub fn dialogue_session_json(&self) -> String {
         match self.session_ui_json() {
             Some(v) => v.to_string(),
             None => "null".into(),
+        }
+    }
+
+    /// VERROU (3c-b) : qui discute, avec qui — JSON
+    /// `{"active":true,"npc","npcName","slot","player","playerName"}` ou
+    /// `{"active":false}`. Les clients NON teneurs affichent le bandeau
+    /// « <NPC> discute avec <joueur> » et bloquent l'ouverture (le moteur
+    /// refuse de toute façon : Busy).
+    pub fn dialogue_lock_json(&self) -> String {
+        let Some(w) = self.world.as_ref() else { return "{\"active\":false}".into() };
+        match w.dialogue_session() {
+            Some(s) => {
+                let code = self.slot_hero_code(s.slot).unwrap_or_default();
+                json!({
+                    "active": true,
+                    "npc": s.npc,
+                    "npcName": s.npc_name,
+                    "slot": s.slot,
+                    "player": code,
+                    "playerName": self.slot_hero_name(&code),
+                })
+                .to_string()
+            }
+            None => "{\"active\":false}".into(),
         }
     }
 }
@@ -103,197 +174,140 @@ mod tests {
         p.join("assets/manifest.json").is_file().then(|| p.to_string_lossy().into_owned())
     }
 
-    fn provide_anim(g: &mut GameCore, root: &str, block: &Value) {
-        if let Some(p) = block.get("cof").and_then(|c| c.as_str()) {
-            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
-        }
-        if let Some(layers) = block.get("layers").and_then(|l| l.as_object()) {
-            for (_, p) in layers {
-                g.provide(p.as_str().unwrap(), std::fs::read(format!("{root}/{}", p.as_str().unwrap())).unwrap());
-            }
-        }
-    }
-
-    /// Boot complet town (même recette que `npc_bridge.rs::boot_town`).
-    fn boot_town() -> GameCore {
+    /// Boot coop 2 slots au camp (même pipeline que `coop_3b2_proof`) :
+    /// niveau + anims de marche, `with_level_coop`, finalize.
+    fn boot_coop_town() -> GameCore {
         let Some(root) = ws_root() else {
             panic!("racine workspace introuvable (assets/ absents)");
         };
         let m: Value = serde_json::from_str(MANIFEST).unwrap();
-        let mut g = GameCore::new(MANIFEST, "BA").unwrap();
-        for key in ["town", "bloodmoor"] {
-            let lv = &m["levels"][key];
-            g.provide(
-                lv["palette"].as_str().unwrap(),
-                std::fs::read(format!("{root}/{}", lv["palette"].as_str().unwrap())).unwrap(),
-            );
-            g.provide(
-                lv["ds1"].as_str().unwrap(),
-                std::fs::read(format!("{root}/{}", lv["ds1"].as_str().unwrap())).unwrap(),
-            );
-            for p in lv["dt1"].as_array().unwrap() {
-                let p = p.as_str().unwrap();
-                g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
-            }
-        }
-        provide_anim(&mut g, &root, &m["heroes"]["BA"]["walk"]);
-        for mon in m["monsters"].as_array().unwrap() {
-            provide_anim(&mut g, &root, &mon["walk"]);
-        }
-        g.set_viewport(320, 240);
-        g.finalize().expect("finalize town");
-        g
-    }
-
-    /// Héros re-placé à côté d'Akara (portée de dialogue, comme le retail).
-    fn near_akara(g: &mut GameCore) {
-        let (ax, ay) = {
-            let e = &g.world.as_ref().unwrap().town_npcs()[0].ent;
-            (e.x, e.y)
-        };
-        g.switch_level("town", ax + 1.5, ay).expect("re-entrée du camp près d'Akara");
-    }
-
-    // -----------------------------------------------------------------
-    // CYCLE OPEN / CHOOSE / CLOSE via le pont JSON (contrat dialogue-ui.js)
-    // -----------------------------------------------------------------
-
-    #[test]
-    fn cycle_open_choose_close_via_pont_json() {
-        let mut g = boot_town();
-        // Hors de portée : Err descriptif (même message que talkNpc).
-        let err = g.open_dialogue_json(0).unwrap_err();
-        assert!(err.contains("trop loin"), "{err}");
-        near_akara(&mut g);
-        // Pas de session avant ouverture.
-        assert_eq!(g.dialogue_session_json(), "null");
-        // OPEN : session JSON complète (champs serde du moteur + visible).
-        let out = g.open_dialogue_json(0).expect("ouverture Akara");
-        let v: Value = serde_json::from_str(&out).unwrap();
-        assert_eq!(v["npc_name"], "Akara");
-        assert_eq!(v["npc"], "akara");
-        assert_eq!(v["node"]["id"], "root");
-        assert!(v["node"]["lignes"].as_array().unwrap().len() >= 1, "ligne fr réelle");
-        assert!(!v["node"]["lignes"][0].as_str().unwrap().is_empty());
-        let labels: Vec<&str> = v["node"]["options"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|o| o["label"].as_str().unwrap())
-            .collect();
-        assert!(labels.contains(&"acheter/vendre"), "menu trade (NPCMenuTrade) : {labels:?}");
-        assert!(labels.contains(&"partir"), "menu leave (NPCMenuLeave) : {labels:?}");
-        assert!(labels.contains(&"divers"), "menu gossip (NPCGossipMenu) : {labels:?}");
-        // `visible` = indices bruts couvrant le nœud (conditions always).
-        let visible: Vec<usize> = v["visible"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|x| x.as_u64().unwrap() as usize)
-            .collect();
-        assert_eq!(visible.len(), 3, "toutes les options `always` sont visibles : {visible:?}");
-        // Le monde est GELÉ : le tick ne bouge ni le héros ni l'horloge
-        // (contrat World::tick — dialogue.rs) et l'UI reçoit les events.
-        let (hx, hy) = {
-            let h = g.world.as_ref().unwrap().hero();
-            (h.x, h.y)
-        };
-        let ev = g.tick(16, Some(crate::world::PlayerInput::MoveTo { x: 1, y: 1 }));
-        let (hx2, hy2) = {
-            let h = g.world.as_ref().unwrap().hero();
-            (h.x, h.y)
-        };
-        assert_eq!((hx, hy), (hx2, hy2), "monde gelé : le héros ne bouge pas");
-        assert!(
-            ev.iter().any(|e| matches!(
-                e,
-                crate::game::CoreEvent::World(d2rules::GameEvent::NpcTalked { ref npc })
-                    if npc == "akara"
-            )),
-            "NpcTalked d'ouverture flushé au tick suivant : {ev:?}"
+        let heroes = serde_json::json!(["BA", "SOR"]).to_string();
+        let mut g = GameCore::with_level_coop(MANIFEST, &heroes, "town").unwrap();
+        let lv = &m["levels"]["town"];
+        g.provide(
+            lv["palette"].as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", lv["palette"].as_str().unwrap())).unwrap(),
         );
-        // CHOOSE « divers » → session à jour (nœud gossip, ligne fr réelle).
-        let divers_ix = v["node"]["options"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .position(|o| o["label"] == "divers")
-            .unwrap();
-        let out = g.choose_dialogue_json(divers_ix).expect("choix divers");
-        let v2: Value = serde_json::from_str(&out).unwrap();
-        assert!(v2["node"]["id"] == "gossip1", "nœud ragot rendu : {}", v2["node"]["id"]);
-        assert!(v2["node"]["lignes"][0].as_str().unwrap().contains("Akara"));
-        // CHOOSE « acheter/vendre » → action OpenShop (session refermée).
-        let trade_ix = v2["node"]["options"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .position(|o| o["label"] == "acheter/vendre")
-            .unwrap();
-        let out = g.choose_dialogue_json(trade_ix).expect("choix trade");
-        let v3: Value = serde_json::from_str(&out).unwrap();
-        assert_eq!(v3["kind"], "open_shop", "action OpenShop pour l'UI (panneau Marchands)");
-        assert_eq!(v3["vendor"], "Akara");
-        // Le moteur garde la session ouverte (seul Close referme) — l'UI
-        // referme via closeDialogue après avoir ouvert le panneau Marchands.
-        assert!(g.dialogue_session_json() != "null", "session encore ouverte côté moteur");
-        assert_eq!(g.close_dialogue_json(), true, "l'UI referme (partir boutique)");
-        assert!(g.close_dialogue_json() == false, "plus rien à fermer côté moteur");
-        // Ré-ouverture pour « partir » : CLOSE via l'endpoint.
-        near_akara(&mut g);
-        g.open_dialogue_json(0).expect("réouverture");
-        let out = g.choose_dialogue_json(
-            serde_json::from_str::<Value>(&g.dialogue_session_json()).unwrap()["node"]["options"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .position(|o| o["label"] == "partir")
-                .unwrap(),
-        ).expect("choix partir");
-        assert_eq!(serde_json::from_str::<Value>(&out).unwrap()["kind"], "close");
-        assert_eq!(g.dialogue_session_json(), "null", "« partir » refermé");
-        // Le monde a repris : le héros marche à nouveau (input move réel
-        // vers une tuile marchable PROUVÉE près de lui — (1,1) serait hors
-        // du camp, A* le refuserait et le héros resterait sur place).
-        let (mut tx, mut ty) = (0i32, 0i32);
-        'found: for r in 2..=10 {
-            for (dx, dy) in [(-r, 0), (r, 0), (0, -r), (0, r), (-r, -r), (r, r)] {
-                let c = (hx + dx as f32, hy + dy as f32);
-                if g.world.as_ref().unwrap().is_walkable(c.0 as i32, c.1 as i32) {
-                    tx = c.0 as i32;
-                    ty = c.1 as i32;
-                    break 'found;
+        g.provide(
+            lv["ds1"].as_str().unwrap(),
+            std::fs::read(format!("{root}/{}", lv["ds1"].as_str().unwrap())).unwrap(),
+        );
+        for p in lv["dt1"].as_array().unwrap() {
+            let p = p.as_str().unwrap();
+            g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+        }
+        for code in ["BA", "SOR"] {
+            let resolved = d2rules::resolve_hero_code(&m, code);
+            if let Some(walk) = m.pointer(&format!("/heroes/{resolved}/walk")) {
+                if let Some(cof) = walk.get("cof").and_then(|c| c.as_str()) {
+                    g.provide(cof, std::fs::read(format!("{root}/{cof}")).unwrap());
+                }
+                if let Some(layers) = walk.get("layers").and_then(|l| l.as_object()) {
+                    for (_, p) in layers {
+                        let p = p.as_str().unwrap();
+                        g.provide(p, std::fs::read(format!("{root}/{p}")).unwrap());
+                    }
                 }
             }
         }
-        assert!((tx, ty) != (0, 0) || g.world.as_ref().unwrap().is_walkable(hx as i32 + 2, hy as i32),
-            "aucune tuile marchable proche trouvée (grille inattendue)");
-        g.tick(16, Some(crate::world::PlayerInput::MoveTo { x: tx, y: ty }));
-        for _ in 0..30 {
-            g.tick(16, None); // ~0,5 s de marche (6 cellules/s)
-        }
-        let (hx3, hy3) = {
-            let h = g.world.as_ref().unwrap().hero();
-            (h.x, h.y)
-        };
-        assert_ne!((hx3, hy3), (hx, hy), "monde repris après close (le héros avance)");
+        g.finalize().expect("finalize town coop");
+        g
+    }
+
+    fn akara_index(g: &GameCore) -> usize {
+        g.world
+            .as_ref()
+            .unwrap()
+            .town_npcs()
+            .iter()
+            .position(|n| crate::world_impl::npc::NPCS[n.def].quest_code == "akara")
+            .expect("Akara au roster")
     }
 
     #[test]
-    fn choose_refuse_et_close_endpoint_sans_session() {
-        let mut g = boot_town();
-        // Aucun dialogue ouvert : choose/close propres (pas de panique).
-        assert!(g.choose_dialogue_json(0).unwrap_err().contains("aucun dialogue"));
-        assert_eq!(g.close_dialogue_json(), false);
-        near_akara(&mut g);
-        g.open_dialogue_json(0).expect("ouverture");
-        // Index hors bornes : `null` (choix refusé), session INCHANGÉE.
-        assert_eq!(g.choose_dialogue_json(99).unwrap(), "null");
-        assert!(g.dialogue_session_json() != "null", "session préservée après refus");
-        // CLOSE endpoint (Échap UI) : true, puis le monde reprend.
-        assert_eq!(g.close_dialogue_json(), true);
-        assert_eq!(g.dialogue_session_json(), "null");
-        // Hors monde (aucun monde) ne peut être testé ici : boot_town garantit
-        // un monde ; le contrat `moteur non initialisé` est défensif.
+    fn coop_verrou_json_et_gel_tous_slots_via_le_pont() {
+        let mut g = boot_coop_town();
+        // Teneur = slot 0 (téléporté près d'Akara via l'API publique,
+        // même chemin que `npc_bridge::talk_npc_range_and_interaction_json`).
+        let a = akara_index(&g);
+        let (ax, ay) = {
+            let e = &g.world.as_ref().unwrap().town_npcs()[a].ent;
+            (e.x, e.y)
+        };
+        g.switch_level("town", ax + 1.5, ay).expect("re-entrée près d'Akara");
+        // Pas de dialogue : verrou inactif.
+        assert_eq!(g.dialogue_lock_json(), "{\"active\":false}");
+        // Slot 1 : hors de portée → Err lisible, monde toujours actif.
+        let err = g.open_dialogue_slot_json(1, a).unwrap_err();
+        assert!(err.contains("trop loin"), "{err}");
+        // Slot 0 ouvre : session JSON porte slot/teneur + options visibles.
+        let raw = g.open_dialogue_slot_json(0, a).expect("ouverture slot 0");
+        let sess: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(sess["slot"], 0);
+        assert_eq!(sess["npc"], "akara");
+        assert_eq!(sess["player"], "BA");
+        assert!(sess["visible"].as_array().unwrap().len() >= 2, "options visibles");
+        // VERROU : le slot 1 est refusé — le message porte NPC + teneur.
+        let err = g.open_dialogue_slot_json(1, a).unwrap_err();
+        assert!(err.contains("discute avec le joueur 1"), "{err}");
+        let lock: Value = serde_json::from_str(&g.dialogue_lock_json()).unwrap();
+        assert_eq!(lock["active"], true);
+        assert_eq!(lock["npc"], "akara");
+        assert_eq!(lock["slot"], 0);
+        assert_eq!(lock["playerName"], "Barbare");
+        // Choix par le mauvais slot : `null`, session inchangée.
+        assert_eq!(g.choose_dialogue_slot_json(1, 0).unwrap(), "null");
+        assert!(g.dialogue_session_json() != "null");
+        // GEL GLOBAL via le pont : entrées des DEUX slots en file + un
+        // tickQueued → RIEN ne bouge, ni l'un ni l'autre.
+        let pos = |gg: &GameCore, slot: usize| {
+            let v: Value = serde_json::from_str(&gg.hero_state_slot_json(slot)).unwrap();
+            (v["x"].as_f64().unwrap(), v["y"].as_f64().unwrap())
+        };
+        let before = (pos(&g, 0), pos(&g, 1));
+        g.queue_input(0, d2rules::PlayerInput::MoveTo { x: 50, y: 50 });
+        g.queue_input(1, d2rules::PlayerInput::MoveTo { x: 40, y: 40 });
+        g.tick_queued(100);
+        assert_eq!(pos(&g, 0), before.0, "slot 0 gelé");
+        assert_eq!(pos(&g, 1), before.1, "slot 1 gelé (gel GLOBAL)");
+        // Fermeture par le mauvais slot : refusée ; par le teneur : ok.
+        assert!(!g.close_dialogue_slot_json(1));
+        assert!(g.close_dialogue_slot_json(0));
+        assert_eq!(g.dialogue_lock_json(), "{\"active\":false}");
+        // Le monde reprend : les mêmes entrées déplacent les deux héros.
+        g.queue_input(0, d2rules::PlayerInput::MoveTo { x: 50, y: 50 });
+        g.queue_input(1, d2rules::PlayerInput::MoveTo { x: 40, y: 40 });
+        g.tick_queued(100);
+        g.tick_queued(100);
+        assert_ne!(pos(&g, 0), before.0, "slot 0 redémarre");
+        assert_ne!(pos(&g, 1), before.1, "slot 1 redémarre");
+    }
+
+    #[test]
+    fn coop_boutique_reservee_au_teneur_action_open_shop() {
+        let mut g = boot_coop_town();
+        let a = akara_index(&g);
+        let (ax, ay) = {
+            let e = &g.world.as_ref().unwrap().town_npcs()[a].ent;
+            (e.x, e.y)
+        };
+        g.switch_level("town", ax + 1.5, ay).expect("re-entrée près d'Akara");
+        g.open_dialogue_slot_json(0, a).expect("session slot 0");
+        // L'option « acheter/vendre » (Akara) : index brut dans node.options.
+        let sess: Value = serde_json::from_str(&g.dialogue_session_json()).unwrap();
+        let shop_ix = sess["node"]["options"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .position(|o| o["action"]["kind"] == "open_shop")
+            .expect("option boutique d'Akara");
+        // Le non-teneur ne peut même pas sélectionner (verrou UI+moteur).
+        assert_eq!(g.choose_dialogue_slot_json(1, shop_ix).unwrap(), "null");
+        // Le teneur choisit : l'action open_shop sort — SEUL SON CLIENT
+        // ouvrira le panneau vendeur (dialogue-ui.js vérifie slot === mien).
+        let out = g.choose_dialogue_slot_json(0, shop_ix).unwrap();
+        let act: Value = serde_json::from_str(&out).unwrap();
+        assert_eq!(act["kind"], "open_shop");
+        assert_eq!(act["vendor"], "Akara");
     }
 }

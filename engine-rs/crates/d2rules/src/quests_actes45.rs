@@ -1152,7 +1152,7 @@ impl World {
         // contexte niveau héros + difficulté est posé à CHAQUE event (état
         // RUNTIME, jamais persisté — `from_json` recharge sans contexte).
         if let Some(log) = self.quests_actes45.as_mut() {
-            log.set_level_gate(Some(self.hero.stats.level), self.difficulty.index());
+            log.set_level_gate(Some(self.players[0].data.stats.level), self.difficulty.index());
         }
         // Décision de spawn scripté sur l'état AVANT avancement.
         let spawns = self
@@ -1192,10 +1192,10 @@ impl World {
                 Act45Reward::SkillPoint(n) => self.grant_skill_points(n),
                 Act45Reward::Item(code) => {
                     let def = quest_item_def(code);
-                    if let Some(slot) = self.hero.inv.iter().position(|s| s.is_none()) {
-                        self.hero.inv[slot] = Some(def);
+                    if let Some(slot) = self.players[0].data.inv.iter().position(|s| s.is_none()) {
+                        self.players[0].data.inv[slot] = Some(def);
                     } else {
-                        let (x, y) = (self.hero_ent.x, self.hero_ent.y);
+                        let (x, y) = (self.players[0].ent.x, self.players[0].ent.y);
                         self.items.push(crate::ItemOnGround { def, x, y });
                     }
                 }
@@ -1203,7 +1203,7 @@ impl World {
                 // appliqué au héros (champ save additif `res_all_pct`,
                 // +10 par difficulté [CITÉ + oracle d2s confirmé]).
                 Act45Reward::ResistAll(n) => {
-                    self.hero.stats.res_all_pct = self.hero.stats.res_all_pct.saturating_add(n);
+                    self.players[0].data.stats.res_all_pct = self.players[0].data.stats.res_all_pct.saturating_add(n);
                 }
                 // Portés par le journal (gating d'acte) ou par la valeur de
                 // retour (serti/personnalisation/mercenaires — l'UI et la
@@ -1242,7 +1242,13 @@ impl World {
             return false;
         };
         let rule = stats.rule;
-        let (hx, hy) = (self.hero_ent.x as i32, self.hero_ent.y as i32);
+        // 3b-1 (coop) : ancre = héros vivant le plus proche (déterministe ;
+        // solo : slot 0, identique).
+        let anchor = self.nearest_living_hero_slot(self.players[0].ent.x, self.players[0].ent.y);
+        let (hx, hy) = (
+            self.players[anchor].ent.x as i32,
+            self.players[anchor].ent.y as i32,
+        );
         // Recherche en spirale (rayon 0..=3) d'une tuile marchable — la
         // grille vient de la DRLG (stub carré ouvert dans les tests).
         for r in 0..=3i32 {
@@ -1991,7 +1997,7 @@ mod tests {
         w.set_quest_actes45(Act45Quests::new());
         // Gate retail 19b : le héros est au niveau minimal Normal (20) —
         // l'autel des Cieux répond (le niveau 19 est testé en golden).
-        w.hero.stats.level = 20;
+        w.players[0].data.stats.level = 20;
         // Entrée Sommet d'Arreat : les 3 Anciens apparaissent (activation +
         // spawns même event).
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
@@ -2012,7 +2018,7 @@ mod tests {
         let mut w = World::with_seed(open_grid(24, 24), manifest_bosses45(), 0xD2_45);
         w.set_quest_actes45(Act45Quests::new());
         // Gate retail 19b : niveau minimal Normal (l'autel exige 20).
-        w.hero.stats.level = 20;
+        w.players[0].data.stats.level = 20;
         // A4Q2 complète (sceaux + Diablo + Tyrael) : ActUnlocked(5).
         w.quest_actes45_event(&zone(lvl::CHAOS_SANCTUARY));
         for g in ["Lord De Seis", "Infector of Souls", "Grand Vizier of Chaos"] {
@@ -2273,11 +2279,11 @@ mod tests {
         let mut w = World::with_seed(open_grid(16, 16), m, 0x19B_01);
         w.set_quest_actes45(Act45Quests::new());
         // NORMAL — 19 : l'autel reste muet ; 20 : le Rite s'active.
-        w.hero.stats.level = 19;
+        w.players[0].data.stats.level = 19;
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
         assert!(w.monsters().is_empty(), "19 < 20 : aucun Ancien");
         assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Inactive);
-        w.hero.stats.level = 20;
+        w.players[0].data.stats.level = 20;
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
         assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Active);
         // Prison de glace Normal : Malah → +10 %.
@@ -2289,10 +2295,10 @@ mod tests {
         // 40 passe ; a5q3 → +20 cumulé.
         w.set_difficulty(Difficulty::Nightmare);
         w.set_quest_actes45(Act45Quests::new());
-        w.hero.stats.level = 39;
+        w.players[0].data.stats.level = 39;
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
         assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Inactive, "NM : 39 < 40");
-        w.hero.stats.level = 40;
+        w.players[0].data.stats.level = 40;
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
         assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Active);
         for ev in [zone(lvl::ICE_CAVE_3A), kill("frozenstein"), talk("anya"), talk("malah")] {
@@ -2302,10 +2308,10 @@ mod tests {
         // ENFER — 59 bloqué, 60 passe ; a5q3 → +30 cumulé.
         w.set_difficulty(Difficulty::Hell);
         w.set_quest_actes45(Act45Quests::new());
-        w.hero.stats.level = 59;
+        w.players[0].data.stats.level = 59;
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
         assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Inactive, "Enfer : 59 < 60");
-        w.hero.stats.level = 60;
+        w.players[0].data.stats.level = 60;
         w.quest_actes45_event(&zone(lvl::MOUNTAIN_TOP));
         assert_eq!(w.quest_actes45().unwrap().run("a5q5").unwrap().phase, ActPhase::Active);
         for ev in [zone(lvl::ICE_CAVE_3A), kill("frozenstein"), talk("anya"), talk("malah")] {
@@ -2325,7 +2331,7 @@ mod tests {
         m["bosses"] = serde_json::json!([]);
         let mut w = World::with_seed(open_grid(16, 16), m, 0x19B_02);
         w.set_quest_actes45(Act45Quests::new());
-        w.hero.stats.level = 20;
+        w.players[0].data.stats.level = 20;
         for ev in [zone(lvl::ICE_CAVE_3A), kill("frozenstein"), talk("anya"), talk("malah")] {
             w.quest_actes45_event(&ev);
         }
@@ -2334,6 +2340,7 @@ mod tests {
         // Rétro-compat : save SANS le champ ⇒ charge à 0 (jamais d'erreur).
         let mut v: serde_json::Value = serde_json::from_str(&json).unwrap();
         v["hero"]["stats"].as_object_mut().unwrap().remove("res_all_pct");
+        v.as_object_mut().unwrap().remove("players"); // 3b-1 : rétro-compat additive
         let old = World::load(&v.to_string()).expect("save sans res_all_pct");
         assert_eq!(old.hero_stats().res_all_pct, 0);
         // Round trip : la save fraîche porte le bonus.

@@ -61,13 +61,12 @@ pub mod monsters;
 /// NPC de ville W16 côté moteur (attach au camp, état JSON UI, talkNpc) —
 /// blocs `impl GameCore` additifs (`npc_bridge.rs`).
 pub mod npc_bridge;
-/// Roster PNJ multi-actes 22b (22 PNJ officiels, sprites DCC/DC6, blocs
-/// manifest `npc`, JSON spawn-ready + attach délégué — `npc_roster.rs`).
-pub mod npc_roster;
-/// 22c PNJ & dialogues côté moteur : pont JSON/wasm de `d2rules::dialogue`
-/// (openDialogue/chooseDialogue/closeDialogue) pour `demo/dialogue-ui.js`
-/// (`dialogue_bridge.rs`).
+/// Dialogues PNJ 3c-b côté moteur (sessions coop : verrou, gel global,
+/// teneur) — pont wasm des variantes `_slot` (`dialogue_bridge.rs`).
 pub mod dialogue_bridge;
+/// Vue party 3c-b côté moteur (état du groupe JSON, temps réel) — pont
+/// wasm `partyView` du panneau latéral (`party_bridge.rs`).
+pub mod party_bridge;
 /// Objets interactifs data-driven 9c (section OBJECTS des DS1, objects.txt +
 /// objgroup.txt, coffres TC/shrines/portes/portails) — plan testable au
 /// niveau, câblage game.rs/wasm au pas d'intégration (`objects_live.rs`).
