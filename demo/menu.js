@@ -256,19 +256,17 @@
     // marche sur place.
     if (scene.on && prev !== code) {
       const now = performance.now();
-      const STEP = { x: 0, y: 5 }; // pas vers la caméra, en % du stage
-      const step = (h, kind, to) => {
+      // FIX-MENU-ANIM : le trajet original vit DANS la planche (frames posées
+      // à leurs vrais offsets DC6) — on ne fait que la jouer depuis son ancre.
+      const step = (h, kind) => {
         const sheet = kind === 'fw' ? h.fw : h.bw;
-        if (!sheet) { h.off = { ...to }; h.walk = null; return; }
-        h.walk = {
-          kind, start: now, from: { ...h.off }, to: { ...to },
-          dur: sheet.frames / ((+sheet.fps > 0 && +sheet.fps) || 10) * 1000,
-        };
+        if (!sheet || sheet.ax == null) return;
+        h.walk = { kind, start: now };
       };
       const prevH = heroList.find((h) => h.code === prev);
-      if (prevH) step(prevH, 'bw', { x: 0, y: 0 });
+      if (prevH) step(prevH, 'bw');
       const newH = heroList.find((h) => h.code === code);
-      if (newH) step(newH, 'fw', STEP);
+      if (newH) step(newH, 'fw');
       // bruitages officiels par classe (Cursor/intro/*.wav)
       if (prev) playHeroSfx(prev, 'des');
       playHeroSfx(code, 'sel');
@@ -337,7 +335,9 @@
     // prog = courbe de progression RÉELLE de la marche (racine par frame des
     // DC6 originaux — l'Assassine dart pendant sa roue, le Barbare avance en pas)
     const loadState = (o) => !o ? Promise.resolve(null) : loadImg(sheetURL(o.file))
-      .then((img) => img && { img, frames: o.frames | 0, w: o.w | 0, h: o.h | 0, fps: +o.fps > 0 ? +o.fps : 8, prog: Array.isArray(o.prog) ? o.prog : null });
+      .then((img) => img && { img, frames: o.frames | 0, w: o.w | 0, h: o.h | 0, fps: +o.fps > 0 ? +o.fps : 8,
+        ax: o.ax != null ? +o.ax : null, ay: o.ay != null ? +o.ay : null,
+        netx: +o.netx || 0, nety: +o.nety || 0 });
     const entries = [];
     for (const code of codes) {
       const e = sheetEntry(json, code);
@@ -429,24 +429,16 @@
       if (h.st !== a) { h.st = a; h.stStart = t; }
       let fi;
       if (h.walk) {
-        // FIX-MENU-ANIM : la POSITION suit le rythme de l'animation
-        // originale — courbe de racine par frame (prog) des DC6 du jeu :
-        // chaque classe traverse la distance à sa façon (l'Assassine dart
-        // pendant sa roue, le Barbare avance en pas réguliers) au lieu
-        // d'un glissement linéaire uniforme.
+        // FIX-MENU-ANIM : la planche alignée porte le trajet original
+        // (frames posées à leurs offsets DC6) — on joue les frames et on
+        // applique le déplacement net à la fin. Aucun glissement synthétique.
         const el = t - h.walk.start;
         fi = Math.min(Math.floor(el / 1000 * a.fps), a.frames - 1);
-        let q = Math.min(el / h.walk.dur, 1);
-        const pr = a.prog;
-        if (pr && pr.length === a.frames) {
-          const frac = Math.min(el / 1000 * a.fps - fi, 1);
-          const p0 = pr[fi], p1 = pr[Math.min(fi + 1, a.frames - 1)];
-          q = p0 + (p1 - p0) * frac;
+        if (el / 1000 * a.fps >= a.frames - 1) {
+          h.off.x = Math.min(Math.max(h.off.x + a.netx / 8, -8), 18);  // px -> % (800)
+          h.off.y = Math.min(Math.max(h.off.y + a.nety / 6, -6), 12);  // px -> % (600)
+          h.walk = null;
         }
-        q = Math.min(Math.max(q, 0), 1);
-        h.off.x = h.walk.from.x + (h.walk.to.x - h.walk.from.x) * q;
-        h.off.y = h.walk.from.y + (h.walk.to.y - h.walk.from.y) * q;
-        if (q >= 1) { const to = h.walk.to; h.walk = null; h.off = { ...to }; }
       } else if (sel && a === h.animSel) {
         // sélection : one-shot depuis 0, puis pose tenue
         fi = Math.min(Math.floor((t - h.stStart) / 1000 * a.fps), a.frames - 1);
@@ -457,7 +449,10 @@
       const { x, y } = stageXY({ x: h.pos.x + h.off.x, y: h.pos.y + h.off.y });
       const dw = a.w * SCALE, dh = a.h * SCALE;
       if (hovered || sel) drawHalo(x, y, sel);
-      sctx.drawImage(a.img, fi * a.w, 0, a.w, a.h, x - dw / 2, y - dh, dw, dh);
+      // marche : ancre originale de la planche (pieds frame 0 sur la position)
+      const wx = h.walk && a.ax != null ? x - a.ax * SCALE : x - dw / 2;
+      const wy = h.walk && a.ax != null ? y - a.ay * SCALE : y - dh;
+      sctx.drawImage(a.img, fi * a.w, 0, a.w, a.h, wx, wy, dw, dh);
       if (hovered) drawLabel(x, Math.max(22, y - dh - 12), heroName(h.def, h.code));
     }
   }
