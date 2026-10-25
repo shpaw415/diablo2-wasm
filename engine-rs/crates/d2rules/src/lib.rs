@@ -183,6 +183,20 @@ pub mod consumables;
 // --- Cube horadrim 11a (cubemain.txt v1.12 + transmutation, 2026-10-24) ---
 pub mod cube;
 
+// --- Runewords 17a (PLAN-FIDELITE phase 17, 2026-10-24) ---
+/// Runewords v1.12 : `patch_runes.txt` (169 recettes) → résolution socle
+/// sertie + runes insérées DANS L'ORDRE (règles retail documentées en tête
+/// de module, preuve réelle : Enigma du save Javazon, RWid 59) → nom +
+/// mods (ids ItemStatCost via `item_props`) + niveau requis. Pur,
+/// déterministe.
+pub mod runewords;
+
+/// Items fin de chaîne 17c (PLAN-FIDELITÉ) : crafted (recettes cubemain
+/// `usetype,crf` : mods fixes + 1-4 affixes au niveau héros), éthéré (jet
+/// 1/20, ÷2 durabilité, +50 % base, non réparable), charges d'usage
+/// (hook décrément + recharge vendeur), personnalisé + ear — cf. item_special.rs.
+pub mod item_special;
+
 /// Invocations 16b (PLAN-FIDÉLITÉ) : summons necro/druid, IA compagnon, corpse registry — cf. minions.rs.
 pub mod minions;
 
@@ -196,6 +210,9 @@ pub mod auras;
 
 // --- Comportements Assassine/Druide 16c (PLAN-FIDELITE phase 16, 2026-10-24) ---
 pub mod assassin_druid;
+
+// --- Socketing 17b (PLAN-FIDELITE phase 17, 2026-10-24) : gemmes/jewels/runes — cf. socketing.rs
+pub mod socketing;
 
 #[cfg(test)]
 mod tests;

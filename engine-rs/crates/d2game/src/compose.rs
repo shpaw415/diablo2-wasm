@@ -53,6 +53,9 @@ pub struct ComposeStats {
     pub out_of_bounds: usize,
     /// Wall-kind tiles routed to the overlay buffer (tall walls).
     pub tall: usize,
+    /// FIX-CAMPES : cellules réelles sans candidate `(type, style, seq)` —
+    /// 0 attendu sur la ville 1 (validé : 2337/2337 sols, 346/346 murs).
+    pub unresolved: usize,
 }
 
 pub struct ComposedMap {
@@ -76,6 +79,11 @@ pub struct ComposedMap {
     /// `grid_h * grid_w` booleans, row-major. `true` = walkable.
     pub walk: Vec<bool>,
     pub stats: ComposeStats,
+    /// FIX-CAMPES : point d'apparition du camp (sous-tuile), calculé depuis
+    /// le centroïde des tentes (kind 15) résolues du layout réel — l'ouverture
+    /// du jeu démarre DANS le camp des Rogues, pas au centre de la carte.
+    /// `None` = pas de layout réel (DRLG/DS1 historique).
+    pub camp_spawn: Option<(usize, usize)>,
 }
 
 impl ComposedMap {
@@ -407,6 +415,7 @@ pub fn compose_seeded(ds1: &Ds1, tilesets: &[Dt1Tile], seed: u64) -> ComposedMap
         grid_h,
         walk,
         stats,
+        camp_spawn: None,
     }
 }
 
@@ -496,6 +505,7 @@ mod tests {
             grid_h: 0,
             walk: vec![],
             stats: ComposeStats::default(),
+            camp_spawn: None,
         };
         let (sx, sy) = m.sub_to_screen(10.0, 20.0);
         assert_eq!(sx, (10.0 - 20.0) * 16.0 + 3280.0);
@@ -518,6 +528,7 @@ mod tests {
             grid_h: 0,
             walk: vec![],
             stats: ComposeStats::default(),
+            camp_spawn: None,
         };
         let (sx, sy) = m.sub_to_screen(5.0, 5.0); // sub-tile corner of cell (1,1)
         assert_eq!(sx, 3280.0);

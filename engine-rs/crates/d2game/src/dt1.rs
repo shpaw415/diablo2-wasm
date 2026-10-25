@@ -37,6 +37,22 @@ pub struct Dt1Tile {
     pub blocks: Vec<Dt1Block>,
 }
 
+/// Metadata of one DT1 record — the real v1.12 record `k` is read at
+/// base `276 + 96k` (the prototype's flat reader used `252 + 96k`, i.e.
+/// record `k-1`'s block pointers: pixels shifted by one tile, ghost tile 0,
+/// last tile never read). Validated on town_fence.dt1 tile 0:
+/// dir=1, type=1, style=0, seq=14.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Dt1Meta {
+    pub dir: i32,
+    /// Tile kind / orientation class — 0 = floor, 1..15 = wall kinds
+    /// (fences 1/2, warp door 10, fire/props 12, trees 14, tents 15…).
+    pub kind: i32,
+    pub style: i32,
+    pub seq: i32,
+    pub rfi: i32,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Dt1Error {
     /// Bytes shorter than the fixed header this format needs.
@@ -116,6 +132,57 @@ pub fn decode_dt1(d: &[u8]) -> Result<Vec<Dt1Tile>, Dt1Error> {
         tiles.push(Dt1Tile { is_floor, blocks });
     }
     Ok(tiles)
+}
+
+/// FIX-CAMPES : lecteur apparié « tuile k = record k » — les pointeurs de
+/// blocs de l'enregistrement `k` sont lus à `276 + 96k + {72,76,80}` (et non
+/// `252 + 96k + {0,4,8}`, qui tombent sur le record `k-1`). Retourne chaque
+/// tuile avec ses métadonnées `(dir, type, style, seq, rfi)` lues à
+/// `276 + 96k + {0,20,24,28,32}` — la règle d'appariement DS1→DT1 du jeu
+/// réel (`(type, style, seq)`, variation `prop % candidats`) en a besoin.
+pub fn decode_dt1_paired(d: &[u8]) -> Result<Vec<(Dt1Tile, Dt1Meta)>, Dt1Error> {
+    let v1 = read_i32(d, 0)?;
+    let v2 = read_i32(d, 4)?;
+    if v1 != 7 || v2 != 6 {
+        return Err(Dt1Error::BadVersion(v1, v2));
+    }
+    let nbtiles = read_i32(d, 268)?.max(0) as usize;
+    let mut out = Vec::with_capacity(nbtiles);
+    for k in 0..nbtiles {
+        let b = 276 + 96 * k;
+        let meta = Dt1Meta {
+            dir: read_i32(d, b)?,
+            kind: read_i32(d, b + 20)?,
+            style: read_i32(d, b + 24)?,
+            seq: read_i32(d, b + 28)?,
+            rfi: read_i32(d, b + 32)?,
+        };
+        let dataoff = read_i32(d, b + 72)? as usize;
+        let datalen = read_i32(d, b + 76)? as usize;
+        let nsub = read_i32(d, b + 80)?.max(0) as usize;
+        let is_floor = nsub == 25;
+        let mut blocks = Vec::with_capacity(nsub);
+        if datalen > 0 {
+            for j in 0..nsub {
+                let h = dataoff + 20 * j;
+                let a = read_i16(d, h)?;
+                let b2 = read_i16(d, h + 2)?;
+                let flags = read_u16(d, h + 8)?;
+                let ln = read_i32(d, h + 10)?.max(0) as usize;
+                let off = read_i32(d, h + 16)? as usize;
+                let start = dataoff + off;
+                let end = start + ln;
+                if end > d.len() {
+                    return Err(Dt1Error::Truncated);
+                }
+                let raw = &d[start..end];
+                let data = if is_floor { raw.to_vec() } else { decode_wall_block(raw) };
+                blocks.push(Dt1Block { a, b: b2, flags, data });
+            }
+        }
+        out.push((Dt1Tile { is_floor, blocks }, meta));
+    }
+    Ok(out)
 }
 
 #[cfg(test)]

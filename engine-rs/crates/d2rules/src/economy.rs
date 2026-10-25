@@ -174,6 +174,9 @@ pub enum EconError {
     BadSlot(usize),
     /// Rien à réparer (pièce pleine ou indestructible).
     NothingToRepair,
+    /// 17c : pièce ÉTHÉRÉE — JAMAIS réparable (D2 réel ; les recettes
+    /// cubemain de réparation L139-140 exigent `noe`).
+    EtherealNotRepairable,
 }
 
 /// ACHAT D2 : débit RÉEL de la bourse + réserve du vendeur créditée
@@ -279,6 +282,23 @@ pub fn repair(cost: u32, cur: u32, max: u32, hero_gold: u32) -> Result<Repair, E
         return Err(EconError::NotEnoughGold { need: price, have: hero_gold });
     }
     Ok(Repair { cost: price, durability: max })
+}
+
+/// 17c — refus du forgeron pour une pièce ÉTHÉRÉE : JAMAIS réparable
+/// (D2 réel ; les recettes cubemain de réparation L139-140 exigent `noe`,
+/// cohérent). Message fr prêt pour l'UI ; la RECHARGE des charges reste
+/// autorisée (`item_special::recharge`, sans garde).
+pub const MSG_ETHEREAL_NOT_REPAIRABLE: &str =
+    "Cet objet éthéré ne peut pas être réparé.";
+
+/// Garde de réparation : `Err(EtherealNotRepairable)` si `ethereal`,
+/// `Ok(())` sinon (chaîner ensuite avec [`repair`]).
+pub fn repair_ethereal_guard(ethereal: bool) -> Result<(), EconError> {
+    if ethereal {
+        Err(EconError::EtherealNotRepairable)
+    } else {
+        Ok(())
+    }
 }
 
 // --- Aides sur les pièces portées ([`EquipItem`], branchement 7c futur) ----
@@ -677,6 +697,20 @@ mod tests {
         assert_eq!(r, Repair { cost: 48, durability: 12 });
         assert_eq!(repair(64, 12, 12, 100), Err(EconError::NothingToRepair));
         assert_eq!(repair(64, 3, 12, 47), Err(EconError::NotEnoughGold { need: 48, have: 47 }));
+    }
+
+    // -- 17c : ÉTHÉRÉ non réparable (garde additive) -------------------------
+
+    /// Garde 17c : l'éthéré est REFUSÉ chez le forgeron (message fr prêt),
+    /// une pièce normale passe et se répare comme avant.
+    #[test]
+    fn ethereal_never_repairable_guard() {
+        assert_eq!(repair_ethereal_guard(true), Err(EconError::EtherealNotRepairable));
+        assert!(!MSG_ETHEREAL_NOT_REPAIRABLE.is_empty());
+        assert_eq!(repair_ethereal_guard(false), Ok(()));
+        // Chaînage : garde OK ⇒ réparation normale inchangée.
+        let guarded = repair_ethereal_guard(false).and_then(|_| repair(64, 3, 12, 100));
+        assert_eq!(guarded.unwrap().durability, 12);
     }
 
     // -- STASH 6×4 : grille partagée canFit ----------------------------------
