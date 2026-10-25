@@ -146,3 +146,23 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Georg
 #musicBtn{position:absolute;top:10px;right:12px;z-index:50;width:38px;height:34px;font-size:16px;
   background:rgba(10,6,2,.75);color:#e8c874;border:1px solid #6b5a2e;border-radius:4px;cursor:pointer}
 #musicBtn:hover{border-color:#c9a44a;color:#ffe9a0}
+
+/* ---------- écran partie en ligne (lobby, phase serveur) ---------- */
+#onlineHead{position:absolute;top:26px;left:0;right:0;text-align:center;font-size:30px;letter-spacing:4px;
+  color:#e8d5a3;text-shadow:2px 2px 0 #000,0 0 10px rgba(0,0,0,.8)}
+#onlineHome{position:absolute;top:150px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:26px}
+#onlineJoinRow{display:flex;gap:10px;align-items:center}
+#onlineCode{width:150px;height:35px;background:rgba(0,0,0,.8);border:1px solid #6b5a2e;color:#ffd873;
+  font:22px Georgia,serif;letter-spacing:6px;text-align:center;text-transform:uppercase;caret-color:#ffd873}
+#onlineCode:focus{outline:none;border-color:#c9a44a;box-shadow:0 0 10px rgba(201,164,74,.4)}
+#onlineErr{min-height:20px;font-size:13px;color:#e07050;text-shadow:1px 1px 0 #000}
+#onlineRoom{position:absolute;top:120px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:18px}
+#onlineCodeBig{font-size:38px;letter-spacing:10px;color:#ffd873;text-shadow:2px 2px 0 #000,0 0 14px rgba(255,140,20,.45)}
+#onlinePlayers{min-height:120px;min-width:320px;border:1px solid #6b5a2e;background:rgba(0,0,0,.55);
+  padding:12px 18px;font-size:15px;color:#cbbd8d;line-height:1.9}
+#onlinePlayers .host{color:#ffd873}
+#onlineBar{display:flex;gap:14px;align-items:center}
+#onlineHint{font-size:11px;color:#6a5f45;letter-spacing:1px}
+#onlineBack{position:absolute;left:0;right:0;bottom:58px;margin:0 auto;width:200px;height:31px}
+/* l'attribut hidden doit gagner sur les display:flex des conteneurs du salon */
+#onlineHome[hidden],#onlineRoom[hidden],#onlineErr[hidden],#onlineStart[hidden]{display:none}

@@ -16,6 +16,8 @@
 (function () {
   'use strict';
   const MENU = 'assets/menu/';
+  const BUST = 'v=' + Date.now(); // contrat en chantier multi-agents : jamais de cache
+  const mURL = (f) => MENU + f + (f.indexOf('?') < 0 ? '?' : '&') + BUST;
   const stage = document.getElementById('stage');
   const errlog = document.getElementById('errlog');
   window.addEventListener('error', (e) => { errlog.textContent += '[err] ' + e.message + '\n'; });
@@ -88,6 +90,7 @@
   function showSelect() { onTitle = false; onSlots = false; screenTitle.classList.remove('on'); screenSlots.classList.remove('on'); screenSelect.classList.add('on'); }
   function showTitle() { onTitle = true; onSlots = false; screenSelect.classList.remove('on'); screenSlots.classList.remove('on'); screenTitle.classList.add('on'); }
   function showSlots() { onTitle = false; onSlots = true; screenTitle.classList.remove('on'); screenSelect.classList.remove('on'); screenSlots.classList.add('on'); renderSlots(); }
+  window.D2Menu = { showTitle, showSelect }; // contrat online-ui.js (écran salon)
 
   // ---- dégradation des assets du titre ----
   // fond : si le png manque, le dégradé radial du #stage (CSS) prend le relais
@@ -291,6 +294,8 @@
     else localStorage.removeItem('d2heroName');
     const p = new URLSearchParams({ hero: selectedCode });
     if (nm) p.set('name', nm);
+    const oc = window.D2Online && D2Online.onlineParam();
+    if (oc) p.set('online', oc); // relaie le code salle à game.html (phase serveur)
     location.href = 'game.html?' + p.toString();
   }
 
@@ -303,8 +308,6 @@
     const e = json[code] || json[ALIAS[code]] || null;
     return (e && e.file && e.frames > 0 && e.w > 0 && e.h > 0) ? e : null;
   }
-  const BUST = 'v=' + Date.now(); // contrat en chantier multi-agents : jamais de cache
-  const mURL = (f) => MENU + f + (f.indexOf('?') < 0 ? '?' : '&') + BUST;
   function sheetURL(file) {
     // contrat : heroes/<CODE>.png — un file contenant déjà un chemin est respecté
     const base = file.indexOf('/') >= 0 ? MENU + file : MENU + 'heroes/' + file;
@@ -567,6 +570,7 @@
       if (action === 'solo') showSelect();
       else if (action === 'continue') location.href = 'game.html?continue=1';
       else if (action === 'slots') showSlots();
+      else if (action === 'online' && window.D2Online) D2Online.show();
       else if (action === 'github') open('https://github.com/shpaw415/diablo2-wasm', '_blank');
       else if (action === 'quit') window.close();
     });
@@ -692,6 +696,10 @@
     if (onSlots) {
       if (e.key === 'Escape') { showTitle(); clickSfx(); }
       return; // saisie/clavier des slots gérés localement (inputs)
+    }
+    if (window.D2Online && D2Online.isActive()) {
+      if (e.key === 'Escape') { D2Online.leaveAndClose(); clickSfx(); }
+      return; // clavier de l'écran salon géré par online-ui.js
     }
     if (onTitle) {
       if (e.key === 'Enter') { showSelect(); clickSfx(); }

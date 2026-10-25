@@ -1,0 +1,58 @@
+{
+  "AM": {
+    "file": "AM.png",
+    "frames": 8,
+    "w": 84,
+    "h": 270,
+    "fps": 12.5
+  },
+  "AS": {
+    "file": "AS.png",
+    "frames": 8,
+    "w": 99,
+    "h": 225,
+    "fps": 12.5
+  },
+  "BA": {
+    "file": "BA.png",
+    "frames": 8,
+    "w": 159,
+    "h": 231,
+    "fps": 9.375
+  },
+  "DZ": {
+    "file": "DZ.png",
+    "frames": 6,
+    "w": 126,
+    "h": 228,
+    "fps": 11.71875
+  },
+  "NE": {
+    "file": "NE.png",
+    "frames": 8,
+    "w": 117,
+    "h": 216,
+    "fps": 12.5
+  },
+  "PA": {
+    "file": "PA.png",
+    "frames": 8,
+    "w": 108,
+    "h": 222,
+    "fps": 12.5
+  },
+  "SO": {
+    "file": "SO.png",
+    "frames": 8,
+    "w": 171,
+    "h": 228,
+    "fps": 12.5
+  },
+  "fire": {
+    "file": "../fire-sheet.png",
+    "frames": 30,
+    "w": 180,
+    "h": 140,
+    "fps": 15
+  }
+}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- _preview.html — test de rendu local des sheets héros du menu (HERO-SHEETS).
+     Anime les 7 classes côte à côte + le feu de camp, d'après heroes.json.
+     Servez le dossier (python3 -m http.server) — repli JSON intégré pour file://.
+     Généré par tools/heroes_sheets.py — ne pas éditer à la main. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>heroes sheets — test</title>
+<style>
+  body { margin: 0; background: #0b0d16; color: #d8cf9f; font: 13px/1.4 serif;
+         display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; }
+  .cell { background: radial-gradient(ellipse at 50% 90%, #1d2233, #0b0d16 75%);
+          border: 1px solid #2a2c3c; padding: 6px 8px; text-align: center; }
+  .cell b { display: block; margin-bottom: 4px; letter-spacing: 2px; }
+  canvas { image-rendering: pixelated; display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<script>
+(function () {
+  'use strict';
+  var EMBED = {"AM":{"file":"AM.png","frames":8,"w":84,"h":270,"fps":12.5},
+    "AS":{"file":"AS.png","frames":8,"w":99,"h":225,"fps":12.5},
+    "BA":{"file":"BA.png","frames":8,"w":159,"h":231,"fps":9.375},
+    "DZ":{"file":"DZ.png","frames":6,"w":126,"h":228,"fps":11.71875},
+    "NE":{"file":"NE.png","frames":8,"w":117,"h":216,"fps":12.5},
+    "PA":{"file":"PA.png","frames":8,"w":108,"h":222,"fps":12.5},
+    "SO":{"file":"SO.png","frames":8,"w":171,"h":228,"fps":12.5},
+    "fire":{"file":"../fire-sheet.png","frames":30,"w":180,"h":140,"fps":15}};
+
+  function add(key, def) {
+    var div = document.createElement('div');
+    div.className = 'cell';
+    div.innerHTML = '<b>' + key + '</b>';
+    var cv = document.createElement('canvas');
+    cv.width = def.w; cv.height = def.h;
+    div.appendChild(cv);
+    var cap = document.createElement('span');
+    cap.textContent = def.frames + ' f — ' + def.fps + ' fps';
+    div.appendChild(cap);
+    document.body.appendChild(div);
+    var ctx = cv.getContext('2d');
+    var sheet = new Image();
+    sheet.onload = function () {
+      var f = 0;
+      setInterval(function () {
+        f = (f + 1) % def.frames;
+        ctx.clearRect(0, 0, def.w, def.h);
+        ctx.drawImage(sheet, f * def.w, 0, def.w, def.h, 0, 0, def.w, def.h);
+      }, Math.round(1000 / def.fps));
+    };
+    sheet.src = def.file;
+  }
+
+  fetch('heroes.json').then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).catch(function () { return EMBED; /* file:// */ }).then(function (idx) {
+    Object.keys(idx).forEach(function (k) { add(k, idx[k]); });
+  });
+})();
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Diablo II — Lord of Destruction</title>
-<link rel="stylesheet" href="menu.css?v=20261025c">
+<link rel="stylesheet" href="menu.css?v=20261025d">
 </head>
 <body>
 <div id="stage">
@@ -23,6 +23,7 @@
       <button class="dbtn" data-action="solo"><span>Solo</span></button>
       <button class="dbtn" data-action="continue" id="btnContinue"><span>Continuer</span></button>
       <button class="dbtn" data-action="slots"><span>Parties</span></button>
+      <button class="dbtn" data-action="online"><span>Partie en ligne</span></button>
       <button class="dbtn" data-action="github"><span>Projet GitHub</span></button>
       <button class="dbtn" data-action="quit"><span>Quitter</span></button>
     </nav>
@@ -75,11 +76,38 @@
     <div id="selectHint">Clic ou ←/→/↑/↓ : choisir &nbsp;·&nbsp; Entrée : jouer &nbsp;·&nbsp; Échap : retour</div>
   </section>
 
+  <!-- ============ Écran 5 : partie en ligne (lobby, phase serveur) ============
+       Créer/rejoindre une salle (code 5 caractères), présence par polling 2 s,
+       lancement hôte → sélection de héros → Jouer relaie ?online=CODE.
+       Logique dans online-ui.js (contrat window.D2Online / window.D2Menu). -->
+  <section id="screenOnline" class="screen">
+    <div id="onlineHead">Partie en ligne</div>
+    <div id="onlineHome">
+      <button id="onlineCreate" class="dbtn"><span>Créer une salle</span></button>
+      <div id="onlineJoinRow">
+        <input id="onlineCode" maxlength="5" placeholder="CODE" autocomplete="off" spellcheck="false">
+        <button id="onlineJoin" class="dbtn small"><span>Rejoindre</span></button>
+      </div>
+      <div id="onlineErr" hidden></div>
+    </div>
+    <div id="onlineRoom" hidden>
+      <div id="onlineCodeBig">SALLE ·····</div>
+      <div id="onlinePlayers"></div>
+      <div id="onlineBar">
+        <button id="onlineStart" class="dbtn" hidden><span>Lancer la partie</span></button>
+        <button id="onlineLeave" class="dbtn small"><span>Quitter la salle</span></button>
+      </div>
+      <div id="onlineHint">Partagez le code — les joueurs rejoignent depuis leur navigateur.</div>
+    </div>
+    <button id="onlineBack" class="dbtn small"><span>Retour</span></button>
+  </section>
+
   <div id="version">version 1.12</div>
   <div id="copyright">portage non officiel — données © Blizzard Entertainment</div>
   <div id="errlog"></div>
 </div>
 <script src="slots.js"></script>
-<script src="menu.js?v=20261025c"></script>
+<script src="online-ui.js"></script>
+<script src="menu.js?v=20261025d"></script>
 </body>
 </html>

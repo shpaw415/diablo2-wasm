@@ -243,6 +243,10 @@ mod lvl {
     pub const A3_SEWERS_2: u32 = 93;
     pub const RUINED_TEMPLE: u32 = 94;
     pub const DURANCE_3: u32 = 102;
+    /// Catacombes 4 (repaire d'Andariel, a1q6 — `patch_levels.txt:39`
+    /// « Act 1 - Catacombs 4 ») — repère du record [`super::ANDARIEL`]
+    /// (étape 21a, GAPS 6).
+    pub const CATACOMBS_4: u32 = 37;
 }
 
 /// Villageois de Lut Gholein acceptés pour a2q3 étape 3 (« Parler avec les
@@ -1007,6 +1011,54 @@ pub fn boss_stats(id_or_code: &str) -> Option<BossStats> {
         res,
     };
     Some(BossStats { rec: *rec, level, hp, ac, exp, res, rule })
+}
+
+/// Andariel (a1q6, acte I — GAPS 6 fermé étape 21a) : record statique dans
+/// la MÊME convention [`BossRec`]. Valeurs citées des tables v1.12 :
+/// `patch_monstats.txt:158` (Id `andariel`, Code `AN`, TC1 « Andariel »),
+/// repaire = Catacombes 4 ([`lvl::CATACOMBS_4`], `patch_levels.txt:39`),
+/// slot porteur = a1q6 (5ᵉ slot du journal acte I, `ACT1_QUEST_IDS[5]` —
+/// informatif : Andariel n'est PAS dans `BOSSES_ACTS23`, le golden de scope
+/// `boss_stats("andariel") == None` reste vrai).
+pub const ANDARIEL: BossRec = BossRec {
+    id: "andariel",
+    code: "AN",
+    name: "Andariel",
+    tc: "Andariel",
+    lair: lvl::CATACOMBS_4,
+    quest_slot: 5,
+};
+
+/// Stats RÉELLES d'Andariel (GAPS 6 fermé étape 21a) — MÊME convention que
+/// [`boss_stats`] : record `patch_monstats.txt` lu RUNTIME (Level 12 N,
+/// HP 2562, AC 84, Exp 916, TC « Andariel », résists Normal
+/// `[0,0,-50,50,50,80]` — vides = 0) × ligne `MonLvl.txt` (N) 12 (AC 72,
+/// TH 111, HP 40 %, DM 8 %, XP 140 %) → [`crate::SpawnRule`] de rang
+/// SuperUnique — branchement superuniques : la règle consommable par
+/// [`crate::World::spawn_monster_rule`] porte la TC dédiée, et le drop
+/// passe par le même chemin que les superuniques (`World::roll_drop`
+/// compose la variante retail « Andariel (H) », présente dans
+/// TreasureClassEx.txt:673). `None` : table absente/inattendue. Le spawn
+/// acte I LIVE reste data-driven d2game (manifest `bosses[]`) — cette API
+/// lui donne la source d2rules (golden vs tables : `fidelity_gaps`).
+pub fn andariel_stats() -> Option<BossStats> {
+    let rec = ANDARIEL;
+    let (level, hp, ac, exp, tc, res) = monstats_boss(rec.id)?;
+    if level == 0 || hp == 0 {
+        return None; // table inattendue : pas de règle fantaisiste
+    }
+    let (ml_ac, ml_th, ml_hp, ml_dm, ml_xp) = monlvl_row(level)?;
+    let rule = crate::SpawnRule {
+        kind: crate::MonKind::SuperUnique,
+        hp_pct: ml_hp,
+        dmg_pct: ml_dm,
+        th_pct: ml_th,
+        xp_pct: ml_xp,
+        ac: ml_ac,
+        treasure_class: if tc.is_empty() { Some(rec.tc.to_string()) } else { Some(tc.clone()) },
+        res,
+    };
+    Some(BossStats { rec, level, hp, ac, exp, res, rule })
 }
 
 /// Boss scripté dont l'étape COURANTE (ou d'activation) du journal réagit à

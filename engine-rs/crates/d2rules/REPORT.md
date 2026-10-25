@@ -262,3 +262,53 @@ golden récompenses citées (SP 1+1+2=4, stats 5, vie 20, rés 10, cap 2.5M) ·
 gate 20/40/60 journal + World (19/39/59 bloqués, 20/40/60 passent) · chaîne 3
 difficultés (+10/+20/+30 résists) · save rétro-compatible (champ absent → 0,
 round trip +10, gate jamais sérialisée).
+
+## Étape 21a — Divers fidélité : 3 gaps 13a fermés (2026-10-25, arbre d2w-audit)
+
+Fichiers : `src/fidelity_gaps.rs` (NOUVEAU — doc des écarts + 4 tests) ·
+`src/quests_actes2.rs` (additif : `ANDARIEL` + `andariel_stats()` + const
+`lvl::CATACOMBS_4`) · `src/lib.rs` (1 ligne : `pub mod fidelity_gaps;`) ·
+en-tête GAPS `tests/progression_golden.rs` (6/7/8 → fermés, doc seule).
+
+### GAPS 7 — « Fangskin (H) », trou de la TABLE retail (écart source, pas port)
+`superuniques.txt:14` (col `TC(H)`) référence « Fangskin (H) », ABSENT de
+TreasureClassEx v1.12 (aucune rangée « Fangskin » du tout ; golden 13a
+`holes == ["Fangskin (H)"]`). La garde `has_tc` de `World::roll_drop` est
+documentée dans `fidelity_gaps.rs` (écart source — Blizzard a oublié la
+rangée, on n'invente PAS la donnée) et PROUVÉE bout en bout : le nom troué
+fourni directement au drop ⇒ repli MVP seul ({gld, hp1} sur 40 seeds, pas de
+panic) ; le chemin VIVANT (base « Act 2 Super B » → variante composée
+« Act 2 (H) Super B », TCE:771) dropne de vrais objets — le trou n'est
+jamais atteint.
+
+### GAPS 6 — Andariel : API stats d2rules
+`quests_actes2::andariel_stats()` — MÊME convention que `boss_stats` :
+`patch_monstats.txt:158` runtime (Level 12 N, HP 2562, AC 84, Exp 916,
+TC « Andariel », res [0,0,-50,50,50,80]) × `MonLvl.txt` ligne 12 (N)
+(AC 72, TH 111, HP 40 %, DM 8 %, XP 140 %) → `SpawnRule` rang SuperUnique
+(branchement superuniques : TC dédiée → variante retail au drop, comme les
+autres boss nommés). Record statique `ANDARIEL` (code `AN`, repaire
+Catacombes 4 id 37 `patch_levels.txt:39`, slot porteur a1q6). Scope
+conservé : `boss_stats("andariel")` reste `None` (golden 13a inchangé).
+Consommation prouvée : `spawn_monster_rule("AN", …, rule)` → 2562 × 40 %
+= 1024 PV effectifs, AC 72. Le spawn acte I live reste d2game (manifest
+`bosses[]`), qui dispose maintenant de la source d2rules.
+
+### GAPS 8 — commentaires MonLvl 25/26 (quests_actes2/finale)
+Constat 13a (« 98/521 », DM 18) : dans CET arbre les commentaires portent
+déjà les vraies valeurs (re-vérifié ligne à ligne contre `MonLvl.txt` :
+ligne 22 = 84, ligne 26 = 106/DM 17, ligne 25 = 150/254/100/16/470) — la
+correction datait de la re-vérification tables du 2026-10-24, le GAPS
+n'était pas à jour. Verrou non-régression `fidelity_gaps::
+monlvl_25_26_comment_claims` : les valeurs COMMENTÉES doivent rester celles
+que sortent `boss_stats` (Duriel 84/14, 132/221 ; Mephisto 106/17, 156/265)
+et `finale_stats` (Hephasto 25 : 100/16, 150/254, XP 470) — un commentaire
+qui re-mente rend son test rouge.
+
+### Tests (+4 → workspace 1025 passed / 0 failed / 1 ignoré, avec la 21b parallèle)
+`fangskin_hole_guarded_no_panic_fallback` · `fangskin_live_path_drops_real_chain` ·
+`andariel_stats_golden_real_tables` · `monlvl_25_26_comment_claims` (tous dans
+`src/fidelity_gaps.rs`). Aucun endpoint wasm changé → pas de rebuild pkg.
+Note arbre : la passe 21b parallèle a posé un stub `fidelity_gaps.rs` le
+2026-10-25 (compilation restaurée pendant l'écriture 21a) — remplacé par ce
+corps complet, contrats inchangés.

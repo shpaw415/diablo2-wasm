@@ -4328,6 +4328,21 @@
     "missingLayers": []
    },
    "note": "planches 110/124"
+  },
+  {
+   "code": "HELLBOVINE",
+   "name": "Hell Bovine",
+   "note": "20b : gabarit moteur minimal (sprite DCC bovine non extrait — entite sans rendu) ; stats retail approximees (MonLvl 28)",
+   "stats": {
+    "level": 28,
+    "hpMin": 96,
+    "hp": 144,
+    "dmgMin": 46,
+    "dmgMax": 74,
+    "exp": 220,
+    "speed": 4,
+    "treasureClass": ""
+   }
   }
  ],
  "level": {
@@ -4694,6 +4709,77 @@
      190
     ],
     "note": "retour vers les Cavernes de cristal ; arrivée au sol central (cellule 38,38 marchable dans les 4 variantes)"
+   }
+  },
+  "tristram": {
+   "name": "Tristram",
+   "nameDisplay": "Tristram (zone spéciale)",
+   "levelsId": 38,
+   "ds1": "assets/map/tristram-engine.ds1",
+   "dt1": [
+    "assets/map/warp.dt1",
+    "assets/map/out_objects.dt1",
+    "assets/map/out_river.dt1",
+    "assets/map/out_stonewall.dt1",
+    "assets/map/floor.dt1",
+    "assets/map/tristram_town.dt1",
+    "assets/map/out_treegroups.dt1"
+   ],
+   "palette": "assets/map/pal_act1_pl2.dat",
+   "monsters": [
+    "SK",
+    "GM",
+    "FS"
+   ],
+   "warp": {
+    "to": "bloodmoor",
+    "at": [
+     172,
+     82
+    ],
+    "r": 4,
+    "entry": [
+     160,
+     160
+    ],
+    "note": "tuile porte-warp du DS1 réel (cellule 34,16) — retour Lande sanglante, ancre Cairn Stones"
+   },
+   "generated": {
+    "step": "20b",
+    "note": "DS1 réel v1.12 (tri_town4.ds1, d2exp.mpq, md5_8 62162f44) projeté (2,2)->(2,1) — pipeline ds1_real/compose_real_town ; tristram-engine.ds1 = octets projetés (test d'or drlg_special.rs)"
+   }
+  },
+  "moomoofarm": {
+   "name": "Moo Moo Farm",
+   "nameDisplay": "La Ferme des vaches (secrète)",
+   "levelsId": 39,
+   "ds1": "assets/map/moomoofarm-engine.ds1",
+   "dt1": [
+    "assets/map/out_treegroups.dt1",
+    "assets/map/out_stonewall.dt1",
+    "assets/map/floor.dt1",
+    "assets/map/out_stones.dt1",
+    "assets/map/town_fence.dt1",
+    "assets/map/warp.dt1"
+   ],
+   "palette": "assets/map/pal_act1_pl2.dat",
+   "monsters": [
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE",
+    "HELLBOVINE"
+   ],
+   "generated": {
+    "step": "20b",
+    "note": "canevas généré (niveau 39 DrlgType 3, 80x80, RNG retail D2Seed) : 4 enclos clôturés + porte-warp (portail rouge) ; chaîne d'ouverture = cube L4 (leg + tbk -> Cow Portal) -> GameCore::open_portal_from_transmute"
    }
   }
  },

@@ -217,6 +217,10 @@ pub mod assassin_druid;
 // --- Socketing 17b (PLAN-FIDELITE phase 17, 2026-10-24) : gemmes/jewels/runes — cf. socketing.rs
 pub mod socketing;
 
+// --- Divers fidélité 21a (PLAN-FIDELITE phase 21, 2026-10-25) : gardes/gaps
+//     Fangskin (H) + Andariel + MonLvl 25/26 — cf. fidelity_gaps.rs
+pub mod fidelity_gaps;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

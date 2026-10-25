@@ -59,6 +59,9 @@
 //! | `bloodyfoothills` (110) | 30 « Act 5 - Siege » → `5 Siege` | 42 % — les sols ground/rockclifffloor (styles 0-1) n'ont pas de records | `fallback` |
 //! | `crystalline` (113) | 33 « Act 5 - Ice Caves » → `5 Ice` (ALIAS, cf. [`group_alias`]) | 95 % — les Cel1-4 mappent proprement | `automap` |
 //! | `hallsvaught` (124) | 32 « Act 5 - Temple » → `5 Temple` | 34 % — interior.dt1 porte les styles 0-24, la table n'en couvre que 7 | `fallback` |
+//! | `tombf1` (55) | 17 « Act 2 - Tomb » → `2 Tomb` | banque 72 % (sonde 21b) — sols tomb/columns et murs walls couverts | `automap` |
+//! | `ancienttunnels` (65) | 13 « Act 2 - Sewer » → `2 Sewer` | banque 67 % (sonde 21b) | `automap` |
+//! | `arcane` (74) | 19 « Act 2 - Arcane » → `2 Arcane` | banque 74 % (sonde 21b) | `automap` |
 //! (Références LECTURE SEULE : `d2w-re/tables/monde/AutoMap.txt` 3 287
 //! records, DT1 `assets/map` — même chaîne d'extraction que le port.)
 //!
@@ -66,15 +69,46 @@
 //! ```json
 //! {"level":"town","name":"Camp des Rousses","mode":"automap","act":1,
 //!  "lvlType":"Town","coverage":0.73,"cellW":57,"cellH":41,"sub":5,
-//!  "cells":[[0,0,1,0],[3,1,3,-1],…]}
+//!  "cells":[[0,0,1,0,0],[3,1,3,-1,-1],…],
+//!  "glyphs":[[[64,0,80,0],[80,0,80,8],…],…]}
 //! ```
-//! `cells` : `[x, y, flags, cel]` par cellule VISIBLE ; `flags` bit0=walk,
-//! bit1=wall, bit2=special (cellule rare L2/L5 — pierres, warp) ; `cel` =
-//! première valeur active `Cel1..4` du record AutoMap (frame `MaxiMap`),
-//! `-1` sans match (→ diamant générique / polygone marchable côté démo).
+//! `cells` : `[x, y, flags, cel, glyph]` par cellule VISIBLE ; `flags`
+//! bit0=walk, bit1=wall, bit2=special (cellule rare L2/L5 — pierres, warp) ;
+//! `cel` = première valeur active `Cel1..4` du record AutoMap (frame
+//! `MaxiMap`), `-1` sans match (→ diamant générique / polygone marchable
+//! côté démo) ; `glyph` = index dans `glyphs` ( traits précis, cf. § 21b),
+//! `-1` sans glyphe (mode fallback, masque vide, ou `cel < 0`).
 //! `act` = acte résolu (préfixe du nom LvlTypes, repli colonne `Act`) ;
 //! `coverage` = fraction des cellules visibles portant un `cel` ≥ 0
 //! (arrondie au centième — le juge du mode, cf. [`AUTOMAP_MIN_COVERAGE`]).
+//!
+//! # 21b — traits précis : les Cels mappés aux polygones DT1 réels
+//! En mode `automap`, chaque cellule dont le `cel` est résolu porte aussi
+//! son GLYPHE : le contour EXACT de l'empreinte de la tuile DT1 composée,
+//! dérivé des coordonnées réelles des blocs placés (`Dt1Block.a/b` et la
+//! taille décodée `data.len()` — mêmes bytes que peint le composeur), et
+//! non plus un rectangle générique :
+//!
+//! * espace local = canevas tuile 160×80 px, découpé en 10×10 sous-tuiles
+//!   de 16×8 px (la grille 16×8 du moteur, cf. `compose::block_region`) —
+//!   un sol plein donne le losange iso exact (mesuré sur
+//!   `act2_tomb_tomb.dt1` : rangées 0..8, largeurs 2/4/6/8/10/8/6/4/2) ;
+//! * **sol** (`is_floor`) : tous les blocs, tels quels (b ≥ 0) ;
+//! * **mur** : les blocs de la RANGÉE DE BASE uniquement (`b == max_b`,
+//!   mesuré : toujours -32 px sur fences/stonewalls/sewer/fort — la face
+//!   entière est suspendue AU-DESSUS du canevas), remontés de `|max_b|`
+//!   pour ancrer la ligne de base au sommet du losange de cellule — le
+//!   trait suit l'assise réelle du mur, x compris (fence gauche ≠ droite) ;
+//! * dédupliqués par masque (tous les sols pleins partagent UN glyphe) ;
+//!   segments axis-aligned fermés, coordonnées multiples de 8/16.
+//!
+//! Le JS (`demo/automap.js`) trace ces segments dans le repère iso de la
+//! mini-carte (échelle uniforme `s/160`) — traits exacts là où le fallback
+//! dessinait une grille. Le mapping `cel → glyphe` est par cellule : deux
+//! tuiles de même `(style, seq)` AutoMap (même `cel`) mais d'empreintes
+//! différentes portent chacune leur trait réel.
+//!
+//! # Couverture mesurée par niveau (missions 13b puis 21b)
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -261,6 +295,78 @@ fn i32_at(d: &[u8], at: usize) -> Result<i32, crate::dt1::Dt1Error> {
 }
 
 // ---------------------------------------------------------------------------
+// 21b — glyphes : empreintes réelles des tuiles DT1 (traits de mini-carte)
+// ---------------------------------------------------------------------------
+
+/// Le canevas local d'une tuile vue de dessus : 10×10 sous-tuiles de 16×8
+/// px (les mêmes unités 16×8 que la grille de collision du composeur) — un
+/// sol plein couvre le losange iso 160×80 (mesuré : rangées de largeurs
+/// 2/4/6/8/10/8/6/4/2 sur `act2_tomb_tomb.dt1`).
+pub const GLYPH_SUB: i32 = 10;
+
+/// Un trait de glyphe : segment `[x1, y1, x2, y2]` en pixels du canevas
+/// local 160×80 (bords de sous-tuiles — multiples de 16 en x, de 8 en y).
+pub type GlyphSeg = [i32; 4];
+
+/// Empreinte d'une tuile sur la grille [`GLYPH_SUB`]² — bit `r*10+c` = la
+/// sous-tuile `(col c, rangée r)` est couverte. Règle 21b (cf. en-tête) :
+/// * sol : tous les blocs, tels quels (`b ≥ 0`, hauteur = `data.len()/32`
+///   px — 8 pour les 32×8 du sol) ;
+/// * mur : RANGÉE DE BASE uniquement (`b == max_b`, mesuré -32 px sur les
+///   murs réels), remontée de `|max_b|` pour ancrer l'assise au sommet du
+///   losange — la face entière est suspendue au-dessus du canevas.
+/// `0` pour une tuile sans blocs (fantôme).
+pub fn tile_footprint(tile: &crate::dt1::Dt1Tile) -> u128 {
+    let mut m: u128 = 0;
+    let Some(max_b) = tile.blocks.iter().map(|b| b.b as i32).max() else { return 0 };
+    let dy = -max_b.min(0); // murs : la rangée de base remonte à y ≥ 0
+    for b in &tile.blocks {
+        if !tile.is_floor && b.b as i32 != max_b {
+            continue; // mur : la rangée de base seule (trait d'assise)
+        }
+        let (x, y, h) = (b.a as i32, b.b as i32 + dy, b.data.len() as i32 / 32);
+        for r in 0..GLYPH_SUB {
+            let ry = r * 8;
+            if y >= ry + 8 || y + h <= ry {
+                continue;
+            }
+            for c in 0..GLYPH_SUB {
+                let rx = c * 16;
+                if x < rx + 16 && x + 32 > rx {
+                    m |= 1u128 << (r * GLYPH_SUB + c);
+                }
+            }
+        }
+    }
+    m
+}
+
+/// Le contour d'un masque : pour chaque sous-tuile couverte, chaque bord
+/// non partagé avec une voisine couverte → un segment axis-aligned (ordre
+/// déterministe : haut, bas, gauche, droite ; les contours de masques
+/// connexes se referment, les trous sont tracés aussi — pas de casse).
+pub fn mask_segments(m: u128) -> Vec<GlyphSeg> {
+    let at = |r: i32, c: i32| -> bool {
+        r >= 0 && c >= 0 && r < GLYPH_SUB && c < GLYPH_SUB
+            && m & (1u128 << (r * GLYPH_SUB + c)) != 0
+    };
+    let mut segs = Vec::new();
+    for r in 0..GLYPH_SUB {
+        for c in 0..GLYPH_SUB {
+            if !at(r, c) {
+                continue;
+            }
+            let (x, y) = (c * 16, r * 8);
+            if !at(r - 1, c) { segs.push([x, y, x + 16, y]); }
+            if !at(r + 1, c) { segs.push([x + 16, y + 8, x, y + 8]); }
+            if !at(r, c - 1) { segs.push([x, y + 8, x, y]); }
+            if !at(r, c + 1) { segs.push([x + 16, y, x + 16, y + 8]); }
+        }
+    }
+    segs
+}
+
+// ---------------------------------------------------------------------------
 // Cache par niveau + construction
 // ---------------------------------------------------------------------------
 
@@ -279,6 +385,9 @@ pub struct AutomapCell {
     /// Frame `MaxiMap` résolue (première `Cel1..4` active du record), `-1`
     /// sans match / en fallback.
     pub cel: i32,
+    /// Index du glyphe (traits précis) dans [`LevelAutomap::glyphs`], `-1`
+    /// sans glyphe : mode fallback, `cel < 0`, ou empreinte vide.
+    pub glyph: i32,
 }
 
 /// Le cache AutoMap du niveau courant — construit au `load_level`, sérialisé
@@ -299,6 +408,9 @@ pub struct LevelAutomap {
     pub cell_w: u32,
     pub cell_h: u32,
     pub cells: Vec<AutomapCell>,
+    /// Glyphes dédupliqués (contours d'empreintes réelles, § 21b) — vide
+    /// en mode `fallback` (le JSON n'expose les traits qu'en `automap`).
+    pub glyphs: Vec<Vec<GlyphSeg>>,
 }
 
 /// Préfixe LvlTypes `Act N - Town` → `Town` (format réel des noms de la
@@ -396,6 +508,10 @@ impl LevelAutomap {
         };
 
         let mut cells = Vec::new();
+        // Dédup des glyphes par masque d'empreinte (tous les sols pleins
+        // partagent le même losange) — index stable d'insertion.
+        let mut glyph_ids: HashMap<u128, i32> = HashMap::new();
+        let mut glyphs: Vec<Vec<GlyphSeg>> = Vec::new();
         for cy in 0..ds1.h {
             for cx in 0..ds1.w {
                 // sol prioritaire (L4 puis rues puis rares), mur sur toute couche
@@ -436,6 +552,21 @@ impl LevelAutomap {
                     .and_then(|g| match_record(g, style, sequence))
                     .map(first_active_cel)
                     .unwrap_or(-1);
+                // Glyphe 21b : empreinte réelle de la tuile composée, UNIQUMENT
+                // pour les cellules dont le Cel AutoMap est résolu (les non
+                // mappées restent au diamant générique, documenté). La variation
+                // seedée du composeur ne change pas l'empreinte : ses candidats
+                // partagent la signature de flags (et donc le placement 16×8).
+                let mut glyph = -1;
+                if cel >= 0 {
+                    let fp = tile_footprint(&tilesets[kind_idx]);
+                    if fp != 0 {
+                        glyph = *glyph_ids.entry(fp).or_insert_with(|| {
+                            glyphs.push(mask_segments(fp));
+                            (glyphs.len() - 1) as i32
+                        });
+                    }
+                }
                 let (sx, sy) = (cx * SUB + 2, cy * SUB + 2);
                 cells.push(AutomapCell {
                     x: cx as u32,
@@ -444,6 +575,7 @@ impl LevelAutomap {
                     wall: dominant,
                     special,
                     cel,
+                    glyph,
                 });
             }
         }
@@ -461,6 +593,15 @@ impl LevelAutomap {
         } else {
             "fallback"
         };
+        // Le JSON n'expose les traits qu'en mode `automap` (les niveaux en
+        // fallback gardent le polygone marchable, raison documentée par
+        // niveau — § 13b/21b de l'en-tête).
+        if mode != "automap" {
+            glyphs.clear();
+            for c in &mut cells {
+                c.glyph = -1;
+            }
+        }
         LevelAutomap {
             level_key: level_key.to_string(),
             act,
@@ -470,6 +611,7 @@ impl LevelAutomap {
             cell_w: ds1.w as u32,
             cell_h: ds1.h as u32,
             cells,
+            glyphs,
         }
     }
 }
@@ -493,8 +635,13 @@ impl crate::game::GameCore {
             .iter()
             .map(|c| {
                 let flags = (c.walk as i64) | ((c.wall as i64) << 1) | ((c.special as i64) << 2);
-                json!([c.x, c.y, flags, c.cel])
+                json!([c.x, c.y, flags, c.cel, c.glyph])
             })
+            .collect();
+        let glyphs: Vec<Value> = a
+            .glyphs
+            .iter()
+            .map(|g| json!(g.iter().map(|s| json!(s)).collect::<Vec<_>>()))
             .collect();
         json!({
             "level": a.level_key,
@@ -507,6 +654,7 @@ impl crate::game::GameCore {
             "cellH": a.cell_h,
             "sub": SUB as u32,
             "cells": cells,
+            "glyphs": glyphs,
         })
         .to_string()
     }
@@ -714,5 +862,129 @@ mod tests {
         assert!(crystalline >= 0.90, "glaces propres : {crystalline:.2} ≥ 0,90");
         let vaught = cov(crate::drlg_a45::HALLS_VAUGHT);
         assert!(vaught < 0.60, "interior styles 0-24 mal couverts : {vaught:.2}");
+    }
+
+    // --- 21b : glyphes — empreintes réelles des tuiles DT1 ------------------
+
+    use crate::dt1::{Dt1Block, Dt1Tile};
+
+    /// Sol synthétique : 25 blocs 32×8 au placement réel du losange iso
+    /// (mesuré sur `act2_tomb_tomb.dt1` tuile 0 — les 25 positions 16×8).
+    fn full_floor() -> Dt1Tile {
+        let pos: &[(i16, i16)] = &[
+            (64, 64), (48, 56), (80, 56), (32, 48), (64, 48), (96, 48),
+            (16, 40), (48, 40), (80, 40), (112, 40), (0, 32), (32, 32),
+            (64, 32), (96, 32), (128, 32), (16, 24), (48, 24), (80, 24),
+            (112, 24), (32, 16), (64, 16), (96, 16), (48, 8), (80, 8), (64, 0),
+        ];
+        Dt1Tile {
+            is_floor: true,
+            blocks: pos.iter().map(|&(a, b)| Dt1Block {
+                a, b, flags: 1, data: vec![9u8; 256],
+            }).collect(),
+        }
+    }
+
+    /// Mur synthétique : face suspendue au-dessus du canevas (b ≤ -32) avec
+    /// une rangée de base — placement réel type `act2_sewer_walls.dt1`.
+    fn wall_face() -> Dt1Tile {
+        Dt1Tile {
+            is_floor: false,
+            blocks: vec![
+                Dt1Block { a: 32, b: -96, flags: 0, data: vec![3u8; 32 * 24] },
+                Dt1Block { a: 64, b: -64, flags: 0, data: vec![3u8; 32 * 16] },
+                Dt1Block { a: 48, b: -32, flags: 0, data: vec![3u8; 32 * 8] },
+            ],
+        }
+    }
+
+    #[test]
+    fn full_floor_footprint_is_the_exact_iso_diamond() {
+        let fp = tile_footprint(&full_floor());
+        assert_eq!(fp.count_ones(), 50, "25 blocs 32×8 = 50 sous-tuiles 16×8");
+        // Rangées réelles du losange (largeurs 2/4/6/8/10/8/6/4/2) :
+        let widths: Vec<usize> = (0..10)
+            .map(|r| (0..10).filter(|&c| fp & (1u128 << (r * 10 + c)) != 0).count())
+            .collect();
+        assert_eq!(widths, vec![2, 4, 6, 8, 10, 8, 6, 4, 2, 0],
+            "losange iso 160×80 : sommet au rang 0, base au rang 8");
+    }
+
+    #[test]
+    fn full_floor_outline_is_closed_with_40_unit_edges() {
+        let segs = mask_segments(tile_footprint(&full_floor()));
+        // 10+10 bords horizontaux ( marches 2/4/6/8/10 puis 8/6/4/2 ) et
+        // 9+9 bords verticaux : le vrai périmètre du losange 10×10 = 38.
+        assert_eq!(segs.len(), 38, "périmètre exact du losange (pas 4 × 10)");
+        for s in &segs {
+            let [x1, y1, x2, y2] = *s;
+            assert!(x1 % 16 == 0 && x2 % 16 == 0 && y1 % 8 == 0 && y2 % 8 == 0,
+                "bords de sous-tuiles : {s:?}");
+            assert!(x1 == x2 || y1 == y2, "segments axis-aligned : {s:?}");
+            assert!((0..=160).contains(&x1.max(x2)) && (0..=80).contains(&y1.max(y2)));
+        }
+        // Sommet du losange : le bord haut de la sous-tuile (4..6, rangée 0).
+        assert!(segs.contains(&[64, 0, 80, 0]), "trait du sommet nord : {segs:?}");
+        // Fermeture : en chaque extrémité, autant de segments arrivent qu'ils partent.
+        let mut ends: HashMap<(i32, i32), i32> = HashMap::new();
+        for &[x1, y1, x2, y2] in &segs {
+            *ends.entry((x1, y1)).or_default() += 1;
+            *ends.entry((x2, y2)).or_default() -= 1;
+        }
+        assert!(ends.values().all(|&d| d == 0), "contour refermé (boucle d'Euler)");
+    }
+
+    #[test]
+    fn wall_footprint_keeps_only_the_base_row() {
+        let fp = tile_footprint(&wall_face());
+        assert_eq!(fp.count_ones(), 2, "rangée de base (48,-32,h8) : 2 sous-tuiles 16×8");
+        // La base (48..80) couvre les colonnes 3 et 4 — ancrée à la rangée 0.
+        for r in 0..10 {
+            for c in 0..10 {
+                let on = fp & (1u128 << (r * 10 + c)) != 0;
+                assert_eq!(on, r == 0 && (3..=4).contains(&c), "bit ({r},{c})");
+            }
+        }
+        let segs = mask_segments(fp);
+        assert!(segs.iter().all(|s| s[1].max(s[3]) <= 8), "traits au sommet du losange");
+    }
+
+    #[test]
+    fn empty_and_degenerate_tiles_have_no_glyph() {
+        assert_eq!(tile_footprint(&Dt1Tile::default()), 0, "tuile fantôme");
+        assert!(mask_segments(0).is_empty());
+        // Face entièrement au-dessus, SANS rangée à b == max_b dans le canevas :
+        // la base remonte à y ≥ 0 quand même (règle uniforme |max_b|).
+        let mut high = wall_face();
+        high.blocks.truncate(1); // (32, -96, h24) : base seule → dy 96
+        let fp = tile_footprint(&high);
+        assert_ne!(fp, 0, "la base est ancrée au sommet, jamais perdue");
+    }
+
+    #[test]
+    fn real_dt1_floor_and_wall_give_exact_traits() {
+        // Tuiles RÉELLES (étape 8 : DT1 A2 frais) — sol tomb et mur sewer.
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors().nth(3).unwrap().to_path_buf();
+        let read = |f: &str| std::fs::read(root.join("assets/map").join(f)).unwrap();
+        // decode_dt1 : index 0 = fantôme, tuile réelle k à l'index k+1.
+        let tomb = crate::dt1::decode_dt1(&read("act2_tomb_tomb.dt1")).unwrap();
+        let fp = tile_footprint(&tomb[1]);
+        let widths: Vec<usize> = (0..10)
+            .map(|r| (0..10).filter(|&c| fp & (1u128 << (r * 10 + c)) != 0).count())
+            .collect();
+        assert_eq!(widths, vec![2, 4, 6, 8, 10, 8, 6, 4, 2, 0],
+            "sol tomb réel : losange iso exact");
+        assert_eq!(mask_segments(fp).len(), 38, "périmètre exact du losange réel");
+        let sewer = crate::dt1::decode_dt1(&read("act2_sewer_walls.dt1")).unwrap();
+        let wp = tile_footprint(&sewer[1]);
+        assert_ne!(wp, 0, "mur sewer : rangée de base tracée");
+        // L'assise remontée touche le sommet du losange ; ses blocs de base
+        // réels font jusqu'à ~32 px de haut → rangées 0..=3, jamais plus bas.
+        for r in 4..10 {
+            assert!((0..10).all(|c| wp & (1u128 << (r * 10 + c)) == 0),
+                "mur : empreinte limite à l'assise (rangée {r} vide)");
+        }
+        assert!((0..10).any(|c| wp & (1u128 << c) != 0), "assise ancrée au rang 0");
     }
 }

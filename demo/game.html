@@ -58,7 +58,7 @@
                      border: 1px solid #7e3a26; font-weight: 600; }
 </style>
   <!-- EXP-H* HUD parité : overlay DOM (hud.css/hud.js, nouveaux fichiers) -->
-  <link rel="stylesheet" href="./hud.css?v=20261025c">
+  <link rel="stylesheet" href="./hud.css">
 </head>
 <body>
   <h1>DIABLO 2 · CAMP DES ROUSSES — Rust → WASM</h1>
@@ -131,17 +131,17 @@
   <div id="msglog" style="max-width: 820px; width: 820px; max-height: 66px; overflow-y: auto; font: 11px/1.5 monospace; color: #a89670; background: #14110a; border: 1px solid #2e2718; padding: 4px 8px;"></div>
   <div id="errlog"></div>
   <div id="help"><b>Clic</b> = se déplacer · <b>Maj</b> = courir · <b>Clic sur un monstre</b> = attaquer · <b>E</b> = ramasser · <b>P</b> = potion · <b>I</b> = inventaire · <b>Clic droit</b> = compétence main droite · <b>Alt</b> = étiquettes des objets au sol</div>
-  <script src="./slots.js?v=20261025c"></script>
-  <script src="./hud.js?v=20261025c"></script> <!-- EXP-H* HUD parité : définit window.D2HUD avant game.js -->
-  <script src="./waypoints.js?v=20261025c"></script> <!-- W05/W19 panneau waypoints : window.D2Waypoints -->
-  <script src="./corpse-ui.js?v=20261025c"></script> <!-- J1 corps au sol : window.D2CorpseUI (overlay mort + flare + hint) -->
-  <script src="./music.js?v=20261025c"></script> <!-- EXP-A1 musique par zone : window.D2Music (autoplay 1er geste, bouton toolbar, mute persistant) -->
+  <script src="./slots.js"></script>
+  <script src="./hud.js"></script> <!-- EXP-H* HUD parité : définit window.D2HUD avant game.js -->
+  <script src="./waypoints.js"></script> <!-- W05/W19 panneau waypoints : window.D2Waypoints -->
+  <script src="./corpse-ui.js"></script> <!-- J1 corps au sol : window.D2CorpseUI (overlay mort + flare + hint) -->
+  <script src="./music.js"></script> <!-- EXP-A1 musique par zone : window.D2Music (autoplay 1er geste, bouton toolbar, mute persistant) -->
   <script src="./mon-sfx.js"></script> <!-- 14a SFX monstres data-driven : window.D2MonSfx (monsounds.txt v1.12, panning, autoplay 1er geste) -->
   <script src="./vendor.js"></script>
-  <script src="./npc-ui.js?v=20261025c"></script> <!-- W16 villes vivantes : NPC du camp (marqueurs + dialogues) : window.D2Npc -->
-  <script src="./skills-ui.js?v=20261025c"></script> <!-- C arbre de compétences : window.D2Skills -->
-  <script src="./merc-ui.js?v=20261025c"></script> <!-- H mercenaire : window.D2Merc (carte vie/KO) -->
-  <script src="./d2s-io.js?v=20261025c"></script> <!-- 6b export/import .d2s : window.D2sIO -->
+  <script src="./npc-ui.js"></script> <!-- W16 villes vivantes : NPC du camp (marqueurs + dialogues) : window.D2Npc -->
+  <script src="./skills-ui.js"></script> <!-- C arbre de compétences : window.D2Skills -->
+  <script src="./merc-ui.js"></script> <!-- H mercenaire : window.D2Merc (carte vie/KO) -->
+  <script src="./d2s-io.js"></script> <!-- 6b export/import .d2s : window.D2sIO -->
   <script type="module" src="./game.js"></script>
 </body>
 </html>

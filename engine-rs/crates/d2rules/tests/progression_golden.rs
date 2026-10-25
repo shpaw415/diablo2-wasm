@@ -48,14 +48,20 @@
 //! 2. `SpawnRule::default()` duplique MonLvl 1 Normal — dorénavant
 //!    verrouillé par `golden_spawn_default_is_monlvl_row1` (repli
 //!    historique assumé).
-//! 6. Andariel : pas d'API stats d2rules (spawn acte I data-driven côté
-//!    d2game) — couvert ici via la convention SpawnRule et les tables.
-//! 7. Trou de la TABLE v1.12 elle-même : « Fangskin (H) » référencé par
-//!    superuniques.txt mais absent de TreasureClassEx.txt (verrouillé dans
-//!    `golden_all_spawned_tcs_exist_with_N_H_variants`).
-//! 8. Commentaires stale dans quests_actes2/finale (MonLvl 25/26 :
-//!    « 98/521 » et DM 18 au lieu de 100/470 et 17 — le CODE lit la
-//!    table, seuls les commentaires datent).
+//!
+//! **FERMÉS à l'étape 21a** (2026-10-25, `src/fidelity_gaps.rs` + doc) :
+//! 6. Andariel : API stats d2rules [`d2rules::quests_actes2::andariel_stats`]
+//!    (convention `boss_stats`, rang superunique + TC dédiée) — golden
+//!    `fidelity_gaps::andariel_stats_golden_real_tables` ; le scope
+//!    `boss_stats("andariel") == None` reste verrouillé ci-dessous.
+//! 7. Trou de la TABLE v1.12 « Fangskin (H) » : garde `has_tc` documentée
+//!    (écart source, pas port) + tests bout-en-bout
+//!    `fidelity_gaps::fangskin_hole_guarded_no_panic_fallback` (repli MVP,
+//!    pas de panic) et `…fangskin_live_path_drops_real_chain` (le chemin
+//!    vivant « Act 2 (H) Super B » dropne réel).
+//! 8. Commentaires MonLvl 25/26 : corrigés aux vraies valeurs (100/470,
+//!    DM 17) et VERROUILLÉS par `fidelity_gaps::monlvl_25_26_comment_claims`
+//!    (les valeurs commentées doivent rester celles des APIs).
 
 use d2rules::quests_actes2::{boss_stats, BOSSES_ACTS23};
 use d2rules::quests_actes45::{boss_stats45, BOSSES_ACTS45};

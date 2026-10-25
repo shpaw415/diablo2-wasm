@@ -22,8 +22,20 @@
 // passé au title, badge « AutoMap résolu · NN % ») / "fallback" (polygone
 // marchable : seules les cellules walk — badge « repli » ; occurs quand le
 // groupe AutoMap du LvlType manque — « 5 Town » Harrogath — ou couvre mal
-// les tuiles DT1 composées : pandemonium 4 %, bloodyfoothills 42 %,
-// hallsvaught 34 % ; crystalline 95 % est le seul « automap » A4-A5).
+// les tuiles DT1 composées : pandemonium 0 %, bloodyfoothills 40 %,
+// hallsvaught 18 % ; les niveaux A2-A5 « automap » portent en plus les
+// TRAITS PRÉCIS 21b).
+//
+// Traits précis (21b) : en mode "automap", chaque cellule dont le Cel est
+// résolu porte un index de glyphe — le contour EXACT de l'empreinte de sa
+// tuile DT1 composée (blocs réels, canevas local 160×80 px, 10×10
+// sous-tuiles de 16×8 ; sols = losange iso, murs = ligne d'assise au
+// sommet). Le moteur expose `glyphs` (segments partagés [x1,y1,x2,y2] en
+// px locaux) et cells devient [x,y,flags,cel,glyph]. Le rendu trace ces
+// segments dans le repère iso de la cellule (échelle uniforme s/160) :
+// mosaïque de losanges exacts, lignes de murs — là où le fallback dessine
+// une grille de rectangles. Cellules sans glyphe (cel -1 ou empreinte
+// vide, tuile sans blocs peints) : rectangle générique, comme avant.
 (function () {
   'use strict';
 
@@ -99,6 +111,16 @@
     D2Automap.visited = new Uint8Array(d.cellW * d.cellH);
     D2Automap.pending = [];
     D2Automap.heroCell = null;
+    // Traits précis 21b : un Path2D par glyphe (segments en px locaux du
+    // canevas 160×80 — tracés sous transform à la peinture).
+    D2Automap.paths = (d.glyphs || []).map((segs) => {
+      const p = new Path2D();
+      for (const s of segs) {
+        p.moveTo(s[0], s[1]);
+        p.lineTo(s[2], s[3]);
+      }
+      return p;
+    });
     // échelle iso : (cellW + cellH) colonnes projetées
     const s = Math.max(1.4, Math.min(4, PANEL_W / (d.cellW + d.cellH)));
     D2Automap.s = s;
@@ -137,6 +159,28 @@
       if (!c) continue;
       const [px, py] = proj(d, s, c[0], c[1]);
       const flags = c[2];
+      const glyph = c[4] >= 0 ? D2Automap.paths[c[4]] : null;
+      // Trait précis 21b (mode automap, glyphe présent) : le contour exact
+      // de l'empreinte DT1 de la cellule — losange réel des sols (rempli),
+      // ligne d'assise des murs (trait seul), teinte de la catégorie.
+      if (glyph) {
+        const k = s / 160;                       // canevas 160×80 → s × s/2
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.scale(k, k);
+        ctx.lineWidth = Math.max(0.5, s / 4) / k; // épaisseur écran stable
+        ctx.lineJoin = 'miter';
+        ctx.strokeStyle = (flags & 4) ? COLORS.special : (flags & 1) ? COLORS.walk : COLORS.wall;
+        ctx.stroke(glyph);
+        if (flags & 1) {                         // sol : losange rempli
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = (flags & 4) ? COLORS.special : COLORS.walk;
+          ctx.fill(glyph);
+          ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+        continue;
+      }
       ctx.fillStyle = (flags & 1) ? COLORS.walk : COLORS.wall;
       if (flags & 4) ctx.fillStyle = COLORS.special;
       // fallback (mode 2) : polygone marchable — les cellules bloquées
@@ -174,18 +218,21 @@
     }
   }
 
-  // Ligne de mode (13b) : « AutoMap résolu · NN % » (rendu précis par
-  // catégorie, Cels réels du niveau) ou « polygone marchable · raison »
-  // (repli documenté automap.rs : groupe AutoMap absent ou couverture
-  // < 60 % — ex. Harrogath « 5 Town » inexistant v1.12, Pandemonium 4 %).
+  // Ligne de mode (13b + 21b) : « AutoMap · traits réels · NN % » (Cels
+  // résolus ET glyphes d'empreintes DT1), « AutoMap résolu · NN % » (cels
+  // sans glyphe — vieilles builds moteur), ou « polygone marchable ·
+  // raison » (repli documenté automap.rs : groupe AutoMap absent ou
+  // couverture < 60 % — ex. Harrogath « 5 Town » inexistant v1.12,
+  // Pandemonium 0 %, Bloody Foothills 40 %, Halls of Vaught 18 %).
   function showMode(d) {
     const el = D2Automap.modeLine;
     if (!el) return;
     if (!d) { el.textContent = ''; return; }
     const pct = Math.round((d.coverage || 0) * 100);
-    el.textContent = d.mode === 'automap'
-      ? `AutoMap résolu · ${pct} %`
-      : `repli : polygone marchable · ${pct} %`;
+    el.textContent = d.mode !== 'automap'
+      ? `repli : polygone marchable · ${pct} %`
+      : (D2Automap.paths && D2Automap.paths.length ? `AutoMap · traits réels · ${pct} %`
+                                                    : `AutoMap résolu · ${pct} %`);
   }
 
   function poll(now) {

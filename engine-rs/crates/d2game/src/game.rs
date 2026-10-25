@@ -3506,15 +3506,25 @@ mod tests {
         assert!(!cells.is_empty());
         let mut walk = 0usize;
         let mut cels = 0usize;
+        let mut glyphs: std::collections::HashSet<i64> = std::collections::HashSet::new();
         for c in cells {
-            assert_eq!(c.as_array().map(|a| a.len()), Some(4), "cellule [x, y, flags, cel]");
+            assert_eq!(c.as_array().map(|a| a.len()), Some(5), "cellule [x, y, flags, cel, glyph]");
             let (x, y) = (c[0].as_u64().unwrap() as usize, c[1].as_u64().unwrap() as usize);
             assert!(x < 57 && y < 41, "cellule dans les bornes");
             let f = c[2].as_i64().unwrap();
             if f & 1 != 0 { walk += 1; }
             if c[3].as_i64().unwrap() >= 0 { cels += 1; }
+            if c[4].as_i64().unwrap() >= 0 { glyphs.insert(c[4].as_i64().unwrap()); }
         }
         assert!(cels > 0, "groupe 1 Town : au moins un Cel résolu");
+        // 21b : les Cels résolus portent leurs traits précis (glyphes), le
+        // tableau partagé couvre exactement les index référencés.
+        let glyph_table = v["glyphs"].as_array().unwrap();
+        assert!(!glyph_table.is_empty(), "mode automap : traits réels exposés");
+        assert!(glyphs.iter().all(|g| (*g as usize) < glyph_table.len()), "index de glyphe dans les bornes");
+        assert_eq!(glyphs.len(), glyph_table.len(), "pas de glyphe mort dans le tableau");
+        assert!(glyph_table.iter().all(|g| g.as_array().unwrap().iter()
+            .all(|s| s.as_array().unwrap().len() == 4)), "segments [x1,y1,x2,y2]");
         let map = g.map.as_ref().unwrap();
         let expected_walk: usize = (0..map.grid_h)
             .filter(|gy| gy % 5 == 2)
@@ -3641,6 +3651,132 @@ mod tests {
             let (v, _) = automap_a45(level, &root, 7);
             assert_eq!(v["mode"], "automap", "{level} : reste en automap");
             assert!(v["coverage"].as_f64().unwrap() >= 0.60, "{level} : couverture au-dessus du seuil");
+        }
+    }
+
+    // --- 21b (divers fidélité) : traits précis — les Cels mappés aux --------
+    // polygones DT1 réels. Golden sur les 8 niveaux finaux (5 × A4-A5 +
+    // tombeaux/égouts/arcane A2, DT1 frais de l'étape 8) + non-régression
+    // ville/lande. Bandes calibrées par la sonde `traits_probe` (--nocapture).
+
+    /// Sonde 21b : stats de traits d'un niveau (mode, couverture, Cels,
+    /// glyphes, segments, cellules Cels sans glyphe) — imprimée à chaque
+    /// golden (étalonnage `--nocapture`), puis bandes d'assertions.
+    fn traits_probe(level: &str, root: &str, seed: u64) -> Value {
+        let g = full_game_with_tables(MANIFEST, level, root, seed);
+        let j1 = g.automap_json();
+        let v: Value = serde_json::from_str(&j1).unwrap();
+        // Déterminisme (même graine ⇒ même automap) — chargé deux fois.
+        let g2 = full_game_with_tables(MANIFEST, level, root, seed);
+        assert_eq!(j1, g2.automap_json(), "{level} : même graine ⇒ même automap");
+        let cells = v["cells"].as_array().unwrap();
+        let cels: std::collections::HashSet<i64> = cells
+            .iter().map(|c| c[3].as_i64().unwrap()).filter(|&c| c >= 0).collect();
+        let glyphs: std::collections::HashSet<i64> = cells
+            .iter().map(|c| c[4].as_i64().unwrap()).filter(|&g| g >= 0).collect();
+        let segs: usize = v["glyphs"].as_array().map(|g| g.iter()
+            .map(|s| s.as_array().unwrap().len()).sum()).unwrap_or(0);
+        let unmapped = cells.iter()
+            .filter(|c| c[3].as_i64().unwrap() >= 0 && c[4].as_i64().unwrap() < 0).count();
+        // Cels sans AUCUN glyphe (empreinte vide partout) — documentés.
+        let cels_with: std::collections::HashSet<i64> = cells.iter()
+            .filter(|c| c[4].as_i64().unwrap() >= 0).map(|c| c[3].as_i64().unwrap()).collect();
+        let cels_orphans = cels.len() - cels_with.len();
+        println!(
+            "{level:16} mode={:8} cov={:.2} cells={} cels={} distinct={} glyphs={} segs={} unmapped={} orphans={}",
+            v["mode"].as_str().unwrap(), v["coverage"].as_f64().unwrap(),
+            cells.len(), cells.iter().filter(|c| c[3].as_i64().unwrap() >= 0).count(),
+            cels.len(), glyphs.len(), segs, unmapped, cels_orphans
+        );
+        v
+    }
+
+    /// Golden 21b : mode + couverture + cohérence des traits par niveau.
+    /// `(clé, mode, bande couverture, bande unmapped (frac cellules Cels
+    /// sans empreinte), cels orphans autorisés)` — étalonné sur sonde réelle
+    /// (seed 7). Les 5 niveaux A4-A5 finaux + 3 tombeaux A2 (étape 8) +
+    /// ville/lande en non-régression.
+    #[test]
+    fn automap_21b_traits_golden_per_level() {
+        let Some(root) = ws_root() else { return };
+        let plan: &[(&str, &str, fn(f32) -> bool, fn(f32) -> bool)] = &[
+            // A2 — tombeaux/égouts/arcane (DT1 frais étape 8) : sols/murs
+            // couverts (banques 67-74 %), traits réels attendus.
+            ("tombf1", "automap", |c| (0.60..0.85).contains(&c), |u| u < 0.20),
+            ("ancienttunnels", "automap", |c| (0.60..0.85).contains(&c), |u| u < 0.10),
+            ("arcane", "automap", |c| (0.65..0.90).contains(&c), |u| u < 0.25),
+            // A4-A5 — les modes 13b inchangés.
+            ("pandemonium", "fallback", |c| c < 0.10, |u| u == 0.0),
+            ("harrogath", "fallback", |c| c < 0.10, |u| u == 0.0),
+            ("bloodyfoothills", "fallback", |c| c < 0.60, |u| u == 0.0),
+            ("crystalline", "automap", |c| c >= 0.90, |u| u < 0.15),
+            ("hallsvaught", "fallback", |c| c < 0.60, |u| u == 0.0),
+            // Non-régression A1 : couverture pleine, zéro cellule non mappée.
+            ("town", "automap", |c| c >= 0.90, |u| u == 0.0),
+            ("bloodmoor", "automap", |c| c >= 0.90, |u| u < 0.01),
+        ];
+        for (level, mode, cov_ok, unmapped_ok) in plan {
+            let v = traits_probe(level, &root, 7);
+            assert_eq!(v["mode"], *mode, "{level} : mode golden");
+            let coverage = v["coverage"].as_f64().unwrap_or(-1.0) as f32;
+            assert!(cov_ok(coverage), "{level} : couverture {coverage:.2} hors bande");
+            let cells = v["cells"].as_array().expect("cells");
+            assert!(!cells.is_empty(), "{level} : cellules visibles");
+            let glyphs = v["glyphs"].as_array().expect("glyphs");
+            let mapped = cells.iter().filter(|c| c[3].as_i64().unwrap() >= 0).count();
+            let unmapped = cells.iter().filter(|c| c[3].as_i64().unwrap() >= 0
+                && c[4].as_i64().unwrap() < 0).count();
+            if *mode == "automap" {
+                // Chaque Cel résolu porte son trait exact — sauf empreinte
+                // vide (tuile sans blocs peints), bande documentée ci-dessus.
+                assert!(unmapped_ok(unmapped as f32 / mapped.max(1) as f32),
+                    "{level} : {unmapped}/{mapped} Cels sans empreinte, hors bande");
+                // Cohérence Cel↔polygones : le tableau partagé référence
+                // exactement les index utilisés, chaque entrée est un trait
+                // axis-aligned dans le canevas 160×80, et les glyphes
+                // dédupliqués restent ≤ au nombre de Cels distincts.
+                let used: std::collections::HashSet<i64> = cells.iter()
+                    .map(|c| c[4].as_i64().unwrap()).filter(|&g| g >= 0).collect();
+                assert_eq!(used.len(), glyphs.len(), "{level} : pas de glyphe mort");
+                assert!(used.iter().all(|g| (*g as usize) < glyphs.len()),
+                    "{level} : index de glyphe dans les bornes");
+                let distinct_cels: std::collections::HashSet<i64> = cells.iter()
+                    .map(|c| c[3].as_i64().unwrap()).filter(|&c| c >= 0).collect();
+                // Cohérence « Cels vs tuiles composées » : chaque Cel distinct
+                // du niveau mappe à AU MOINS un polygone réel (un même Cel —
+                // ex. joker mur `wr 0 -1 -1` — peut couvrir plusieurs
+                // empreintes de murs, donc glyphes ≥ 1 par Cel, sans excès
+                // au-delà des cellules mappées).
+                let cels_with: std::collections::HashSet<i64> = cells.iter()
+                    .filter(|c| c[4].as_i64().unwrap() >= 0)
+                    .map(|c| c[3].as_i64().unwrap()).collect();
+                assert_eq!(cels_with.len(), distinct_cels.len(),
+                    "{level} : chaque Cel résolu a au moins un trait réel");
+                assert!(glyphs.len() <= mapped, "{level} : glyphes dédupliqués ≤ cellules mappées");
+                let segs: usize = glyphs.iter().map(|g| g.as_array().unwrap().len()).sum();
+                assert!(segs > 0, "{level} : des traits réels");
+                for g in glyphs {
+                    for s in g.as_array().unwrap() {
+                        let s = s.as_array().unwrap();
+                        assert_eq!(s.len(), 4, "{level} : segment [x1,y1,x2,y2]");
+                        let (x1, y1, x2, y2) = (s[0].as_i64().unwrap(), s[1].as_i64().unwrap(),
+                            s[2].as_i64().unwrap(), s[3].as_i64().unwrap());
+                        assert!(x1 == x2 || y1 == y2, "{level} : trait axis-aligned");
+                        assert!((0..=160).contains(&x1) && (0..=160).contains(&x2)
+                            && (0..=80).contains(&y1) && (0..=80).contains(&y2),
+                            "{level} : trait dans le canevas 160×80");
+                    }
+                }
+                println!("{level:16} glyphs={} segs={} (traits réels OK)", glyphs.len(), segs);
+            } else {
+                // Fallback : AUCUN trait exposé (raison documentée par
+                // niveau — en-tête automap.rs), le polygone marchable reste.
+                assert!(glyphs.is_empty(), "{level} : fallback sans glyphes");
+                assert!(cells.iter().all(|c| c[4].as_i64().unwrap() == -1),
+                    "{level} : aucun index de glyphe en fallback");
+                assert!(cells.iter().any(|c| c[2].as_i64().unwrap() & 1 == 1),
+                    "{level} : marchable présent pour le repli");
+            }
         }
     }
 }

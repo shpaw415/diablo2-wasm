@@ -43,6 +43,12 @@ pub mod dt1_flags;
 /// DRLG maze seedé (DrlgType 1, étape 8a) — tombeaux/égouts/sanctuaire A2
 /// depuis LvlMaze/LvlTypes réels + DT1 extraits (`drlg_maze.rs`).
 pub mod drlg_maze;
+/// Zones spéciales (étape 20b) — Tristram (preset réel projeté) + portail
+/// des vaches (cube L4 → Moo Moo Farm, niveau 39) (`drlg_special.rs`).
+pub mod drlg_special;
+/// DRLG wilderness retail structuralement fidèle — étape 20a PLAN-FIDELITÉ
+/// (grille Def/Dt1Mask + bordures LUT + LvlSub + RNG D2Seed, `drlg_exact.rs`).
+pub mod drlg_exact;
 /// Élites champion/unique data-driven (étape 9b monde vivant, W09) —
 /// catalogue monumod + constantes officielles, tirage seedé, `EliteInfo`
 /// JSON (additif au plan de spawn) (`elite_mods.rs`).
