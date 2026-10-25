@@ -33,6 +33,14 @@
 // les endpoints de dialogue (build antérieur), le module reste inerte — la
 // page reste jouable et la bulle W16 de npc-ui.js prend le relais.
 //
+// 23a — VOIX (d2speech.mpq fr-FR v1.12) : à l'affichage de chaque ligne, la
+// voix réelle du NPC joue (index assets/sfx/speech/index.json — clé TBL ->
+// wav, généré par tools/extract_speech.py ; 91/91 clés du moteur couvertes,
+// golden test d2rules/tests/speech_golden.rs). Musique DUCKÉE pendant la
+// voix (API publique D2Audio.setVolume('music')), rendue à la fin/fermeture.
+// Tout est défensif : index/wav absent ou mute global = silence propre, pas
+// une seule erreur JS (garde-fou E2E, même contrat que game-sfx.js).
+//
 // Branchement (game.js, 1 ligne) : `import './dialogue-ui.js';` — le module
 // s'auto-accroche au moteur dès `window.__d2.game` est finalisé.
 
@@ -119,11 +127,15 @@
     }
     var lines = node.lignes || s.lignes || s.lines || s.text || s.dialogue || '';
     if (typeof lines === 'string') lines = lines ? [lines] : [];
+    // 23a : clés TBL des lignes (line_keys du moteur) — consommées par
+    // l'index vocal assets/sfx/speech/index.json (une voix par ligne affichée).
+    var keys = node.line_keys || s.line_keys || [];
     return {
       index: s.npc_index != null ? s.npc_index : (s.index != null ? s.index : null),
       name: s.npc_name || s.name || s.npc || 'PNJ',
       role: s.npc || s.role || '',
       lines: lines.map(String),
+      keys: keys.map(String),
       options: options,
       done: !!(s.done || s.closed || s.end),
     };
@@ -137,6 +149,133 @@
       try { return parseSession(g.dialogueSession()); } catch (e) { return null; }
     }
     return null;
+  }
+
+  // --- 23a : voix des PNJ (d2speech.mpq fr-FR v1.12) ---------------------------
+  // Une voix RÉELLE par ligne affichée : index assets/sfx/speech/index.json
+  // (clé TBL -> wav, généré par tools/extract_speech.py depuis les tables du
+  // moteur — 91/91 clés, golden test tests/speech_golden.rs). DEFENSIF (même
+  // famille que game-sfx.js) : index/wav absent = silence + note info, JAMAIS
+  // d'erreur JS. Ducking de la musique via l'API publique D2Audio (bus musique
+  // baissé pendant la voix, rendu à la fin) ; mute GLOBAL respecté (clé
+  // partagée music.js) ; autoplay au premier geste (politique navigateur).
+  var SPEECH_BASE = 'assets/sfx/speech/';
+  var MUTE_KEY = 'd2wasm.musicMuted'; // clé partagée music.js / game-sfx.js
+  var VOICE_VOLUME = 0.9;             // bus voix (la musique duck à 0.12)
+  var DUCK_TARGET = 0.12;             // volume musique pendant la voix
+  var speechIndex = null;             // { clé TBL -> wav basename }
+  var speechIndexPromise = null;
+  var speechBufs = new Map();         // wav -> Promise<AudioBuffer|null>
+  var spActx = null, spBus = null;    // contexte audio voix (unlock 1er geste)
+  var voiceSrc = null;                // source de la voix en cours
+  var duckSaved = null;               // volume musique avant duck
+
+  function mutedNow() {
+    try { return localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { return false; }
+  }
+
+  function unlockVoice() {
+    try {
+      if (!spActx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        spActx = new AC();
+        spBus = spActx.createGain();
+        spBus.gain.value = VOICE_VOLUME;
+        spBus.connect(spActx.destination);
+      }
+      if (spActx.state === 'suspended') spActx.resume().catch(function () {});
+    } catch (e) { spActx = null; } // WebAudio indisponible : voix muettes
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pointerdown', unlockVoice, { passive: true });
+    window.addEventListener('keydown', unlockVoice);
+  }
+
+  function speechIndexOf() {
+    if (speechIndex) return Promise.resolve(speechIndex);
+    if (!speechIndexPromise) {
+      speechIndexPromise = fetch(SPEECH_BASE + 'index.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; })
+        .then(function (j) {
+          speechIndex = j && j.lines && typeof j.lines === 'object' ? j.lines : {};
+          if (!Object.keys(speechIndex).length) {
+            console.info('[dialogue] index vocal indisponible — voix muettes (silence).');
+          }
+          return speechIndex;
+        });
+    }
+    return speechIndexPromise;
+  }
+
+  function speechBuffer(file) {
+    if (!speechBufs.has(file)) {
+      speechBufs.set(file,
+        fetch(SPEECH_BASE + file)
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+          .then(function (b) { return spActx.decodeAudioData(b); })
+          .catch(function (e) {
+            console.info('[dialogue] ' + file + ' indisponible (' +
+              (e && e.message ? e.message : e) + ') — silence.');
+            speechBufs.delete(file); // fichier revenu plus tard : on retentera
+            return null;
+          }));
+    }
+    return speechBufs.get(file);
+  }
+
+  /** Ducking : musique baissée pendant la voix (API publique D2Audio). */
+  function duckMusic(on) {
+    try {
+      if (typeof window === 'undefined' || !window.D2Audio ||
+          typeof window.D2Audio.setVolume !== 'function') return; // pas de mixage : la voix joue quand même
+      if (on) {
+        if (duckSaved == null) duckSaved = window.D2Audio.volume('music');
+        window.D2Audio.setVolume('music', Math.min(duckSaved, DUCK_TARGET));
+      } else if (duckSaved != null) {
+        window.D2Audio.setVolume('music', duckSaved);
+        duckSaved = null;
+      }
+    } catch (e) { /* cosmétique : jamais bloquer la voix */ }
+  }
+
+  function stopVoice() {
+    if (voiceSrc) {
+      try { voiceSrc.onended = null; voiceSrc.stop(); } catch (e) { /* déjà finie */ }
+      voiceSrc = null;
+    }
+    duckMusic(false);
+  }
+
+  /** Joue la voix de la ligne affichée (première clé TBL connue de l'index). */
+  function playVoice(keys) {
+    stopVoice();
+    if (!spActx || mutedNow() || !keys || !keys.length) return;
+    var wanted = keys.slice();
+    void (async function () {
+      var idx = await speechIndexOf();
+      var file = null;
+      for (var i = 0; i < wanted.length && !file; i++) file = idx[wanted[i]] || null;
+      if (!file || !spActx) return; // clé sans voix (TBD…) : silence propre
+      var buf = await speechBuffer(file);
+      if (!buf || mutedNow()) return;
+      try {
+        var src = spActx.createBufferSource();
+        src.buffer = buf;
+        var g = spActx.createGain();
+        g.gain.value = 1; // le bus voix porte VOICE_VOLUME
+        src.connect(g); g.connect(spBus);
+        src.onended = function () {
+          if (voiceSrc === src) { voiceSrc = null; duckMusic(false); }
+        };
+        voiceSrc = src;
+        duckMusic(true);
+        src.start();
+      } catch (e) {
+        console.info('[dialogue] lecture impossible — silence.');
+      }
+    })();
   }
 
   // --- accroche moteur : wrapper de tick (pause) + panneau + gardes d'input --
@@ -248,6 +387,9 @@
       b.addEventListener('click', function () { choose(o); });
       elOpts.appendChild(b);
     });
+    // 23a : voix du NPC à l'affichage de la ligne (skip silencieux si le
+    // fichier est absent — jamais d'erreur), musique duckée pendant.
+    playVoice(session.keys);
   }
 
   // --- wire : ouverture / choix / fermeture ------------------------------------
@@ -356,6 +498,7 @@
   function close(withEngine) {
     if (!session) return;
     session = null;
+    stopVoice(); // 23a : voix coupée + musique dé-duckée à la fermeture
     render();
     var g = hooked || game();
     if (withEngine && g && typeof g.closeDialogue === 'function') {
@@ -387,6 +530,12 @@
     },
     _parse: parseSession,
     _state: function () { return { hooked: !!hooked, session: session }; },
+    // 23a : état voix (recette + harnais node) — index chargé, voix en
+    // cours, musique duckée.
+    _voiceState: function () {
+      return { loaded: !!speechIndex, playing: !!voiceSrc, ducked: duckSaved != null };
+    },
+    _stopVoice: stopVoice, // interne (fermeture forcée des harnais)
   };
   if (typeof window !== 'undefined') window.D2Dialogue = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

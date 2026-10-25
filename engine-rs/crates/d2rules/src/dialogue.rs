@@ -594,6 +594,103 @@ impl World {
 }
 
 // ---------------------------------------------------------------------------
+// Voix des NPC (23a) — nommage réel d2speech.mpq (release fr-FR v1.12)
+// ---------------------------------------------------------------------------
+
+/// Préfixe de fichier vocal par NPC — nommage RÉEL du listfile d2speech.mpq
+/// (`data\local\sfx\Act1\Akara\Aka_act1_…`, `Cain\Cain_act1_…`, énuméré par
+/// SFileFindFirstFile à l'étape 23a).
+static VOICE_PREFIX: &[(&str, &str)] = &[
+    ("Akara", "aka"),
+    ("Kashya", "kas"),
+    ("Charsi", "cha"),
+    ("Gheed", "ghe"),
+    ("Warriv", "war"),
+    ("Cain", "cain"),
+];
+
+/// Fichier vocal (basename minuscule, relatif à `demo/assets/sfx/speech/`)
+/// attendu pour une clé TBL parlée — règle dérivée du listfile réel :
+/// * `{Npc}IntroGossip1` / `WarrivAct1IntroGossip1` → `{p}_act1_intro.wav` ;
+/// * `{Npc}Gossip<i>` → `{p}_act1_gossip_{i:02}.wav` ;
+/// * `A1Q<n>{Init|EarlyReturn|AfterInit|AfterInitScroll|Successful|
+///   QuestSuccessful}{Npc}` → `{p}_act1_q<n>_<variante>.wav`, variant retail
+///   `A1Q1AfterInitCharsiMain` → `cha_act1_q1_after_main.wav`.
+///
+/// `None` : clé hors périmètre parlé (libellés de menu, `TBD…`, clés
+/// étrangères). Miroir EXACT de `tools/extract_speech.py::voice_file_for`
+/// (le script génère `index.json` depuis CES tables ; le golden test
+/// `tests/speech_golden.rs` croise moteur × index × wavs sur disque).
+pub fn voice_file_for(key: &str) -> Option<String> {
+    // Ragots : le nom du NPC est préfixe (AkaraIntroGossip1, CainGossip2…).
+    for (name, p) in VOICE_PREFIX {
+        if let Some(rest) = key.strip_prefix(name) {
+            // Intro : `IntroGossip1` (Akara…) comme `Act1IntroGossip1`
+            // (Warriv — nommage retail du listfile).
+            if rest.ends_with("IntroGossip1") {
+                return Some(format!("{p}_act1_intro.wav"));
+            }
+            if let Some(num) = rest.strip_prefix("Gossip") {
+                let n: u32 = num.parse().ok()?;
+                return Some(format!("{p}_act1_gossip_{n:02}.wav"));
+            }
+        }
+    }
+    // Quêtes : `A1Q<n><Variante><Npc>` — le nom du NPC est suffixe.
+    let rest = key.strip_prefix("A1Q")?;
+    let head = rest.chars().next()?;
+    if !head.is_ascii_digit() {
+        return None;
+    }
+    let q = head; // quêtes acte I : a1q1…a1q6, un seul chiffre
+    let rest = &rest[1..];
+    for (name, p) in VOICE_PREFIX {
+        // variant retail `…CharsiMain` (a1q1) : suffixe étendu en second.
+        for (suffix, tail) in [(name.to_string(), ""), (format!("{name}Main"), "_main")] {
+            let Some(mid) = rest.strip_suffix(suffix.as_str()) else { continue };
+            let base = match mid {
+                "Init" => "init",
+                "EarlyReturn" => "early",
+                "AfterInit" => "after",
+                "AfterInitScroll" => "after_scroll",
+                "Successful" => "successful",
+                "QuestSuccessful" => "successful",
+                _ => continue,
+            };
+            return Some(format!("{p}_act1_q{q}_{base}{tail}.wav"));
+        }
+    }
+    None
+}
+
+/// Inventaire des clés PARLÉES du moteur : INIT + PENDANT + REMISE puis
+/// GOSSIP, dédupliquées en conservant l'ordre des tables (91 clés v1.12) —
+/// consommé par le golden test `tests/speech_golden.rs` (couverture voix).
+pub fn all_line_keys() -> Vec<&'static str> {
+    let mut out: Vec<&'static str> = Vec::new();
+    let mut push = |out: &mut Vec<&'static str>, k: &'static str| {
+        if !out.contains(&k) {
+            out.push(k);
+        }
+    };
+    for (_, _, k) in INIT_QUEST {
+        push(&mut out, k);
+    }
+    for (_, _, k) in PENDANT {
+        push(&mut out, k);
+    }
+    for (_, _, k) in REMISE {
+        push(&mut out, k);
+    }
+    for (_, keys) in GOSSIP {
+        for k in *keys {
+            push(&mut out, k);
+        }
+    }
+    out
+}
+
+// ---------------------------------------------------------------------------
 // Tests — chaînes complètes × phases, clés TBL citées, monde gelé
 // ---------------------------------------------------------------------------
 
@@ -988,5 +1085,47 @@ mod tests {
         assert_eq!(back, s);
         assert!(j.contains("\"phase\":\"avant\""));
         assert!(j.contains("A1Q1InitAkara"), "clé TBL citée dans le JSON");
+    }
+
+    // --- 23a : règle de nommage vocal (miroir extract_speech.py) -----------
+
+    #[test]
+    fn voice_file_for_nommage_reel_listfile() {
+        // Une sonde par branche de la règle (nommage réel d2speech.mpq).
+        assert_eq!(voice_file_for("A1Q1InitAkara").as_deref(), Some("aka_act1_q1_init.wav"));
+        assert_eq!(voice_file_for("A1Q6InitCain").as_deref(), Some("cain_act1_q6_init.wav"));
+        assert_eq!(voice_file_for("A1Q1EarlyReturnAkara").as_deref(), Some("aka_act1_q1_early.wav"));
+        assert_eq!(voice_file_for("A1Q2AfterInitCharsi").as_deref(), Some("cha_act1_q2_after.wav"));
+        // variant retail a1q1 Charsi (AfterInitCharsiMain) :
+        assert_eq!(voice_file_for("A1Q1AfterInitCharsiMain").as_deref(), Some("cha_act1_q1_after_main.wav"));
+        assert_eq!(voice_file_for("A1Q4AfterInitScrollWarriv").as_deref(), Some("war_act1_q4_after_scroll.wav"));
+        assert_eq!(voice_file_for("A1Q3SuccessfulCain").as_deref(), Some("cain_act1_q3_successful.wav"));
+        // a1q4 : nommage retail distinct (QuestSuccessful) — même wav :
+        assert_eq!(voice_file_for("A1Q4QuestSuccessfulCain").as_deref(), Some("cain_act1_q4_successful.wav"));
+        // ragots + intros (Warriv : clé retail préfixée `Act1`) :
+        assert_eq!(voice_file_for("AkaraGossip3").as_deref(), Some("aka_act1_gossip_03.wav"));
+        assert_eq!(voice_file_for("CainGossip1").as_deref(), Some("cain_act1_gossip_01.wav"));
+        assert_eq!(voice_file_for("AkaraIntroGossip1").as_deref(), Some("aka_act1_intro.wav"));
+        assert_eq!(voice_file_for("WarrivAct1IntroGossip1").as_deref(), Some("war_act1_intro.wav"));
+        // hors périmètre parlé : menus, TBD, clés étrangères, formats exotiques.
+        assert_eq!(voice_file_for("NPCMenuTrade"), None);
+        assert_eq!(voice_file_for("Rogue Encampment"), None);
+        assert_eq!(voice_file_for("TBD — aucune clé"), None);
+        assert_eq!(voice_file_for("A1QXInitAkara"), None);
+        assert_eq!(voice_file_for("AkaraGossipZ"), None);
+    }
+
+    #[test]
+    fn all_line_keys_inventaire_complet() {
+        let keys = all_line_keys();
+        // 5 init + 33 pendant + 34 remise + 19 ragots (6 NPC) = 91 clés v1.12.
+        assert_eq!(keys.len(), 91, "inventaire parlé des tables de dialogue.rs");
+        assert_eq!(keys.iter().filter(|k| voice_file_for(k).is_none()).count(), 0,
+            "toute clé du moteur a une règle vocale");
+        // ordre stable + déduplication : pas de doublon entre tables.
+        let mut sorted = keys.clone();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted.len(), keys.len(), "clés uniques");
     }
 }
