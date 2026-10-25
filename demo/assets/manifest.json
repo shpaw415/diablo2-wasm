@@ -112,8 +112,7 @@
       "S2": "assets/dcc/BANUS2.dcc",
       "S1": "assets/dcc/BANUS1.dcc",
       "HD": "assets/dcc/BANUHD.dcc",
-      "RH": "assets/dcc/BANURH.dcc",
-      "LG": "assets/dcc/BANULG.dcc"
+      "RH": "assets/dcc/BANURH.dcc"
      },
      "missingLayers": [
       "LH",
@@ -151,8 +150,7 @@
       "RA": "assets/dcc/BARNRA.dcc",
       "S1": "assets/dcc/BARNS1.dcc",
       "HD": "assets/dcc/BARNHD.dcc",
-      "RH": "assets/dcc/BARNRH.dcc",
-      "LG": "assets/dcc/BARNLG.dcc"
+      "RH": "assets/dcc/BARNRH.dcc"
      },
      "missingLayers": [
       "LH",
@@ -1625,8 +1623,7 @@
       "RA": "assets/dcc/DZNURA.dcc",
       "S1": "assets/dcc/DZNUS1.dcc",
       "TR": "assets/dcc/DZNUTR.dcc",
-      "RH": "assets/dcc/DZNURH.dcc",
-      "LG": "assets/dcc/DZNULG.dcc"
+      "RH": "assets/dcc/DZNURH.dcc"
      },
      "missingLayers": [
       "LH",
@@ -1645,8 +1642,7 @@
       "RA": "assets/dcc/DZWLRA.dcc",
       "S1": "assets/dcc/DZWLS1.dcc",
       "TR": "assets/dcc/DZWLTR.dcc",
-      "RH": "assets/dcc/DZWLRH.dcc",
-      "LG": "assets/dcc/DZWLLG.dcc"
+      "RH": "assets/dcc/DZWLRH.dcc"
      },
      "missingLayers": [
       "LH",
@@ -1883,8 +1879,7 @@
       "S2": "assets/dcc/NENUS2.dcc",
       "HD": "assets/dcc/NENUHD.dcc",
       "S1": "assets/dcc/NENUS1.dcc",
-      "RH": "assets/dcc/NENURH.dcc",
-      "LG": "assets/dcc/NENULG.dcc"
+      "RH": "assets/dcc/NENURH.dcc"
      },
      "missingLayers": [
       "LH",
@@ -1903,8 +1898,7 @@
       "S2": "assets/dcc/NEWLS2.dcc",
       "HD": "assets/dcc/NEWLHD.dcc",
       "S1": "assets/dcc/NEWLS1.dcc",
-      "RH": "assets/dcc/NEWLRH.dcc",
-      "LG": "assets/dcc/NEWLLG.dcc"
+      "RH": "assets/dcc/NEWLRH.dcc"
      },
      "missingLayers": [
       "LH",
@@ -6705,5 +6699,1381 @@
    },
    "note": "kill événementiel a2q3"
   }
- ]
+ ],
+ "npc": [
+  {
+   "id": "akara",
+   "code": "PS",
+   "name": "Akara",
+   "display": "Akara",
+   "hcIdx": 148,
+   "act": 1,
+   "town": "town",
+   "townLevelId": 1,
+   "role": "healer",
+   "vendor": "akara",
+   "questCode": "akara",
+   "pos": [
+    126.0,
+    45.0
+   ],
+   "posAssumed": false,
+   "walk": {
+    "cof": "assets/dcc/PSWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/PSWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 192
+   },
+   "idle": {
+    "cof": "assets/dcc/PSNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/PSNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 13,
+    "dirs": 8,
+    "speed": 0
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/PSNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/PSNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 13,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/PSWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/PSWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 192
+    }
+   }
+  },
+  {
+   "id": "kashya",
+   "code": "RC",
+   "name": "Kashya",
+   "display": "Kashya",
+   "hcIdx": 150,
+   "act": 1,
+   "town": "town",
+   "townLevelId": 1,
+   "role": "mercenary_captain",
+   "vendor": null,
+   "questCode": "kashya",
+   "pos": [
+    153.0,
+    46.0
+   ],
+   "posAssumed": false,
+   "walk": {
+    "cof": "assets/dcc/RCWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/RCWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/RCNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/RCNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 12,
+    "dirs": 8,
+    "speed": 0
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/RCNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/RCNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/RCWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/RCWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "charsi",
+   "code": "CI",
+   "name": "Charsi",
+   "display": "Charsi",
+   "hcIdx": 154,
+   "act": 1,
+   "town": "town",
+   "townLevelId": 1,
+   "role": "blacksmith",
+   "vendor": "charsi",
+   "questCode": "charsi",
+   "pos": [
+    94.0,
+    27.0
+   ],
+   "posAssumed": false,
+   "walk": {
+    "cof": "assets/dcc/CIWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/CIWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/CINUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/CINUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 13,
+    "dirs": 8,
+    "speed": 176
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/CINUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/CINUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 13,
+     "dirs": 8,
+     "speed": 176
+    },
+    "WL": {
+     "cof": "assets/dcc/CIWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/CIWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "gheed",
+   "code": "GH",
+   "name": "Gheed",
+   "display": "Gheed",
+   "hcIdx": 147,
+   "act": 1,
+   "town": "town",
+   "townLevelId": 1,
+   "role": "gambler",
+   "vendor": "gheed",
+   "questCode": "gheed",
+   "pos": [
+    95.0,
+    87.0
+   ],
+   "posAssumed": false,
+   "walk": {
+    "cof": "assets/dcc/GHWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/GHWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/GHNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/GHNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 96
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/GHNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/GHNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 96
+    },
+    "WL": {
+     "cof": "assets/dcc/GHWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/GHWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "warriv1",
+   "code": "WA",
+   "name": "Warriv",
+   "display": "Warriv",
+   "hcIdx": 155,
+   "act": 1,
+   "town": "town",
+   "townLevelId": 1,
+   "role": "caravan",
+   "vendor": null,
+   "questCode": "warriv",
+   "pos": [
+    192.0,
+    16.0
+   ],
+   "posAssumed": false,
+   "walk": {
+    "cof": "assets/dcc/WAWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/WAWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 12,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/WANUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/WANUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 16,
+    "dirs": 8,
+    "speed": 128
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/WANUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/WANUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/WAWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/WAWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "atma",
+   "code": "AS",
+   "name": "Atma",
+   "display": "Atma",
+   "hcIdx": 176,
+   "act": 2,
+   "town": "lutgholein",
+   "townLevelId": 40,
+   "role": "tavern",
+   "vendor": null,
+   "questCode": "atma",
+   "pos": [
+    62.0,
+    66.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/ASWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ASWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 104
+   },
+   "idle": {
+    "cof": "assets/dcc/ASNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ASNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 48
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/ASNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ASNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 48
+    },
+    "WL": {
+     "cof": "assets/dcc/ASWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ASWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 104
+    },
+    "DD": {
+     "cof": "assets/dcc/ASDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ASDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 8,
+     "speed": 0
+    }
+   },
+   "note": "DD réel v1.12 (1 frame) ; position preset authoring (aucune donnée PATH extractible — lutgholein.ds1 tronqué dans ce workspace)."
+  },
+  {
+   "id": "drognan",
+   "code": "DR",
+   "name": "Drognan",
+   "display": "Drognan",
+   "hcIdx": 177,
+   "act": 2,
+   "town": "lutgholein",
+   "townLevelId": 40,
+   "role": "vendor",
+   "vendor": "drognan",
+   "questCode": "drognan",
+   "pos": [
+    70.0,
+    58.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/DRWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/DRWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 72
+   },
+   "idle": {
+    "cof": "assets/dcc/DRNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/DRNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 56
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/DRNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/DRNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 56
+    },
+    "WL": {
+     "cof": "assets/dcc/DRWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/DRWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 72
+    }
+   }
+  },
+  {
+   "id": "greiz",
+   "code": "GR",
+   "name": "Greiz",
+   "display": "Greiz",
+   "hcIdx": 198,
+   "act": 2,
+   "town": "lutgholein",
+   "townLevelId": 40,
+   "role": "mercenary_captain",
+   "vendor": null,
+   "questCode": "greiz",
+   "pos": [
+    76.0,
+    74.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/GRWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/GRWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/GRNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/GRNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 80
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/GRNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/GRNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 80
+    },
+    "WL": {
+     "cof": "assets/dcc/GRWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/GRWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "elzix",
+   "code": "EL",
+   "name": "Elzix",
+   "display": "Elzix",
+   "hcIdx": 199,
+   "act": 2,
+   "town": "lutgholein",
+   "townLevelId": 40,
+   "role": "vendor",
+   "vendor": "elzix",
+   "questCode": "elzix",
+   "pos": [
+    46.0,
+    78.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/ELWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ELWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 192
+   },
+   "idle": {
+    "cof": "assets/dcc/ELNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ELNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 96
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/ELNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ELNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 96
+    },
+    "WL": {
+     "cof": "assets/dcc/ELWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ELWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 192
+    }
+   }
+  },
+  {
+   "id": "meshif1",
+   "code": "MS",
+   "name": "Meshif",
+   "display": "Meshif",
+   "hcIdx": 210,
+   "act": 2,
+   "town": "lutgholein",
+   "townLevelId": 40,
+   "role": "caravan",
+   "vendor": null,
+   "questCode": "meshif",
+   "pos": [
+    86.0,
+    82.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/MSWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/MSWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 160
+   },
+   "idle": {
+    "cof": "assets/dcc/MSNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/MSNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 64
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/MSNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/MSNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 64
+    },
+    "WL": {
+     "cof": "assets/dcc/MSWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/MSWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 160
+    }
+   }
+  },
+  {
+   "id": "lysander",
+   "code": "LY",
+   "name": "Lysander",
+   "display": "Lysander",
+   "hcIdx": 202,
+   "act": 2,
+   "town": "lutgholein",
+   "townLevelId": 40,
+   "role": "vendor",
+   "vendor": "lysander",
+   "questCode": "lysander",
+   "pos": [
+    52.0,
+    52.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/LYWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/LYWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 160
+   },
+   "idle": {
+    "cof": "assets/dcc/LYNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/LYNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 104
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/LYNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/LYNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 104
+    },
+    "WL": {
+     "cof": "assets/dcc/LYWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/LYWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 160
+    }
+   }
+  },
+  {
+   "id": "ormus",
+   "code": "OR",
+   "name": "ormus",
+   "display": "Ormus",
+   "hcIdx": 255,
+   "act": 3,
+   "town": "kurast",
+   "townLevelId": 75,
+   "role": "healer",
+   "vendor": "ormus",
+   "questCode": "ormus",
+   "pos": [
+    70.0,
+    66.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/ORWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ORWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 128
+   },
+   "idle": {
+    "cof": "assets/dcc/ORNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ORNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 14,
+    "dirs": 8,
+    "speed": 128
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/ORNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ORNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 14,
+     "dirs": 8,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/ORWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ORWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128
+    }
+   }
+  },
+  {
+   "id": "asheara",
+   "code": "AH",
+   "name": "asheara",
+   "display": "Asheara",
+   "hcIdx": 252,
+   "act": 3,
+   "town": "kurast",
+   "townLevelId": 75,
+   "role": "mercenary_captain",
+   "vendor": "asheara",
+   "questCode": null,
+   "pos": [
+    82.0,
+    74.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/AHWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/AHWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 10,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/AHNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/AHNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 31,
+    "dirs": 8,
+    "speed": 0
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/AHNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/AHNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 31,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/AHWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/AHWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "alkor",
+   "code": "AL",
+   "name": "alkor",
+   "display": "Alkor",
+   "hcIdx": 254,
+   "act": 3,
+   "town": "kurast",
+   "townLevelId": 75,
+   "role": "vendor",
+   "vendor": "alkor",
+   "questCode": "alkor",
+   "pos": [
+    56.0,
+    80.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/ALWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ALWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 128
+   },
+   "idle": {
+    "cof": "assets/dcc/ALNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/ALNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 14,
+    "dirs": 8,
+    "speed": 128
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/ALNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ALNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 14,
+     "dirs": 8,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/ALWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/ALWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 128
+    }
+   }
+  },
+  {
+   "id": "hratli",
+   "code": "HR",
+   "name": "hratli",
+   "display": "Hratli",
+   "hcIdx": 253,
+   "act": 3,
+   "town": "kurast",
+   "townLevelId": 75,
+   "role": "blacksmith",
+   "vendor": "hratli",
+   "questCode": null,
+   "pos": [
+    64.0,
+    58.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/HRWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/HRWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 10,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/HRNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/HRNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 16,
+    "dirs": 8,
+    "speed": 0
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/HRNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/HRNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/HRWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/HRWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 10,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "halbu",
+   "code": "20",
+   "name": "halbu",
+   "display": "Halbu",
+   "hcIdx": 257,
+   "act": 4,
+   "town": "pandemonium",
+   "townLevelId": 103,
+   "role": "blacksmith",
+   "vendor": "halbu",
+   "questCode": null,
+   "pos": [
+    14.0,
+    12.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/20WLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/20WLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 12,
+    "dirs": 8,
+    "speed": 0
+   },
+   "idle": {
+    "cof": "assets/dcc/20NUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/20NUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 12,
+    "dirs": 8,
+    "speed": 104
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/20NUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/20NUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 104
+    },
+    "WL": {
+     "cof": "assets/dcc/20WLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/20WLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 12,
+     "dirs": 8,
+     "speed": 0
+    }
+   }
+  },
+  {
+   "id": "tyrael2",
+   "code": "TY",
+   "name": "tyrael",
+   "display": "Tyrael",
+   "hcIdx": 367,
+   "act": 4,
+   "town": "pandemonium",
+   "townLevelId": 103,
+   "role": "scholar",
+   "vendor": null,
+   "questCode": "tyrael",
+   "pos": [
+    21.0,
+    12.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/TYWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/TYWLTR.dc6",
+     "RA": "assets/dcc/TYNURA.dcc",
+     "LH": "assets/dcc/TYNULA.dcc"
+    },
+    "missingLayers": [],
+    "frames": 20,
+    "dirs": 8,
+    "speed": 128
+   },
+   "idle": {
+    "cof": "assets/dcc/TYNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/TYNUTR.dc6",
+     "RA": "assets/dcc/TYNURA.dcc",
+     "LH": "assets/dcc/TYNULA.dcc"
+    },
+    "missingLayers": [],
+    "frames": 60,
+    "dirs": 1,
+    "speed": 0
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/TYNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/TYNUTR.dc6",
+      "RA": "assets/dcc/TYNURA.dcc",
+      "LH": "assets/dcc/TYNULA.dcc"
+     },
+     "missingLayers": [],
+     "frames": 60,
+     "dirs": 1,
+     "speed": 0
+    },
+    "WL": {
+     "cof": "assets/dcc/TYWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/TYWLTR.dc6",
+      "RA": "assets/dcc/TYNURA.dcc",
+      "LH": "assets/dcc/TYNULA.dcc"
+     },
+     "missingLayers": [],
+     "frames": 20,
+     "dirs": 8,
+     "speed": 128
+    },
+    "DD": {
+     "cof": "assets/dcc/TYDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/TYDDTR.dc6"
+     },
+     "missingLayers": [],
+     "frames": 3,
+     "dirs": 1,
+     "speed": 0
+    }
+   },
+   "dc6Note": "Tyrael : couche TR en DC6-only dans la release v1.12 (clés tyrael1/tyrael2, comme MP/Méphisto) — RA/LH en DCC ; compose DCC-only le dessine sans torse tant que d2dc6 n'est pas branché (choix 15a). WL réutilise RA/LH de NU (mêmes fichiers réels).",
+   "note": "Position preset authoring (PATH fortress.ds1 hors grille — données retail inutilisables)."
+  },
+  {
+   "id": "malah",
+   "code": "XT",
+   "name": "Malah",
+   "display": "Malah",
+   "hcIdx": 513,
+   "act": 5,
+   "town": "harrogath",
+   "townLevelId": 109,
+   "role": "healer",
+   "vendor": "malah",
+   "questCode": "malah",
+   "pos": [
+    20.0,
+    20.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/XTWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XTWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 16,
+    "dirs": 8,
+    "speed": 184
+   },
+   "idle": {
+    "cof": "assets/dcc/XTNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XTNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 16,
+    "dirs": 8,
+    "speed": 64
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/XTNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XTNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 64
+    },
+    "WL": {
+     "cof": "assets/dcc/XTWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XTWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 184
+    }
+   }
+  },
+  {
+   "id": "larzuk",
+   "code": "XR",
+   "name": "Larzuk",
+   "display": "Larzuk",
+   "hcIdx": 511,
+   "act": 5,
+   "town": "harrogath",
+   "townLevelId": 109,
+   "role": "blacksmith",
+   "vendor": "larzuk",
+   "questCode": "larzuk",
+   "pos": [
+    30.0,
+    18.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/XRWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XRWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 144
+   },
+   "idle": {
+    "cof": "assets/dcc/XRNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XRNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 32
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/XRNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XRNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 32
+    },
+    "WL": {
+     "cof": "assets/dcc/XRWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XRWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 144
+    }
+   }
+  },
+  {
+   "id": "drehya",
+   "code": "XS",
+   "name": "Drehya",
+   "display": "Anya",
+   "hcIdx": 512,
+   "act": 5,
+   "town": "harrogath",
+   "townLevelId": 109,
+   "role": "vendor",
+   "vendor": "drehya",
+   "questCode": "anya",
+   "pos": [
+    28.0,
+    24.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/XSWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XSWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 152
+   },
+   "idle": {
+    "cof": "assets/dcc/XSNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XSNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 15,
+    "dirs": 8,
+    "speed": 128
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/XSNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XSNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 15,
+     "dirs": 8,
+     "speed": 128
+    },
+    "WL": {
+     "cof": "assets/dcc/XSWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XSWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 152
+    },
+    "DD": {
+     "cof": "assets/dcc/XSDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XSDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 1,
+     "speed": 0
+    }
+   },
+   "note": "DD = stub retail 2x2 px (0 px peints — dcc_decode 0) ; TBL fr « Drehya » → « Anya »."
+  },
+  {
+   "id": "nihlathak",
+   "code": "0J",
+   "name": "Nihlathak Town",
+   "display": "Nihlathak",
+   "hcIdx": 514,
+   "act": 5,
+   "town": "harrogath",
+   "townLevelId": 109,
+   "role": "vendor",
+   "vendor": "nihlathak",
+   "questCode": "nihlathak",
+   "pos": [
+    38.0,
+    14.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/0JWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/0JWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 104
+   },
+   "idle": {
+    "cof": "assets/dcc/0JNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/0JNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 16,
+    "dirs": 8,
+    "speed": 104
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/0JNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/0JNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 16,
+     "dirs": 8,
+     "speed": 104
+    },
+    "WL": {
+     "cof": "assets/dcc/0JWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/0JWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 104
+    },
+    "DD": {
+     "cof": "assets/dcc/0JDDHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/0JDDTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 1,
+     "dirs": 1,
+     "speed": 0
+    }
+   },
+   "note": "DD = stub retail 2x2 px (0 px peints) ; NameStr « Nihlathak Town » → TBL fr « Nihlathak »."
+  },
+  {
+   "id": "qual-kehk",
+   "code": "XV",
+   "name": "Qual-Kehk",
+   "display": "Qual-Kehk",
+   "hcIdx": 515,
+   "act": 5,
+   "town": "harrogath",
+   "townLevelId": 109,
+   "role": "mercenary_captain",
+   "vendor": null,
+   "questCode": "qual-kehk",
+   "pos": [
+    48.0,
+    20.0
+   ],
+   "posAssumed": true,
+   "walk": {
+    "cof": "assets/dcc/XVWLHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XVWLTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 112
+   },
+   "idle": {
+    "cof": "assets/dcc/XVNUHTH.COF",
+    "layers": {
+     "TR": "assets/dcc/XVNUTR.dcc"
+    },
+    "missingLayers": [],
+    "frames": 8,
+    "dirs": 8,
+    "speed": 40
+   },
+   "modes": {
+    "NU": {
+     "cof": "assets/dcc/XVNUHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XVNUTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 40
+    },
+    "WL": {
+     "cof": "assets/dcc/XVWLHTH.COF",
+     "layers": {
+      "TR": "assets/dcc/XVWLTR.dcc"
+     },
+     "missingLayers": [],
+     "frames": 8,
+     "dirs": 8,
+     "speed": 112
+    }
+   }
+  }
+ ],
+ "npcNote": "blocs npc étape 22b — roster 22 PNJ officiels (5 actes) data-driven depuis patch_monstats.txt v1.12 + table npc.txt (multiplicateurs marchands) + noms fr TBL ; sprites extraits des MPQ release (sondes hash, priorité patch_d2>d2exp>d2data), modes NU/WL (+DD réel AS/0J/XS/TY). Les COF A1 (geste) existent SANS couche TR dans la release — non composables, non déclarés en modes. Acte I : positions PATH réelles TownN1.ds1 (miroir d2rules::npc::NPCS) ; Actes IV-V : presets authoring (aucun PATH exploitable) validés marchables sur les cartes réelles par golden ; Actes II-III : villes non jouables dans ce workspace (lutgholein.ds1 tronqué, Kurast absente) — roster prêt, spawn à l'étape ville. Spawn vivant : Acte I via d2rules::World (npc_bridge.rs) ; multi-actes = npc_roster.rs (JSON + attach prêts, entités vivantes = extension contrat d2rules)."
 }

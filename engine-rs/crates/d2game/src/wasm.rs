@@ -397,6 +397,50 @@ impl D2Game {
     pub fn belt_info(&self) -> String {
         self.core.belt_json()
     }
+
+    // ------------------------------------------------------------------
+    // 22c PNJ & DIALOGUES (d2rules::dialogue, moteur étape 22a) — endpoints
+    // additifs consommés par demo/dialogue-ui.js (window.D2Dialogue).
+    // Append-only. Contrat complet : crates/d2game/src/dialogue_bridge.rs.
+    // ------------------------------------------------------------------
+
+    /// Ouvre le dialogue du NPC `index` (clic NPC) — JSON
+    /// `DialogueSession` serde du moteur (npc_index/npc/npc_name/quest/
+    /// phase/node{lignes fr, options}) AUGMENTÉ de `visible` (indices bruts
+    /// des options visibles — conditions `quest_done` évaluées en vivant).
+    /// `Err` descriptif (`"trop loin — approchez-vous du NPC"`). L'ouverture
+    /// GÈLE le monde (World::tick ne simule plus rien tant que la session
+    /// est ouverte — cf. dialogue.rs) ; les events (NpcTalked, quêtes)
+    /// continuent de couler via tick.
+    #[wasm_bindgen(js_name = openDialogue)]
+    pub fn open_dialogue(&mut self, npc_index: usize) -> Result<String, JsValue> {
+        self.core.open_dialogue_json(npc_index).map_err(js_err)
+    }
+
+    /// Choisit l'option `option_ix` — INDEX BRUT dans `node.options` (l'UI
+    /// affiche la sous-liste `visible`, elle choisit l'indice d'origine).
+    /// JSON : la session À JOUR si le nœud a avancé (ragots « dites-m'en
+    /// plus »), sinon l'action produite (`{"kind":"open_shop","vendor":…}`,
+    /// `{"kind":"close"}`…), `null` si le choix est refusé (condition non
+    /// remplie / hors bornes).
+    #[wasm_bindgen(js_name = chooseDialogue)]
+    pub fn choose_dialogue(&mut self, option_ix: usize) -> Result<String, JsValue> {
+        self.core.choose_dialogue_json(option_ix).map_err(js_err)
+    }
+
+    /// Referme la session (« partir » / Échap UI) — JSON `true/false`. Le
+    /// tick du monde reprend.
+    #[wasm_bindgen(js_name = closeDialogue)]
+    pub fn close_dialogue(&mut self) -> String {
+        self.core.close_dialogue_json().to_string()
+    }
+
+    /// Session de dialogue ouverte (lecture) — JSON `DialogueSession` +
+    /// `visible`, ou `null` (getter de secours pour l'UI).
+    #[wasm_bindgen(js_name = dialogueSession)]
+    pub fn dialogue_session(&self) -> String {
+        self.core.dialogue_session_json()
+    }
 }
 
 fn parse_input(json: &str) -> Option<PlayerInput> {

@@ -64,6 +64,51 @@ export class D2Game {
         }
     }
     /**
+     * Choisit l'option `option_ix` — INDEX BRUT dans `node.options` (l'UI
+     * affiche la sous-liste `visible`, elle choisit l'indice d'origine).
+     * JSON : la session À JOUR si le nœud a avancé (ragots « dites-m'en
+     * plus »), sinon l'action produite (`{"kind":"open_shop","vendor":…}`,
+     * `{"kind":"close"}`…), `null` si le choix est refusé (condition non
+     * remplie / hors bornes).
+     * @param {number} option_ix
+     * @returns {string}
+     */
+    chooseDialogue(option_ix) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.d2game_chooseDialogue(this.__wbg_ptr, option_ix);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * Referme la session (« partir » / Échap UI) — JSON `true/false`. Le
+     * tick du monde reprend.
+     * @returns {string}
+     */
+    closeDialogue() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_closeDialogue(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Collision grid as 0/1 bytes (row-major), for d2rules/debug overlays.
      * @returns {Uint8Array}
      */
@@ -93,6 +138,23 @@ export class D2Game {
         let deferred1_1;
         try {
             const ret = wasm.d2game_corpseInfo(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * Session de dialogue ouverte (lecture) — JSON `DialogueSession` +
+     * `visible`, ou `null` (getter de secours pour l'UI).
+     * @returns {string}
+     */
+    dialogueSession() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.d2game_dialogueSession(this.__wbg_ptr);
             deferred1_0 = ret[0];
             deferred1_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
@@ -409,6 +471,36 @@ export class D2Game {
             return getStringFromWasm0(ret[0], ret[1]);
         } finally {
             wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * Ouvre le dialogue du NPC `index` (clic NPC) — JSON
+     * `DialogueSession` serde du moteur (npc_index/npc/npc_name/quest/
+     * phase/node{lignes fr, options}) AUGMENTÉ de `visible` (indices bruts
+     * des options visibles — conditions `quest_done` évaluées en vivant).
+     * `Err` descriptif (`"trop loin — approchez-vous du NPC"`). L'ouverture
+     * GÈLE le monde (World::tick ne simule plus rien tant que la session
+     * est ouverte — cf. dialogue.rs) ; les events (NpcTalked, quêtes)
+     * continuent de couler via tick.
+     * @param {number} npc_index
+     * @returns {string}
+     */
+    openDialogue(npc_index) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.d2game_openDialogue(this.__wbg_ptr, npc_index);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
         }
     }
     /**

@@ -116,6 +116,8 @@ pub mod quests;
 /// Roster réel Acte I (monstats + PATH TownN1.ds1), spawn, patrouilles,
 /// rôles (soin/forge/mercenaires/gamble/caravane/érudit), clic → NpcTalked.
 pub mod npc;
+// --- Dialogues PNJ 22a (arbres × phase de quête, TBL fr réelles, 2026-10-25) ---
+pub mod dialogue;
 // --- Mercenaires H (hireling.txt v1.12, 2026-10-23) ---
 /// Mercenaires : embauche/combat/KO/résurrection data-driven (tables réelles
 /// `assets/patch_hireling.txt`), état porté par `World`, save additive.

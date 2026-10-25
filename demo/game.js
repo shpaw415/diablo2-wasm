@@ -10,6 +10,7 @@
 
 const $ = (id) => document.getElementById(id);
 import './automap.js'; // 9d monde vivant : mini-carte (window.D2Automap, Tab / bouton Carte)
+import './dialogue-ui.js'; // 22c PNJ & dialogues : bandeau D2 (window.D2Dialogue — pause monde, Échap)
 const status = $('status');
 const canvas = $('game');
 const ctx = canvas.getContext('2d');

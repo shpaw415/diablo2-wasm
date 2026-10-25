@@ -366,6 +366,10 @@ pub struct World {
     /// Journal de quêtes (W13) branché optionnellement (`set_quest_log`) —
     /// les clics NPC y avancent q3/q4. `None` = aucun câblage forcé.
     pub(crate) quests: Option<QuestLog>,
+    /// Session de dialogue PNJ active (22a, `dialogue.rs`) — TRANSITOIRE
+    /// (jamais persistée, comme `corpse_pending`) : le monde est GELÉ
+    /// pendant la session (cf. `tick`), `close_dialogue` la referme.
+    pub(crate) dialogue: Option<crate::dialogue::DialogueSession>,
     /// Événements produits HORS tick (`talk_to_npc`…) — flushés au début du
     /// tick suivant (le contrat d2rules émet toujours via `tick`).
     pub(crate) pending_events: Vec<GameEvent>,
@@ -603,6 +607,7 @@ impl World {
             difficulty: Difficulty::default(),
             npcs: Vec::new(),
             quests: None,
+            dialogue: None, // 22a : session transitoire (monde gelé pendant)
             pending_events: Vec::new(),
             merc: None,
             merc_target: None,
@@ -850,6 +855,13 @@ impl World {
         let mut ev = std::mem::take(&mut self.pending_events);
         let mut deferred_ev = std::mem::take(&mut self.deferred);
         ev.extend(deferred_ev);
+        // 22a (dialogue.rs) : session de dialogue active ⇒ monde GELÉ — ni
+        // héros, ni monstres, ni NPC, ni missiles, ni horloge (`now_ms`) ;
+        // seuls les événements en attente (le `NpcTalked` émis à
+        // l'ouverture, quêtes) sont flushés. `close_dialogue` rend le tick.
+        if self.dialogue.is_some() {
+            return ev;
+        }
         let dt = dt_ms.min(MAX_DT_MS);
         self.now_ms += dt as u64;
         if let Some(input) = input {

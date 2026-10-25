@@ -427,6 +427,9 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
         // est transitoire — jamais persisté.
         corpse: s.corpse,
         corpse_pending: false,
+        // 22a : session de dialogue transitoire (dialogue.rs) — jamais
+        // persistée : après un load, l'UI rouvre le dialogue d'un clic.
+        dialogue: None,
         // 11c : stash (saves antérieures = vide 6×4, Stash::default).
         gold_stash: s.gold_stash.unwrap_or_default(),
         consum: s.consumables.unwrap_or_default(), // 11b : additif (ceinture vide)
