@@ -97,7 +97,7 @@
   bg.addEventListener('error', bgGone);
   if (bg.complete && !bg.naturalWidth) bgGone();
   // logo : frames manquantes -> titre 100 % CSS
-  Promise.all([probe(MENU + 'logo_flame_l_00.png'), probe(MENU + 'logo_flame_r_00.png')])
+  Promise.all([probe(mURL('logo_flame_l_00.png')), probe(mURL('logo_flame_r_00.png'))])
     .then(([l, r]) => {
       if (l && r) return;
       stage.classList.add('no-logo');
@@ -106,7 +106,7 @@
       clearInterval(logoTimer);
     });
   // feu de camp : fire-sheet.png -> canvas animé, sinon feu CSS (classe .no-fire)
-  probe(MENU + 'fire-sheet.png').then((ok) => { if (!ok) stage.classList.add('no-fire'); });
+  probe(mURL('fire-sheet.png')).then((ok) => { if (!ok) stage.classList.add('no-fire'); });
 
   // ---- logo en flammes : 30 frames (gauche + droite), ~15 fps ----
   // Chaque URL est demandée UNE seule fois (préchargement Image) ; ensuite
@@ -118,8 +118,8 @@
   const frames = [];
   for (let i = 0; i < FRAMES; i++) {
     const L = new Image(), R = new Image();
-    L.src = MENU + 'logo_flame_l_' + pad(i) + '.png';
-    R.src = MENU + 'logo_flame_r_' + pad(i) + '.png';
+    L.src = mURL('logo_flame_l_' + pad(i) + '.png');
+    R.src = mURL('logo_flame_r_' + pad(i) + '.png');
     frames.push({ L, R });
   }
   let f = 0;
@@ -151,7 +151,7 @@
       }, 66);
     };
     sheet.onerror = () => stage.classList.add('no-fire');
-    sheet.src = MENU + 'fire-sheet.png';
+    sheet.src = mURL('fire-sheet.png');
   })();
 
   // ================= sélection de héros =================
@@ -304,6 +304,7 @@
     return (e && e.file && e.frames > 0 && e.w > 0 && e.h > 0) ? e : null;
   }
   const BUST = 'v=' + Date.now(); // contrat en chantier multi-agents : jamais de cache
+  const mURL = (f) => MENU + f + (f.indexOf('?') < 0 ? '?' : '&') + BUST;
   function sheetURL(file) {
     // contrat : heroes/<CODE>.png — un file contenant déjà un chemin est respecté
     const base = file.indexOf('/') >= 0 ? MENU + file : MENU + 'heroes/' + file;
