@@ -10,10 +10,10 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Georg
 
 /* ---------- écran-titre ---------- */
 #bg{position:absolute;inset:0;width:800px;height:600px;image-rendering:pixelated}
-#logo{position:absolute;left:218px;top:8px;width:365px;height:171px}
+#logo{position:absolute;left:218px;top:8px;width:362px;height:171px}
 #logo img{position:absolute;top:0;image-rendering:pixelated}
 #logoL{left:0}
-#logoR{left:181px}
+#logoR{left:178px}
 #logoText{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   font-size:64px;letter-spacing:6px;color:#e8d5a3;text-shadow:0 0 18px rgba(255,140,20,.55),2px 2px 0 #000}
 #stage.no-logo #logoText{display:flex}
