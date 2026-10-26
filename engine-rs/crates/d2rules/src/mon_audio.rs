@@ -39,8 +39,8 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 const MONSOUNDS_TXT: &str = include_str!("../../../../assets/monsounds.txt");
-const INDEX_JSON: &str = include_str!("../../../../demo/assets/sfx/monsounds/index.json");
-const MON_SFX_JS: &str = include_str!("../../../../demo/mon-sfx.js");
+const INDEX_JSON: &str = include_str!("../../../../web/assets/sfx/monsounds/index.json");
+const MON_SFX_JS: &str = include_str!("../../../../web/mon-sfx.js");
 
 /// Alias tige → ligne monsounds, décidés sur les données du port (cf. en-tête
 /// et rapport d'étape) — jamais une invention de sons.
@@ -434,7 +434,7 @@ mod tests {
     #[test]
     fn indexed_wav_files_exist_on_disk_with_riff_header() {
         // Chaque fichier de l'index doit exister et être un WAV RIFF réel.
-        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../demo/assets/sfx/monsounds");
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../web/assets/sfx/monsounds");
         let mut checked = 0;
         let mut unique = std::collections::HashSet::new();
         for fam in families_with_files() {

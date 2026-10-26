@@ -452,6 +452,15 @@ impl D2Game {
         self.core.learn_skill(code)
     }
 
+    /// Dépense `points` points de caractéristique (`"str"|"dex"|"vit"|"ene"`)
+    /// du héros (P26-1, panneau perso) — formules réelles charstats. JSON
+    /// `{"ok":true,"stat":"vit","value":30,"points":2,"lifeGain":20,…}` ou
+    /// `{"ok":false,"error":"…"}`.
+    #[wasm_bindgen(js_name = spendStat)]
+    pub fn spend_stat(&mut self, stat: &str, points: u32) -> String {
+        self.core.spend_stat(stat, points)
+    }
+
     /// Fiche de survol du monstre `index` (EXP-H6) — JSON
     /// `{code,name,kind,alive,hp,maxHp,x,y,sx,sy}` ou `null`.
     #[wasm_bindgen(js_name = monsterInfo)]

@@ -60,7 +60,7 @@ fn is_15b(tag: &str) -> bool {
 #[test]
 fn modes_15b_matrice_complete_dans_les_deux_manifests() {
     let root = ws_root();
-    for rel in ["assets/manifest.json", "demo/assets/manifest.json"] {
+    for rel in ["assets/manifest.json", "web/assets/manifest.json"] {
         let m = manifest(&root, rel);
         for (hero, modes) in EXPECTED {
             let block = &m.pointer(&format!("/heroes/{hero}/modes")).unwrap();
@@ -223,7 +223,7 @@ fn modes_15b_tous_tags_manifest_sont_conus() {
     // Aucune clé fantôme dans `modes` (le moteur ignore ce qu'il ne connaît
     // pas — build_entity_sets) : les 2 manifests ne listent que NU..A2.
     let root = ws_root();
-    for rel in ["assets/manifest.json", "demo/assets/manifest.json"] {
+    for rel in ["assets/manifest.json", "web/assets/manifest.json"] {
         let m = manifest(&root, rel);
         for hero in ["BA", "SOR", "PA", "AM", "AS", "DZ", "NE"] {
             for tag in m

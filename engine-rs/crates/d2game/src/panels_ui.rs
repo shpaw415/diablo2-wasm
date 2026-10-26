@@ -55,9 +55,9 @@ impl GameCore {
             return "{}".into();
         };
         let code = hc["code"].as_str().unwrap_or("BA").to_string();
-        // Gabarit manifest (bloc classes `heroes.<code>.stats`, repli `hero.stats`) :
-        // vitalité/énergie ne baissent jamais au MVP (aucun dépense de points
-        // câblée côté moteur) — valeurs de base de la classe.
+        // Vitalité/énergie : valeurs RÉELLES du héros (base classe + points
+        // dépensés via spendStat, P26-1) — repli gabarit manifest pour les
+        // saves antérieures non reconciliées (valeur 0 impossible en D2).
         let ms = |key: &str| -> Value {
             self.manifest_value()
                 .pointer(&format!("/heroes/{code}/stats/{key}"))
@@ -65,11 +65,6 @@ impl GameCore {
                 .cloned()
                 .unwrap_or(Value::Null)
         };
-        // Dégâts dérivés de l'ÉQUIPEMENT porté : arme de départ du gabarit
-        // (le branchement Equipment→combat reste à faire, cf. full_playthrough
-        // §stub) — MÊME formule que le combat réel (`world.rs` :
-        // `base × (1 + str/100)` plancher) et MÊMES défauts que `data.rs`
-        // (`u32_at` : null/absent ⇒ 3..6, comme le gabarit du combat).
         let at = |key: &str, d: u64| -> u64 {
             self.manifest_value()
                 .pointer(&format!("/heroes/{code}/stats/{key}"))
@@ -77,6 +72,13 @@ impl GameCore {
                 .and_then(|x| x.as_u64())
                 .unwrap_or(d)
         };
+        let vitality = if s.vitality == 0 { at("vitality", 25) } else { s.vitality as u64 };
+        let energy = if s.energy == 0 { at("energy", 10) } else { s.energy as u64 };
+        // Dégâts dérivés de l'ÉQUIPEMENT porté : arme de départ du gabarit
+        // (le branchement Equipment→combat reste à faire, cf. full_playthrough
+        // §stub) — MÊME formule que le combat réel (`world.rs` :
+        // `base × (1 + str/100)` plancher) et MÊMES défauts que `data.rs`
+        // (`u32_at` : null/absent ⇒ 3..6, comme le gabarit du combat).
         let (wmin, wmax) = (at("startWeapon/dmgMin", 3) as f32, at("startWeapon/dmgMax", 6) as f32);
         let wname = ms("startWeapon/name").as_str().unwrap_or("").to_string();
         let str_f = 1.0 + s.strength as f32 / 100.0;
@@ -96,8 +98,8 @@ impl GameCore {
             "maxMana": s.max_mana,
             "strength": s.strength,
             "dexterity": s.dexterity,
-            "vitality": ms("vitality"),
-            "energy": ms("energy"),
+            "vitality": vitality,
+            "energy": energy,
             "defense": s.defense,
             "toHit": s.to_hit,
             "dmgMin": dmg_min,

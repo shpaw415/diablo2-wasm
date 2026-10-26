@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diablo II — Lord of Destruction</title>
+<link rel="stylesheet" href="menu.css?v=20261025d">
+</head>
+<body>
+<div id="stage">
+  <!-- ================= Écran 1 : titre ================= -->
+  <section id="screenTitle" class="screen on">
+    <img id="bg" src="assets/menu/menu-bg.png" alt="">
+    <div id="logo">
+      <!-- frames à canvas FIXE (181×165 / 184×171) : aucune taille ne change
+           entre frames, le logo ne bouge plus d'un pixel pendant l'animation -->
+      <img id="logoL" src="assets/menu/logo_flame_l_00.png" width="178" height="164" alt="">
+      <img id="logoR" src="assets/menu/logo_flame_r_00.png" width="184" height="171" alt="">
+      <!-- repli 100 % CSS si assets/menu absent (ex : Pages sans assets) -->
+      <div id="logoText" hidden>DIABLO&nbsp;II</div>
+    </div>
+    <nav id="buttons">
+      <button class="dbtn" data-action="solo"><span>Solo</span></button>
+      <button class="dbtn" data-action="continue" id="btnContinue"><span>Continuer</span></button>
+      <button class="dbtn" data-action="slots"><span>Parties</span></button>
+      <button class="dbtn" data-action="online"><span>Partie en ligne</span></button>
+      <button class="dbtn" data-action="github"><span>Projet GitHub</span></button>
+      <button class="dbtn" data-action="quit"><span>Quitter</span></button>
+    </nav>
+  </section>
+
+  <!-- ============ Écran 3 : parties sauvegardées (save P0) ============
+       Slots nommés (5 max, un par héros) : classe/niveau/temps de jeu/zone,
+       reprise directe, renommage, suppression, export/import .json.
+       Les données viennent de slots.js (localStorage d2wasm.slots.v1). -->
+  <section id="screenSlots" class="screen">
+    <div id="slotsHead">Parties sauvegardées</div>
+    <div id="slotsMsg" hidden></div>
+    <div id="slotsList"></div>
+    <div id="slotsEmpty" hidden>Aucune partie sauvegardée.<br>Lancez <b>Solo</b>, jouez, puis <b>Sauvegarder</b> en jeu.</div>
+    <div id="slotsBar">
+      <button id="slotImport" class="dbtn small"><span>Importer un .json…</span></button>
+      <input id="slotFile" type="file" accept=".json,application/json" hidden>
+      <button id="slotsBack" class="dbtn small"><span>Retour</span></button>
+    </div>
+    <div id="slotsHint">Jouer : reprend ce héros · × : supprimer · les sauvegardes restent dans ce navigateur</div>
+  </section>
+
+  <!-- ============ Écran 2 : sélection de héros ============
+       Deux modes gérés par menu.js, liste/ordre/noms/stats TOUJOURS depuis
+       assets/manifest.json (heroes{}) — aucune classe codée en dur ici :
+       - scène animée si le contrat assets/menu/heroes.json est présent
+         ({CODE:{file,frames,w,h,fps}} + heroes/<CODE>.png) ;
+       - sinon cartes ci-dessous (repli historique, ex : build Pages). -->
+  <section id="screenSelect" class="screen">
+    <div id="selectHead">Choisissez votre héros</div>
+    <div id="manifestErr" hidden></div>
+    <div id="sceneWrap">
+      <canvas id="sceneCanvas" width="800" height="600"></canvas>
+    </div>
+    <div id="sceneStats"></div>
+    <div id="heroGrid"></div>
+    <div id="fireWrap">
+      <div id="fireGlow"></div>
+      <canvas id="fireCanvas" width="180" height="140"></canvas>
+      <!-- feu 100 % CSS si fire-sheet.png absent -->
+      <div id="cssFire" hidden><i></i><i></i><i></i></div>
+    </div>
+    <div id="selectBar">
+      <label id="nameLabel" for="heroName">Nom du héros</label>
+      <input id="heroName" type="text" maxlength="16" placeholder="Sans nom"
+             autocomplete="off" spellcheck="false">
+      <button id="play" class="dbtn" disabled><span>Jouer</span></button>
+      <button id="back" class="dbtn" data-action="back"><span>Retour</span></button>
+    </div>
+    <div id="selectHint">Clic ou ←/→/↑/↓ : choisir &nbsp;·&nbsp; Entrée : jouer &nbsp;·&nbsp; Échap : retour</div>
+  </section>
+
+  <!-- ============ Écran 5 : partie en ligne (lobby, phase serveur) ============
+       Créer/rejoindre une salle (code 5 caractères), présence par polling 2 s,
+       lancement hôte → sélection de héros → Jouer relaie ?online=CODE.
+       Logique dans online-ui.js (contrat window.D2Online / window.D2Menu). -->
+  <section id="screenOnline" class="screen">
+    <div id="onlineHead">Partie en ligne</div>
+    <div id="onlineHome">
+      <button id="onlineCreate" class="dbtn"><span>Créer une salle</span></button>
+      <div id="onlineJoinRow">
+        <input id="onlineCode" maxlength="5" placeholder="CODE" autocomplete="off" spellcheck="false">
+        <button id="onlineJoin" class="dbtn small"><span>Rejoindre</span></button>
+      </div>
+      <div id="onlineErr" hidden></div>
+    </div>
+    <div id="onlineRoom" hidden>
+      <div id="onlineCodeBig">SALLE ·····</div>
+      <div id="onlinePlayers"></div>
+      <div id="onlineBar">
+        <button id="onlineStart" class="dbtn" hidden><span>Lancer la partie</span></button>
+        <button id="onlineLeave" class="dbtn small"><span>Quitter la salle</span></button>
+      </div>
+      <div id="onlineHint">Partagez le code — les joueurs rejoignent depuis leur navigateur.</div>
+    </div>
+    <button id="onlineBack" class="dbtn small"><span>Retour</span></button>
+  </section>
+
+  <div id="version">version 1.12</div>
+  <div id="copyright">portage non officiel — données © Blizzard Entertainment</div>
+  <div id="errlog"></div>
+</div>
+<script src="generated-assets.js"></script> <!-- GÉNÉRÉ par serveur/build.ts (`bun run build`) : window.D2_ASSETS -->
+<script src="slots.js"></script>
+<script src="online-ui.js"></script>
+<script src="menu.js?v=20261025d"></script>
+</body>
+</html>

@@ -346,7 +346,7 @@ fn manifest_block(e: &NpcRosterEntry) -> Value {
 
 /// Blocs `npc` du manifest (array complet, 22 entrées) — la source de vérité
 /// reste [`ROSTER`] ; les DEUX copies assets/manifest.json et
-/// demo/assets/manifest.json doivent être identiques (golden de parité).
+/// web/assets/manifest.json doivent être identiques (golden de parité).
 pub fn manifest_blocks() -> Vec<Value> {
     ROSTER.iter().map(manifest_block).collect()
 }
@@ -588,7 +588,7 @@ mod tests {
     fn manifest_npc_blocks_match_roster_both_copies() {
         let root = root();
         let a = std::fs::read_to_string(format!("{root}/assets/manifest.json")).unwrap();
-        let b = std::fs::read_to_string(format!("{root}/demo/assets/manifest.json")).unwrap();
+        let b = std::fs::read_to_string(format!("{root}/web/assets/manifest.json")).unwrap();
         let va: Value = serde_json::from_str(&a).unwrap();
         let vb: Value = serde_json::from_str(&b).unwrap();
         assert_eq!(va["npc"], vb["npc"], "copies manifest identiques (npc)");

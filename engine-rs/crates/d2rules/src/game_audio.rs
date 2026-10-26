@@ -307,7 +307,7 @@ mod tests {
     /// que le conteneur) et le dossier n'héberge aucun wav hors table.
     #[test]
     fn fichiers_wav_presents_et_conformes() {
-        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../demo/",);
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../web/",);
         let base = format!("{dir}{BASE}");
         assert_eq!(ALL.len(), 25, "la table ALL attend les 25 sons extraits");
         for (path, src) in ALL {

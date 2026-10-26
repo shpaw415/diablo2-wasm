@@ -237,6 +237,9 @@ pub use skills::HeroSkill;
 /// Erreurs d'apprentissage de l'arbre (prérequis/plafond/points…) —
 /// consommées par d2game (learnSkill) et affichables telles quelles en UI.
 pub use skills_tree::SkillTreeError;
+/// Dépense des points de caractéristiques (P26-1) — types + erreurs
+/// consommés par d2game (spendStat, panneau perso).
+pub use world::{HeroStat, StatSpendError, StatSpent, ATTR_CAP};
 pub use world::World;
 /// 3b-1 (coop multi-héros) : UN joueur = un héros (`World::players[slot]`) +
 /// ses données [`HeroData`] — consommés par d2game (HUD par slot, salon).
@@ -604,12 +607,31 @@ pub struct HeroStats {
     /// antérieures chargent à 0) — un autre chantier ajoute d'autres champs.
     #[serde(default)]
     pub skill_points: u32,
-    /// Points de caractéristique NON DÉPENSÉS (récompenses de quêtes :
-    /// Livre de Lam Esen A3 +5, spec quests-actes.md §4 [CITÉ Arreat
-    /// Summit]). `#[serde(default)]` OBLIGATOIRE : champ save additif (les
-    /// saves antérieures chargent à 0).
+    /// Points de caractéristique NON DÉPENSÉS (+`StatPerLevel` 5/niveau de
+    /// perso, récompenses de quêtes : Livre de Lam Esen A3 +5, spec
+    /// quests-actes.md §4 [CITÉ Arreat Summit]). `#[serde(default)]`
+    /// OBLIGATOIRE : champ save additif (les saves antérieures chargent à 0).
     #[serde(default)]
     pub stat_points: u32,
+    /// Vitalité COURANTE (base de la classe + points DÉPENSÉS — dépense
+    /// P26-1 `World::spend_stat`) : pilote la vie max
+    /// (+`LifePerVitality`/point) et l'endurance max
+    /// (+`StaminaPerVitality`/point). `#[serde(default)]` OBLIGATOIRE :
+    /// champ save additif (saves antérieures → 0, reconcilié au gabarit de
+    /// la classe par `save::load_json`, même contrat que `stamina`).
+    #[serde(default)]
+    pub vitality: u32,
+    /// Énergie COURANTE (base de la classe + points DÉPENSÉS — dépense
+    /// P26-1) : pilote le mana max (+`ManaPerMagic`/point).
+    /// `#[serde(default)]` OBLIGATOIRE : champ save additif.
+    #[serde(default)]
+    pub energy: u32,
+    /// Reste de QUARTS de point de mana des dépenses d'énergie (0..3) —
+    /// `ManaPerMagic` n'est pas entier pour PA/AM/AS (1,5/point ⇒ 6 quarts) :
+    /// le cumul exact retail (floor(1,5×n)) exige de porter le reste entre
+    /// deux dépenses. `#[serde(default)]` OBLIGATOIRE : champ save additif.
+    #[serde(default)]
+    pub mana_frac_fourths: u32,
     /// Bonus PERMANENT en points de % aux TOUTES les résistances (récompense
     /// de quête « Prison de glace » A5Q3 : +10 par difficulté — Malah,
     /// parchemin de résistance [CITÉ trevin ; valeur confirmée par le README

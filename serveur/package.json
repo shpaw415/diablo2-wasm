@@ -1,0 +1,9 @@
+{
+  "name": "d2w-serveur",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "bun server.ts",
+    "build": "bun build.ts"
+  }
+}

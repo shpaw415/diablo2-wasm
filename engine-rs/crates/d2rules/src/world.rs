@@ -474,6 +474,11 @@ impl Player {
             max_stamina: t.stamina,
             skill_points: 0,
             stat_points: 0,
+            // P26-1 : vitalité/énergie de départ de la classe — champs save
+            // additifs (`#[serde(default)]` HeroStats).
+            vitality: t.vitality,
+            energy: t.energy,
+            mana_frac_fourths: 0,
             res_all_pct: 0,
         }
     }
@@ -714,10 +719,153 @@ macro_rules! hero_parts {
 }
 
 
+// ---------------------------------------------------------------------------
+// DÉPENSE DES POINTS DE CARACTÉRISTIQUES (P26-1 — A2/L7) : types purs +
+// tables `patch_charstats.txt` (colonnes « in fourths » absentes du manifest).
+// L'endpoint [`World::spend_stat`] câble ces formules sur l'état joueur.
+// ---------------------------------------------------------------------------
+
+/// Plafond de DÉPENSE d'un attribut de base — encodage 10 bits du .d2s
+/// (str/dex/ene/vit, stat ids 0-3, `csv_bits_max`) : au-delà, l'export
+/// .d2s sature. Inatteignable en jeu (5×98 + base ≈ 540 au niveau 99) :
+/// garde-fou d'export/interop.
+pub const ATTR_CAP: u32 = 1023;
+
+/// Une caractéristique dépensable ([`World::spend_stat`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HeroStat {
+    /// Force (`str`) — dégâts `×(1+str/100)` au coup, requis d'items.
+    Str,
+    /// Dextérité (`dex`) — défense `dex/4` + toucher.
+    Dex,
+    /// Vitalité (`vit`) — vie max + endurance max.
+    Vit,
+    /// Énergie (`ene`) — mana max.
+    Ene,
+}
+
+impl HeroStat {
+    /// Code canonique (`"str"|"dex"|"vit"|"ene"`) — clé JSON/UI.
+    pub fn code(self) -> &'static str {
+        match self {
+            HeroStat::Str => "str",
+            HeroStat::Dex => "dex",
+            HeroStat::Vit => "vit",
+            HeroStat::Ene => "ene",
+        }
+    }
+}
+
+/// Code canonique ou nom long EN (`"strength"|"dexterity"|"vitality"|
+/// "energy"`) → [`HeroStat`].
+fn parse_hero_stat(s: &str) -> Option<HeroStat> {
+    match s.trim().to_ascii_lowercase().as_str() {
+        "str" | "strength" => Some(HeroStat::Str),
+        "dex" | "dexterity" => Some(HeroStat::Dex),
+        "vit" | "vitality" => Some(HeroStat::Vit),
+        "ene" | "energy" => Some(HeroStat::Ene),
+        _ => None,
+    }
+}
+
+/// Résultat d'une dépense acceptée ([`World::spend_stat`]) — les gains
+/// dérivés affichables (flash UI, tests golden).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StatSpent {
+    /// Caractéristique dépensée.
+    pub stat: HeroStat,
+    /// Points dépensés (coût 1/point).
+    pub points: u32,
+    /// Nouvelle valeur de l'attribut.
+    pub value: u32,
+    /// Points de caractéristique restants.
+    pub remaining: u32,
+    /// Vie max gagnée (`vit` seulement).
+    pub life_gain: u32,
+    /// Mana max gagné (`ene` seulement).
+    pub mana_gain: u32,
+    /// Endurance max gagnée (`vit` seulement).
+    pub stamina_gain: u32,
+    /// Défense gagnée (`dex` seulement).
+    pub defense_gain: u32,
+    /// Toucher gagné (`dex` seulement).
+    pub to_hit_gain: u32,
+}
+
+/// Erreurs de dépense ([`World::spend_stat`]) — état INCHANGÉ sur `Err`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum StatSpendError {
+    /// Slot joueur hors table.
+    SlotInvalide,
+    /// Stat inconnue (`str`/`dex`/`vit`/`ene` attendus).
+    StatInconnue(String),
+    /// Dépense de 0 point (refusée — aucun effet, même contrat retail).
+    AucunPoint,
+    /// Pas assez de points non dépensés.
+    PasAssezDePoints {
+        /// Points réellement disponibles.
+        disponibles: u32,
+    },
+    /// La dépense dépasserait [`ATTR_CAP`] (1023, encodage .d2s).
+    PlafondAttribut {
+        /// Plafond refusé.
+        plafond: u32,
+    },
+}
+
+impl std::fmt::Display for StatSpendError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StatSpendError::SlotInvalide => write!(f, "slot joueur invalide"),
+            StatSpendError::StatInconnue(s) => {
+                write!(f, "caractéristique inconnue : {s} (str/dex/vit/ene)")
+            }
+            StatSpendError::AucunPoint => write!(f, "aucun point à dépenser"),
+            StatSpendError::PasAssezDePoints { disponibles } => {
+                write!(f, "pas assez de points ({disponibles} disponibles)")
+            }
+            StatSpendError::PlafondAttribut { plafond } => {
+                write!(f, "plafond d'attribut atteint ({plafond})")
+            }
+        }
+    }
+}
+
+impl std::error::Error for StatSpendError {}
+
+/// Lignes réelles `patch_charstats.txt` v1.12 (même source que
+/// `save_d2s::CHARSTATS`) — colonnes de CROISSANCE absentes du manifest.
+const CHARSTATS_GROWTH: &str = include_str!("../../../../assets/patch_charstats.txt");
+
+/// `StaminaPerVitality` EN QUARTS de la ligne de classe (colonne 23 —
+/// « in fourths » : BA 4 ⇒ +1 endurance/point de vitalité, AS 5 ⇒ +1,25).
+/// Défaut 4 (valeur des 6 autres classes) si la ligne manque.
+fn charstats_stamina_per_vit_fourths(hero_code: &str) -> u32 {
+    let want = match crate::skills_hero::class_code(hero_code).as_str() {
+        "ama" => "Amazon",
+        "sor" => "Sorceress",
+        "nec" => "Necromancer",
+        "pal" => "Paladin",
+        "bar" => "Barbarian",
+        "dru" => "Druid",
+        "ass" => "Assassin",
+        _ => "Barbarian",
+    };
+    for line in CHARSTATS_GROWTH.lines() {
+        let mut cols = line.split('\t');
+        if !cols.next().unwrap_or("").trim().eq_ignore_ascii_case(want) {
+            continue;
+        }
+        if let Some(v) = cols.nth(21).and_then(|c| c.trim().parse::<u32>().ok()) {
+            return v.max(1);
+        }
+    }
+    4
+}
+
 /// 3b-1 : hachage d'un joueur (entité + données + flux RNG) — facteur commun
 /// de [`World::state_hash`] et [`World::state_hash_slot`].
-fn hash_player<H: std::hash::Hasher>(h: &mut H, p: &Player) {
-    use std::hash::Hash;
+fn hash_player<H: std::hash::Hasher>(h: &mut H, p: &Player) {    use std::hash::Hash;
     p.slot.hash(h);
     hash_entity(h, &p.ent);
     p.code.hash(h);
@@ -739,10 +887,12 @@ fn hash_player<H: std::hash::Hasher>(h: &mut H, p: &Player) {
     d.stats.max_stamina.hash(h);
     d.stats.skill_points.hash(h);
     d.stats.stat_points.hash(h);
+    d.stats.vitality.hash(h);
+    d.stats.energy.hash(h);
+    d.stats.mana_frac_fourths.hash(h);
     d.stats.res_all_pct.hash(h);
     d.stats.skill.hash(h);
-    d.stats.skill_level.hash(h);
-    d.swing_ms.hash(h);
+    d.stats.skill_level.hash(h);    d.swing_ms.hash(h);
     d.swing_cast.hash(h);
     d.dead_ms.hash(h);
     d.run.hash(h);
@@ -915,6 +1065,11 @@ impl World {
             // Étape 8d : caractéristiques de quêtes (Lam Esen A3 +5) —
             // champ save additif (`#[serde(default)]` HeroStats).
             stat_points: 0,
+            // P26-1 : vitalité/énergie de départ de la classe (dépense de
+            // points) — champs save additifs (`#[serde(default)]`).
+            vitality: t.vitality,
+            energy: t.energy,
+            mana_frac_fourths: 0,
             // Étape 19b : bonus résistances de quêtes (Prison de glace +10 %
             // par difficulté) — champ save additif (`#[serde(default)]`).
             res_all_pct: 0,
@@ -1499,6 +1654,11 @@ impl World {
             max_stamina: t.stamina,
             skill_points: 0,
             stat_points: 0,
+            // P26-1 : vitalité/énergie de départ de la classe — champs save
+            // additifs (`#[serde(default)]` HeroStats).
+            vitality: t.vitality,
+            energy: t.energy,
+            mana_frac_fourths: 0,
             res_all_pct: 0,
         }
     }
@@ -1676,6 +1836,124 @@ impl World {
         let ls = self.local_slot;
         let p = &mut self.players[ls].data.stats;
         p.skill_points = p.skill_points.saturating_add(n);
+    }
+
+    /// Injecte des points de caractéristique HORS tick (récompenses de
+    /// quêtes — le flux par niveau passe par [`Self::apply_xp_slot`],
+    /// +`StatPerLevel`/niveau). Même convention que
+    /// [`Self::grant_skill_points`].
+    pub fn grant_stat_points(&mut self, n: u32) {
+        let ls = self.local_slot;
+        let p = &mut self.players[ls].data.stats;
+        p.stat_points = p.stat_points.saturating_add(n);
+    }
+
+    /// Dépense `points` points de caractéristique (coût 1/point, v1.12) sur
+    /// `stat` (`"str"|"dex"|"vit"|"ene"`, noms longs EN acceptés) du joueur
+    /// `player_slot` — P26-1 (A2/L7). Formules RÉELLES
+    /// `patch_charstats.txt` (colonnes « in fourths », manifest ÷4) :
+    ///
+    /// * `vit` → vie max +`LifePerVitality`×points (BA +4, SO/NE/DZ +2,
+    ///   PA/AM/AS +3) ET endurance max +`StaminaPerVitality`×points (+1,
+    ///   AS +1,25 — reste en quarts porté par `stamina_milli`, transitoire) ;
+    ///   vie/endurance courantes suivent la montée du max (même contrat que
+    ///   le level-up) ;
+    /// * `ene` → mana max +`ManaPerMagic`×points (BA +1, SO/NE/DZ +2,
+    ///   PA/AM +1,5 — cumul EXACT via [`HeroStats::mana_frac_fourths`]) ;
+    ///   mana courant suit ;
+    /// * `dex` → défense +`dex/4` (plancher par point, réel v1.12) et
+    ///   toucher +`ToHitFactor`+dex (formule documentée du moteur) ;
+    /// * `str` → rien de dérivé côté stats (dégâts `×(1+str/100)` évalués
+    ///   au coup, requis d'items déjà gérés par `equipment.rs`).
+    ///
+    /// Plafonds : 0 point refusé, pas assez de points refusé, attribut
+    /// plafonné à [`ATTR_CAP`] (1023 — encodage 10 bits du .d2s, jamais
+    /// atteignable en jeu : garde-fou d'export). `Err` = raison exacte
+    /// ([`StatSpendError`], affichable UI) ; état INCHANGÉ sur refus.
+    pub fn spend_stat(
+        &mut self,
+        player_slot: usize,
+        stat: &str,
+        points: u32,
+    ) -> Result<StatSpent, StatSpendError> {
+        let which = parse_hero_stat(stat).ok_or_else(|| StatSpendError::StatInconnue(stat.trim().to_string()))?;
+        if points == 0 {
+            return Err(StatSpendError::AucunPoint);
+        }
+        let p = self.players.get(player_slot).ok_or(StatSpendError::SlotInvalide)?;
+        let s = &p.data.stats;
+        if points > s.stat_points {
+            return Err(StatSpendError::PasAssezDePoints { disponibles: s.stat_points });
+        }
+        let (old_attr, cap_new) = match which {
+            HeroStat::Str => (s.strength, s.strength.saturating_add(points)),
+            HeroStat::Dex => (s.dexterity, s.dexterity.saturating_add(points)),
+            HeroStat::Vit => (s.vitality, s.vitality.saturating_add(points)),
+            HeroStat::Ene => (s.energy, s.energy.saturating_add(points)),
+        };
+        if cap_new > ATTR_CAP {
+            return Err(StatSpendError::PlafondAttribut { plafond: ATTR_CAP });
+        }
+        let code = p.code.clone();
+        let t = p.tpl.clone();
+        let p = &mut self.players[player_slot];
+        let s = &mut p.data.stats;
+        let mut out = StatSpent {
+            stat: which,
+            points,
+            value: cap_new,
+            remaining: s.stat_points - points,
+            life_gain: 0,
+            mana_gain: 0,
+            stamina_gain: 0,
+            defense_gain: 0,
+            to_hit_gain: 0,
+        };
+        s.stat_points = out.remaining;
+        match which {
+            HeroStat::Str => s.strength = cap_new,
+            HeroStat::Dex => {
+                // Défense = dex/4 + AC bouclier : seule la part dex/4 bouge
+                // (plancher par point — 20→21 ne gagne rien, 20→24 gagne 1).
+                let shield = s.defense.saturating_sub(old_attr / 4);
+                let factor = s.to_hit.saturating_sub(old_attr);
+                s.dexterity = cap_new;
+                out.defense_gain = cap_new / 4 - old_attr / 4;
+                s.defense = cap_new / 4 + shield;
+                out.to_hit_gain = points;
+                s.to_hit = cap_new + factor;
+            }
+            HeroStat::Vit => {
+                s.vitality = cap_new;
+                // Vie : LifePerVitality en quarts (16/12/8 — multiple de 4
+                // pour les 7 classes v1.12 : gain toujours exact).
+                let life = points * t.life_per_vitality_fourths;
+                out.life_gain = life / 4;
+                s.max_life = s.max_life.saturating_add(out.life_gain);
+                s.life = s.life.saturating_add(out.life_gain);
+                // Endurance : StaminaPerVitality en quarts (charstats col 23,
+                // absent du manifest) — reste sous-unitaire porté par
+                // `stamina_milli` (transitoire, recalé au chargement).
+                let stam = points * charstats_stamina_per_vit_fourths(&code);
+                out.stamina_gain = stam / 4;
+                s.max_stamina = s.max_stamina.saturating_add(out.stamina_gain);
+                let gain_milli = (out.stamina_gain * 1000 + (stam % 4) * 250) as i64;
+                p.data.stamina_milli = (p.data.stamina_milli + gain_milli)
+                    .min((s.max_stamina as i64) * 1000);
+                s.stamina = (p.data.stamina_milli / 1000) as u32;
+            }
+            HeroStat::Ene => {
+                s.energy = cap_new;
+                // Mana : ManaPerMagic en quarts + reste porté entre dépenses
+                // (cumul exact retail : PA/AM 1,5/point ⇒ +1,+3,+4,+6…).
+                let total = s.mana_frac_fourths + points * t.mana_per_magic_fourths;
+                out.mana_gain = total / 4;
+                s.mana_frac_fourths = total % 4;
+                s.max_mana = s.max_mana.saturating_add(out.mana_gain);
+                s.mana = s.mana.saturating_add(out.mana_gain);
+            }
+        }
+        Ok(out)
     }
 
     /// Injecte de l'XP au héros HORS tick (import d2s futurs, outils,
@@ -2818,6 +3096,10 @@ impl World {
                     // perso (v1.12) ; récompenses de quêtes EN PLUS via
                     // `grant_skill_points` (slot 0).
                     d.stats.skill_points = d.stats.skill_points.saturating_add(1);
+                    // P26-1 (A2) : +`StatPerLevel` points de caractéristique
+                    // par niveau (v1.12 : 5 pour les 7 classes) — dépensés
+                    // via [`World::spend_stat`].
+                    d.stats.stat_points = d.stats.stat_points.saturating_add(tpl.stat_per_level);
                 }
                 ev.push(GameEvent::HeroLeveled { level: lvl + 1 });
             } else {

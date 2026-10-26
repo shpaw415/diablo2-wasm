@@ -2028,11 +2028,20 @@ mod tests {
         w.quest_actes2_event(&kill("radament"));
         w.quest_actes2_event(&talk("atma"));
         assert_eq!(w.unspent_skill_points(), 1);
-        // a3q1 Lam Esen → Alkor : +5 points de caractéristique.
+        // a3q1 Lam Esen → Alkor : +5 points de caractéristique (récompense
+        // exacte — P26-1 ajoute +StatPerLevel 5/niveau via apply_xp_slot, et
+        // l'XP de la même remise peut faire niveauter le héros dans le même
+        // événement : on décompose récompense + level-ups éventuels).
         w.quest_actes2_event(&zone(lvl::RUINED_TEMPLE));
         w.quest_actes2_event(&item("bbb"));
+        let pts_before = w.hero_stats().stat_points;
+        let lvl_before = w.hero_stats().level;
         w.quest_actes2_event(&talk("alkor"));
-        assert_eq!(w.hero_stats().stat_points, 5);
+        {
+            let s = w.hero_stats();
+            let expected = pts_before + 5 + 5 * (s.level - lvl_before);
+            assert_eq!(s.stat_points, expected, "+5 (Lam Esen) + 5/niveau gagné");
+        }
         // a3q4 Oiseau de Feu → Alkor : +20 vie max permanente (les bonus XP
         // des quêtes précédentes peuvent avoir fait monter le niveau — on
         // capture la vie max juste avant la récompense).

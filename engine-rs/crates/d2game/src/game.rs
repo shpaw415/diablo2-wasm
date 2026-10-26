@@ -1918,6 +1918,34 @@ impl GameCore {
         }
     }
 
+    /// Dépense `points` points de caractéristique (`"str"|"dex"|"vit"|"ene"`,
+    /// coût 1/point v1.12) du héros LOCAL — formules réelles
+    /// `patch_charstats.txt` via [`d2rules::World::spend_stat`] (P26-1 :
+    /// vit→vie/endurance max, ene→mana max, dex→défense/toucher, plafonds).
+    /// JSON `{"ok":true,"stat":"vit","value":30,"points":2,"lifeGain":20,…}`
+    /// ou `{"ok":false,"error":"…"}` (fr, affichable).
+    pub fn spend_stat(&mut self, stat: &str, points: u32) -> String {
+        let Some(w) = self.world.as_mut() else {
+            return serde_json::json!({"ok": false, "error": "monde non initialisé"}).to_string();
+        };
+        let slot = w.local_slot();
+        match w.spend_stat(slot, stat, points) {
+            Ok(sp) => serde_json::json!({
+                "ok": true,
+                "stat": sp.stat.code(),
+                "value": sp.value,
+                "points": sp.remaining,
+                "lifeGain": sp.life_gain,
+                "manaGain": sp.mana_gain,
+                "staminaGain": sp.stamina_gain,
+                "defenseGain": sp.defense_gain,
+                "toHitGain": sp.to_hit_gain,
+            })
+            .to_string(),
+            Err(e) => serde_json::json!({"ok": false, "error": e.to_string()}).to_string(),
+        }
+    }
+
     /// Tables de niveaux branchées (W01) si l'asset `patch_levels.txt` a été
     /// fourni — exposé à la couche noms fr (`tbl_names.rs`, W18) qui préfère
     /// la clé `LevelName` réelle au repli embarqué.
@@ -4384,6 +4412,44 @@ mod tests {
         let t2: Value = serde_json::from_str(&g2.skill_tree_json()).unwrap();
         assert_eq!(t2["skills"].as_array().unwrap().len(), 30);
         assert_eq!(t2["points"], 0);
+    }
+
+    #[test]
+    fn spend_stat_endpoint_updates_derived_and_refuses() {
+        let Some(root) = ws_root() else { return };
+        let (mut g, _) = full_ba_game(&root);
+        g.finalize().unwrap();
+        // Panneau niv 1 : gabarit charstats (vit 25, ene 10, vie 55, mana 15).
+        let p: Value = serde_json::from_str(&g.hero_panel_json()).unwrap();
+        assert_eq!(p["vitality"], 25);
+        assert_eq!(p["energy"], 10);
+        assert_eq!(p["maxLife"], 55);
+        assert_eq!(p["maxMana"], 15);
+        assert_eq!(p["statPoints"], 0);
+        // 0 point demandé : refus explicite, aucun effet.
+        let r: Value = serde_json::from_str(&g.spend_stat("vit", 0)).unwrap();
+        assert_eq!(r["ok"], false);
+        assert!(r["error"].as_str().unwrap().contains("point"), "{}", r["error"]);
+        // +5 vit (BA : LifePerVitality 16 quarts = +4/pt, StaminaPerVitality
+        // 4 quarts = +1/pt) → +20 vie max, +5 endurance max.
+        g.world.as_mut().unwrap().grant_stat_points(5);
+        let r: Value = serde_json::from_str(&g.spend_stat("vit", 5)).unwrap();
+        assert_eq!(r["ok"], true);
+        assert_eq!(r["stat"], "vit");
+        assert_eq!(r["value"], 30);
+        assert_eq!(r["lifeGain"], 20);
+        assert_eq!(r["staminaGain"], 5);
+        assert_eq!(r["points"], 0);
+        // Le PANNEAU reflète les stats RÉELLES (plus le gabarit manifest).
+        let p: Value = serde_json::from_str(&g.hero_panel_json()).unwrap();
+        assert_eq!(p["vitality"], 30);
+        assert_eq!(p["maxLife"], 75);
+        assert_eq!(p["maxStamina"], 97);
+        assert_eq!(p["statPoints"], 0);
+        // Stat inconnue : erreur affichable en fr.
+        let r: Value = serde_json::from_str(&g.spend_stat("chance", 1)).unwrap();
+        assert_eq!(r["ok"], false);
+        assert!(r["error"].as_str().unwrap().contains("inconnue"), "{}", r["error"]);
     }
 
     #[test]

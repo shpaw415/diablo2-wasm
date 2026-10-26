@@ -28,6 +28,22 @@ pub(crate) struct HeroTpl {
     pub life_per_level: u32,
     /// Mana gagné par niveau (`ManaPerLevel` 4/4 = +1).
     pub mana_per_level: u32,
+    /// Vitalité de départ (col `vit`, BA = 25) — P26-1 : base des dépenses
+    /// de points (les valeurs du manifest sont les colonnes charstats ÷4).
+    pub vitality: u32,
+    /// Énergie de départ (col `int`, BA = 10).
+    pub energy: u32,
+    /// Vie gagnée par point de vitalité DÉPENSÉ (`LifePerVitality` en
+    /// quarts : 16 ⇒ +4/point BA, 8 ⇒ +2 SO/NE/DZ, 12 ⇒ +3 PA/AM/AS) —
+    /// multiple de 4 pour les 7 classes v1.12 (gain toujours exact).
+    pub life_per_vitality_fourths: u32,
+    /// Mana gagné par point d'énergie DÉPENSÉ (`ManaPerMagic` en quarts :
+    /// 4 ⇒ +1 BA, 8 ⇒ +2 SO/NE/DZ, 6 ⇒ +1,5 PA/AM — reste porté par
+    /// `HeroStats::mana_frac_fourths`).
+    pub mana_per_magic_fourths: u32,
+    /// Points de caractéristique gagnés par niveau (`StatPerLevel` = 5 en
+    /// v1.12 pour les 7 classes).
+    pub stat_per_level: u32,
     /// Dégâts min arme de départ (`item1` = hax, `mindam` = 3).
     pub weapon_min: u32,
     /// Dégâts max arme de départ (`maxdam` = 6).
@@ -127,6 +143,19 @@ pub(crate) fn parse_hero_code(v: &Value, code: &str) -> HeroTpl {    let has = v
         to_hit_factor: u32_at(v, &format!("{base}/toHitFactor"), 20),
         life_per_level: u32_at(v, &format!("{base}/lifePerLevel"), 2),
         mana_per_level: u32_at(v, &format!("{base}/manaPerLevel"), 1),
+        vitality: u32_at(v, &format!("{base}/vitality"), 25),
+        energy: u32_at(v, &format!("{base}/energy"), 10),
+        // Colonnes charstats « in fourths » : le manifest porte la valeur ÷4
+        // (1,5 ⇒ 6 quarts). f32 × 4 arrondi — tolère 1.5/1.75.
+        life_per_vitality_fourths: {
+            let f = f32_at(v, &format!("{base}/lifePerVitality"), 4.0);
+            (f * 4.0).round().max(1.0) as u32
+        },
+        mana_per_magic_fourths: {
+            let f = f32_at(v, &format!("{base}/manaPerEnergy"), 1.0);
+            (f * 4.0).round().max(1.0) as u32
+        },
+        stat_per_level: u32_at(v, &format!("{base}/statPerLevel"), 5).max(1),
         weapon_min: u32_at(v, &format!("{base}/startWeapon/dmgMin"), 3),
         weapon_max: u32_at(v, &format!("{base}/startWeapon/dmgMax"), 6),
         shield_ac_min: u32_at(v, &format!("{base}/startShield/acMin"), 4),

@@ -470,6 +470,14 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                         stats.max_stamina = tpl.stamina;
                         stats.stamina = stats.max_stamina;
                     }
+                    // P26-1 : vitalité/énergie des saves antérieures (champs
+                    // additifs absents → 0) reconciliées au gabarit de classe.
+                    if stats.vitality == 0 {
+                        stats.vitality = tpl.vitality;
+                    }
+                    if stats.energy == 0 {
+                        stats.energy = tpl.energy;
+                    }
                     let stamina_milli = (stats.stamina as i64) * 1000;
                     super::world::Player {
                         slot,
@@ -506,11 +514,19 @@ pub(crate) fn load_json(json: &str) -> Result<World, ()> {
                 tpl: super::data::parse_hero_code(&s.manifest, &hero_code),
                 data: super::world::HeroData {
                     stats: {
+                        let tpl0 = super::data::parse_hero_code(&s.manifest, &hero_code);
                         let mut stats = s.hero.stats.clone();
                         if stats.max_stamina == 0 {
-                            stats.max_stamina =
-                                super::data::parse_hero_code(&s.manifest, &hero_code).stamina;
+                            stats.max_stamina = tpl0.stamina;
                             stats.stamina = stats.max_stamina;
+                        }
+                        // P26-1 : vitalité/énergie des saves antérieures
+                        // reconciliées au gabarit de classe (champs additifs).
+                        if stats.vitality == 0 {
+                            stats.vitality = tpl0.vitality;
+                        }
+                        if stats.energy == 0 {
+                            stats.energy = tpl0.energy;
                         }
                         stats
                     },
